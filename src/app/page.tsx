@@ -31,6 +31,7 @@ import {
   dataService,
   COLEGIOS_DEFAULT,
   GRADOS_DEFAULT,
+  OBSERVACIONES_DEFAULT,
   DIAS_SEMANA,
   obtenerDiaActualSemana,
 } from '@/lib/dataService';
@@ -74,6 +75,52 @@ function PedidoContent() {
   const [isPending, startTransition] = useTransition();
   const [pedidoCompletado, setPedidoCompletado] = useState<Pedido | null>(null);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
+
+  // Listas dinámicas configurables por el admin
+  const [listaColegios, setListaColegios] = useState<string[]>(COLEGIOS_DEFAULT);
+  const [listaGrados, setListaGrados] = useState<string[]>(GRADOS_DEFAULT);
+  const [observacionesTags, setObservacionesTags] = useState<string[]>(OBSERVACIONES_DEFAULT);
+
+  // Cargar configuraciones dinámicas
+  useEffect(() => {
+    let montado = true;
+    Promise.all([
+      dataService.obtenerColegios(),
+      dataService.obtenerGrados(),
+      dataService.obtenerObservaciones(),
+    ]).then(([cols, grads, obs]) => {
+      if (!montado) return;
+      if (cols && cols.length > 0) {
+        setListaColegios(cols);
+        setColegio((prev) => (cols.includes(prev) ? prev : cols[0]));
+      }
+      if (grads && grads.length > 0) {
+        setListaGrados(grads);
+        setGrado((prev) => (grads.includes(prev) ? prev : grads[0]));
+      }
+      if (obs && obs.length > 0) {
+        setObservacionesTags(obs);
+      }
+    });
+
+    const desuscribir = dataService.suscribirCambios(() => {
+      Promise.all([
+        dataService.obtenerColegios(),
+        dataService.obtenerGrados(),
+        dataService.obtenerObservaciones(),
+      ]).then(([cols, grads, obs]) => {
+        if (!montado) return;
+        if (cols && cols.length > 0) setListaColegios(cols);
+        if (grads && grads.length > 0) setListaGrados(grads);
+        if (obs && obs.length > 0) setObservacionesTags(obs);
+      });
+    });
+
+    return () => {
+      montado = false;
+      desuscribir();
+    };
+  }, []);
 
   // Cargar resumen de pedidos si es administrador
   useEffect(() => {
@@ -770,7 +817,7 @@ function PedidoContent() {
                   onChange={(e) => setColegio(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800"
                 >
-                  {COLEGIOS_DEFAULT.map((c) => (
+                  {listaColegios.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
@@ -783,7 +830,7 @@ function PedidoContent() {
                   onChange={(e) => setGrado(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800"
                 >
-                  {GRADOS_DEFAULT.map((g) => (
+                  {listaGrados.map((g) => (
                     <option key={g} value={g}>{g}</option>
                   ))}
                 </select>
@@ -803,40 +850,39 @@ function PedidoContent() {
           </div>
 
           {cargandoPlatos ? (
-            <p className="text-xs text-slate-400 py-4 text-center">Cargando opciones...</p>
+            <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
           ) : entradas.length === 0 ? (
-            <p className="text-xs text-slate-400 py-3 text-center">Sin entradas para este día.</p>
+            <p className="text-xs text-slate-400 py-3 text-center">No hay entradas registradas para este día.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {entradas.map((ent) => {
-                const activo = entradaSeleccionada === ent.nombre;
+              {entradas.map((plato) => {
+                const seleccionado = entradaSeleccionada === plato.nombre;
                 return (
                   <button
-                    key={ent.id}
+                    key={plato.id}
                     type="button"
-                    onClick={() => setEntradaSeleccionada(ent.nombre)}
-                    className={`rounded-2xl border text-left overflow-hidden transition flex flex-col ${
-                      activo
-                        ? 'border-orange-500 ring-2 ring-orange-500/20 shadow-xs bg-orange-50/30'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    onClick={() => plato.disponible && setEntradaSeleccionada(plato.nombre)}
+                    disabled={!plato.disponible}
+                    className={`p-3 rounded-2xl border text-left flex items-start gap-3 transition-all relative ${
+                      !plato.disponible
+                        ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
+                        : seleccionado
+                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-xs'
+                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
                     }`}
                   >
-                    <div className="h-28 w-full bg-slate-100 relative">
-                      {ent.imagenUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover" />
-                      )}
-                      {activo && (
-                        <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1 shadow-xs">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-2.5 flex-1">
-                      <h4 className="text-xs font-bold text-slate-900">{ent.nombre}</h4>
-                      {ent.descripcion && (
-                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{ent.descripcion}</p>
-                      )}
+                    {plato.imagenUrl && (
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-200 shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">{plato.nombre}</h3>
+                        {seleccionado && <CheckCircle2 className="w-4 h-4 text-orange-600 shrink-0" />}
+                      </div>
+                      <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{plato.descripcion}</p>
                     </div>
                   </button>
                 );
@@ -850,46 +896,45 @@ function PedidoContent() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
               <Utensils className="w-4 h-4 text-orange-500" />
-              2. Plato de Fondo ({diaSeleccionado})
+              2. Segundo ({diaSeleccionado})
             </h2>
-            <span className="text-xs font-bold text-emerald-700">S/ 12.00</span>
+            <span className="text-xs font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">S/ 12</span>
           </div>
 
           {cargandoPlatos ? (
-            <p className="text-xs text-slate-400 py-4 text-center">Cargando opciones...</p>
+            <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
           ) : segundos.length === 0 ? (
-            <p className="text-xs text-slate-400 py-3 text-center">Sin platos de fondo para este día.</p>
+            <p className="text-xs text-slate-400 py-3 text-center">No hay segundos registrados para este día.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {segundos.map((seg) => {
-                const activo = segundoSeleccionado === seg.nombre;
+              {segundos.map((plato) => {
+                const seleccionado = segundoSeleccionado === plato.nombre;
                 return (
                   <button
-                    key={seg.id}
+                    key={plato.id}
                     type="button"
-                    onClick={() => setSegundoSeleccionado(seg.nombre)}
-                    className={`rounded-2xl border text-left overflow-hidden transition flex flex-col ${
-                      activo
-                        ? 'border-orange-500 ring-2 ring-orange-500/20 shadow-xs bg-orange-50/30'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    onClick={() => plato.disponible && setSegundoSeleccionado(plato.nombre)}
+                    disabled={!plato.disponible}
+                    className={`p-3 rounded-2xl border text-left flex items-start gap-3 transition-all relative ${
+                      !plato.disponible
+                        ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
+                        : seleccionado
+                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-xs'
+                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
                     }`}
                   >
-                    <div className="h-32 w-full bg-slate-100 relative">
-                      {seg.imagenUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={seg.imagenUrl} alt={seg.nombre} className="w-full h-full object-cover" />
-                      )}
-                      {activo && (
-                        <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1 shadow-xs">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-2.5 flex-1">
-                      <h4 className="text-xs font-bold text-slate-900">{seg.nombre}</h4>
-                      {seg.descripcion && (
-                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{seg.descripcion}</p>
-                      )}
+                    {plato.imagenUrl && (
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-200 shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">{plato.nombre}</h3>
+                        {seleccionado && <CheckCircle2 className="w-4 h-4 text-orange-600 shrink-0" />}
+                      </div>
+                      <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{plato.descripcion}</p>
                     </div>
                   </button>
                 );
@@ -905,7 +950,7 @@ function PedidoContent() {
           </label>
 
           <div className="flex flex-wrap gap-1.5 mb-2.5">
-            {['Sin cebolla', 'Poca crema', 'Sin ensalada', 'Presa sin piel', 'Solo segundo'].map((tag) => (
+            {observacionesTags.map((tag) => (
               <button
                 key={tag}
                 type="button"

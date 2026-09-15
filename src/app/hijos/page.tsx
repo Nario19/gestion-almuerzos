@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -16,7 +16,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { COLEGIOS_DEFAULT, GRADOS_DEFAULT } from '@/lib/dataService';
+import { dataService, COLEGIOS_DEFAULT, GRADOS_DEFAULT } from '@/lib/dataService';
 
 function HijosContent() {
   const router = useRouter();
@@ -27,11 +27,27 @@ function HijosContent() {
 
   const [mostrarFormulario, setMostrarFormulario] = useState(true);
   const [nombreHijo, setNombreHijo] = useState('');
+  const [listaColegios, setListaColegios] = useState<string[]>(COLEGIOS_DEFAULT);
+  const [listaGrados, setListaGrados] = useState<string[]>(GRADOS_DEFAULT);
   const [colegio, setColegio] = useState(COLEGIOS_DEFAULT[0]);
-  const [grado, setGrado] = useState(GRADOS_DEFAULT[9]);
-  const [alergias, setAlergias] = useState('');
+  const [grado, setGrado] = useState(GRADOS_DEFAULT[0]);
   const [guardando, setGuardando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+
+  useEffect(() => {
+    dataService.obtenerColegios().then((cols) => {
+      if (cols && cols.length > 0) {
+        setListaColegios(cols);
+        setColegio((prev) => (cols.includes(prev) ? prev : cols[0]));
+      }
+    });
+    dataService.obtenerGrados().then((grds) => {
+      if (grds && grds.length > 0) {
+        setListaGrados(grds);
+        setGrado((prev) => (grds.includes(prev) ? prev : grds[0]));
+      }
+    });
+  }, []);
 
   if (cargandoAuth) {
     return (
@@ -95,13 +111,11 @@ function HijosContent() {
       nombreCompleto: nombreHijo.trim(),
       colegioNombre: colegio,
       gradoSeccion: grado,
-      alergiasNotas: alergias.trim() || undefined,
     });
     setGuardando(false);
 
     if (res.ok) {
       setNombreHijo('');
-      setAlergias('');
       setMensajeExito('¡Hijo(a) registrado(a) con éxito!');
       setTimeout(() => setMensajeExito(null), 3000);
     } else {
@@ -182,7 +196,7 @@ function HijosContent() {
                 onChange={(e) => setColegio(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
               >
-                {COLEGIOS_DEFAULT.map((c) => (
+                {listaColegios.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -197,23 +211,10 @@ function HijosContent() {
                 onChange={(e) => setGrado(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
               >
-                {GRADOS_DEFAULT.map((g) => (
+                {listaGrados.map((g) => (
                   <option key={g} value={g}>{g}</option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> Alergias / Dietas (Opcional)
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. Alérgica a mariscos, intolerante a lactosa..."
-                value={alergias}
-                onChange={(e) => setAlergias(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-              />
             </div>
 
             <button
@@ -269,13 +270,6 @@ function HijosContent() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-
-                {hijo.alergiasNotas && (
-                  <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl text-[11px] font-bold text-amber-800 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
-                    <span>Dieta / Alergia: {hijo.alergiasNotas}</span>
-                  </div>
-                )}
 
                 <Link
                   href={`/?hijoId=${hijo.id}`}

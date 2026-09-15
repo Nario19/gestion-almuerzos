@@ -15,6 +15,10 @@ import {
   Sparkles,
   Utensils,
   DollarSign,
+  Building2,
+  GraduationCap,
+  Tag,
+  X,
 } from 'lucide-react';
 import { dataService, DIAS_SEMANA, obtenerDiaActualSemana } from '@/lib/dataService';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -38,6 +42,20 @@ export default function AdminPage() {
   const [imagenUrlNueva, setImagenUrlNueva] = useState('');
   const [subiendoFoto, setSubiendoFoto] = useState(false);
 
+  const [tabActiva, setTabActiva] = useState<'menu' | 'colegios' | 'grados' | 'observaciones'>('menu');
+
+  // Colegios
+  const [colegios, setColegios] = useState<string[]>([]);
+  const [nuevoColegio, setNuevoColegio] = useState('');
+
+  // Grados
+  const [grados, setGrados] = useState<string[]>([]);
+  const [nuevoGrado, setNuevoGrado] = useState('');
+
+  // Observaciones
+  const [observaciones, setObservaciones] = useState<string[]>([]);
+  const [nuevaObservacion, setNuevaObservacion] = useState('');
+
   const cargarPlatos = async (dia: DiaSemana) => {
     setCargando(true);
     const data = await dataService.obtenerPlatosPorDia(dia);
@@ -48,8 +66,59 @@ export default function AdminPage() {
   useEffect(() => {
     if (esAdmin) {
       cargarPlatos(diaActivo);
+      dataService.obtenerColegios().then(setColegios);
+      dataService.obtenerGrados().then(setGrados);
+      dataService.obtenerObservaciones().then(setObservaciones);
     }
   }, [diaActivo, esAdmin]);
+
+  const handleAgregarColegio = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevoColegio.trim()) return;
+    const res = await dataService.agregarColegio(nuevoColegio.trim());
+    setColegios(res);
+    setNuevoColegio('');
+    setGuardadoExitoso(true);
+    setTimeout(() => setGuardadoExitoso(false), 2500);
+  };
+
+  const handleEliminarColegio = async (nombre: string) => {
+    if (!confirm(`¿Eliminar ${nombre}?`)) return;
+    const res = await dataService.eliminarColegio(nombre);
+    setColegios(res);
+  };
+
+  const handleAgregarGrado = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevoGrado.trim()) return;
+    const res = await dataService.agregarGrado(nuevoGrado.trim());
+    setGrados(res);
+    setNuevoGrado('');
+    setGuardadoExitoso(true);
+    setTimeout(() => setGuardadoExitoso(false), 2500);
+  };
+
+  const handleEliminarGrado = async (nombre: string) => {
+    if (!confirm(`¿Eliminar ${nombre}?`)) return;
+    const res = await dataService.eliminarGrado(nombre);
+    setGrados(res);
+  };
+
+  const handleAgregarObservacion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevaObservacion.trim()) return;
+    const res = await dataService.agregarObservacion(nuevaObservacion.trim());
+    setObservaciones(res);
+    setNuevaObservacion('');
+    setGuardadoExitoso(true);
+    setTimeout(() => setGuardadoExitoso(false), 2500);
+  };
+
+  const handleEliminarObservacion = async (tag: string) => {
+    if (!confirm(`¿Eliminar la etiqueta "${tag}"?`)) return;
+    const res = await dataService.eliminarObservacion(tag);
+    setObservaciones(res);
+  };
 
   // Manejador para comprimir foto del plato antes de guardarla
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,14 +207,71 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
-      <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-orange-500" /> Selecciona el Día a Configurar:
-          </h2>
-          <span className="text-xs text-slate-400">Configurando {diaActivo}</span>
-        </div>
+      {/* Pestañas de Gestión Administrativa */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 border-b border-slate-200">
+        <button
+          type="button"
+          onClick={() => setTabActiva('menu')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
+            tabActiva === 'menu'
+              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Utensils className="w-4 h-4" />
+          Menú Semanal
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setTabActiva('colegios')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
+            tabActiva === 'colegios'
+              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          Colegios ({colegios.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setTabActiva('grados')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
+            tabActiva === 'grados'
+              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <GraduationCap className="w-4 h-4" />
+          Grados y Secciones ({grados.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setTabActiva('observaciones')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
+            tabActiva === 'observaciones'
+              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Tag className="w-4 h-4" />
+          Observaciones ({observaciones.length})
+        </button>
+      </div>
+
+      {tabActiva === 'menu' && (
+        <>
+          {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
+          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-orange-500" /> Selecciona el Día a Configurar:
+              </h2>
+              <span className="text-xs text-slate-400">Configurando {diaActivo}</span>
+            </div>
 
         <div className="grid grid-cols-5 gap-2">
           {DIAS_SEMANA.map((dia) => (
@@ -372,6 +498,193 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+    </>
+  )}
+
+      {/* PESTAÑA: COLEGIOS */}
+      {tabActiva === 'colegios' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Formulario nuevo colegio */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
+            <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-orange-500" />
+              Nuevo Colegio
+            </h2>
+            <form onSubmit={handleAgregarColegio} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Nombre del Colegio *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Colegio Innova Schools"
+                  value={nuevoColegio}
+                  onChange={(e) => setNuevoColegio(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <Plus className="w-4 h-4" /> Agregar Colegio
+              </button>
+            </form>
+          </div>
+
+          {/* Lista de colegios */}
+          <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
+            <h2 className="text-sm font-black text-slate-900 mb-2">
+              Colegios Disponibles ({colegios.length})
+            </h2>
+            <div className="divide-y divide-slate-100">
+              {colegios.map((col) => (
+                <div key={col} className="py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-xs">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs sm:text-sm font-bold text-slate-800">{col}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleEliminarColegio(col)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                    title="Eliminar colegio"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PESTAÑA: GRADOS Y SECCIONES */}
+      {tabActiva === 'grados' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Formulario nuevo grado */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
+            <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
+              <GraduationCap className="w-4 h-4 text-orange-500" />
+              Nuevo Grado / Sección
+            </h2>
+            <form onSubmit={handleAgregarGrado} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Nombre del Grado / Sección *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. 1.° Primaria B"
+                  value={nuevoGrado}
+                  onChange={(e) => setNuevoGrado(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <Plus className="w-4 h-4" /> Agregar Grado / Sección
+              </button>
+            </form>
+          </div>
+
+          {/* Lista de grados */}
+          <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
+            <h2 className="text-sm font-black text-slate-900 mb-2">
+              Grados y Secciones Activas ({grados.length})
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {grados.map((g) => (
+                <div key={g} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-orange-500 shrink-0" />
+                    <span className="text-xs font-bold text-slate-800">{g}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleEliminarGrado(g)}
+                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                    title="Eliminar grado"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PESTAÑA: OBSERVACIONES / RESTRICCIONES */}
+      {tabActiva === 'observaciones' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Formulario nueva observacion */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
+            <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-orange-500" />
+              Nueva Observación Rápida
+            </h2>
+            <p className="text-xs text-slate-500 mb-3">
+              Estas etiquetas aparecen como botones rápidos para que los padres las seleccionen al ordenar.
+            </p>
+            <form onSubmit={handleAgregarObservacion} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Etiqueta / Restricción *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Sin cebolla, Presa pecho..."
+                  value={nuevaObservacion}
+                  onChange={(e) => setNuevaObservacion(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <Plus className="w-4 h-4" /> Agregar Etiqueta
+              </button>
+            </form>
+          </div>
+
+          {/* Lista de observaciones */}
+          <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
+            <h2 className="text-sm font-black text-slate-900 mb-2">
+              Etiquetas Configuradas ({observaciones.length})
+            </h2>
+            <p className="text-xs text-slate-500 mb-3">
+              Los padres verán estas opciones al realizar su pedido para agregar notas en un toque:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {observaciones.map((tag) => (
+                <div
+                  key={tag}
+                  className="px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-orange-900 text-xs font-bold flex items-center gap-2 shadow-2xs"
+                >
+                  <span>{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleEliminarObservacion(tag)}
+                    className="p-0.5 text-orange-400 hover:text-rose-600 transition"
+                    title="Eliminar etiqueta"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

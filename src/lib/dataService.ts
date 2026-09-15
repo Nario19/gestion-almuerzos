@@ -24,6 +24,14 @@ export const GRADOS_DEFAULT = [
   '5.° Secundaria',
 ];
 
+export const OBSERVACIONES_DEFAULT = [
+  'Sin cebolla',
+  'Poca crema',
+  'Sin ensalada',
+  'Presa sin piel',
+  'Solo segundo',
+];
+
 export const DIAS_SEMANA: { key: DiaSemana; label: string; short: string }[] = [
   { key: 'LUNES', label: 'Lunes', short: 'Lun' },
   { key: 'MARTES', label: 'Martes', short: 'Mar' },
@@ -224,6 +232,21 @@ const PLATOS_INICIALES: Plato[] = [
 
 let platosMemoria: Plato[] = [...PLATOS_INICIALES];
 let pedidosMemoria: Pedido[] = [];
+let colegiosMemoria: string[] = [...COLEGIOS_DEFAULT];
+let gradosMemoria: string[] = [...GRADOS_DEFAULT];
+let observacionesMemoria: string[] = [...OBSERVACIONES_DEFAULT];
+
+if (typeof window !== 'undefined') {
+  try {
+    const c = localStorage.getItem('config_colegios');
+    if (c) colegiosMemoria = JSON.parse(c);
+    const g = localStorage.getItem('config_grados');
+    if (g) gradosMemoria = JSON.parse(g);
+    const o = localStorage.getItem('config_observaciones');
+    if (o) observacionesMemoria = JSON.parse(o);
+  } catch (_) {}
+}
+
 const listeners: (() => void)[] = [];
 
 function notifyListeners() {
@@ -537,5 +560,129 @@ export const dataService = {
         supabase.removeChannel(channel);
       }
     };
+  },
+
+  // --- GESTIÓN DE COLEGIOS ---
+  async obtenerColegios(): Promise<string[]> {
+    if (typeof window !== 'undefined') {
+      try {
+        const c = localStorage.getItem('config_colegios');
+        if (c) {
+          colegiosMemoria = JSON.parse(c);
+          return [...colegiosMemoria];
+        }
+      } catch (_) {}
+    }
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.from('colegios').select('nombre').order('nombre');
+        if (!error && data && data.length > 0) {
+          colegiosMemoria = data.map((d) => d.nombre);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+          }
+          return [...colegiosMemoria];
+        }
+      } catch (_) {}
+    }
+    return [...colegiosMemoria];
+  },
+
+  async agregarColegio(nombre: string): Promise<string[]> {
+    const limpio = nombre.trim();
+    if (!limpio || colegiosMemoria.includes(limpio)) return [...colegiosMemoria];
+    colegiosMemoria.push(limpio);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+    }
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('colegios').insert([{ nombre: limpio, activo: true }]);
+      } catch (_) {}
+    }
+    notifyListeners();
+    return [...colegiosMemoria];
+  },
+
+  async eliminarColegio(nombre: string): Promise<string[]> {
+    colegiosMemoria = colegiosMemoria.filter((c) => c !== nombre);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+    }
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('colegios').delete().eq('nombre', nombre);
+      } catch (_) {}
+    }
+    notifyListeners();
+    return [...colegiosMemoria];
+  },
+
+  // --- GESTIÓN DE GRADOS Y SECCIONES ---
+  async obtenerGrados(): Promise<string[]> {
+    if (typeof window !== 'undefined') {
+      try {
+        const g = localStorage.getItem('config_grados');
+        if (g) {
+          gradosMemoria = JSON.parse(g);
+          return [...gradosMemoria];
+        }
+      } catch (_) {}
+    }
+    return [...gradosMemoria];
+  },
+
+  async agregarGrado(nombre: string): Promise<string[]> {
+    const limpio = nombre.trim();
+    if (!limpio || gradosMemoria.includes(limpio)) return [...gradosMemoria];
+    gradosMemoria.push(limpio);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_grados', JSON.stringify(gradosMemoria));
+    }
+    notifyListeners();
+    return [...gradosMemoria];
+  },
+
+  async eliminarGrado(nombre: string): Promise<string[]> {
+    gradosMemoria = gradosMemoria.filter((g) => g !== nombre);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_grados', JSON.stringify(gradosMemoria));
+    }
+    notifyListeners();
+    return [...gradosMemoria];
+  },
+
+  // --- GESTIÓN DE OBSERVACIONES / RESTRICCIONES ---
+  async obtenerObservaciones(): Promise<string[]> {
+    if (typeof window !== 'undefined') {
+      try {
+        const o = localStorage.getItem('config_observaciones');
+        if (o) {
+          observacionesMemoria = JSON.parse(o);
+          return [...observacionesMemoria];
+        }
+      } catch (_) {}
+    }
+    return [...observacionesMemoria];
+  },
+
+  async agregarObservacion(tag: string): Promise<string[]> {
+    const limpio = tag.trim();
+    if (!limpio || observacionesMemoria.includes(limpio)) return [...observacionesMemoria];
+    observacionesMemoria.push(limpio);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_observaciones', JSON.stringify(observacionesMemoria));
+    }
+    notifyListeners();
+    return [...observacionesMemoria];
+  },
+
+  async eliminarObservacion(tag: string): Promise<string[]> {
+    observacionesMemoria = observacionesMemoria.filter((o) => o !== tag);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_observaciones', JSON.stringify(observacionesMemoria));
+    }
+    notifyListeners();
+    return [...observacionesMemoria];
   },
 };
