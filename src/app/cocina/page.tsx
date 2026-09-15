@@ -36,6 +36,7 @@ export default function CocinaPage() {
   };
 
   useEffect(() => {
+    if (!esAdmin) return;
     cargarDatos();
 
     // Suscribirse a cambios en tiempo real
@@ -44,7 +45,7 @@ export default function CocinaPage() {
     });
 
     return () => desuscribir();
-  }, []);
+  }, [esAdmin]);
 
   // Filtrar pedidos si se seleccionó un colegio específico
   const pedidosFiltrados = colegioFiltro === 'TODOS'
@@ -58,8 +59,17 @@ export default function CocinaPage() {
     (p) => p.observacion && p.observacion.trim().length > 0
   );
 
-  if (!cargandoAuth && !esAdmin) {
-    return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para el personal de cocina." />;
+  if (cargandoAuth) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-semibold text-slate-600">Verificando credenciales de cocina...</p>
+      </div>
+    );
+  }
+
+  if (!esAdmin) {
+    return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para el personal de cocina de Placeres Culinarios." />;
   }
 
   return (

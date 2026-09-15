@@ -4,8 +4,8 @@ import HeaderNav from "@/components/HeaderNav";
 import { AuthProvider } from "@/lib/authContext";
 
 export const metadata: Metadata = {
-  title: "Almuerzos Escolares | Pedidos Rápidos",
-  description: "Sistema de gestión y pedidos de almuerzos escolares",
+  title: "Placeres Culinarios | Gestión de Almuerzos",
+  description: "Placeres Culinarios - Sistema de gestión y pedidos de menús escolares",
 };
 
 export default function RootLayout({

@@ -36,10 +36,7 @@ export default function HeaderNav() {
             </div>
             <div>
               <span className="text-base tracking-tight font-black text-slate-900 block leading-none">
-                Almuerzos Escolar
-              </span>
-              <span className="text-[11px] font-medium text-orange-600 flex items-center gap-1 mt-0.5">
-                <Sparkles className="w-3 h-3 inline" /> Pedidos Digitales
+                Placeres Culinarios
               </span>
             </div>
           </Link>

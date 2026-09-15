@@ -46,8 +46,10 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    cargarPlatos(diaActivo);
-  }, [diaActivo]);
+    if (esAdmin) {
+      cargarPlatos(diaActivo);
+    }
+  }, [diaActivo, esAdmin]);
 
   // Manejador para comprimir foto del plato antes de guardarla
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,8 +100,17 @@ export default function AdminPage() {
   const entradas = platos.filter((p) => p.tipo === 'ENTRADA');
   const segundos = platos.filter((p) => p.tipo === 'SEGUNDO');
 
-  if (!cargandoAuth && !esAdmin) {
-    return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para la administración del menú." />;
+  if (cargandoAuth) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-semibold text-slate-600">Verificando credenciales...</p>
+      </div>
+    );
+  }
+
+  if (!esAdmin) {
+    return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para la administración del menú de Placeres Culinarios." />;
   }
 
   return (

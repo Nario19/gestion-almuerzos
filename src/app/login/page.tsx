@@ -18,7 +18,7 @@ import { useAuth } from '@/lib/authContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, registro, usuario, esAdmin } = useAuth();
+  const { login, registro, usuario, esAdmin, cargando: cargandoAuth } = useAuth();
 
   const [esRegistro, setEsRegistro] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -33,6 +33,15 @@ export default function LoginPage() {
   // Campo de login
   const [identificadorLogin, setIdentificadorLogin] = useState('');
   const [passwordLogin, setPasswordLogin] = useState('');
+
+  if (cargandoAuth) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-semibold text-slate-600">Verificando sesión...</p>
+      </div>
+    );
+  }
 
   // Si ya tiene sesión activa
   if (usuario) {

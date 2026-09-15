@@ -38,7 +38,7 @@ function PedidoContent() {
   const searchParams = useSearchParams();
   const hijoIdParam = searchParams.get('hijoId');
 
-  const { usuario, esAdmin } = useAuth();
+  const { usuario, esAdmin, cargando: cargandoAuth } = useAuth();
 
   // Estado para el panel de admin si es administrador
   const [resumenAdmin, setResumenAdmin] = useState<ResumenCocina | null>(null);
@@ -220,6 +220,18 @@ function PedidoContent() {
     if (observacion.includes(tag)) return;
     setObservacion((prev) => (prev ? `${prev}, ${tag}` : tag));
   };
+
+  // ----------------------------------------------------
+  // ESTADO DE CARGA DE SESIÓN
+  // ----------------------------------------------------
+  if (cargandoAuth) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-semibold text-slate-600">Cargando...</p>
+      </div>
+    );
+  }
 
   // ----------------------------------------------------
   // VISTA EXCLUSIVA PARA ADMINISTRADORES
@@ -439,16 +451,6 @@ function PedidoContent() {
             <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las 09:30 AM
           </span>
         </div>
-
-        {/* Si no está logueado, botón directo de acceso */}
-        {!usuario && (
-          <Link
-            href="/login"
-            className="text-xs font-bold px-3 py-1.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition"
-          >
-            Ingresar con DNI
-          </Link>
-        )}
       </div>
 
       {/* SELECTOR DE HIJOS VINCULADOS (SI ESTÁ LOGUEADO COMO PADRE) */}
@@ -746,7 +748,7 @@ function PedidoContent() {
           {(metodoPago === 'Yape' || metodoPago === 'Plin') && (
             <div className="bg-purple-50/60 border border-purple-100 rounded-xl p-3 mb-3 text-xs text-purple-950">
               <p className="font-bold">Número de {metodoPago}: 999-999-999</p>
-              <p className="text-[11px] text-purple-700">Almuerzos Escolares S.A.C.</p>
+              <p className="text-[11px] text-purple-700">Placeres Culinarios</p>
             </div>
           )}
 

@@ -23,7 +23,7 @@ function HijosContent() {
   const searchParams = useSearchParams();
   const primeraVez = searchParams.get('primera_vez') === 'true';
 
-  const { usuario, agregarHijo, eliminarHijo } = useAuth();
+  const { usuario, agregarHijo, eliminarHijo, cargando: cargandoAuth } = useAuth();
 
   const [mostrarFormulario, setMostrarFormulario] = useState(true);
   const [nombreHijo, setNombreHijo] = useState('');
@@ -32,6 +32,15 @@ function HijosContent() {
   const [alergias, setAlergias] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+
+  if (cargandoAuth) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-semibold text-slate-600">Cargando...</p>
+      </div>
+    );
+  }
 
   if (!usuario) {
     return (
@@ -49,6 +58,28 @@ function HijosContent() {
             className="inline-flex items-center gap-2 py-3 px-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs transition"
           >
             Iniciar Sesión / Registrarse
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (usuario.rol === 'ADMIN') {
+    return (
+      <div className="max-w-md mx-auto px-4 py-12 text-center">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+          <GraduationCap className="w-12 h-12 text-orange-500 mx-auto" />
+          <h2 className="text-lg font-black text-slate-900">
+            Sesión de Administrador
+          </h2>
+          <p className="text-xs text-slate-500">
+            Esta sección es para que los padres gestionen a sus hijos estudiantes. Como administrador, puedes gestionar los menús, la cocina y los despachos.
+          </p>
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-2 py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition"
+          >
+            Ir a Gestión de Menú
           </Link>
         </div>
       </div>

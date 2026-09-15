@@ -32,12 +32,13 @@ export default function DespachoPage() {
   };
 
   useEffect(() => {
+    if (!esAdmin) return;
     cargarDatos();
     const desuscribir = dataService.suscribirCambios(() => {
       cargarDatos();
     });
     return () => desuscribir();
-  }, []);
+  }, [esAdmin]);
 
   const handleCambiarEstado = async (id: string, nuevoEstado: EstadoPedido) => {
     await dataService.cambiarEstadoPedido(id, nuevoEstado);
@@ -59,8 +60,17 @@ export default function DespachoPage() {
     return matchColegio && matchBusqueda;
   });
 
-  if (!cargandoAuth && !esAdmin) {
-    return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para el personal de despacho y empaque." />;
+  if (cargandoAuth) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-semibold text-slate-600">Verificando credenciales de despacho...</p>
+      </div>
+    );
+  }
+
+  if (!esAdmin) {
+    return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para el personal de despacho y empaque de Placeres Culinarios." />;
   }
 
   // Agrupar por Colegio y luego por Grado/Sección
