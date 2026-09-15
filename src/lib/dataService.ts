@@ -349,6 +349,14 @@ export const dataService = {
     return [...pedidosMemoria];
   },
 
+  async obtenerPedidosPorPadre(padreId?: string, telefono?: string): Promise<Pedido[]> {
+    const todos = await this.obtenerPedidos();
+    if (!padreId && !telefono) return [];
+    return todos.filter(
+      (p) => (padreId && p.padreId === padreId) || (telefono && p.telefonoContacto === telefono)
+    );
+  },
+
   async crearPedido(
     pedidoData: Omit<Pedido, 'id' | 'codigoPedido' | 'createdAt' | 'fecha' | 'estadoPedido' | 'estadoPago'> & {
       estadoPago?: EstadoPago;

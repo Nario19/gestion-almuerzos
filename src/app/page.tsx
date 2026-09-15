@@ -23,6 +23,7 @@ import {
   ArrowRight,
   LogIn,
   Sparkles,
+  ShoppingBag,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
@@ -417,6 +418,14 @@ function PedidoContent() {
               Enviar comprobante por WhatsApp
             </button>
 
+            <Link
+              href="/pedidos"
+              className="w-full py-2.5 px-4 bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs transition"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-orange-600" />
+              Ver en Mis Pedidos
+            </Link>
+
             <button
               onClick={() => {
                 setPedidoCompletado(null);
@@ -628,8 +637,8 @@ function PedidoContent() {
   // VISTA DE PEDIDO PARA PADRES AUTENTICADOS
   // ----------------------------------------------------
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
-      {/* Encabezado limpio con horario de cierre */}
+    <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28 sm:pb-24">
+      {/* Encabezado con horario de cierre y enlace a Mis Pedidos */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
         <div>
           <h1 className="text-lg font-black text-slate-900 tracking-tight">
@@ -639,6 +648,14 @@ function PedidoContent() {
             <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las 09:30 AM
           </span>
         </div>
+
+        <Link
+          href="/pedidos"
+          className="text-xs font-bold px-3 py-1.5 bg-orange-50 text-orange-800 border border-orange-200 rounded-xl hover:bg-orange-100 transition flex items-center gap-1.5 shadow-xs"
+        >
+          <ShoppingBag className="w-3.5 h-3.5 text-orange-600" />
+          <span>Mis Pedidos</span>
+        </Link>
       </div>
 
       {/* SELECTOR DE HIJOS VINCULADOS (SI ESTÁ LOGUEADO COMO PADRE) */}
@@ -740,18 +757,18 @@ function PedidoContent() {
                 placeholder="Ej. Dhana Quispe Cristobal"
                 value={estudiante}
                 onChange={(e) => setEstudiante(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                 required
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Colegio</label>
                 <select
                   value={colegio}
                   onChange={(e) => setColegio(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-xs text-slate-800"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800"
                 >
                   {COLEGIOS_DEFAULT.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -764,7 +781,7 @@ function PedidoContent() {
                 <select
                   value={grado}
                   onChange={(e) => setGrado(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-xs text-slate-800"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800"
                 >
                   {GRADOS_DEFAULT.map((g) => (
                     <option key={g} value={g}>{g}</option>
@@ -905,7 +922,7 @@ function PedidoContent() {
             placeholder="Especifica cualquier detalle del pedido..."
             value={observacion}
             onChange={(e) => setObservacion(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-base sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
           />
         </div>
 

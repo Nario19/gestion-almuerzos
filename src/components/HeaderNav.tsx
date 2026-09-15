@@ -12,6 +12,7 @@ import {
   LogOut,
   LogIn,
   ShieldCheck,
+  ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
@@ -72,23 +73,38 @@ export default function HeaderNav() {
           <div className="flex items-center gap-2">
             {usuario ? (
               <div className="flex items-center gap-1.5 sm:gap-2">
-                {/* Si es Padre, muestra acceso a "Mis Hijos" */}
+                {/* Si es Padre, muestra accesos a "Mis Pedidos" y "Mis Hijos" */}
                 {!esAdmin && (
-                  <Link
-                    href="/hijos"
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                      pathname === '/hijos'
-                        ? 'bg-orange-100 text-orange-800 border border-orange-200'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                    title="Gestionar mis hijos"
-                  >
-                    <GraduationCap className="w-4 h-4 text-orange-600" />
-                    <span className="hidden sm:inline">Mis Hijos</span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-orange-500 text-white text-[10px] font-black">
-                      {usuario.hijos.length}
-                    </span>
-                  </Link>
+                  <div className="flex items-center gap-1 sm:gap-1.5">
+                    <Link
+                      href="/pedidos"
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        pathname === '/pedidos'
+                          ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                      title="Historial de Pedidos"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                      <span className="hidden sm:inline">Mis Pedidos</span>
+                    </Link>
+
+                    <Link
+                      href="/hijos"
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        pathname === '/hijos'
+                          ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                      title="Gestionar mis hijos"
+                    >
+                      <GraduationCap className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                      <span className="hidden sm:inline">Hijos</span>
+                      <span className="px-1.5 py-0.2 rounded-full bg-orange-500 text-white text-[10px] font-black">
+                        {usuario.hijos.length}
+                      </span>
+                    </Link>
+                  </div>
                 )}
 
                 {/* Si es Admin, muestra indicador de Admin */}
