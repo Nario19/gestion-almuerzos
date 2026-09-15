@@ -21,6 +21,8 @@ import {
   PackageCheck,
   Settings,
   ArrowRight,
+  LogIn,
+  Sparkles,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
@@ -439,6 +441,192 @@ function PedidoContent() {
   const segundos = platosDelDia.filter((p) => p.tipo === 'SEGUNDO');
   const diaActual = obtenerDiaActualSemana();
 
+  // ----------------------------------------------------
+  // VISTA PÚBLICA / CARTA SEMANAL (VISITANTES SIN CUENTA)
+  // ----------------------------------------------------
+  if (!usuario) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
+        {/* Encabezado de la Carta */}
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+          <div>
+            <h1 className="text-lg font-black text-slate-900 tracking-tight">
+              Carta Semanal
+            </h1>
+            <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1 mt-0.5">
+              <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las 09:30 AM
+            </span>
+          </div>
+          <Link
+            href="/login"
+            className="text-xs font-bold px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-xs transition flex items-center gap-1.5"
+          >
+            <LogIn className="w-3.5 h-3.5" /> Iniciar Sesión
+          </Link>
+        </div>
+
+        {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
+        <div className="mb-6">
+          <div className="grid grid-cols-5 gap-1.5 bg-slate-200/80 p-1 rounded-2xl">
+            {DIAS_SEMANA.map((dia) => {
+              const activo = diaSeleccionado === dia.key;
+              const esHoy = diaActual === dia.key;
+              return (
+                <button
+                  key={dia.key}
+                  type="button"
+                  onClick={() => setDiaSeleccionado(dia.key)}
+                  className={`py-2 px-1 rounded-xl text-center transition ${
+                    activo
+                      ? 'bg-white text-orange-600 font-bold shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <span className="block text-xs">{dia.short}</span>
+                  {esHoy && (
+                    <span className="inline-block text-[9px] font-bold px-1.5 bg-orange-100 text-orange-700 rounded-md">
+                      Hoy
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* CONTENIDO DE LA CARTA */}
+        <div className="space-y-6">
+          {/* 1. ENTRADAS */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Utensils className="w-4 h-4 text-orange-500" />
+                1. Entrada ({diaSeleccionado})
+              </h2>
+              <span className="text-[11px] font-semibold text-slate-500">Incluida en el menú</span>
+            </div>
+
+            {cargandoPlatos ? (
+              <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
+            ) : entradas.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">Sin entradas programadas para este día.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {entradas.map((ent) => (
+                  <div
+                    key={ent.id}
+                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col"
+                  >
+                    <div className="h-32 w-full bg-slate-100 relative">
+                      {ent.imagenUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover" />
+                      )}
+                      <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                        Entrada
+                      </span>
+                    </div>
+                    <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ent.nombre}</h4>
+                        {ent.descripcion && (
+                          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ent.descripcion}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 2. SEGUNDOS */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Utensils className="w-4 h-4 text-orange-500" />
+                2. Plato de Fondo ({diaSeleccionado})
+              </h2>
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                S/ 12.00
+              </span>
+            </div>
+
+            {cargandoPlatos ? (
+              <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
+            ) : segundos.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">Sin platos de fondo para este día.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {segundos.map((seg) => (
+                  <div
+                    key={seg.id}
+                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col"
+                  >
+                    <div className="h-36 w-full bg-slate-100 relative">
+                      {seg.imagenUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={seg.imagenUrl} alt={seg.nombre} className="w-full h-full object-cover" />
+                      )}
+                      <span className="absolute top-2 left-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                        Segundo
+                      </span>
+                    </div>
+                    <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900">{seg.nombre}</h4>
+                        {seg.descripcion && (
+                          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{seg.descripcion}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* BANNER CTA PARA PEDIR */}
+          <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl p-6 text-white text-center shadow-lg shadow-orange-500/20">
+            <Sparkles className="w-8 h-8 mx-auto mb-2 text-amber-200" />
+            <h3 className="text-lg font-black tracking-tight">¿Deseas pedir el almuerzo para tu hijo?</h3>
+            <p className="text-xs text-orange-100 mt-1.5 max-w-sm mx-auto leading-relaxed">
+              Inicia sesión o regístrate en la plataforma para asociar a tu estudiante y programar sus almuerzos escolares con entrega directa.
+            </p>
+            <div className="mt-5 flex flex-col sm:flex-row gap-2 justify-center">
+              <Link
+                href="/login"
+                className="px-6 py-3 bg-white text-orange-600 font-bold rounded-2xl text-xs sm:text-sm hover:bg-orange-50 transition shadow-xs flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Iniciar Sesión / Registrarme
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* BARRA FLOTANTE FIJA INFERIOR */}
+        <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-xl z-30">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-bold text-slate-900 block">Menú Escolar Completo</span>
+              <span className="text-[11px] text-emerald-600 font-bold">S/ 12.00 • Entrada + Segundo</span>
+            </div>
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center gap-1.5 shrink-0"
+            >
+              <LogIn className="w-3.5 h-3.5" /> Iniciar Sesión para Pedir
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // VISTA DE PEDIDO PARA PADRES AUTENTICADOS
+  // ----------------------------------------------------
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
       {/* Encabezado limpio con horario de cierre */}
@@ -536,8 +724,8 @@ function PedidoContent() {
 
       {/* FORMULARIO */}
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* SI NO ESTÁ LOGUEADO: CAMPOS DEL ALUMNO */}
-        {(!usuario || usuario.hijos.length === 0) && (
+        {/* SI EL PADRE AÚN NO TIENE HIJOS REGISTRADOS: CAMPOS DEL ALUMNO */}
+        {usuario.hijos.length === 0 && (
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
             <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               Datos del Alumno
