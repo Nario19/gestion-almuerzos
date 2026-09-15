@@ -13,25 +13,36 @@ import {
   AlertCircle,
   Check,
   FileSpreadsheet,
-  Calendar,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   dataService,
   COLEGIOS_DEFAULT,
-  DIAS_SEMANA,
-  obtenerDiaActualSemana,
 } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import { Pedido, EstadoPedido, EstadoPago } from '@/types';
 
+// Obtener fecha actual en formato YYYY-MM-DD en hora local
+const obtenerFechaHoy = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function DespachoPage() {
   const { esAdmin, cargando: cargandoAuth } = useAuth();
-  const diaActual = obtenerDiaActualSemana();
+  const fechaHoy = obtenerFechaHoy();
+
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [colegios, setColegios] = useState<string[]>(COLEGIOS_DEFAULT);
   const [colegioFiltro, setColegioFiltro] = useState<string>('TODOS');
-  const [diaFiltro, setDiaFiltro] = useState<string>('TODOS');
+  // Por defecto el filtro de fecha es el día de hoy
+  const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [busqueda, setBusqueda] = useState('');
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
 
@@ -61,39 +72,50 @@ export default function DespachoPage() {
     cargarDatos();
   };
 
-  // Helper para verificar coincidencia de día
-  const coincideDia = (p: Pedido, dia: string) => {
-    if (dia === 'TODOS') return true;
-    if (p.diaSemana) {
-      return p.diaSemana.toUpperCase() === dia.toUpperCase();
+  // Formateador legible en español para la fecha
+  const formatearFechaLegible = (fechaStr: string) => {
+    if (fechaStr === 'TODAS') return 'Todas las fechas';
+    try {
+      const [y, m, d] = fechaStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString('es-PE', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch (_) {
+      return fechaStr;
     }
-    if (p.fecha) {
-      try {
-        const [y, m, d] = p.fecha.split('-').map(Number);
-        const date = new Date(y, m - 1, d);
-        const dayNum = date.getDay();
-        const diasMap: Record<number, string> = {
-          1: 'LUNES',
-          2: 'MARTES',
-          3: 'MIERCOLES',
-          4: 'JUEVES',
-          5: 'VIERNES',
-        };
-        return diasMap[dayNum] === dia.toUpperCase();
-      } catch (_) {}
-    }
-    return false;
   };
 
-  // Filtrado de pedidos por Día, Colegio y Búsqueda
+  // Navegar día anterior o siguiente
+  const cambiarDia = (offset: number) => {
+    if (fechaFiltro === 'TODAS') {
+      setFechaFiltro(fechaHoy);
+      return;
+    }
+    try {
+      const [y, m, d] = fechaFiltro.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      date.setDate(date.getDate() + offset);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      setFechaFiltro(`${year}-${month}-${day}`);
+    } catch (_) {}
+  };
+
+  // Filtrado de pedidos por Calendario (Fecha), Colegio y Búsqueda
   const pedidosFiltrados = pedidos.filter((p) => {
-    const matchDia = coincideDia(p, diaFiltro);
+    const fechaPedido = (p.fecha || '').slice(0, 10);
+    const matchFecha = fechaFiltro === 'TODAS' || fechaPedido === fechaFiltro;
     const matchColegio = colegioFiltro === 'TODOS' || p.colegioNombre === colegioFiltro;
     const matchBusqueda =
       p.estudianteNombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       p.gradoSeccion.toLowerCase().includes(busqueda.toLowerCase()) ||
       p.codigoPedido.toLowerCase().includes(busqueda.toLowerCase());
-    return matchDia && matchColegio && matchBusqueda;
+    return matchFecha && matchColegio && matchBusqueda;
   });
 
   // Métricas rápidas
@@ -122,13 +144,13 @@ export default function DespachoPage() {
       return;
     }
 
-    const nombreDia = diaFiltro === 'TODOS' ? 'Todos_los_Dias' : diaFiltro;
+    const nombreFecha = fechaFiltro === 'TODAS' ? 'Todas_las_Fechas' : fechaFiltro;
     const nombreColegio =
       colegioFiltro === 'TODOS'
         ? 'Todos_los_Colegios'
         : colegioFiltro.replace(/\s+/g, '_');
     const fecha = new Date().toISOString().slice(0, 10);
-    const filename = `Reporte_Despacho_${nombreColegio}_${nombreDia}_${fecha}.xls`;
+    const filename = `Reporte_Despacho_${nombreColegio}_${nombreFecha}_${fecha}.xls`;
 
     const filasHtml = pedidosFiltrados
       .map((p, idx) => {
@@ -191,9 +213,9 @@ export default function DespachoPage() {
       <body>
         <h2 style="color: #065f46; margin-bottom: 2px;">REPORTE DE DESPACHO - PLACERES CULINARIOS</h2>
         <p style="color: #475569; margin-top: 0; margin-bottom: 12px;">
-          <strong>Día:</strong> ${diaFiltro === 'TODOS' ? 'Todos los Días' : diaFiltro} &nbsp;|&nbsp;
+          <strong>Fecha Filtrada:</strong> ${fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)} &nbsp;|&nbsp;
           <strong>Colegio:</strong> ${colegioFiltro} &nbsp;|&nbsp;
-          <strong>Fecha:</strong> ${new Date().toLocaleDateString('es-PE')} &nbsp;|&nbsp;
+          <strong>Fecha de Emisión:</strong> ${new Date().toLocaleDateString('es-PE')} &nbsp;|&nbsp;
           <strong>Total Pedidos:</strong> ${pedidosFiltrados.length}
         </p>
         <table>
@@ -319,68 +341,85 @@ export default function DespachoPage() {
           />
         </div>
 
-        {/* Filtro por Día */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
-            <Calendar className="w-3.5 h-3.5 text-orange-500" /> Día:
-          </span>
-          <button
-            type="button"
-            onClick={() => setDiaFiltro('TODOS')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer ${
-              diaFiltro === 'TODOS'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Todos los Días
-          </button>
-          {DIAS_SEMANA.map((dia) => {
-            const esHoy = diaActual === dia.key;
-            const seleccionado = diaFiltro === dia.key;
-            const countDia = pedidos.filter(
-              (p) =>
-                coincideDia(p, dia.key) &&
-                (colegioFiltro === 'TODOS' || p.colegioNombre === colegioFiltro)
-            ).length;
+        {/* Filtro de Calendario / Fecha */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+              <CalendarIcon className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                Filtrar por Fecha (Calendario)
+              </span>
+              <span className="text-xs sm:text-sm font-black text-slate-800 capitalize">
+                {formatearFechaLegible(fechaFiltro)}
+                {fechaFiltro === fechaHoy && (
+                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider">
+                    Hoy
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
 
-            return (
-              <button
-                key={dia.key}
-                type="button"
-                onClick={() => setDiaFiltro(dia.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition flex items-center gap-1.5 cursor-pointer ${
-                  seleccionado
-                    ? 'bg-orange-500 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                <span>{dia.label}</span>
-                {esHoy && (
-                  <span
-                    className={`text-[9px] px-1 py-0.2 rounded-md font-black tracking-wide ${
-                      seleccionado
-                        ? 'bg-white text-orange-600'
-                        : 'bg-orange-100 text-orange-700'
-                    }`}
-                  >
-                    HOY
-                  </span>
-                )}
-                {countDia > 0 && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      seleccionado
-                        ? 'bg-orange-600 text-white'
-                        : 'bg-slate-200 text-slate-700'
-                    }`}
-                  >
-                    {countDia}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Navegación Día Anterior */}
+            <button
+              type="button"
+              onClick={() => cambiarDia(-1)}
+              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+              title="Día anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {/* Input nativo de Calendario */}
+            <div className="relative flex items-center">
+              <input
+                type="date"
+                value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
+                onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
+                className="bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                title="Haz clic para seleccionar cualquier fecha en el calendario"
+              />
+            </div>
+
+            {/* Navegación Día Siguiente */}
+            <button
+              type="button"
+              onClick={() => cambiarDia(1)}
+              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+              title="Día siguiente"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Botón rápido HOY */}
+            <button
+              type="button"
+              onClick={() => setFechaFiltro(fechaHoy)}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                fechaFiltro === fechaHoy
+                  ? 'bg-orange-500 text-white shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Hoy
+            </button>
+
+            {/* Botón Ver Todas las Fechas */}
+            <button
+              type="button"
+              onClick={() => setFechaFiltro('TODAS')}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                fechaFiltro === 'TODAS'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Todas las Fechas
+            </button>
+          </div>
         </div>
 
         {/* Filtro Dinámico de Colegios */}
@@ -408,16 +447,40 @@ export default function DespachoPage() {
       <div className="hidden print:block mb-4">
         <h2 className="text-xl font-black text-slate-900">Reporte de Despacho y Empaque</h2>
         <p className="text-xs text-slate-600">
-          Día: <strong>{diaFiltro === 'TODOS' ? 'Todos los Días' : diaFiltro}</strong> | Colegio: <strong>{colegioFiltro}</strong> | Fecha: <strong>{new Date().toLocaleDateString('es-PE')}</strong> | Total: <strong>{total}</strong>
+          Fecha: <strong>{fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)}</strong> | Colegio: <strong>{colegioFiltro}</strong> | Fecha de Emisión: <strong>{new Date().toLocaleDateString('es-PE')}</strong> | Total: <strong>{total}</strong>
         </p>
       </div>
 
       {/* Lista / Reporte con estructura de columnas solicitada: N°, Grado y Sección, Nombres, Pedido, Pago */}
       {Object.keys(gruposColegio).length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs">
           <PackageCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm font-bold text-slate-700">No se encontraron pedidos con estos filtros</p>
-          <p className="text-xs text-slate-400 mt-1">Verifica los criterios de búsqueda o el colegio seleccionado.</p>
+          <p className="text-sm font-bold text-slate-800">
+            No se encontraron pedidos para el {formatearFechaLegible(fechaFiltro)}
+          </p>
+          <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+            {fechaFiltro === fechaHoy
+              ? 'Aún no se han registrado almuerzos para el día de hoy con los filtros seleccionados.'
+              : 'No hay pedidos programados para esta fecha.'}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {fechaFiltro !== fechaHoy && (
+              <button
+                type="button"
+                onClick={() => setFechaFiltro(fechaHoy)}
+                className="px-3.5 py-2 text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition cursor-pointer shadow-xs"
+              >
+                Ver Pedidos de Hoy
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setFechaFiltro('TODAS')}
+              className="px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer"
+            >
+              Ver Todas las Fechas
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
@@ -497,10 +560,10 @@ export default function DespachoPage() {
                           {/* Columna: Pedido */}
                           <td className="py-3.5 px-4">
                             <div className="space-y-1">
-                              {p.diaSemana && diaFiltro === 'TODOS' && (
+                              {fechaFiltro === 'TODAS' && (
                                 <div>
                                   <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-md bg-orange-100 text-orange-800">
-                                    📅 {p.diaSemana}
+                                    📅 {p.fecha ? p.fecha.slice(0, 10) : p.diaSemana || 'Hoy'}
                                   </span>
                                 </div>
                               )}
