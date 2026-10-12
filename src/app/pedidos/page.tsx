@@ -16,17 +16,29 @@ import {
   Sparkles,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
   ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { dataService } from '@/lib/dataService';
 import { Pedido, EstadoPedido, EstadoPago } from '@/types';
 
+const obtenerFechaHoy = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 function PedidosContent() {
   const { usuario, cargando: cargandoAuth } = useAuth();
+  const fechaHoy = obtenerFechaHoy();
+
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [cargandoPedidos, setCargandoPedidos] = useState(true);
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
+  const [fechaFiltro, setFechaFiltro] = useState<string>('TODAS');
 
   const cargarPedidos = async () => {
     if (!usuario) return;
@@ -194,6 +206,44 @@ function PedidosContent() {
     window.open(url, '_blank');
   };
 
+  const formatearFechaLegible = (fechaStr: string) => {
+    if (fechaStr === 'TODAS') return 'Todos los pedidos';
+    try {
+      const [y, m, d] = fechaStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString('es-PE', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch (_) {
+      return fechaStr;
+    }
+  };
+
+  const cambiarDia = (offset: number) => {
+    if (fechaFiltro === 'TODAS') {
+      setFechaFiltro(fechaHoy);
+      return;
+    }
+    try {
+      const [y, m, d] = fechaFiltro.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      date.setDate(date.getDate() + offset);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      setFechaFiltro(`${year}-${month}-${day}`);
+    } catch (_) {}
+  };
+
+  const pedidosFiltrados = pedidos.filter((p) => {
+    if (fechaFiltro === 'TODAS') return true;
+    const fechaPedido = (p.fecha || '').slice(0, 10);
+    return fechaPedido === fechaFiltro;
+  });
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28">
       {/* Barra de cabecera con retorno */}
@@ -218,9 +268,104 @@ function PedidosContent() {
         </div>
 
         <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 border border-orange-200 text-orange-700 rounded-xl">
-          {pedidos.length} {pedidos.length === 1 ? 'pedido' : 'pedidos'}
+          {fechaFiltro === 'TODAS'
+            ? `${pedidos.length} ${pedidos.length === 1 ? 'pedido' : 'pedidos'}`
+            : `${pedidosFiltrados.length} de ${pedidos.length} ${pedidos.length === 1 ? 'pedido' : 'pedidos'}`}
         </span>
       </div>
+
+      {/* Filtro por Día (Calendario y chips rápidos) */}
+      {!cargandoPedidos && pedidos.length > 0 && (
+        <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-xs mb-5 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Filtrar por Día
+                </span>
+                <span className="text-xs sm:text-sm font-black text-slate-800 capitalize">
+                  {formatearFechaLegible(fechaFiltro)}
+                  {fechaFiltro === fechaHoy && (
+                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider">
+                      Hoy
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            {/* Chips Rápidos: Todos vs Hoy */}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFechaFiltro('TODAS')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
+                  fechaFiltro === 'TODAS'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Todos ({pedidos.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFechaFiltro(fechaHoy)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
+                  fechaFiltro === fechaHoy
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Hoy
+              </button>
+            </div>
+          </div>
+
+          {/* Selector con Flechas y Calendario nativo */}
+          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => cambiarDia(-1)}
+              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition cursor-pointer"
+              title="Día anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className="relative flex-1">
+              <input
+                type="date"
+                value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
+                onChange={(e) => setFechaFiltro(e.target.value || 'TODAS')}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => cambiarDia(1)}
+              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition cursor-pointer"
+              title="Día siguiente"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {fechaFiltro !== 'TODAS' && (
+              <button
+                type="button"
+                onClick={() => setFechaFiltro('TODAS')}
+                className="text-xs font-bold text-orange-600 hover:text-orange-700 px-2 py-1.5 transition shrink-0"
+                title="Quitar filtro de fecha"
+              >
+                Ver todos
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Lista de Pedidos */}
       {cargandoPedidos ? (
@@ -249,9 +394,30 @@ function PedidosContent() {
             </Link>
           </div>
         </div>
+      ) : pedidosFiltrados.length === 0 ? (
+        <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center shadow-xs space-y-3">
+          <div className="w-14 h-14 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mx-auto">
+            <Calendar className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-black text-slate-900">
+            No tienes pedidos para el {formatearFechaLegible(fechaFiltro)}
+          </h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+            No se encontraron almuerzos programados para este día. Puedes revisar otra fecha o consultar todo tu historial.
+          </p>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setFechaFiltro('TODAS')}
+              className="inline-flex items-center gap-2 py-2.5 px-5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition shadow-xs cursor-pointer"
+            >
+              Ver todos mis pedidos ({pedidos.length})
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="space-y-4">
-          {pedidos.map((pedido) => (
+          {pedidosFiltrados.map((pedido) => (
             <div
               key={pedido.id}
               className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs hover:border-orange-200 transition space-y-3.5"
