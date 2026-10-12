@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   UtensilsCrossed,
   ChefHat,
@@ -18,7 +18,13 @@ import { useAuth } from '@/lib/authContext';
 
 export default function HeaderNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { usuario, esAdmin, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const adminNavItems = [
     { href: '/cocina', label: 'Cocina', icon: ChefHat },
@@ -116,7 +122,7 @@ export default function HeaderNav() {
 
                 {/* Botón Cerrar Sesión */}
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
                   title="Cerrar sesión"
                 >

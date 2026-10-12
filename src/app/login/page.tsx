@@ -13,16 +13,23 @@ import {
   AlertCircle,
   CreditCard,
   ShieldCheck,
+  Eye,
+  EyeOff,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, registro, usuario, esAdmin, cargando: cargandoAuth } = useAuth();
+  const { login, registro, usuario, esAdmin, cargando: cargandoAuth, logout } = useAuth();
 
   const [esRegistro, setEsRegistro] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Estados para mostrar u ocultar contraseña
+  const [verPasswordLogin, setVerPasswordLogin] = useState(false);
+  const [verPasswordRegistro, setVerPasswordRegistro] = useState(false);
 
   // Campos de registro requeridos: Nombre, DNI, Teléfono, Contraseña
   const [nombre, setNombre] = useState('');
@@ -79,6 +86,14 @@ export default function LoginPage() {
                 Administrar Mis Hijos ({usuario.hijos.length})
               </Link>
             )}
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="py-2.5 px-4 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-2xl transition border border-rose-200 flex items-center justify-center gap-1.5"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Cerrar Sesión
+            </button>
           </div>
         </div>
       </div>
@@ -93,19 +108,31 @@ export default function LoginPage() {
     try {
       if (esRegistro) {
         if (!nombre.trim() || !dni.trim() || !telefono.trim() || !password) {
-          setErrorMsg('Por favor completa todos los campos (Nombre, DNI, Teléfono y Contraseña).');
+          setErrorMsg('Por favor completa todos los campos.');
           setCargando(false);
           return;
         }
 
-        if (dni.trim().length < 8) {
-          setErrorMsg('El DNI debe tener 8 dígitos.');
+        if (dni.trim().length !== 8) {
+          setErrorMsg('El DNI debe tener exactamente 8 dígitos.');
+          setCargando(false);
+          return;
+        }
+
+        if (telefono.trim().length !== 9) {
+          setErrorMsg('El número de celular debe tener exactamente 9 dígitos.');
+          setCargando(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
           setCargando(false);
           return;
         }
 
         const res = await registro({
-          nombreCompleto: nombre,
+          nombreCompleto: nombre.trim().toUpperCase(),
           dni: dni.trim(),
           telefono: telefono.trim(),
           password,
@@ -195,16 +222,16 @@ export default function LoginPage() {
             <>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nombres y Apellidos del Padre / Tutor *
+                  Nombres y Apellidos completos del Padre *
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <input
                     type="text"
-                    placeholder="Ej. Juan Pérez Quispe"
+                    placeholder="EJ. JUAN PÉREZ QUISPE"
                     value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    onChange={(e) => setNombre(e.target.value.toUpperCase())}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden uppercase"
                     required
                   />
                 </div>
@@ -217,11 +244,13 @@ export default function LoginPage() {
                 <div className="relative">
                   <CreditCard className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <input
-                    type="text"
-                    maxLength={12}
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={8}
                     placeholder="Ej. 72345678"
                     value={dni}
-                    onChange={(e) => setDni(e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => setDni(e.target.value.replace(/\D/g, '').slice(0, 8))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-mono"
                     required
                   />
@@ -230,16 +259,19 @@ export default function LoginPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Teléfono Celular (WhatsApp) *
+                  Teléfono Celular (9 dígitos) *
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <input
                     type="tel"
-                    placeholder="Ej. 987 654 321"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={9}
+                    placeholder="Ej. 987654321"
                     value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    onChange={(e) => setTelefono(e.target.value.replace(/\D/g, '').slice(0, 9))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-mono"
                     required
                   />
                 </div>
@@ -247,18 +279,27 @@ export default function LoginPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Contraseña *
+                  Contraseña (mínimo 6 caracteres) *
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <input
-                    type="password"
-                    placeholder="Crea una contraseña segura"
+                    type={verPasswordRegistro ? 'text' : 'password'}
+                    minLength={6}
+                    placeholder="Mínimo 6 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setVerPasswordRegistro(!verPasswordRegistro)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-lg transition"
+                    title={verPasswordRegistro ? 'Ocultar contraseña' : 'Ver contraseña'}
+                  >
+                    {verPasswordRegistro ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             </>
@@ -289,13 +330,21 @@ export default function LoginPage() {
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <input
-                    type="password"
+                    type={verPasswordLogin ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={passwordLogin}
                     onChange={(e) => setPasswordLogin(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setVerPasswordLogin(!verPasswordLogin)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-lg transition"
+                    title={verPasswordLogin ? 'Ocultar contraseña' : 'Ver contraseña'}
+                  >
+                    {verPasswordLogin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             </>
