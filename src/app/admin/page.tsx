@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Settings,
   Plus,
@@ -8,6 +9,8 @@ import {
   Calendar,
   Image as ImageIcon,
   CheckCircle,
+  CheckCircle2,
+  AlertCircle,
   Database,
   Cloud,
   Laptop,
@@ -19,13 +22,19 @@ import {
   GraduationCap,
   Tag,
   X,
+  BarChart3,
+  TrendingUp,
+  PackageCheck,
+  ChefHat,
+  ArrowRight,
+  PieChart,
 } from 'lucide-react';
 import { dataService, DIAS_SEMANA, obtenerDiaActualSemana } from '@/lib/dataService';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { compressImage } from '@/lib/imageCompression';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
-import { Plato, DiaSemana, TipoPlato } from '@/types';
+import { Plato, DiaSemana, TipoPlato, Pedido } from '@/types';
 
 export default function AdminPage() {
   const { esAdmin, cargando: cargandoAuth } = useAuth();
@@ -33,6 +42,10 @@ export default function AdminPage() {
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [cargando, setCargando] = useState(false);
   const [guardadoExitoso, setGuardadoExitoso] = useState(false);
+
+  // Pedidos y Período para KPIs del Dashboard
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [periodoKpi, setPeriodoKpi] = useState<'hoy' | 'semana' | 'todos'>('hoy');
 
   // Formulario de nuevo plato
   const [tipoNuevo, setTipoNuevo] = useState<TipoPlato>('SEGUNDO');
@@ -42,7 +55,7 @@ export default function AdminPage() {
   const [imagenUrlNueva, setImagenUrlNueva] = useState('');
   const [subiendoFoto, setSubiendoFoto] = useState(false);
 
-  const [tabActiva, setTabActiva] = useState<'menu' | 'colegios' | 'grados' | 'observaciones'>('menu');
+  const [tabActiva, setTabActiva] = useState<'dashboard' | 'menu' | 'colegios' | 'grados' | 'observaciones'>('dashboard');
 
   // Colegios
   const [colegios, setColegios] = useState<string[]>([]);
@@ -69,6 +82,12 @@ export default function AdminPage() {
       dataService.obtenerColegios().then(setColegios);
       dataService.obtenerGrados().then(setGrados);
       dataService.obtenerObservaciones().then(setObservaciones);
+      dataService.obtenerPedidos().then(setPedidos);
+
+      const desuscribir = dataService.suscribirCambios(() => {
+        dataService.obtenerPedidos().then(setPedidos);
+      });
+      return () => desuscribir();
     }
   }, [diaActivo, esAdmin]);
 
@@ -169,6 +188,82 @@ export default function AdminPage() {
   const entradas = platos.filter((p) => p.tipo === 'ENTRADA');
   const segundos = platos.filter((p) => p.tipo === 'SEGUNDO');
 
+  // Obtener fecha de hoy en formato local YYYY-MM-DD
+  const obtenerFechaHoyStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const fechaHoyStr = obtenerFechaHoyStr();
+
+  // Filtrado de pedidos según el período seleccionado
+  const pedidosPeriodo = pedidos.filter((p) => {
+    if (periodoKpi === 'todos') return true;
+    const f = (p.fecha || '').slice(0, 10);
+    if (periodoKpi === 'hoy') return f === fechaHoyStr;
+    if (periodoKpi === 'semana') {
+      const fechaP = new Date(p.createdAt || p.fecha);
+      const hace7Dias = new Date();
+      hace7Dias.setDate(hace7Dias.getDate() - 7);
+      return fechaP >= hace7Dias;
+    }
+    return true;
+  });
+
+  // Métricas financieras y volumen
+  const totalAlmuerzos = pedidosPeriodo.length;
+  const ventasTotales = pedidosPeriodo.reduce((acc, p) => acc + (p.monto || 12), 0);
+  const pedidosPagados = pedidosPeriodo.filter((p) => p.estadoPago === 'PAGADO');
+  const ingresosRecaudados = pedidosPagados.reduce((acc, p) => acc + (p.monto || 12), 0);
+  const pedidosPendientes = pedidosPeriodo.filter((p) => p.estadoPago !== 'PAGADO');
+  const montoPorCobrar = pedidosPendientes.reduce((acc, p) => acc + (p.monto || 12), 0);
+  const porcentajeCobrado = totalAlmuerzos > 0 ? Math.round((pedidosPagados.length / totalAlmuerzos) * 100) : 0;
+  const ticketPromedio = totalAlmuerzos > 0 ? (ventasTotales / totalAlmuerzos).toFixed(2) : '12.00';
+
+  // Embudo de producción y despacho
+  const registrados = pedidosPeriodo.filter((p) => p.estadoPedido === 'REGISTRADO').length;
+  const enCocina = pedidosPeriodo.filter((p) => p.estadoPedido === 'EN_COCINA').length;
+  const empacados = pedidosPeriodo.filter((p) => p.estadoPedido === 'EMPACADO').length;
+  const entregados = pedidosPeriodo.filter((p) => p.estadoPedido === 'ENTREGADO').length;
+  const completados = empacados + entregados;
+  const porcentajeDespacho = totalAlmuerzos > 0 ? Math.round((completados / totalAlmuerzos) * 100) : 0;
+
+  // Distribución por colegio
+  const pedidosPorColegio = pedidosPeriodo.reduce((acc, p) => {
+    const col = p.colegioNombre || 'Colegio General';
+    acc[col] = (acc[col] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const rankingColegios = Object.entries(pedidosPorColegio).sort((a, b) => b[1] - a[1]);
+
+  // Ranking de segundos más solicitados
+  const segundosFrecuencia = pedidosPeriodo.reduce((acc, p) => {
+    if (p.segundoNombre) {
+      acc[p.segundoNombre] = (acc[p.segundoNombre] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topSegundos = Object.entries(segundosFrecuencia)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  // Ranking de entradas más solicitadas
+  const entradasFrecuencia = pedidosPeriodo.reduce((acc, p) => {
+    if (p.entradaNombre) {
+      acc[p.entradaNombre] = (acc[p.entradaNombre] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topEntradas = Object.entries(entradasFrecuencia)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
   if (cargandoAuth) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
@@ -188,9 +283,12 @@ export default function AdminPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Settings className="w-7 h-7 text-orange-500" />
-            Gestión del Menú
+            <BarChart3 className="w-7 h-7 text-orange-500" />
+            Panel de Administración
           </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Métricas clave del negocio, gestión del menú semanal y configuración
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -203,7 +301,7 @@ export default function AdminPage() {
       {guardadoExitoso && (
         <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in">
           <CheckCircle className="w-5 h-5 text-emerald-600" />
-          ¡Plato guardado con éxito! Ya está visible en el catálogo de los padres.
+          ¡Configuración guardada con éxito!
         </div>
       )}
 
@@ -211,8 +309,21 @@ export default function AdminPage() {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 border-b border-slate-200">
         <button
           type="button"
+          onClick={() => setTabActiva('dashboard')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 cursor-pointer ${
+            tabActiva === 'dashboard'
+              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          Dashboard & KPIs
+        </button>
+
+        <button
+          type="button"
           onClick={() => setTabActiva('menu')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 cursor-pointer ${
             tabActiva === 'menu'
               ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -261,6 +372,380 @@ export default function AdminPage() {
           Observaciones ({observaciones.length})
         </button>
       </div>
+
+      {/* PESTAÑA: DASHBOARD & KPIS */}
+      {tabActiva === 'dashboard' && (
+        <div className="space-y-6">
+          {/* Selector de Período y Enlaces Operativos */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0">
+                Período:
+              </span>
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => setPeriodoKpi('hoy')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    periodoKpi === 'hoy'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Hoy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriodoKpi('semana')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    periodoKpi === 'semana'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Últimos 7 días
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriodoKpi('todos')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    periodoKpi === 'todos'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Histórico Total
+                </button>
+              </div>
+            </div>
+
+            {/* Accesos directos a Cocina y Despacho */}
+            <div className="flex items-center gap-2">
+              <Link
+                href="/cocina"
+                className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold transition"
+              >
+                <ChefHat className="w-3.5 h-3.5" />
+                <span>Panel Cocina</span>
+              </Link>
+              <Link
+                href="/despacho"
+                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition"
+              >
+                <PackageCheck className="w-3.5 h-3.5" />
+                <span>Despacho & Excel</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Tarjetas Principales de KPIs Financieros y Volumen */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* KPI 1: Ventas Generadas */}
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Ventas Generadas
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-slate-900">
+                S/ {ventasTotales.toFixed(2)}
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Ticket promedio: S/ {ticketPromedio}
+              </p>
+            </div>
+
+            {/* KPI 2: Total Almuerzos */}
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Total Almuerzos
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Utensils className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-slate-900">
+                {totalAlmuerzos} <span className="text-xs text-slate-400 font-normal">raciones</span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {rankingColegios.length} colegios atendidos
+              </p>
+            </div>
+
+            {/* KPI 3: Pagos Recaudados */}
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
+                  Cobrado ({porcentajeCobrado}%)
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-emerald-700">
+                S/ {ingresosRecaudados.toFixed(2)}
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                <div
+                  className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                  style={{ width: `${porcentajeCobrado}%` }}
+                />
+              </div>
+            </div>
+
+            {/* KPI 4: Por Cobrar */}
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
+                  Por Cobrar
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-rose-600">
+                S/ {montoPorCobrar.toFixed(2)}
+              </div>
+              <p className="text-[11px] text-rose-500 mt-1 font-semibold">
+                {pedidosPendientes.length} pedidos sin confirmar
+              </p>
+            </div>
+          </div>
+
+          {/* Sección Operativa: Embudo de Despacho del Período */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <PackageCheck className="w-4 h-4 text-orange-500" />
+                  Estado Operativo de Almuerzos
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Progreso de preparación y entrega de loncheras
+                </p>
+              </div>
+              <div className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl self-start sm:self-auto">
+                {porcentajeDespacho}% completado
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 bg-sky-50 rounded-2xl border border-sky-100">
+                <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider block">
+                  1. Recibidos
+                </span>
+                <span className="text-xl font-black text-sky-800">{registrados}</span>
+              </div>
+              <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-100">
+                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">
+                  2. En Cocina
+                </span>
+                <span className="text-xl font-black text-amber-800">{enCocina}</span>
+              </div>
+              <div className="p-3.5 bg-purple-50 rounded-2xl border border-purple-100">
+                <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">
+                  3. Empacados
+                </span>
+                <span className="text-xl font-black text-purple-800">{empacados}</span>
+              </div>
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">
+                  4. Entregados
+                </span>
+                <span className="text-xl font-black text-emerald-800">{entregados}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Dos Columnas: Demanda por Colegio y Platos Más Pedidos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Demanda por Colegio */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-orange-500" />
+                  Demanda por Colegio
+                </h3>
+                <span className="text-xs text-slate-400 font-bold">
+                  {rankingColegios.length} colegios
+                </span>
+              </div>
+
+              {rankingColegios.length === 0 ? (
+                <p className="text-xs text-slate-400 py-6 text-center">
+                  No hay pedidos registrados en este período.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {rankingColegios.map(([col, cant]) => {
+                    const pct = totalAlmuerzos > 0 ? Math.round((cant / totalAlmuerzos) * 100) : 0;
+                    return (
+                      <div key={col} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                          <span className="truncate pr-2">{col}</span>
+                          <span className="shrink-0 text-slate-900">
+                            {cant} ({pct}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Platos Favoritos (Preferencias) */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <Utensils className="w-4 h-4 text-orange-500" />
+                  Platos Más Solicitados
+                </h3>
+                <span className="text-xs text-slate-400 font-bold">Top Preferencias</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">
+                    Platos de Fondo (Segundos)
+                  </span>
+                  {topSegundos.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-2">Sin datos disponibles.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {topSegundos.map(([plato, cant], idx) => {
+                        const pct = totalAlmuerzos > 0 ? Math.round((cant / totalAlmuerzos) * 100) : 0;
+                        return (
+                          <div key={plato} className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-slate-700 truncate pr-2">
+                              {idx + 1}. {plato}
+                            </span>
+                            <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-lg shrink-0">
+                              {cant} pedidos ({pct}%)
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-slate-100">
+                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">
+                    Entradas
+                  </span>
+                  {topEntradas.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-2">Sin datos disponibles.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {topEntradas.map(([entrada, cant], idx) => (
+                        <div key={entrada} className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-slate-700 truncate pr-2">
+                            {idx + 1}. {entrada}
+                          </span>
+                          <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-lg shrink-0">
+                            {cant} pedidos
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Últimos Pedidos Recientes */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-orange-500" />
+                  Últimos Pedidos del Período
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Actividad reciente de los padres de familia
+                </p>
+              </div>
+              <Link
+                href="/despacho"
+                className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 transition"
+              >
+                Ver todos en despacho <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {pedidosPeriodo.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center">
+                No hay pedidos en este período seleccionado.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wider text-[10px]">
+                      <th className="pb-2">Código</th>
+                      <th className="pb-2">Estudiante</th>
+                      <th className="pb-2">Colegio / Grado</th>
+                      <th className="pb-2">Menú</th>
+                      <th className="pb-2 text-right">Monto</th>
+                      <th className="pb-2 text-center">Pago</th>
+                      <th className="pb-2 text-center">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {pedidosPeriodo.slice(0, 6).map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50/60 transition">
+                        <td className="py-2.5 font-mono font-black text-slate-800">
+                          #{p.codigoPedido}
+                        </td>
+                        <td className="py-2.5 font-bold text-slate-800">
+                          {p.estudianteNombre}
+                        </td>
+                        <td className="py-2.5 text-slate-500">
+                          {p.colegioNombre} <span className="font-semibold text-slate-700">({p.gradoSeccion})</span>
+                        </td>
+                        <td className="py-2.5 text-slate-700 truncate max-w-[160px]">
+                          {p.segundoNombre}
+                        </td>
+                        <td className="py-2.5 font-bold text-slate-900 text-right">
+                          S/ {(p.monto || 12).toFixed(2)}
+                        </td>
+                        <td className="py-2.5 text-center">
+                          <span
+                            className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${
+                              p.estadoPago === 'PAGADO'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {p.estadoPago}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-center">
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700">
+                            {p.estadoPedido}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {tabActiva === 'menu' && (
         <>

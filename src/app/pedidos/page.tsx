@@ -222,6 +222,22 @@ function PedidosContent() {
     }
   };
 
+  const formatearFechaCorta = (fechaStr?: string, diaSemana?: string) => {
+    if (!fechaStr) return diaSemana || 'Hoy';
+    try {
+      const [y, m, d] = fechaStr.slice(0, 10).split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const fechaFormateada = date.toLocaleDateString('es-PE', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      return `${diaSemana ? `${diaSemana} • ` : ''}${fechaFormateada}`;
+    } catch (_) {
+      return `${diaSemana ? `${diaSemana} • ` : ''}${fechaStr}`;
+    }
+  };
+
   const cambiarDia = (offset: number) => {
     if (fechaFiltro === 'TODAS') {
       setFechaFiltro(fechaHoy);
@@ -424,13 +440,13 @@ function PedidosContent() {
             >
               {/* Encabezado de la tarjeta */}
               <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-xl font-mono">
                     #{pedido.codigoPedido}
                   </span>
-                  <span className="text-xs font-bold text-orange-600 uppercase flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {pedido.diaSemana || 'Hoy'}
+                  <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200/60 px-2.5 py-1 rounded-xl flex items-center gap-1.5 uppercase">
+                    <Calendar className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                    <span>{formatearFechaCorta(pedido.fecha, pedido.diaSemana)}</span>
                   </span>
                 </div>
 
