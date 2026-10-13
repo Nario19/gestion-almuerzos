@@ -124,10 +124,12 @@ export default function DespachoPage() {
 
   // Métricas rápidas
   const total = pedidosFiltrados.length;
-  const empacados = pedidosFiltrados.filter(
-    (p) => p.estadoPedido === 'EMPACADO' || p.estadoPedido === 'ENTREGADO'
+  const entregados = pedidosFiltrados.filter((p) => p.estadoPedido === 'ENTREGADO').length;
+  const faltaEntregar = pedidosFiltrados.filter(
+    (p) =>
+      (p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO') &&
+      p.estadoPedido !== 'ENTREGADO'
   ).length;
-  const pendientesEmpaque = total - empacados;
   const pagados = pedidosFiltrados.filter((p) => p.estadoPago === 'PAGADO').length;
   const pendientesPago = total - pagados;
 
@@ -314,12 +316,12 @@ export default function DespachoPage() {
           <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{total}</div>
         </div>
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-bold text-emerald-600 uppercase">Empacados</span>
-          <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-0.5">{empacados}</div>
+          <span className="text-[11px] font-bold text-emerald-600 uppercase">Entregados</span>
+          <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-0.5">{entregados}</div>
         </div>
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-bold text-amber-600 uppercase">Por Empacar</span>
-          <div className="text-xl sm:text-2xl font-black text-amber-600 mt-0.5">{pendientesEmpaque}</div>
+          <span className="text-[11px] font-bold text-amber-600 uppercase">Falta Entregar</span>
+          <div className="text-xl sm:text-2xl font-black text-amber-600 mt-0.5">{faltaEntregar}</div>
         </div>
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
           <span className="text-[11px] font-bold text-slate-400 uppercase">Pagados / Por Cobrar</span>
@@ -635,29 +637,23 @@ export default function DespachoPage() {
                             </div>
                           </td>
 
-                          {/* Columna Acciones / Estado en Pipeline */}
+                          {/* Columna Acciones / Estado en Empaque */}
                           <td className="py-3.5 px-4 text-right print:hidden">
                             <div className="inline-flex items-center gap-1.5 justify-end">
                               <select
-                                value={p.estadoPedido}
+                                value={p.estadoPedido === 'ENTREGADO' ? 'ENTREGADO' : 'EMPACADO'}
                                 onChange={(e) =>
                                   handleCambiarEstado(p.id, e.target.value as EstadoPedido)
                                 }
-                                className={`text-xs font-bold px-2.5 py-1.5 rounded-xl border transition cursor-pointer focus:outline-hidden ${
+                                className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition cursor-pointer focus:outline-hidden ${
                                   p.estadoPedido === 'ENTREGADO'
                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                    : p.estadoPedido === 'EMPACADO'
-                                    ? 'bg-purple-50 text-purple-800 border-purple-300'
-                                    : p.estadoPedido === 'EN_COCINA'
-                                    ? 'bg-amber-50 text-amber-800 border-amber-300'
-                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                                    : 'bg-purple-50 text-purple-800 border-purple-300'
                                 }`}
-                                title="Cambiar estado del pedido en la línea de tiempo"
+                                title="Estado en empaque: Preparado o Entregado"
                               >
-                                <option value="REGISTRADO">1. Orden recibida</option>
-                                <option value="EN_COCINA">2. En Cocina</option>
-                                <option value="EMPACADO">3. Preparado</option>
-                                <option value="ENTREGADO">4. Entregado</option>
+                                <option value="EMPACADO">Preparado</option>
+                                <option value="ENTREGADO">Entregado</option>
                               </select>
                             </div>
                           </td>

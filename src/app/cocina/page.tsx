@@ -12,17 +12,50 @@ import {
   Flame,
   Utensils,
   Radio,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import { Pedido, ResumenCocina } from '@/types';
 
+// Obtener fecha actual en formato YYYY-MM-DD en hora local
+const obtenerFechaHoy = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Formateador legible en español para la fecha
+const formatearFechaLegible = (fechaStr: string) => {
+  if (fechaStr === 'TODAS') return 'Todas las fechas';
+  try {
+    const [y, m, d] = fechaStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString('es-PE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch (_) {
+    return fechaStr;
+  }
+};
+
 export default function CocinaPage() {
   const { esAdmin, cargando: cargandoAuth } = useAuth();
+  const fechaHoy = obtenerFechaHoy();
+
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [colegios, setColegios] = useState<string[]>([]);
   const [colegioFiltro, setColegioFiltro] = useState<string>('TODOS');
+  // Por defecto Cocina muestra los pedidos de HOY
+  const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [cargando, setCargando] = useState(true);
   const [ultimaActualizacion, setUltimaActualizacion] = useState<string>('');
 
@@ -53,17 +86,40 @@ export default function CocinaPage() {
     return () => desuscribir();
   }, [esAdmin]);
 
-  // En cocina solo se preparan pedidos aceptados (pago verificado o estado avanzado por administración)
-  const pedidosAceptados = pedidos.filter(
+  // Navegar día anterior o siguiente (para ver ayer, mañana, etc.)
+  const cambiarDia = (offset: number) => {
+    if (fechaFiltro === 'TODAS') {
+      setFechaFiltro(fechaHoy);
+      return;
+    }
+    try {
+      const [y, m, d] = fechaFiltro.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      date.setDate(date.getDate() + offset);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      setFechaFiltro(`${year}-${month}-${day}`);
+    } catch (_) {}
+  };
+
+  // 1. Filtrar por fecha seleccionada (por defecto HOY)
+  const pedidosFecha = pedidos.filter((p) => {
+    const f = (p.fecha || '').slice(0, 10);
+    return fechaFiltro === 'TODAS' || f === fechaFiltro;
+  });
+
+  // 2. En cocina solo se preparan pedidos aceptados (pago verificado o estado avanzado por administración)
+  const pedidosAceptados = pedidosFecha.filter(
     (p) => p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'
   );
 
-  // Pedidos que aún no han sido aceptados/pagados en Despacho
-  const pedidosPendientesDespacho = pedidos.filter(
+  // 3. Pedidos de esta fecha que aún no han sido aceptados/pagados en Despacho
+  const pedidosPendientesDespacho = pedidosFecha.filter(
     (p) => p.estadoPago !== 'PAGADO' && p.estadoPedido === 'REGISTRADO'
   );
 
-  // Filtrar pedidos listos para cocina según el colegio seleccionado
+  // 4. Filtrar pedidos listos para cocina según el colegio seleccionado
   const pedidosFiltrados = colegioFiltro === 'TODOS'
     ? pedidosAceptados
     : pedidosAceptados.filter((p) => p.colegioNombre === colegioFiltro);
@@ -120,8 +176,82 @@ export default function CocinaPage() {
           </div>
         </div>
 
+        {/* Selector de Calendario y Fechas (Hoy, Ayer, etc.) */}
+        <div className="mt-5 pt-4 border-t border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 font-bold flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-orange-400" /> Menú de Cocina:
+            </span>
+            <span className="font-black text-amber-300 capitalize text-sm">
+              {formatearFechaLegible(fechaFiltro)}
+              {fechaFiltro === fechaHoy && (
+                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-bold uppercase tracking-wider border border-emerald-500/30">
+                  Hoy
+                </span>
+              )}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Botón Día Anterior (Ayer) */}
+            <button
+              type="button"
+              onClick={() => cambiarDia(-1)}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer"
+              title="Ver día anterior (ayer)"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {/* Input nativo de Calendario */}
+            <input
+              type="date"
+              value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
+              onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
+              className="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer"
+              title="Seleccionar fecha para consultar cocina"
+            />
+
+            {/* Botón Día Siguiente */}
+            <button
+              type="button"
+              onClick={() => cambiarDia(1)}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer"
+              title="Ver día siguiente"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Botón rápido HOY */}
+            <button
+              type="button"
+              onClick={() => setFechaFiltro(fechaHoy)}
+              className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
+                fechaFiltro === fechaHoy
+                  ? 'bg-orange-500 text-white shadow-xs'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              Hoy
+            </button>
+
+            {/* Botón Ver Todas las Fechas */}
+            <button
+              type="button"
+              onClick={() => setFechaFiltro('TODAS')}
+              className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
+                fechaFiltro === 'TODAS'
+                  ? 'bg-amber-500 text-slate-950 font-black'
+                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              Histórico
+            </button>
+          </div>
+        </div>
+
         {/* Filtro por Institución Educativa */}
-        <div className="mt-5 pt-4 border-t border-slate-800 flex flex-wrap items-center gap-2 text-xs">
+        <div className="mt-4 pt-3 border-t border-slate-800/60 flex flex-wrap items-center gap-2 text-xs">
           <span className="text-slate-400 font-bold flex items-center gap-1">
             <Filter className="w-3.5 h-3.5" /> Filtrar por:
           </span>
@@ -182,7 +312,9 @@ export default function CocinaPage() {
           <span className="text-3xl font-black text-emerald-600 tracking-tight block mt-1">
             {resumen.pedidosPagados}
           </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Aceptados para hoy</span>
+          <span className="text-[11px] text-slate-400 mt-0.5 block">
+            {fechaFiltro === fechaHoy ? 'Aceptados para hoy' : `Para ${formatearFechaLegible(fechaFiltro)}`}
+          </span>
         </div>
 
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
@@ -210,7 +342,9 @@ export default function CocinaPage() {
 
           <div className="space-y-3">
             {resumen.entradas.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">No hay pedidos registrados aún.</p>
+              <p className="text-xs text-slate-400 text-center py-6">
+                No hay pedidos de entrada para {formatearFechaLegible(fechaFiltro)}.
+              </p>
             ) : (
               resumen.entradas.map((item) => (
                 <div
@@ -243,7 +377,9 @@ export default function CocinaPage() {
 
           <div className="space-y-3">
             {resumen.segundos.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">No hay pedidos registrados aún.</p>
+              <p className="text-xs text-slate-400 text-center py-6">
+                No hay pedidos de segundo para {formatearFechaLegible(fechaFiltro)}.
+              </p>
             ) : (
               resumen.segundos.map((item) => (
                 <div

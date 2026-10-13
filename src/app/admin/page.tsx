@@ -226,13 +226,14 @@ export default function AdminPage() {
   const porcentajeCobrado = totalAlmuerzos > 0 ? Math.round((pedidosPagados.length / totalAlmuerzos) * 100) : 0;
   const ticketPromedio = totalAlmuerzos > 0 ? (ventasTotales / totalAlmuerzos).toFixed(2) : '12.00';
 
-  // Embudo de producción y despacho
-  const registrados = pedidosPeriodo.filter((p) => p.estadoPedido === 'REGISTRADO').length;
-  const enCocina = pedidosPeriodo.filter((p) => p.estadoPedido === 'EN_COCINA').length;
-  const empacados = pedidosPeriodo.filter((p) => p.estadoPedido === 'EMPACADO').length;
-  const entregados = pedidosPeriodo.filter((p) => p.estadoPedido === 'ENTREGADO').length;
-  const completados = empacados + entregados;
-  const porcentajeDespacho = totalAlmuerzos > 0 ? Math.round((completados / totalAlmuerzos) * 100) : 0;
+  // Métricas operativas: Entregados vs Falta Entregar (con pago aceptado y preparados)
+  const pedidosOperativos = pedidosPeriodo.filter(
+    (p) => p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'
+  );
+  const entregados = pedidosOperativos.filter((p) => p.estadoPedido === 'ENTREGADO').length;
+  const faltaEntregar = pedidosOperativos.filter((p) => p.estadoPedido !== 'ENTREGADO').length;
+  const totalParaEntrega = entregados + faltaEntregar;
+  const porcentajeEntrega = totalParaEntrega > 0 ? Math.round((entregados / totalParaEntrega) * 100) : 0;
 
   // Distribución por colegio
   const pedidosPorColegio = pedidosPeriodo.reduce((acc, p) => {
@@ -531,35 +532,45 @@ export default function AdminPage() {
                   Progreso de preparación y entrega de loncheras
                 </p>
               </div>
-              <div className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl self-start sm:self-auto">
-                {porcentajeDespacho}% completado
+              <div className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl self-start sm:self-auto flex items-center gap-1.5">
+                <span className="font-black text-orange-600">{porcentajeEntrega}%</span>
+                <span>completado ({entregados} de {totalParaEntrega})</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 bg-sky-50 rounded-2xl border border-sky-100">
-                <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider block">
-                  1. Recibidos
-                </span>
-                <span className="text-xl font-black text-sky-800">{registrados}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block">
+                    Entregados
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-900 mt-1 block">
+                    {entregados}
+                  </span>
+                  <p className="text-[11px] text-emerald-600 mt-0.5">
+                    Almuerzos entregados en colegios
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <CheckCircle className="w-6 h-6" />
+                </div>
               </div>
-              <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-100">
-                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">
-                  2. En Cocina
-                </span>
-                <span className="text-xl font-black text-amber-800">{enCocina}</span>
-              </div>
-              <div className="p-3.5 bg-purple-50 rounded-2xl border border-purple-100">
-                <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">
-                  3. Empacados
-                </span>
-                <span className="text-xl font-black text-purple-800">{empacados}</span>
-              </div>
-              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100">
-                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">
-                  4. Entregados
-                </span>
-                <span className="text-xl font-black text-emerald-800">{entregados}</span>
+
+              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-amber-700 uppercase tracking-wider block">
+                    Falta Entregar
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-black text-amber-900 mt-1 block">
+                    {faltaEntregar}
+                  </span>
+                  <p className="text-[11px] text-amber-600 mt-0.5">
+                    Pago aceptado y preparados por entregar
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                  <Clock className="w-6 h-6" />
+                </div>
               </div>
             </div>
           </div>

@@ -258,4 +258,47 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Prepara
     assert.strictEqual(soloZarate.pedidosFiltrados.length, 1, 'Solo p2 debe aparecer para Zárate');
     assert.strictEqual(soloZarate.pedidosFiltrados[0].id, '2');
   });
+
+  test('8. Filtro de fecha en Cocina: discrimina entre hoy y ayer', () => {
+    const hoyStr = '2026-10-14';
+    const ayerStr = '2026-10-13';
+
+    const pHoy = { ...basePedido, id: 'h1', fecha: hoyStr, estadoPago: 'PAGADO' };
+    const pAyer = { ...basePedido, id: 'a1', fecha: ayerStr, estadoPago: 'PAGADO' };
+
+    // Filtrar cocina para hoy
+    const pedidosHoy = [pHoy, pAyer].filter((p) => p.fecha === hoyStr && (p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'));
+    assert.strictEqual(pedidosHoy.length, 1);
+    assert.strictEqual(pedidosHoy[0].id, 'h1');
+
+    // Filtrar cocina para ayer
+    const pedidosAyer = [pHoy, pAyer].filter((p) => p.fecha === ayerStr && (p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'));
+    assert.strictEqual(pedidosAyer.length, 1);
+    assert.strictEqual(pedidosAyer[0].id, 'a1');
+  });
+
+  test('9. Métricas Operativas de Admin: SOLO muestra Entregados y Falta Entregar', () => {
+    const pEntregado = { ...basePedido, id: '1', estadoPago: 'PAGADO', estadoPedido: 'ENTREGADO' };
+    const pPreparadoFaltaEntregar = { ...basePedido, id: '2', estadoPago: 'PAGADO', estadoPedido: 'EMPACADO' };
+    const pEnCocinaFaltaEntregar = { ...basePedido, id: '3', estadoPago: 'PAGADO', estadoPedido: 'EN_COCINA' };
+    const pNoPagado = { ...basePedido, id: '4', estadoPago: 'PENDIENTE', estadoPedido: 'REGISTRADO' };
+
+    const pedidosPeriodo = [pEntregado, pPreparadoFaltaEntregar, pEnCocinaFaltaEntregar, pNoPagado];
+
+    // Solo se consideran órdenes operativas (con pago aceptado o en proceso)
+    const operativos = pedidosPeriodo.filter(
+      (p) => p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'
+    );
+    assert.strictEqual(operativos.length, 3, 'Solo 3 pedidos tienen pago aceptado');
+
+    const entregados = operativos.filter((p) => p.estadoPedido === 'ENTREGADO').length;
+    assert.strictEqual(entregados, 1, '1 pedido entregado');
+
+    const faltaEntregar = operativos.filter((p) => p.estadoPedido !== 'ENTREGADO').length;
+    assert.strictEqual(faltaEntregar, 2, '2 pedidos falta entregar (con pago aceptado y preparados/en proceso)');
+
+    const totalParaEntrega = entregados + faltaEntregar;
+    const porcentajeEntrega = Math.round((entregados / totalParaEntrega) * 100);
+    assert.strictEqual(porcentajeEntrega, 33, '33% completado (1 de 3)');
+  });
 });
