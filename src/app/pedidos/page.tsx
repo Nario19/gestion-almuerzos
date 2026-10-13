@@ -145,19 +145,19 @@ function PedidosContent() {
       case 'REGISTRADO':
         return (
           <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
-            <Clock className="w-3 h-3" /> Recibido
+            <Clock className="w-3 h-3" /> Orden recibida
           </span>
         );
       case 'EN_COCINA':
         return (
           <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold rounded-xl flex items-center gap-1 animate-pulse">
-            <Utensils className="w-3 h-3" /> En Cocina
+            <Utensils className="w-3 h-3" /> En cocina
           </span>
         );
       case 'EMPACADO':
         return (
           <span className="px-2.5 py-1 bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
-            <ShoppingBag className="w-3 h-3" /> Empacado
+            <ShoppingBag className="w-3 h-3" /> Preparado
           </span>
         );
       case 'ENTREGADO':
@@ -176,20 +176,20 @@ function PedidosContent() {
       case 'PAGADO':
         return (
           <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Pagado
+            <CheckCircle2 className="w-3 h-3" /> Pago aceptado
           </span>
         );
       case 'VERIFICANDO':
         return (
           <span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
-            <Clock className="w-3 h-3" /> Verificando Pago
+            <Clock className="w-3 h-3" /> Validando pago
           </span>
         );
       case 'PENDIENTE':
       default:
         return (
           <span className="px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" /> Pendiente de Pago
+            <AlertCircle className="w-3 h-3" /> Pendiente de pago
           </span>
         );
     }
@@ -207,8 +207,8 @@ function PedidosContent() {
     const etapas = [
       {
         id: 1,
-        titulo: 'Pedido',
-        descripcion: 'Orden recibida',
+        titulo: 'Orden recibida',
+        descripcion: 'Orden registrada',
         icono: ShoppingBag,
         completado: true,
         enCurso: false,
@@ -216,30 +216,35 @@ function PedidosContent() {
       },
       {
         id: 2,
-        titulo: 'Aceptado',
-        descripcion: pagadoOAceptado
+        titulo: 'Pago aceptado',
+        descripcion: (entregado || pagadoOAceptado)
           ? 'Pago verificado'
           : pedido.estadoPago === 'VERIFICANDO'
           ? 'Validando pago'
-          : 'Por Pagar',
+          : 'Por pagar',
         icono: CheckCircle2,
-        completado: pagadoOAceptado,
-        enCurso: !pagadoOAceptado,
-        alerta: pedido.estadoPago === 'PENDIENTE',
+        completado: pagadoOAceptado || entregado,
+        enCurso: !pagadoOAceptado && !entregado,
+        alerta: pedido.estadoPago === 'PENDIENTE' && !entregado,
       },
       {
         id: 3,
         titulo: 'Preparado',
-        descripcion: enCocinaOListo ? 'En Cocina' : 'En cola',
+        descripcion: (entregado || empacadoOListo)
+          ? 'Almuerzo preparado'
+          : pedido.estadoPedido === 'EN_COCINA'
+          ? 'En preparación'
+          : 'En cola',
         icono: ChefHat,
-        completado: empacadoOListo,
-        enCurso: pagadoOAceptado && !empacadoOListo,
+        // Si el admin pasa de frente de pago aceptado a entregado, preparado se da por completado automáticamente
+        completado: empacadoOListo || entregado,
+        enCurso: (pagadoOAceptado || entregado) && !empacadoOListo && !entregado,
         alerta: false,
       },
       {
         id: 4,
-        titulo: 'Entrega',
-        descripcion: entregado ? 'Entregado' : empacadoOListo ? 'Empacado' : 'En camino',
+        titulo: 'Entregado',
+        descripcion: entregado ? 'Entregado en colegio' : empacadoOListo ? 'Listo para entrega' : 'Programado',
         icono: PackageCheck,
         completado: entregado,
         enCurso: empacadoOListo && !entregado,
@@ -248,9 +253,9 @@ function PedidosContent() {
     ];
 
     let estadoVivo = {
-      titulo: 'Orden Registrada - Esperando Pago',
+      titulo: 'Orden Recibida - Esperando Pago',
       descripcion:
-        'Por favor realiza el pago por Yape o Plin y adjunta el comprobante para que la administración acepte la orden y la envíe a cocina.',
+        'Por favor realiza el pago por Yape o Plin y adjunta el comprobante para que la administración valide el pago y acepte tu orden.',
       color: 'amber',
       icono: Clock,
     };
@@ -264,7 +269,7 @@ function PedidosContent() {
       };
     } else if (pedido.estadoPedido === 'EMPACADO') {
       estadoVivo = {
-        titulo: 'Lonchera Empacada y Rotulada',
+        titulo: 'Lonchera Preparada y Empacada',
         descripcion: `Almuerzo listo y empacado en envase térmico rotulado con el grado (${pedido.gradoSeccion}). En ruta de entrega al colegio.`,
         color: 'purple',
         icono: PackageCheck,
@@ -278,9 +283,9 @@ function PedidosContent() {
       };
     } else if (pagadoOAceptado) {
       estadoVivo = {
-        titulo: '¡Orden Aceptada! Pasó a Cocina',
+        titulo: '¡Pago Aceptado! Orden en Cocina',
         descripcion:
-          'El pago ha sido confirmado por administración. La orden ya está asignada al equipo de cocina para la preparación de hoy.',
+          'El pago ha sido confirmado por administración. La orden ya está en cocina para su preparación.',
         color: 'blue',
         icono: CheckCircle2,
       };
@@ -575,12 +580,12 @@ function PedidosContent() {
                     </span>
                     <span className="text-orange-600 font-bold lowercase">
                       {entregado
-                        ? '4 de 4 completado'
+                        ? '4 de 4 completado (entregado)'
                         : empacadoOListo
-                        ? '3 de 4 empacado'
+                        ? '3 de 4 completado (preparado)'
                         : pagadoOAceptado
-                        ? '2 de 4 aceptado'
-                        : '1 de 4 en validación'}
+                        ? '2 de 4 completado (pago aceptado)'
+                        : '1 de 4 (orden recibida)'}
                     </span>
                   </div>
 

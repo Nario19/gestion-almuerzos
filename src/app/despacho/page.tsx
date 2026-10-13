@@ -61,6 +61,13 @@ export default function DespachoPage() {
 
   const handleCambiarEstado = async (id: string, nuevoEstado: EstadoPedido) => {
     await dataService.cambiarEstadoPedido(id, nuevoEstado);
+    // Si el admin pasa directo a ENTREGADO, asegurar que el pago quede como aceptado
+    if (nuevoEstado === 'ENTREGADO') {
+      const pedidoActual = pedidos.find((p) => p.id === id);
+      if (pedidoActual && pedidoActual.estadoPago !== 'PAGADO') {
+        await dataService.cambiarEstadoPago(id, 'PAGADO');
+      }
+    }
     cargarDatos();
   };
 
@@ -605,12 +612,12 @@ export default function DespachoPage() {
                                 {pagado ? (
                                   <>
                                     <Check className="w-3.5 h-3.5 text-emerald-700" />
-                                    <span>✓ Aceptado ({p.metodoPago || 'Pagado'})</span>
+                                    <span>✓ Pago Aceptado ({p.metodoPago || 'Pagado'})</span>
                                   </>
                                 ) : (
                                   <>
                                     <CheckCircle className="w-3.5 h-3.5" />
-                                    <span>Aceptar Orden ({p.metodoPago || 'Por Cobrar'})</span>
+                                    <span>Aceptar Pago ({p.metodoPago || 'Por Cobrar'})</span>
                                   </>
                                 )}
                               </button>
@@ -647,9 +654,9 @@ export default function DespachoPage() {
                                 }`}
                                 title="Cambiar estado del pedido en la línea de tiempo"
                               >
-                                <option value="REGISTRADO">1. Registrado</option>
+                                <option value="REGISTRADO">1. Orden recibida</option>
                                 <option value="EN_COCINA">2. En Cocina</option>
-                                <option value="EMPACADO">3. Empacado</option>
+                                <option value="EMPACADO">3. Preparado</option>
                                 <option value="ENTREGADO">4. Entregado</option>
                               </select>
                             </div>
