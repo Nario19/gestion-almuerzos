@@ -12,7 +12,7 @@ import {
   Utensils,
   Radio,
 } from 'lucide-react';
-import { dataService, COLEGIOS_DEFAULT } from '@/lib/dataService';
+import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import { Pedido, ResumenCocina } from '@/types';
@@ -20,6 +20,7 @@ import { Pedido, ResumenCocina } from '@/types';
 export default function CocinaPage() {
   const { esAdmin, cargando: cargandoAuth } = useAuth();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [colegios, setColegios] = useState<string[]>([]);
   const [colegioFiltro, setColegioFiltro] = useState<string>('TODOS');
   const [cargando, setCargando] = useState(true);
   const [ultimaActualizacion, setUltimaActualizacion] = useState<string>('');
@@ -27,8 +28,12 @@ export default function CocinaPage() {
   const cargarDatos = async () => {
     setCargando(true);
     try {
-      const data = await dataService.obtenerPedidos();
+      const [data, cols] = await Promise.all([
+        dataService.obtenerPedidos(),
+        dataService.obtenerColegios(),
+      ]);
       setPedidos(data);
+      if (cols) setColegios(cols);
       setUltimaActualizacion(new Date().toLocaleTimeString());
     } finally {
       setCargando(false);
@@ -109,7 +114,7 @@ export default function CocinaPage() {
           <span className="text-slate-400 font-bold flex items-center gap-1">
             <Filter className="w-3.5 h-3.5" /> Filtrar por:
           </span>
-          {['TODOS', ...COLEGIOS_DEFAULT].map((c) => (
+          {['TODOS', ...colegios].map((c) => (
             <button
               key={c}
               onClick={() => setColegioFiltro(c)}

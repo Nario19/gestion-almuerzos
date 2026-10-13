@@ -16,7 +16,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { dataService, COLEGIOS_DEFAULT, GRADOS_DEFAULT } from '@/lib/dataService';
+import { dataService } from '@/lib/dataService';
 
 function HijosContent() {
   const router = useRouter();
@@ -27,26 +27,45 @@ function HijosContent() {
 
   const [mostrarFormulario, setMostrarFormulario] = useState(true);
   const [nombreHijo, setNombreHijo] = useState('');
-  const [listaColegios, setListaColegios] = useState<string[]>(COLEGIOS_DEFAULT);
-  const [listaGrados, setListaGrados] = useState<string[]>(GRADOS_DEFAULT);
-  const [colegio, setColegio] = useState(COLEGIOS_DEFAULT[0]);
-  const [grado, setGrado] = useState(GRADOS_DEFAULT[0]);
+  const [listaColegios, setListaColegios] = useState<string[]>([]);
+  const [listaGrados, setListaGrados] = useState<string[]>([]);
+  const [colegio, setColegio] = useState('');
+  const [grado, setGrado] = useState('');
+  const [cargandoConfig, setCargandoConfig] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
   useEffect(() => {
-    dataService.obtenerColegios().then((cols) => {
-      if (cols && cols.length > 0) {
-        setListaColegios(cols);
-        setColegio((prev) => (cols.includes(prev) ? prev : cols[0]));
+    let montado = true;
+    const cargarConfiguraciones = async () => {
+      try {
+        const [cols, grds] = await Promise.all([
+          dataService.obtenerColegios(),
+          dataService.obtenerGrados(),
+        ]);
+        if (!montado) return;
+        if (cols) {
+          setListaColegios(cols);
+          setColegio((prev) => (prev && cols.includes(prev) ? prev : cols[0] || ''));
+        }
+        if (grds) {
+          setListaGrados(grds);
+          setGrado((prev) => (prev && grds.includes(prev) ? prev : grds[0] || ''));
+        }
+      } finally {
+        if (montado) setCargandoConfig(false);
       }
+    };
+
+    cargarConfiguraciones();
+    const desuscribir = dataService.suscribirCambios(() => {
+      cargarConfiguraciones();
     });
-    dataService.obtenerGrados().then((grds) => {
-      if (grds && grds.length > 0) {
-        setListaGrados(grds);
-        setGrado((prev) => (grds.includes(prev) ? prev : grds[0]));
-      }
-    });
+
+    return () => {
+      montado = false;
+      desuscribir();
+    };
   }, []);
 
   if (cargandoAuth) {
@@ -105,6 +124,15 @@ function HijosContent() {
   const handleCrearHijo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombreHijo.trim()) return;
+
+    if (!colegio) {
+      alert('Por favor selecciona un colegio válido.');
+      return;
+    }
+    if (!grado) {
+      alert('Por favor selecciona un grado válido.');
+      return;
+    }
 
     setGuardando(true);
     const res = await agregarHijo({
@@ -189,37 +217,61 @@ function HijosContent() {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" /> Colegio
+                <Building2 className="w-3.5 h-3.5 text-slate-400" /> Colegio *
               </label>
-              <select
-                value={colegio}
-                onChange={(e) => setColegio(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-              >
-                {listaColegios.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              {cargandoConfig ? (
+                <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-400 animate-pulse flex items-center gap-2">
+                  <div className="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  Cargando colegios disponibles...
+                </div>
+              ) : listaColegios.length === 0 ? (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                  No hay colegios disponibles configurados por el administrador.
+                </div>
+              ) : (
+                <select
+                  value={colegio}
+                  onChange={(e) => setColegio(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  required
+                >
+                  {listaColegios.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Grado y Sección
+                Grado y Sección *
               </label>
-              <select
-                value={grado}
-                onChange={(e) => setGrado(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-              >
-                {listaGrados.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
+              {cargandoConfig ? (
+                <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-400 animate-pulse flex items-center gap-2">
+                  <div className="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  Cargando grados...
+                </div>
+              ) : listaGrados.length === 0 ? (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                  No hay grados configurados.
+                </div>
+              ) : (
+                <select
+                  value={grado}
+                  onChange={(e) => setGrado(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  required
+                >
+                  {listaGrados.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={guardando}
+              disabled={guardando || cargandoConfig || listaColegios.length === 0}
               className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-orange-500/20 transition disabled:opacity-50"
             >
               {guardando ? 'Guardando...' : '+ Guardar Hijo'}

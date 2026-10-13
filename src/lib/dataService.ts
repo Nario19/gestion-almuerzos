@@ -1,12 +1,7 @@
 import { Pedido, Plato, MenuDia, ResumenCocina, EstadoPedido, EstadoPago, DiaSemana } from '@/types';
 import { supabase, isSupabaseConfigured } from './supabase';
 
-export const COLEGIOS_DEFAULT = [
-  'Colegio San José',
-  'Colegio Santa Rosa',
-  'I.E. Miguel Grau',
-  'Colegio San Agustín',
-];
+export const COLEGIOS_DEFAULT: string[] = [];
 
 export const GRADOS_DEFAULT = [
   '1.° Primaria',
@@ -232,18 +227,27 @@ const PLATOS_INICIALES: Plato[] = [
 
 let platosMemoria: Plato[] = [...PLATOS_INICIALES];
 let pedidosMemoria: Pedido[] = [];
-let colegiosMemoria: string[] = [...COLEGIOS_DEFAULT];
+let colegiosMemoria: string[] = [];
 let gradosMemoria: string[] = [...GRADOS_DEFAULT];
 let observacionesMemoria: string[] = [...OBSERVACIONES_DEFAULT];
 
 if (typeof window !== 'undefined') {
   try {
     const c = localStorage.getItem('config_colegios');
-    if (c) colegiosMemoria = JSON.parse(c);
+    if (c) {
+      const parsed = JSON.parse(c);
+      if (Array.isArray(parsed) && parsed.length > 0) colegiosMemoria = parsed;
+    }
     const g = localStorage.getItem('config_grados');
-    if (g) gradosMemoria = JSON.parse(g);
+    if (g) {
+      const parsed = JSON.parse(g);
+      if (Array.isArray(parsed) && parsed.length > 0) gradosMemoria = parsed;
+    }
     const o = localStorage.getItem('config_observaciones');
-    if (o) observacionesMemoria = JSON.parse(o);
+    if (o) {
+      const parsed = JSON.parse(o);
+      if (Array.isArray(parsed) && parsed.length > 0) observacionesMemoria = parsed;
+    }
   } catch (_) {}
 }
 
@@ -550,6 +554,12 @@ export const dataService = {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'platos' }, () => {
           callback();
         })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'colegios' }, () => {
+          callback();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'menus_dia' }, () => {
+          callback();
+        })
         .subscribe();
     }
 
@@ -564,24 +574,40 @@ export const dataService = {
 
   // --- GESTIÓN DE COLEGIOS ---
   async obtenerColegios(): Promise<string[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('colegios')
+          .select('nombre, activo')
+          .order('nombre', { ascending: true });
+
+        if (!error && data) {
+          const nombres = data
+            .filter((d) => d.activo !== false)
+            .map((d) => (d.nombre ? d.nombre.trim() : ''))
+            .filter((n) => n.length > 0);
+
+          colegiosMemoria = nombres;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('config_colegios', JSON.stringify(nombres));
+          }
+          return [...colegiosMemoria];
+        }
+      } catch (e) {
+        console.warn('Error trayendo colegios de Supabase, usando caché:', e);
+      }
+    }
+
+    // Fallback de emergencia solo si no hay Supabase o falló la red
     if (typeof window !== 'undefined') {
       try {
         const c = localStorage.getItem('config_colegios');
         if (c) {
-          colegiosMemoria = JSON.parse(c);
-          return [...colegiosMemoria];
-        }
-      } catch (_) {}
-    }
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase.from('colegios').select('nombre').order('nombre');
-        if (!error && data && data.length > 0) {
-          colegiosMemoria = data.map((d) => d.nombre);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+          const parsed = JSON.parse(c);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            colegiosMemoria = parsed;
+            return [...colegiosMemoria];
           }
-          return [...colegiosMemoria];
         }
       } catch (_) {}
     }
@@ -590,29 +616,40 @@ export const dataService = {
 
   async agregarColegio(nombre: string): Promise<string[]> {
     const limpio = nombre.trim();
-    if (!limpio || colegiosMemoria.includes(limpio)) return [...colegiosMemoria];
+    if (!limpio) return [...colegiosMemoria];
+
+    const yaExiste = colegiosMemoria.some((c) => c.toLowerCase() === limpio.toLowerCase());
+    if (yaExiste) return [...colegiosMemoria];
+
     colegiosMemoria.push(limpio);
     if (typeof window !== 'undefined') {
       localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
     }
+
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase.from('colegios').insert([{ nombre: limpio, activo: true }]);
-      } catch (_) {}
+      } catch (e) {
+        console.error('Error insertando colegio en Supabase:', e);
+      }
     }
     notifyListeners();
     return [...colegiosMemoria];
   },
 
   async eliminarColegio(nombre: string): Promise<string[]> {
-    colegiosMemoria = colegiosMemoria.filter((c) => c !== nombre);
+    const target = nombre.trim();
+    colegiosMemoria = colegiosMemoria.filter((c) => c.toLowerCase() !== target.toLowerCase());
     if (typeof window !== 'undefined') {
       localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
     }
+
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from('colegios').delete().eq('nombre', nombre);
-      } catch (_) {}
+        await supabase.from('colegios').delete().eq('nombre', target);
+      } catch (e) {
+        console.error('Error eliminando colegio en Supabase:', e);
+      }
     }
     notifyListeners();
     return [...colegiosMemoria];
@@ -620,46 +657,122 @@ export const dataService = {
 
   // --- GESTIÓN DE GRADOS Y SECCIONES ---
   async obtenerGrados(): Promise<string[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (!error && data && data.mensaje_aviso) {
+          try {
+            const parsed = JSON.parse(data.mensaje_aviso);
+            if (Array.isArray(parsed.grados) && parsed.grados.length > 0) {
+              gradosMemoria = parsed.grados;
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('config_grados', JSON.stringify(gradosMemoria));
+              }
+              return [...gradosMemoria];
+            }
+          } catch (_) {}
+        }
+      } catch (e) {
+        console.warn('Error leyendo grados de Supabase:', e);
+      }
+    }
+
     if (typeof window !== 'undefined') {
       try {
         const g = localStorage.getItem('config_grados');
         if (g) {
-          gradosMemoria = JSON.parse(g);
-          return [...gradosMemoria];
+          const parsed = JSON.parse(g);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            gradosMemoria = parsed;
+            return [...gradosMemoria];
+          }
         }
       } catch (_) {}
     }
     return [...gradosMemoria];
   },
 
-  async agregarGrado(nombre: string): Promise<string[]> {
-    const limpio = nombre.trim();
-    if (!limpio || gradosMemoria.includes(limpio)) return [...gradosMemoria];
-    gradosMemoria.push(limpio);
+  async guardarConfiguracionSistema(nuevosGrados?: string[], nuevasObs?: string[]): Promise<void> {
+    const g = nuevosGrados || gradosMemoria;
+    const o = nuevasObs || observacionesMemoria;
+    const jsonStr = JSON.stringify({ grados: g, observaciones: o });
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem('config_grados', JSON.stringify(gradosMemoria));
+      localStorage.setItem('config_grados', JSON.stringify(g));
+      localStorage.setItem('config_observaciones', JSON.stringify(o));
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('menus_dia')
+          .update({ mensaje_aviso: jsonStr })
+          .eq('dia_semana', 'SABADO');
+      } catch (e) {
+        console.error('Error guardando configuración en Supabase:', e);
+      }
     }
     notifyListeners();
+  },
+
+  async agregarGrado(nombre: string): Promise<string[]> {
+    const limpio = nombre.trim();
+    if (!limpio || gradosMemoria.some((g) => g.toLowerCase() === limpio.toLowerCase())) {
+      return [...gradosMemoria];
+    }
+    gradosMemoria.push(limpio);
+    await this.guardarConfiguracionSistema(gradosMemoria, undefined);
     return [...gradosMemoria];
   },
 
   async eliminarGrado(nombre: string): Promise<string[]> {
-    gradosMemoria = gradosMemoria.filter((g) => g !== nombre);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('config_grados', JSON.stringify(gradosMemoria));
-    }
-    notifyListeners();
+    const target = nombre.trim();
+    gradosMemoria = gradosMemoria.filter((g) => g.toLowerCase() !== target.toLowerCase());
+    await this.guardarConfiguracionSistema(gradosMemoria, undefined);
     return [...gradosMemoria];
   },
 
   // --- GESTIÓN DE OBSERVACIONES / RESTRICCIONES ---
   async obtenerObservaciones(): Promise<string[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (!error && data && data.mensaje_aviso) {
+          try {
+            const parsed = JSON.parse(data.mensaje_aviso);
+            if (Array.isArray(parsed.observaciones) && parsed.observaciones.length > 0) {
+              observacionesMemoria = parsed.observaciones;
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('config_observaciones', JSON.stringify(observacionesMemoria));
+              }
+              return [...observacionesMemoria];
+            }
+          } catch (_) {}
+        }
+      } catch (e) {
+        console.warn('Error leyendo observaciones de Supabase:', e);
+      }
+    }
+
     if (typeof window !== 'undefined') {
       try {
         const o = localStorage.getItem('config_observaciones');
         if (o) {
-          observacionesMemoria = JSON.parse(o);
-          return [...observacionesMemoria];
+          const parsed = JSON.parse(o);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            observacionesMemoria = parsed;
+            return [...observacionesMemoria];
+          }
         }
       } catch (_) {}
     }
@@ -668,21 +781,18 @@ export const dataService = {
 
   async agregarObservacion(tag: string): Promise<string[]> {
     const limpio = tag.trim();
-    if (!limpio || observacionesMemoria.includes(limpio)) return [...observacionesMemoria];
-    observacionesMemoria.push(limpio);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('config_observaciones', JSON.stringify(observacionesMemoria));
+    if (!limpio || observacionesMemoria.some((o) => o.toLowerCase() === limpio.toLowerCase())) {
+      return [...observacionesMemoria];
     }
-    notifyListeners();
+    observacionesMemoria.push(limpio);
+    await this.guardarConfiguracionSistema(undefined, observacionesMemoria);
     return [...observacionesMemoria];
   },
 
   async eliminarObservacion(tag: string): Promise<string[]> {
-    observacionesMemoria = observacionesMemoria.filter((o) => o !== tag);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('config_observaciones', JSON.stringify(observacionesMemoria));
-    }
-    notifyListeners();
+    const target = tag.trim();
+    observacionesMemoria = observacionesMemoria.filter((o) => o.toLowerCase() !== target.toLowerCase());
+    await this.guardarConfiguracionSistema(undefined, observacionesMemoria);
     return [...observacionesMemoria];
   },
 };

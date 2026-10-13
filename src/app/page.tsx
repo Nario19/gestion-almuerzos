@@ -30,8 +30,6 @@ import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
 import {
   dataService,
-  COLEGIOS_DEFAULT,
-  GRADOS_DEFAULT,
   OBSERVACIONES_DEFAULT,
   DIAS_SEMANA,
   obtenerDiaActualSemana,
@@ -65,8 +63,8 @@ function PedidoContent() {
   const [hijoSeleccionado, setHijoSeleccionado] = useState<Hijo | null>(null);
 
   // Datos manuales (si no está logueado)
-  const [colegio, setColegio] = useState(COLEGIOS_DEFAULT[0]);
-  const [grado, setGrado] = useState(GRADOS_DEFAULT[9]);
+  const [colegio, setColegio] = useState('');
+  const [grado, setGrado] = useState('');
   const [estudiante, setEstudiante] = useState('');
   const [telefono, setTelefono] = useState('');
 
@@ -86,43 +84,41 @@ function PedidoContent() {
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
 
   // Listas dinámicas configurables por el admin
-  const [listaColegios, setListaColegios] = useState<string[]>(COLEGIOS_DEFAULT);
-  const [listaGrados, setListaGrados] = useState<string[]>(GRADOS_DEFAULT);
+  const [listaColegios, setListaColegios] = useState<string[]>([]);
+  const [listaGrados, setListaGrados] = useState<string[]>([]);
   const [observacionesTags, setObservacionesTags] = useState<string[]>(OBSERVACIONES_DEFAULT);
+  const [cargandoColegios, setCargandoColegios] = useState(true);
 
   // Cargar configuraciones dinámicas
   useEffect(() => {
     let montado = true;
-    Promise.all([
-      dataService.obtenerColegios(),
-      dataService.obtenerGrados(),
-      dataService.obtenerObservaciones(),
-    ]).then(([cols, grads, obs]) => {
-      if (!montado) return;
-      if (cols && cols.length > 0) {
-        setListaColegios(cols);
-        setColegio((prev) => (cols.includes(prev) ? prev : cols[0]));
-      }
-      if (grads && grads.length > 0) {
-        setListaGrados(grads);
-        setGrado((prev) => (grads.includes(prev) ? prev : grads[0]));
-      }
-      if (obs && obs.length > 0) {
-        setObservacionesTags(obs);
-      }
-    });
-
-    const desuscribir = dataService.suscribirCambios(() => {
-      Promise.all([
-        dataService.obtenerColegios(),
-        dataService.obtenerGrados(),
-        dataService.obtenerObservaciones(),
-      ]).then(([cols, grads, obs]) => {
+    const cargarConfig = async () => {
+      try {
+        const [cols, grads, obs] = await Promise.all([
+          dataService.obtenerColegios(),
+          dataService.obtenerGrados(),
+          dataService.obtenerObservaciones(),
+        ]);
         if (!montado) return;
-        if (cols && cols.length > 0) setListaColegios(cols);
-        if (grads && grads.length > 0) setListaGrados(grads);
-        if (obs && obs.length > 0) setObservacionesTags(obs);
-      });
+        if (cols) {
+          setListaColegios(cols);
+          setColegio((prev) => (prev && cols.includes(prev) ? prev : cols[0] || ''));
+        }
+        if (grads) {
+          setListaGrados(grads);
+          setGrado((prev) => (prev && grads.includes(prev) ? prev : grads[0] || ''));
+        }
+        if (obs && obs.length > 0) {
+          setObservacionesTags(obs);
+        }
+      } finally {
+        if (montado) setCargandoColegios(false);
+      }
+    };
+
+    cargarConfig();
+    const desuscribir = dataService.suscribirCambios(() => {
+      cargarConfig();
     });
 
     return () => {
@@ -820,29 +816,51 @@ function PedidoContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Colegio</label>
-                <select
-                  value={colegio}
-                  onChange={(e) => setColegio(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800"
-                >
-                  {listaColegios.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Colegio *</label>
+                {cargandoColegios ? (
+                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-400 animate-pulse">
+                    Cargando colegios...
+                  </div>
+                ) : listaColegios.length === 0 ? (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                    No hay colegios disponibles
+                  </div>
+                ) : (
+                  <select
+                    value={colegio}
+                    onChange={(e) => setColegio(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    required
+                  >
+                    {listaColegios.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Grado / Sección</label>
-                <select
-                  value={grado}
-                  onChange={(e) => setGrado(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800"
-                >
-                  {listaGrados.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Grado / Sección *</label>
+                {cargandoColegios ? (
+                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-400 animate-pulse">
+                    Cargando grados...
+                  </div>
+                ) : listaGrados.length === 0 ? (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                    No hay grados disponibles
+                  </div>
+                ) : (
+                  <select
+                    value={grado}
+                    onChange={(e) => setGrado(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    required
+                  >
+                    {listaGrados.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
           </div>

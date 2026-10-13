@@ -86,6 +86,9 @@ export default function AdminPage() {
 
       const desuscribir = dataService.suscribirCambios(() => {
         dataService.obtenerPedidos().then(setPedidos);
+        dataService.obtenerColegios().then(setColegios);
+        dataService.obtenerGrados().then(setGrados);
+        dataService.obtenerObservaciones().then(setObservaciones);
       });
       return () => desuscribir();
     }

@@ -17,10 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import {
-  dataService,
-  COLEGIOS_DEFAULT,
-} from '@/lib/dataService';
+import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import { Pedido, EstadoPedido, EstadoPago } from '@/types';
@@ -39,7 +36,7 @@ export default function DespachoPage() {
   const fechaHoy = obtenerFechaHoy();
 
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [colegios, setColegios] = useState<string[]>(COLEGIOS_DEFAULT);
+  const [colegios, setColegios] = useState<string[]>([]);
   const [colegioFiltro, setColegioFiltro] = useState<string>('TODOS');
   // Por defecto el filtro de fecha es el día de hoy
   const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
@@ -50,7 +47,7 @@ export default function DespachoPage() {
     const data = await dataService.obtenerPedidos();
     setPedidos(data);
     const cols = await dataService.obtenerColegios();
-    if (cols && cols.length > 0) setColegios(cols);
+    if (cols) setColegios(cols);
   };
 
   useEffect(() => {
