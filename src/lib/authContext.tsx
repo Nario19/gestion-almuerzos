@@ -8,7 +8,7 @@ interface AuthContextType {
   usuario: UsuarioPadre | null;
   cargando: boolean;
   esAdmin: boolean;
-  login: (identificador: string, password?: string) => Promise<{ ok: boolean; error?: string }>;
+  login: (identificador: string, password?: string) => Promise<{ ok: boolean; error?: string; esAdmin?: boolean }>;
   registro: (datos: {
     nombreCompleto: string;
     dni: string;
@@ -168,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUsuario(adminUser);
       localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(adminUser));
-      return { ok: true };
+      return { ok: true, esAdmin: true };
     }
 
     if (isSupabaseConfigured && supabase) {
@@ -214,7 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setUsuario(u);
         localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
-        return { ok: true };
+        return { ok: true, esAdmin };
       } catch (err: any) {
         return { ok: false, error: err.message || 'Error al iniciar sesión' };
       }
@@ -230,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUsuario(u);
       localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
-      return { ok: true };
+      return { ok: true, esAdmin: false };
     }
   };
 

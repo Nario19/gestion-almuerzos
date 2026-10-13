@@ -13,6 +13,7 @@ import {
   LogIn,
   ShieldCheck,
   ShoppingBag,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
@@ -27,9 +28,9 @@ export default function HeaderNav() {
   };
 
   const adminNavItems = [
+    { href: '/admin', label: 'Admin', icon: BarChart3 },
     { href: '/cocina', label: 'Cocina', icon: ChefHat },
     { href: '/despacho', label: 'Despacho', icon: PackageCheck },
-    { href: '/admin', label: 'Gestión Menú', icon: Settings },
   ];
 
   return (

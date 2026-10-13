@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Utensils,
   GraduationCap,
@@ -24,6 +24,7 @@ import {
   LogIn,
   Sparkles,
   ShoppingBag,
+  BarChart3,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
@@ -39,10 +40,18 @@ import { useAuth } from '@/lib/authContext';
 import { Plato, Pedido, MetodoPago, DiaSemana, Hijo, ResumenCocina } from '@/types';
 
 function PedidoContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const hijoIdParam = searchParams.get('hijoId');
 
   const { usuario, esAdmin, cargando: cargandoAuth } = useAuth();
+
+  // Si entra como administrador, redirigir directo a /admin
+  useEffect(() => {
+    if (esAdmin) {
+      router.replace('/admin');
+    }
+  }, [esAdmin, router]);
 
   // Estado para el panel de admin si es administrador
   const [resumenAdmin, setResumenAdmin] = useState<ResumenCocina | null>(null);
@@ -379,16 +388,16 @@ function PedidoContent() {
             className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-slate-800 hover:shadow-md transition group flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <Settings className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                <BarChart3 className="w-6 h-6" />
               </div>
-              <h2 className="text-base font-black text-slate-900">Gestión de Menú</h2>
+              <h2 className="text-base font-black text-slate-900">Panel Admin & KPIs</h2>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Programación del catálogo semanal (Lunes a Viernes), fotos de platos y precios.
+                Dashboard de ventas, embudo operativo, gestión del menú semanal y colegios.
               </p>
             </div>
             <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-800">
-              <span>Configurar Menú</span>
+              <span>Abrir Panel Admin</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </Link>

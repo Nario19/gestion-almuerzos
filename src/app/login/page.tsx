@@ -50,6 +50,13 @@ export default function LoginPage() {
     );
   }
 
+  // Si ya es admin con sesión activa, redirigir a /admin
+  React.useEffect(() => {
+    if (usuario && esAdmin) {
+      router.replace('/admin');
+    }
+  }, [usuario, esAdmin, router]);
+
   // Si ya tiene sesión activa
   if (usuario) {
     return (
@@ -65,26 +72,36 @@ export default function LoginPage() {
             {esAdmin ? 'Cuenta con privilegios de Administrador' : `DNI: ${usuario.dni} • ${usuario.hijos.length} hijos registrados`}
           </p>
           <div className="flex flex-col gap-2 pt-2">
-            <Link
-              href="/"
-              className="py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-sm transition"
-            >
-              Ir al Catálogo de Almuerzos
-            </Link>
             {esAdmin ? (
-              <Link
-                href="/cocina"
-                className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition"
-              >
-                Ir a Panel de Cocina y Despacho
-              </Link>
+              <>
+                <Link
+                  href="/admin"
+                  className="py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-sm transition shadow-xs"
+                >
+                  Ir al Panel de Administración (Admin)
+                </Link>
+                <Link
+                  href="/despacho"
+                  className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition"
+                >
+                  Ir a Despacho & Excel
+                </Link>
+              </>
             ) : (
-              <Link
-                href="/hijos"
-                className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-xs transition"
-              >
-                Administrar Mis Hijos ({usuario.hijos.length})
-              </Link>
+              <>
+                <Link
+                  href="/"
+                  className="py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-sm transition"
+                >
+                  Ir al Catálogo de Almuerzos
+                </Link>
+                <Link
+                  href="/hijos"
+                  className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-xs transition"
+                >
+                  Administrar Mis Hijos ({usuario.hijos.length})
+                </Link>
+              </>
             )}
             <button
               type="button"
@@ -154,7 +171,11 @@ export default function LoginPage() {
         if (!res.ok) {
           setErrorMsg(res.error || 'Credenciales no válidas.');
         } else {
-          router.push('/');
+          if (res.esAdmin) {
+            router.push('/admin');
+          } else {
+            router.push('/');
+          }
         }
       }
     } catch (err: any) {
