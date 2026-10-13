@@ -21,7 +21,7 @@ interface AuthContextType {
     colegioNombre: string;
     gradoSeccion: string;
     alergiasNotas?: string;
-  }) => Promise<{ ok: boolean; error?: string }>;
+  }) => Promise<{ ok: boolean; error?: string; hijo?: Hijo }>;
   eliminarHijo: (hijoId: string) => Promise<{ ok: boolean; error?: string }>;
   actualizarHijos: () => Promise<void>;
 }
@@ -291,7 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(usuarioActualizado);
     localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(usuarioActualizado));
 
-    return { ok: true };
+    return { ok: true, hijo: nuevoHijo };
   };
 
   const eliminarHijo = async (hijoId: string) => {

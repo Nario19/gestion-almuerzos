@@ -25,6 +25,7 @@ import {
   Sparkles,
   ShoppingBag,
   BarChart3,
+  X,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
@@ -42,7 +43,7 @@ function PedidoContent() {
   const searchParams = useSearchParams();
   const hijoIdParam = searchParams.get('hijoId');
 
-  const { usuario, esAdmin, cargando: cargandoAuth } = useAuth();
+  const { usuario, esAdmin, cargando: cargandoAuth, agregarHijo } = useAuth();
 
   // Si entra como administrador, redirigir directo a /admin
   useEffect(() => {
@@ -83,6 +84,15 @@ function PedidoContent() {
   const [pedidoCompletado, setPedidoCompletado] = useState<Pedido | null>(null);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
 
+  // Modal para agregar estudiante si el padre no tiene ninguno registrado
+  const [mostrarModalAgregarHijo, setMostrarModalAgregarHijo] = useState(false);
+  const [nombreNuevoHijo, setNombreNuevoHijo] = useState('');
+  const [colegioNuevoHijo, setColegioNuevoHijo] = useState('');
+  const [gradoNuevoHijo, setGradoNuevoHijo] = useState('');
+  const [alergiasNuevoHijo, setAlergiasNuevoHijo] = useState('');
+  const [guardandoNuevoHijo, setGuardandoNuevoHijo] = useState(false);
+  const [errorModalHijo, setErrorModalHijo] = useState<string | null>(null);
+
   // Listas dinámicas configurables por el admin
   const [listaColegios, setListaColegios] = useState<string[]>([]);
   const [listaGrados, setListaGrados] = useState<string[]>([]);
@@ -100,13 +110,15 @@ function PedidoContent() {
           dataService.obtenerObservaciones(),
         ]);
         if (!montado) return;
-        if (cols) {
+        if (cols && cols.length > 0) {
           setListaColegios(cols);
           setColegio((prev) => (prev && cols.includes(prev) ? prev : cols[0] || ''));
+          setColegioNuevoHijo((prev) => (prev && cols.includes(prev) ? prev : cols[0] || ''));
         }
-        if (grads) {
+        if (grads && grads.length > 0) {
           setListaGrados(grads);
           setGrado((prev) => (prev && grads.includes(prev) ? prev : grads[0] || ''));
+          setGradoNuevoHijo((prev) => (prev && grads.includes(prev) ? prev : grads[0] || ''));
         }
         if (obs && obs.length > 0) {
           setObservacionesTags(obs);
@@ -202,11 +214,8 @@ function PedidoContent() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorValidacion(null);
-
-    const nombreFinal = hijoSeleccionado ? hijoSeleccionado.nombreCompleto : estudiante.trim();
+  const ejecutarCreacionPedido = (hijoTarget: Hijo | null) => {
+    const nombreFinal = hijoTarget ? hijoTarget.nombreCompleto : estudiante.trim();
     if (!nombreFinal) {
       setErrorValidacion('Ingresa el nombre del estudiante.');
       return;
@@ -225,14 +234,14 @@ function PedidoContent() {
         const nuevo = await dataService.crearPedido({
           diaSemana: diaSeleccionado,
           padreId: usuario?.id,
-          hijoId: hijoSeleccionado?.id,
-          colegioNombre: hijoSeleccionado ? hijoSeleccionado.colegioNombre : colegio,
-          gradoSeccion: hijoSeleccionado ? hijoSeleccionado.gradoSeccion : grado,
+          hijoId: hijoTarget?.id,
+          colegioNombre: hijoTarget ? hijoTarget.colegioNombre : colegio,
+          gradoSeccion: hijoTarget ? hijoTarget.gradoSeccion : grado,
           estudianteNombre: nombreFinal,
           telefonoContacto: telefono.trim() || usuario?.telefono || 'No especificado',
           entradaNombre: entradaSeleccionada,
           segundoNombre: segundoSeleccionado,
-          observacion: observacion.trim() || undefined,
+          observacion: observacion.trim() || (hijoTarget?.alergiasNotas ? `Alergias: ${hijoTarget.alergiasNotas}` : undefined),
           metodoPago,
           comprobanteUrl: comprimidoInfo?.compressedDataUrl,
           monto: 12.0,
@@ -253,6 +262,82 @@ function PedidoContent() {
         setErrorValidacion('Ocurrió un error al registrar el pedido.');
       }
     });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorValidacion(null);
+
+    if (!entradaSeleccionada) {
+      setErrorValidacion('Por favor selecciona una entrada.');
+      return;
+    }
+    if (!segundoSeleccionado) {
+      setErrorValidacion('Por favor selecciona un plato de fondo.');
+      return;
+    }
+
+    // Si el usuario es un padre y no tiene hijos registrados, solicitar que agregue uno mediante el modal
+    if (usuario && usuario.rol !== 'ADMIN' && (!usuario.hijos || usuario.hijos.length === 0)) {
+      setMostrarModalAgregarHijo(true);
+      return;
+    }
+
+    ejecutarCreacionPedido(hijoSeleccionado);
+  };
+
+  const handleGuardarHijoYConfirmar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorModalHijo(null);
+
+    const nombre = nombreNuevoHijo.trim();
+    if (!nombre) {
+      setErrorModalHijo('Ingresa el nombre y apellidos del estudiante.');
+      return;
+    }
+    const col = colegioNuevoHijo || listaColegios[0] || '';
+    if (!col) {
+      setErrorModalHijo('Selecciona un colegio.');
+      return;
+    }
+    const grd = gradoNuevoHijo || listaGrados[0] || '';
+    if (!grd) {
+      setErrorModalHijo('Selecciona un grado y sección.');
+      return;
+    }
+
+    setGuardandoNuevoHijo(true);
+    try {
+      const res = await agregarHijo({
+        nombreCompleto: nombre,
+        colegioNombre: col,
+        gradoSeccion: grd,
+        alergiasNotas: alergiasNuevoHijo.trim() || undefined,
+      });
+
+      if (!res.ok) {
+        setErrorModalHijo(res.error || 'Error al guardar el estudiante.');
+        return;
+      }
+
+      const hijoCreado: Hijo = res.hijo || {
+        id: `hijo-${Date.now()}`,
+        padreId: usuario?.id || '',
+        nombreCompleto: nombre,
+        colegioNombre: col,
+        gradoSeccion: grd,
+        alergiasNotas: alergiasNuevoHijo.trim() || undefined,
+        createdAt: new Date().toISOString(),
+      };
+
+      seleccionarHijo(hijoCreado);
+      setMostrarModalAgregarHijo(false);
+      ejecutarCreacionPedido(hijoCreado);
+    } catch (err: any) {
+      setErrorModalHijo(err.message || 'Error al registrar estudiante.');
+    } finally {
+      setGuardandoNuevoHijo(false);
+    }
   };
 
   const abrirWhatsApp = () => {
@@ -518,12 +603,6 @@ function PedidoContent() {
               <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las 09:30 AM
             </span>
           </div>
-          <Link
-            href="/login"
-            className="text-xs font-bold px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-xs transition flex items-center gap-1.5"
-          >
-            <LogIn className="w-3.5 h-3.5" /> Iniciar Sesión
-          </Link>
         </div>
 
         {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
@@ -710,8 +789,8 @@ function PedidoContent() {
         </Link>
       </div>
 
-      {/* SELECTOR DE HIJOS VINCULADOS (SI ESTÁ LOGUEADO COMO PADRE) */}
-      {usuario && usuario.rol !== 'ADMIN' && (
+      {/* SELECTOR DE HIJOS VINCULADOS (SI TIENE HIJOS REGISTRADOS) */}
+      {usuario && usuario.rol !== 'ADMIN' && usuario.hijos && usuario.hijos.length > 0 && (
         <div className="mb-5 bg-white rounded-3xl p-4 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -725,40 +804,31 @@ function PedidoContent() {
             </Link>
           </div>
 
-          {usuario.hijos.length === 0 ? (
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-600 flex items-center justify-between">
-              <span>No tienes estudiantes registrados.</span>
-              <Link href="/hijos" className="font-bold text-orange-600 underline">
-                Registrar aquí
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {usuario.hijos.map((hijo) => {
-                const activo = hijoSeleccionado?.id === hijo.id;
-                return (
-                  <button
-                    key={hijo.id}
-                    type="button"
-                    onClick={() => seleccionarHijo(hijo)}
-                    className={`p-2.5 rounded-2xl border text-left flex items-center justify-between transition ${
-                      activo
-                        ? 'border-orange-500 bg-orange-50/70 shadow-xs ring-1 ring-orange-500'
-                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900">{hijo.nombreCompleto}</h4>
-                      <p className="text-[11px] text-slate-500">
-                        {hijo.colegioNombre} • {hijo.gradoSeccion}
-                      </p>
-                    </div>
-                    {activo && <CheckCircle2 className="w-4 h-4 text-orange-600 shrink-0" />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {usuario.hijos.map((hijo) => {
+              const activo = hijoSeleccionado?.id === hijo.id;
+              return (
+                <button
+                  key={hijo.id}
+                  type="button"
+                  onClick={() => seleccionarHijo(hijo)}
+                  className={`p-2.5 rounded-2xl border text-left flex items-center justify-between transition ${
+                    activo
+                      ? 'border-orange-500 bg-orange-50/70 shadow-xs ring-1 ring-orange-500'
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                  }`}
+                >
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">{hijo.nombreCompleto}</h4>
+                    <p className="text-[11px] text-slate-500">
+                      {hijo.colegioNombre} • {hijo.gradoSeccion}
+                    </p>
+                  </div>
+                  {activo && <CheckCircle2 className="w-4 h-4 text-orange-600 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -793,78 +863,6 @@ function PedidoContent() {
 
       {/* FORMULARIO */}
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* SI EL PADRE AÚN NO TIENE HIJOS REGISTRADOS: CAMPOS DEL ALUMNO */}
-        {usuario.hijos.length === 0 && (
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Datos del Alumno
-            </h3>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Nombre y Apellidos *
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. Dhana Quispe Cristobal"
-                value={estudiante}
-                onChange={(e) => setEstudiante(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Colegio *</label>
-                {cargandoColegios ? (
-                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-400 animate-pulse">
-                    Cargando colegios...
-                  </div>
-                ) : listaColegios.length === 0 ? (
-                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-                    No hay colegios disponibles
-                  </div>
-                ) : (
-                  <select
-                    value={colegio}
-                    onChange={(e) => setColegio(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                    required
-                  >
-                    {listaColegios.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Grado / Sección *</label>
-                {cargandoColegios ? (
-                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-400 animate-pulse">
-                    Cargando grados...
-                  </div>
-                ) : listaGrados.length === 0 ? (
-                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-                    No hay grados disponibles
-                  </div>
-                ) : (
-                  <select
-                    value={grado}
-                    onChange={(e) => setGrado(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                    required
-                  >
-                    {listaGrados.map((g) => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* 1. ENTRADAS */}
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
@@ -1071,6 +1069,143 @@ function PedidoContent() {
           )}
         </button>
       </form>
+
+      {/* MODAL PARA AGREGAR ESTUDIANTE SI EL PADRE NO TIENE NINGUNO REGISTRADO */}
+      {mostrarModalAgregarHijo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                  <GraduationCap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Agrega a tu Estudiante</h3>
+                  <p className="text-xs text-slate-500">Requerido para confirmar el pedido</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMostrarModalAgregarHijo(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarHijoYConfirmar} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nombre y Apellidos del Estudiante *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Dhana Quispe Cristobal"
+                  value={nombreNuevoHijo}
+                  onChange={(e) => setNombreNuevoHijo(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Colegio *
+                  </label>
+                  {cargandoColegios ? (
+                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-400">
+                      Cargando colegios...
+                    </div>
+                  ) : (
+                    <select
+                      required
+                      value={colegioNuevoHijo || listaColegios[0] || ''}
+                      onChange={(e) => setColegioNuevoHijo(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    >
+                      {listaColegios.map((col) => (
+                        <option key={col} value={col}>
+                          {col}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Grado / Sección *
+                  </label>
+                  {cargandoColegios ? (
+                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-400">
+                      Cargando grados...
+                    </div>
+                  ) : (
+                    <select
+                      required
+                      value={gradoNuevoHijo || listaGrados[0] || ''}
+                      onChange={(e) => setGradoNuevoHijo(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    >
+                      {listaGrados.map((gr) => (
+                        <option key={gr} value={gr}>
+                          {gr}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Alergias o notas médicas (opcional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Alérgico al maní, sin ensalada..."
+                  value={alergiasNuevoHijo}
+                  onChange={(e) => setAlergiasNuevoHijo(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                />
+              </div>
+
+              {errorModalHijo && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorModalHijo}</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex flex-col gap-2">
+                <button
+                  type="submit"
+                  disabled={guardandoNuevoHijo}
+                  className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-orange-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {guardandoNuevoHijo ? (
+                    <span className="animate-pulse">Guardando estudiante...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Guardar y Confirmar Pedido</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMostrarModalAgregarHijo(false)}
+                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition"
+                >
+                  Cancelar y Volver al Menú
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
