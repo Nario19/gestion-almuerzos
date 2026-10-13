@@ -583,7 +583,7 @@ export default function DespachoPage() {
                             </div>
                           </td>
 
-                          {/* Columna: Pago */}
+                          {/* Columna: Pago y Aceptación */}
                           <td className="py-3.5 px-4">
                             <div className="flex flex-col gap-1.5 items-start">
                               <button
@@ -591,17 +591,28 @@ export default function DespachoPage() {
                                 onClick={() =>
                                   handleCambiarPago(p.id, pagado ? 'PENDIENTE' : 'PAGADO')
                                 }
-                                className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 transition ${
+                                className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
                                   pagado
-                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                    : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                                    : 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs'
                                 }`}
-                                title="Clic para alternar estado de pago"
+                                title={
+                                  pagado
+                                    ? 'Orden aceptada y pagada (Clic para revertir a pendiente)'
+                                    : 'Aceptar orden y enviar a cocina'
+                                }
                               >
-                                <DollarSign className="w-3.5 h-3.5" />
-                                {pagado
-                                  ? `Pagado (${p.metodoPago || 'Yape'})`
-                                  : `Por Pagar (${p.metodoPago || 'S/ 12'})`}
+                                {pagado ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                    <span>✓ Aceptado ({p.metodoPago || 'Pagado'})</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span>Aceptar Orden ({p.metodoPago || 'Por Cobrar'})</span>
+                                  </>
+                                )}
                               </button>
 
                               {p.comprobanteUrl && (
@@ -617,25 +628,31 @@ export default function DespachoPage() {
                             </div>
                           </td>
 
-                          {/* Columna Acciones / Empaque */}
+                          {/* Columna Acciones / Estado en Pipeline */}
                           <td className="py-3.5 px-4 text-right print:hidden">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleCambiarEstado(
-                                  p.id,
-                                  empacado ? 'REGISTRADO' : 'EMPACADO'
-                                )
-                              }
-                              className={`px-3 py-1.5 rounded-xl text-xs font-black inline-flex items-center gap-1.5 transition cursor-pointer ${
-                                empacado
-                                  ? 'bg-slate-800 text-white shadow-xs'
-                                  : 'bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 border border-slate-200'
-                              }`}
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                              {empacado ? 'Empacado ✓' : 'Marcar'}
-                            </button>
+                            <div className="inline-flex items-center gap-1.5 justify-end">
+                              <select
+                                value={p.estadoPedido}
+                                onChange={(e) =>
+                                  handleCambiarEstado(p.id, e.target.value as EstadoPedido)
+                                }
+                                className={`text-xs font-bold px-2.5 py-1.5 rounded-xl border transition cursor-pointer focus:outline-hidden ${
+                                  p.estadoPedido === 'ENTREGADO'
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                    : p.estadoPedido === 'EMPACADO'
+                                    ? 'bg-purple-50 text-purple-800 border-purple-300'
+                                    : p.estadoPedido === 'EN_COCINA'
+                                    ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                                }`}
+                                title="Cambiar estado del pedido en la línea de tiempo"
+                              >
+                                <option value="REGISTRADO">1. Registrado</option>
+                                <option value="EN_COCINA">2. En Cocina</option>
+                                <option value="EMPACADO">3. Empacado</option>
+                                <option value="ENTREGADO">4. Entregado</option>
+                              </select>
+                            </div>
                           </td>
                         </tr>
                       );

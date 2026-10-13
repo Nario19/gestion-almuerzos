@@ -29,8 +29,8 @@ export default function HeaderNav() {
 
   const adminNavItems = [
     { href: '/admin', label: 'Admin', icon: BarChart3 },
-    { href: '/cocina', label: 'Cocina', icon: ChefHat },
     { href: '/despacho', label: 'Despacho', icon: PackageCheck },
+    { href: '/cocina', label: 'Cocina', icon: ChefHat },
   ];
 
   return (

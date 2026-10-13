@@ -342,44 +342,6 @@ function PedidoContent() {
         {/* Los 3 Módulos Operativos */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link
-            href="/cocina"
-            className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <ChefHat className="w-6 h-6" />
-              </div>
-              <h2 className="text-base font-black text-slate-900">Cocina</h2>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Consolidado en tiempo real con cantidades exactas de entradas y segundos a preparar.
-              </p>
-            </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-orange-600">
-              <span>Abrir Cocina</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </Link>
-
-          <Link
-            href="/despacho"
-            className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-emerald-500 hover:shadow-md transition group flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <PackageCheck className="w-6 h-6" />
-              </div>
-              <h2 className="text-base font-black text-slate-900">Despacho</h2>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Lista ordenada por colegio y grado para rotulado de envases y verificación de pagos.
-              </p>
-            </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
-              <span>Abrir Despacho</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </Link>
-
-          <Link
             href="/admin"
             className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-slate-800 hover:shadow-md transition group flex flex-col justify-between"
           >
@@ -394,6 +356,44 @@ function PedidoContent() {
             </div>
             <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-800">
               <span>Abrir Panel Admin</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </Link>
+
+          <Link
+            href="/despacho"
+            className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-emerald-500 hover:shadow-md transition group flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                <PackageCheck className="w-6 h-6" />
+              </div>
+              <h2 className="text-base font-black text-slate-900">Despacho</h2>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Recepción de órdenes, verificación de pagos, rotulado de loncheras y reporte Excel.
+              </p>
+            </div>
+            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+              <span>Abrir Despacho</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </Link>
+
+          <Link
+            href="/cocina"
+            className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                <ChefHat className="w-6 h-6" />
+              </div>
+              <h2 className="text-base font-black text-slate-900">Cocina</h2>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Consolidado de platos de pedidos aceptados y alertas de dietas especiales a preparar.
+              </p>
+            </div>
+            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-orange-600">
+              <span>Abrir Cocina</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </Link>

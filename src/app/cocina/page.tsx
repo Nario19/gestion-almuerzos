@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   ChefHat,
   AlertTriangle,
@@ -52,14 +53,24 @@ export default function CocinaPage() {
     return () => desuscribir();
   }, [esAdmin]);
 
-  // Filtrar pedidos si se seleccionó un colegio específico
+  // En cocina solo se preparan pedidos aceptados (pago verificado o estado avanzado por administración)
+  const pedidosAceptados = pedidos.filter(
+    (p) => p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'
+  );
+
+  // Pedidos que aún no han sido aceptados/pagados en Despacho
+  const pedidosPendientesDespacho = pedidos.filter(
+    (p) => p.estadoPago !== 'PAGADO' && p.estadoPedido === 'REGISTRADO'
+  );
+
+  // Filtrar pedidos listos para cocina según el colegio seleccionado
   const pedidosFiltrados = colegioFiltro === 'TODOS'
-    ? pedidos
-    : pedidos.filter((p) => p.colegioNombre === colegioFiltro);
+    ? pedidosAceptados
+    : pedidosAceptados.filter((p) => p.colegioNombre === colegioFiltro);
 
   const resumen: ResumenCocina = dataService.calcularResumenCocina(pedidosFiltrados);
 
-  // Extraer todas las observaciones críticas
+  // Extraer todas las observaciones críticas de los pedidos aceptados
   const pedidosConObs = pedidosFiltrados.filter(
     (p) => p.observacion && p.observacion.trim().length > 0
   );
@@ -130,14 +141,32 @@ export default function CocinaPage() {
         </div>
       </div>
 
+      {/* Aviso de pedidos pendientes de validación en Despacho */}
+      {pedidosPendientesDespacho.length > 0 && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm text-amber-900 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">⏳</span>
+            <span>
+              Hay <strong>{pedidosPendientesDespacho.length} pedido(s) pendiente(s) de verificación en Despacho</strong>. Pasarán automáticamente a Cocina en cuanto el administrador valide el pago.
+            </span>
+          </div>
+          <Link
+            href="/despacho"
+            className="px-3.5 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-950 font-bold rounded-xl shrink-0 transition text-center"
+          >
+            Ir a Despacho y Pagos →
+          </Link>
+        </div>
+      )}
+
       {/* KPI Cards de Resumen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Almuerzos</span>
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Almuerzos a Cocinar</span>
           <span className="text-3xl font-black text-slate-900 tracking-tight block mt-1">
             {resumen.totalPedidos}
           </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Para el día de hoy</span>
+          <span className="text-[11px] text-slate-400 mt-0.5 block">Órdenes confirmadas</span>
         </div>
 
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
@@ -145,7 +174,7 @@ export default function CocinaPage() {
           <span className="text-3xl font-black text-amber-600 tracking-tight block mt-1">
             {resumen.pedidosConObservacion}
           </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Dietas o alergias</span>
+          <span className="text-[11px] text-slate-400 mt-0.5 block">Dietas o preferencias</span>
         </div>
 
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
@@ -153,15 +182,15 @@ export default function CocinaPage() {
           <span className="text-3xl font-black text-emerald-600 tracking-tight block mt-1">
             {resumen.pedidosPagados}
           </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Yape / Plin confirmado</span>
+          <span className="text-[11px] text-slate-400 mt-0.5 block">Aceptados para hoy</span>
         </div>
 
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider block">Pagos Pendientes</span>
+          <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider block">Pendientes en Despacho</span>
           <span className="text-3xl font-black text-rose-600 tracking-tight block mt-1">
-            {resumen.pedidosPendientesPago}
+            {pedidosPendientesDespacho.length}
           </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Por verificar en caja</span>
+          <span className="text-[11px] text-slate-400 mt-0.5 block">Esperando confirmación</span>
         </div>
       </div>
 
