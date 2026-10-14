@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Settings,
@@ -77,18 +77,26 @@ export default function AdminPage() {
   const [periodoKpi, setPeriodoKpi] = useState<'hoy' | 'semana' | 'todos'>('hoy');
 
   // Formulario de nuevo plato
-  const [tipoNuevo, setTipoNuevo] = useState<TipoPlato>('SEGUNDO');
+  const [tiposDisponibles, setTiposDisponibles] = useState<string[]>([
+    'Sopa o postre',
+    'Segundo',
+    'Refrigerio',
+    'Bebida',
+    'Postre',
+  ]);
+  const [tipoNuevo, setTipoNuevo] = useState<string>('Segundo');
+  const [otroTipoInput, setOtroTipoInput] = useState('');
+  const [mostrandoInputOtroTipo, setMostrandoInputOtroTipo] = useState(false);
   const [nombreNuevo, setNombreNuevo] = useState('');
   const [descripcionNueva, setDescripcionNueva] = useState('');
   const [precioNuevo, setPrecioNuevo] = useState('12.00');
   const [imagenUrlNueva, setImagenUrlNueva] = useState('');
   const [subiendoFoto, setSubiendoFoto] = useState(false);
 
-  const [tabActiva, setTabActiva] = useState<'dashboard' | 'menu' | 'colegios' | 'grados' | 'observaciones'>('dashboard');
+  const [tabActiva, setTabActiva] = useState<'dashboard' | 'menu' | 'grados' | 'observaciones'>('dashboard');
 
   // Colegios
   const [colegios, setColegios] = useState<string[]>([]);
-  const [nuevoColegio, setNuevoColegio] = useState('');
 
   // Grados
   const [grados, setGrados] = useState<string[]>([]);
@@ -138,31 +146,16 @@ export default function AdminPage() {
     }
   }, [diaActivo, esAdmin, colegioMenuSeleccionado, usuario?.colegioNombre, esSuperAdmin]);
 
-  const handleAgregarColegio = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nuevoColegio.trim()) return;
-    const res = await dataService.agregarColegio(nuevoColegio.trim());
-    setColegios(res);
-    setNuevoColegio('');
-    setGuardadoExitoso(true);
-    setTimeout(() => setGuardadoExitoso(false), 2500);
-  };
-
-  const handleSolicitarEliminarColegio = (nombre: string) => {
-    setConfirmacion({
-      abierto: true,
-      titulo: `¿Eliminar colegio "${nombre}"?`,
-      mensaje: (
-        <span>
-          ¿Estás seguro de que deseas eliminar el colegio <strong>{nombre}</strong>? Los padres ya no podrán seleccionarlo al registrar a sus hijos.
-        </span>
-      ),
-      textoBotonConfirmar: 'Sí, eliminar colegio',
-      onConfirmar: async () => {
-        const res = await dataService.eliminarColegio(nombre);
-        setColegios(res);
-      },
-    });
+  const handleAgregarTipoPersonalizado = () => {
+    const val = otroTipoInput.trim();
+    if (val) {
+      if (!tiposDisponibles.includes(val)) {
+        setTiposDisponibles((prev) => [...prev, val]);
+      }
+      setTipoNuevo(val);
+      setOtroTipoInput('');
+      setMostrandoInputOtroTipo(false);
+    }
   };
 
   const handleAgregarGrado = async (e: React.FormEvent) => {
@@ -244,12 +237,13 @@ export default function AdminPage() {
       ? usuario.colegioNombre
       : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
 
+    const esSopa = tipoNuevo === 'Sopa o postre' || tipoNuevo === 'ENTRADA';
     const nuevo = await dataService.agregarPlato({
       diaSemana: diaActivo,
       tipo: tipoNuevo,
       nombre: nombreNuevo.trim(),
       descripcion: descripcionNueva.trim() || undefined,
-      precio: tipoNuevo === 'ENTRADA' ? 0 : parseFloat(precioNuevo) || 12.0,
+      precio: esSopa ? 0 : parseFloat(precioNuevo) || 12.0,
       imagenUrl: imagenUrlNueva || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
       disponible: true,
       orden: platos.length + 1,
@@ -267,10 +261,10 @@ export default function AdminPage() {
   const handleSolicitarEliminarPlato = (plato: Plato) => {
     setConfirmacion({
       abierto: true,
-      titulo: `¿Eliminar ${plato.tipo === 'ENTRADA' ? 'la entrada' : 'el segundo'} "${plato.nombre}"?`,
+      titulo: `¿Eliminar "${plato.nombre}"?`,
       mensaje: (
         <span>
-          ¿Estás seguro de que deseas retirar <strong>{plato.nombre}</strong> del catálogo de {plato.diaSemana.toLowerCase()}? Ya no aparecerá disponible para los pedidos de los padres.
+          ¿Estás seguro de que deseas retirar <strong>{plato.nombre}</strong> ({plato.tipo}) del catálogo de {plato.diaSemana.toLowerCase()}? Ya no aparecerá disponible para los pedidos de los padres.
         </span>
       ),
       textoBotonConfirmar: 'Sí, eliminar plato',
@@ -281,8 +275,35 @@ export default function AdminPage() {
     });
   };
 
-  const entradas = platos.filter((p) => p.tipo === 'ENTRADA');
-  const segundos = platos.filter((p) => p.tipo === 'SEGUNDO');
+  // Categorías de platos dinámicas
+  const categoriasOrdenadas = useMemo(() => {
+    const ordenBase = ['Sopa o postre', 'Segundo', 'Refrigerio', 'Bebida', 'Postre'];
+    const categoriasPresentes = new Set<string>();
+    platos.forEach((p) => {
+      let t = p.tipo;
+      if (t === 'ENTRADA') t = 'Sopa o postre';
+      else if (t === 'SEGUNDO') t = 'Segundo';
+      categoriasPresentes.add(t);
+    });
+    // Unir base y adicionales
+    const lista = [...ordenBase];
+    categoriasPresentes.forEach((c) => {
+      if (!lista.includes(c)) lista.push(c);
+    });
+    return lista;
+  }, [platos]);
+
+  const platosPorCategoria = useMemo(() => {
+    const mapa: Record<string, Plato[]> = {};
+    for (const plato of platos) {
+      let t = plato.tipo;
+      if (t === 'ENTRADA') t = 'Sopa o postre';
+      else if (t === 'SEGUNDO') t = 'Segundo';
+      if (!mapa[t]) mapa[t] = [];
+      mapa[t].push(plato);
+    }
+    return mapa;
+  }, [platos]);
 
   // Fecha de hoy en formato estándar Perú (YYYY-MM-DD)
   const fechaHoyStr = obtenerFechaHoyPeru();
@@ -396,7 +417,7 @@ export default function AdminPage() {
             </Link>
           ) : usuario?.colegioNombre ? (
             <span className="px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 text-xs font-bold flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5" /> Sede: {usuario.colegioNombre}
+              <Building2 className="w-3.5 h-3.5" /> {usuario.colegioNombre}
             </span>
           ) : null}
           <span className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-1.5">
@@ -440,7 +461,7 @@ export default function AdminPage() {
           Menú Semanal
         </button>
 
-        {esSuperAdmin ? (
+        {esSuperAdmin && (
           <Link
             href="/superadmin"
             className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200"
@@ -449,19 +470,6 @@ export default function AdminPage() {
             <Building2 className="w-4 h-4 text-purple-600" />
             Colegios & Admins ({colegios.length})
           </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setTabActiva('colegios')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
-              tabActiva === 'colegios'
-                ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            <Building2 className="w-4 h-4" />
-            {usuario?.colegioNombre ? `Mi Sede (${usuario.colegioNombre})` : `Colegios (${colegios.length})`}
-          </button>
         )}
 
         <button
@@ -962,30 +970,76 @@ export default function AdminPage() {
 
           <form onSubmit={handleCrearPlato} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Tipo de Plato</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTipoNuevo('ENTRADA')}
-                  className={`py-2 rounded-xl text-xs font-bold border transition ${
-                    tipoNuevo === 'ENTRADA'
-                      ? 'border-orange-500 bg-orange-50 text-orange-800'
-                      : 'border-slate-200 text-slate-600'
-                  }`}
-                >
-                  Sopa o postre
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTipoNuevo('SEGUNDO')}
-                  className={`py-2 rounded-xl text-xs font-bold border transition ${
-                    tipoNuevo === 'SEGUNDO'
-                      ? 'border-orange-500 bg-orange-50 text-orange-800'
-                      : 'border-slate-200 text-slate-600'
-                  }`}
-                >
-                  Segundo
-                </button>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">Tipo de Plato</label>
+                {!mostrandoInputOtroTipo && (
+                  <button
+                    type="button"
+                    onClick={() => setMostrandoInputOtroTipo(true)}
+                    className="text-[11px] font-bold text-orange-600 hover:text-orange-700 cursor-pointer"
+                  >
+                    + Otro tipo...
+                  </button>
+                )}
+              </div>
+
+              {mostrandoInputOtroTipo && (
+                <div className="flex items-center gap-2 mb-2 p-2 bg-orange-50 rounded-xl border border-orange-200">
+                  <input
+                    type="text"
+                    placeholder="Ej. Refrigerio, Snack, Bebida..."
+                    value={otroTipoInput}
+                    onChange={(e) => setOtroTipoInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAgregarTipoPersonalizado();
+                      }
+                    }}
+                    className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAgregarTipoPersonalizado}
+                    className="px-2.5 py-1 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 cursor-pointer"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMostrandoInputOtroTipo(false);
+                      setOtroTipoInput('');
+                    }}
+                    className="px-2 py-1 bg-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-300 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-1.5">
+                {tiposDisponibles.map((tipo) => {
+                  const seleccionado =
+                    tipoNuevo === tipo ||
+                    (tipo === 'Sopa o postre' && tipoNuevo === 'ENTRADA') ||
+                    (tipo === 'Segundo' && tipoNuevo === 'SEGUNDO');
+                  return (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() => setTipoNuevo(tipo)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                        seleccionado
+                          ? 'border-orange-500 bg-orange-500 text-white shadow-xs'
+                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {tipo}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1012,7 +1066,7 @@ export default function AdminPage() {
               />
             </div>
 
-            {tipoNuevo === 'SEGUNDO' && (
+            {tipoNuevo !== 'Sopa o postre' && tipoNuevo !== 'ENTRADA' && (
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Precio (S/)</label>
                 <input
@@ -1049,192 +1103,87 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs shadow-md shadow-orange-500/20 transition mt-2"
+              className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs shadow-md shadow-orange-500/20 transition mt-2 cursor-pointer"
             >
               + Publicar en el Menú de {diaActivo}
             </button>
           </form>
         </div>
 
-        {/* COLUMNA 2 Y 3: LISTA DE PLATOS DEL DÍA CON FOTOS */}
+        {/* COLUMNA 2 Y 3: LISTA DE PLATOS DEL DÍA CON FOTOS POR CATEGORÍA */}
         <div className="lg:col-span-2 space-y-6">
-          {/* SOPAS O POSTRES */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <Utensils className="w-4 h-4 text-orange-500" />
-                Sopas o Postres de {diaActivo} ({entradas.length})
-              </h3>
+          {platos.length === 0 ? (
+            <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center shadow-xs">
+              <Utensils className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm font-bold text-slate-700">No hay platos registrados para {diaActivo}</p>
+              <p className="text-xs text-slate-400 mt-1">Usa el formulario a la izquierda para publicar platos en esta fecha.</p>
             </div>
-
-            {entradas.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">No hay sopas o postres para este día.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {entradas.map((plato) => (
-                  <div
-                    key={plato.id}
-                    className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-slate-50/50"
-                  >
-                    <div className="h-24 bg-slate-200 relative">
-                      {plato.imagenUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
-                          <ImageIcon className="w-6 h-6" />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleSolicitarEliminarPlato(plato)}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
-                        title="Eliminar plato"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="p-3">
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <h4 className="text-xs font-black text-slate-900">{plato.nombre}</h4>
-                        {plato.colegioNombre && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-800 text-[9px] font-bold shrink-0">
-                            {plato.colegioNombre}
-                          </span>
-                        )}
-                      </div>
-                      {plato.descripcion && (
-                        <p className="text-[11px] text-slate-500 line-clamp-2">{plato.descripcion}</p>
-                      )}
-                    </div>
+          ) : (
+            categoriasOrdenadas.map((cat: string) => {
+              const platosDeCat = platosPorCategoria[cat] || [];
+              if (platosDeCat.length === 0) return null;
+              return (
+                <div key={cat} className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                    <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                      <Utensils className="w-4 h-4 text-orange-500" />
+                      {cat} de {diaActivo} ({platosDeCat.length})
+                    </h3>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* SEGUNDOS */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <Utensils className="w-4 h-4 text-rose-500" />
-                Segundos / Platos de Fondo de {diaActivo} ({segundos.length})
-              </h3>
-            </div>
-
-            {segundos.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">No hay segundos para este día.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {segundos.map((plato) => (
-                  <div
-                    key={plato.id}
-                    className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-slate-50/50"
-                  >
-                    <div className="h-28 bg-slate-200 relative">
-                      {plato.imagenUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
-                          <ImageIcon className="w-6 h-6" />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleSolicitarEliminarPlato(plato)}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
-                        title="Eliminar plato"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {platosDeCat.map((plato: Plato) => (
+                      <div
+                        key={plato.id}
+                        className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-slate-50/50"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg">
-                        S/ {plato.precio.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="p-3">
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <h4 className="text-xs font-black text-slate-900">{plato.nombre}</h4>
-                        {plato.colegioNombre && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-800 text-[9px] font-bold shrink-0">
-                            {plato.colegioNombre}
-                          </span>
-                        )}
+                        <div className="h-28 bg-slate-200 relative">
+                          {plato.imagenUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                              <ImageIcon className="w-6 h-6" />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleSolicitarEliminarPlato(plato)}
+                            className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
+                            title="Eliminar plato"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          {plato.precio > 0 && (
+                            <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg">
+                              S/ {plato.precio.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <h4 className="text-xs font-black text-slate-900">{plato.nombre}</h4>
+                            {plato.colegioNombre && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-800 text-[9px] font-bold shrink-0">
+                                {plato.colegioNombre}
+                              </span>
+                            )}
+                          </div>
+                          {plato.descripcion && (
+                            <p className="text-[11px] text-slate-500 line-clamp-2">{plato.descripcion}</p>
+                          )}
+                        </div>
                       </div>
-                      {plato.descripcion && (
-                        <p className="text-[11px] text-slate-500 line-clamp-2">{plato.descripcion}</p>
-                      )}
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </>
   )}
-
-      {/* PESTAÑA: COLEGIOS */}
-      {tabActiva === 'colegios' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Formulario nuevo colegio */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
-            <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-orange-500" />
-              Nuevo Colegio
-            </h2>
-            <form onSubmit={handleAgregarColegio} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Nombre del Colegio *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Colegio Innova Schools"
-                  value={nuevoColegio}
-                  onChange={(e) => setNuevoColegio(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <Plus className="w-4 h-4" /> Agregar Colegio
-              </button>
-            </form>
-          </div>
-
-          {/* Lista de colegios */}
-          <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
-            <h2 className="text-sm font-black text-slate-900 mb-2">
-              Colegios Disponibles ({colegios.length})
-            </h2>
-            <div className="divide-y divide-slate-100">
-              {colegios.map((col) => (
-                <div key={col} className="py-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-xs">
-                      <Building2 className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs sm:text-sm font-bold text-slate-800">{col}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSolicitarEliminarColegio(col)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
-                    title="Eliminar colegio"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* PESTAÑA: GRADOS Y SECCIONES */}
       {tabActiva === 'grados' && (

@@ -175,7 +175,7 @@ function HijosContent() {
             Estudiantes Registrados
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tutor: {usuario.nombreCompleto} (DNI: {usuario.dni})
+            Padre: {usuario.nombreCompleto} (DNI: {usuario.dni})
           </p>
         </div>
 

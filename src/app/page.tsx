@@ -159,15 +159,15 @@ function PedidoContent() {
     let montado = true;
     setCargandoPlatos(true);
 
-    const colegioFiltro = hijoSeleccionado?.colegioNombre || colegio || undefined;
+    const colegioFiltro = hijoSeleccionado?.colegioId || hijoSeleccionado?.colegioNombre || colegio || undefined;
 
     dataService.obtenerPlatosPorDia(diaSeleccionado, colegioFiltro).then((platos) => {
       if (!montado) return;
       setPlatosDelDia(platos);
       setCargandoPlatos(false);
 
-      const primeraEntrada = platos.find((p) => p.tipo === 'ENTRADA' && p.disponible);
-      const primerSegundo = platos.find((p) => p.tipo === 'SEGUNDO' && p.disponible);
+      const primeraEntrada = platos.find((p) => (p.tipo === 'ENTRADA' || p.tipo === 'Sopa o postre') && p.disponible);
+      const primerSegundo = platos.find((p) => (p.tipo === 'SEGUNDO' || p.tipo === 'Segundo') && p.disponible);
       if (primeraEntrada) setEntradaSeleccionada(primeraEntrada.nombre);
       if (primerSegundo) setSegundoSeleccionado(primerSegundo.nombre);
     });
@@ -241,6 +241,8 @@ function PedidoContent() {
         const nuevo = await dataService.crearPedido({
           diaSemana: diaSeleccionado,
           padreId: usuario?.id,
+          padreNombre: usuario?.nombreCompleto,
+          colegioId: hijoTarget?.colegioId,
           hijoId: hijoTarget?.id,
           colegioNombre: hijoTarget ? hijoTarget.colegioNombre : colegio,
           gradoSeccion: hijoTarget ? hijoTarget.gradoSeccion : grado,
@@ -611,8 +613,8 @@ function PedidoContent() {
   // CATÁLOGO LIMPIO PARA CLIENTES / PADRES
   // (Sin frases de relleno)
   // ----------------------------------------------------
-  const entradas = platosDelDia.filter((p) => p.tipo === 'ENTRADA');
-  const segundos = platosDelDia.filter((p) => p.tipo === 'SEGUNDO');
+  const entradas = platosDelDia.filter((p) => p.tipo === 'ENTRADA' || p.tipo === 'Sopa o postre');
+  const segundos = platosDelDia.filter((p) => p.tipo === 'SEGUNDO' || p.tipo === 'Segundo');
   const diaActual = obtenerDiaActualSemana();
 
   // ----------------------------------------------------
@@ -664,12 +666,12 @@ function PedidoContent() {
 
         {/* CONTENIDO DE LA CARTA */}
         <div className="space-y-6">
-          {/* 1. ENTRADAS */}
+          {/* 1. SOPAS O POSTRES */}
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Utensils className="w-4 h-4 text-orange-500" />
-                1. Entrada ({diaSeleccionado})
+                1. Sopa o postre ({diaSeleccionado})
               </h2>
               <span className="text-[11px] font-semibold text-slate-500">Incluida en el menú</span>
             </div>
@@ -677,7 +679,7 @@ function PedidoContent() {
             {cargandoPlatos ? (
               <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
             ) : entradas.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Sin entradas programadas para este día.</p>
+              <p className="text-xs text-slate-400 py-4 text-center">Sin opciones de sopa o postre para este día.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {entradas.map((ent) => (
@@ -691,7 +693,7 @@ function PedidoContent() {
                         <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover" />
                       )}
                       <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
-                        Entrada
+                        Sopa o postre
                       </span>
                     </div>
                     <div className="p-3 flex-1 flex flex-col justify-between">
@@ -778,7 +780,7 @@ function PedidoContent() {
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
             <div>
               <span className="text-xs font-bold text-slate-900 block">Menú Escolar Completo</span>
-              <span className="text-[11px] text-emerald-600 font-bold">S/ 12.00 • Entrada + Segundo</span>
+              <span className="text-[11px] text-emerald-600 font-bold">S/ 12.00 • Sopa o postre + Segundo</span>
             </div>
             <Link
               href="/login"

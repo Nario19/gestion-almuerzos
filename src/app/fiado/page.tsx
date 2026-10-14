@@ -25,6 +25,7 @@ import {
   CreditCard,
   Utensils,
   Calendar,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
@@ -55,6 +56,7 @@ export default function FiadoPage() {
   // Estados de interfaz
   const [tarjetasExpandidas, setTarjetasExpandidas] = useState<Record<string, boolean>>({});
   const [padreReporteModal, setPadreReporteModal] = useState<PadreFiadoResumen | null>(null);
+  const [mostrarReporteGlobal, setMostrarReporteGlobal] = useState(false);
 
   // Confirmación de pago / liquidación
   const [confirmacion, setConfirmacion] = useState<{
@@ -155,7 +157,7 @@ export default function FiadoPage() {
     }));
   };
 
-  // Generar y enviar mensaje de cobro por WhatsApp
+  // Generar y enviar mensaje de cobro por WhatsApp organizado por hijo
   const enviarCobroWhatsApp = (padre: PadreFiadoResumen) => {
     const telefonoLimpio = padre.telefono.replace(/\D/g, '');
     const telefonoFinal = telefonoLimpio.startsWith('51')
@@ -164,28 +166,121 @@ export default function FiadoPage() {
 
     const pedidosPendientes = padre.pedidos.filter((p) => p.estadoPago !== 'PAGADO');
 
-    // Desglose de almuerzos por fecha e hijo
-    const lineasDetalle = pedidosPendientes
-      .map((p) => {
-        const entregaTag =
-          p.estadoPedido === 'ENTREGADO' ? '✓ Entregado' : '⏳ En preparación';
-        return `  • ${p.fecha} - ${p.estudianteNombre} (${p.gradoSeccion}):\n    ${p.entradaNombre ? `${p.entradaNombre} + ` : ''}${p.segundoNombre} [S/ ${(p.monto || 12).toFixed(2)}] (${entregaTag})`;
+    // Desglose agrupado por cada hijo
+    const porHijo: Record<string, ItemFiadoPedido[]> = {};
+    pedidosPendientes.forEach((p) => {
+      if (!porHijo[p.estudianteNombre]) porHijo[p.estudianteNombre] = [];
+      porHijo[p.estudianteNombre].push(p);
+    });
+
+    const bloquesHijos = Object.entries(porHijo)
+      .map(([hijo, peds]) => {
+        const subtotal = peds.reduce((acc, p) => acc + (p.monto || 12), 0);
+        const grado = peds[0]?.gradoSeccion ? ` (${peds[0].gradoSeccion})` : '';
+        const filas = peds
+          .map((p) => {
+            const entregaTag =
+              p.estadoPedido === 'ENTREGADO' ? '✓ Entregado' : '⏳ Pendiente';
+            return `    • ${p.fecha}: ${p.entradaNombre ? `${p.entradaNombre} + ` : ''}${p.segundoNombre} [S/ ${(p.monto || 12).toFixed(2)}] (${entregaTag})`;
+          })
+          .join('\n');
+        return `👦 *${hijo}*${grado} - Subtotal: S/ ${subtotal.toFixed(2)}:\n${filas}`;
       })
-      .join('\n');
+      .join('\n\n');
 
     const mensaje =
       `Hola *${padre.nombrePadre}*, le saludamos de *Placeres Culinarios* (${padre.colegioNombre}).\n\n` +
-      `Le compartimos el estado de cuenta de sus almuerzos bajo la modalidad *"Pagar luego / Fiado"*:\n\n` +
-      `📋 *Detalle de almuerzos pendientes (${pedidosPendientes.length}):*\n` +
-      `${lineasDetalle}\n\n` +
+      `Le compartimos el estado de cuenta detallado de sus almuerzos bajo la modalidad *"Pagar luego / Fiado"*:\n\n` +
+      `📋 *Detalle por Estudiante (${pedidosPendientes.length} almuerzos pendientes):*\n\n` +
+      `${bloquesHijos}\n\n` +
       `💰 *Total pendiente de pago: S/ ${padre.totalDeuda.toFixed(2)}*\n\n` +
       `Puede realizar su abono a través de:\n` +
       `• *Yape / Plin:* 999-999-999 (Placeres Culinarios)\n` +
-      `• O cancelarlo directamente en el módulo de atención.\n\n` +
+      `• O cancelarlo directamente en el módulo de atención escolar.\n\n` +
       `Agradecemos enviar su comprobante por este medio para registrar su abono. ¡Muchas gracias!`;
 
     const url = `https://wa.me/${telefonoFinal}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
+  };
+
+  // Exportar Reporte Global a Excel
+  const exportarReporteGlobalExcel = () => {
+    const colStr = colegioFiltro === 'TODOS' ? 'Todos los Colegios' : colegioFiltro;
+    const filasHtml = fiadosFiltrados
+      .map((p, idx) => {
+        const hijosStr = p.hijosNombres.join(', ');
+        const totalPeds = p.pedidos.length;
+        const pendPeds = p.pedidos.filter((ped) => ped.estadoPago !== 'PAGADO').length;
+        const entregadosSinCobrar = p.pedidos.filter(
+          (ped) => ped.estadoPedido === 'ENTREGADO' && ped.estadoPago !== 'PAGADO'
+        ).length;
+        return `
+        <tr>
+          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${idx + 1}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${p.nombrePadre}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 6px;">${p.telefono || 'Sin teléfono'}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 6px;">${p.colegioNombre}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 6px;">${hijosStr}</td>
+          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${totalPeds} (${pendPeds} pend / ${entregadosSinCobrar} entregados)</td>
+          <td style="text-align: right; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; color: #b45309;">S/ ${p.totalDeuda.toFixed(2)}</td>
+        </tr>
+      `;
+      })
+      .join('');
+
+    const excelHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; font-size: 11pt; }
+          table { border-collapse: collapse; width: 100%; }
+          th { background-color: #d97706; color: #ffffff; font-weight: bold; text-align: left; padding: 8px; border: 1px solid #b45309; }
+        </style>
+      </head>
+      <body>
+        <h2 style="color: #92400e; margin-bottom: 2px;">REPORTE GLOBAL DE FIADOS / PAGAR LUEGO - PLACERES CULINARIOS</h2>
+        <p style="color: #475569; margin-top: 0; margin-bottom: 12px;">
+          <strong>Institución:</strong> ${colStr} &nbsp;|&nbsp;
+          <strong>Emisión:</strong> ${formatearFechaEmisionPeru()} &nbsp;|&nbsp;
+          <strong>Familias con Deuda:</strong> ${totalFamiliasConDeuda} &nbsp;|&nbsp;
+          <strong>Total Deuda Acumulada:</strong> S/ ${totalDeudaGlobal.toFixed(2)}
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">N°</th>
+              <th style="width: 220px;">Padre de Familia</th>
+              <th style="width: 120px;">Teléfono</th>
+              <th style="width: 180px;">Colegio</th>
+              <th style="width: 220px;">Hijos</th>
+              <th style="width: 180px; text-align: center;">Almuerzos Fiados</th>
+              <th style="width: 130px; text-align: right;">Deuda Pendiente</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filasHtml}
+          </tbody>
+          <tfoot>
+            <tr style="font-weight: bold; background-color: #fef3c7;">
+              <td colspan="6" style="text-align: right; border: 1px solid #cbd5e1; padding: 8px;">TOTAL GENERAL ADEUDADO:</td>
+              <td style="text-align: right; border: 1px solid #cbd5e1; padding: 8px; font-weight: bold; color: #b45309;">S/ ${totalDeudaGlobal.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Reporte_Global_Fiados_${colStr.replace(/\s+/g, '_')}_${obtenerFechaHoyPeru()}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Acción: Marcar un almuerzo individual como pagado
@@ -299,7 +394,25 @@ export default function FiadoPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto print:hidden">
+          <button
+            type="button"
+            onClick={() => setMostrarReporteGlobal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-2xl shadow-xs transition cursor-pointer"
+            title="Ver e imprimir el reporte general de todas las familias y fiados"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Reporte Global</span>
+          </button>
+          <button
+            type="button"
+            onClick={exportarReporteGlobalExcel}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl shadow-xs transition cursor-pointer"
+            title="Descargar listado global de fiados en Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Excel</span>
+          </button>
           <Link
             href="/despacho"
             className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-2xl shadow-xs transition"
@@ -730,6 +843,157 @@ export default function FiadoPage() {
         </div>
       )}
 
+      {/* MODAL DE REPORTE GLOBAL DE FIADOS */}
+      {mostrarReporteGlobal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-4xl rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto">
+            {/* Cabecera del Reporte Global */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-200">
+              <div>
+                <span className="text-[10px] font-black uppercase text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-md">
+                  Reporte General de Cobranza • Placeres Culinarios
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
+                  Reporte Global de Fiados (Pagar luego)
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  {colegioFiltro === 'TODOS' ? 'Todos los Colegios' : colegioFiltro} • Emisión: {formatearFechaEmisionPeru()}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMostrarReporteGlobal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer print:hidden"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Métricas Resumen */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200">
+                <span className="text-[10px] font-bold text-amber-800 uppercase block">Deuda Total</span>
+                <span className="text-xl font-black text-amber-700">S/ {totalDeudaGlobal.toFixed(2)}</span>
+              </div>
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                <span className="text-[10px] font-bold text-slate-600 uppercase block">Familias Deudoras</span>
+                <span className="text-xl font-black text-slate-900">{totalFamiliasConDeuda}</span>
+              </div>
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                <span className="text-[10px] font-bold text-slate-600 uppercase block">Almuerzos Fiados</span>
+                <span className="text-xl font-black text-slate-900">{totalAlmuerzosFiados}</span>
+              </div>
+              <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200">
+                <span className="text-[10px] font-bold text-emerald-800 uppercase block">Entregados sin Cobrar</span>
+                <span className="text-xl font-black text-emerald-700">{totalEntregadosSinCobrar}</span>
+              </div>
+            </div>
+
+            {/* Tabla Global */}
+            <div className="border border-slate-200 rounded-2xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-[11px]">
+                    <th className="py-2.5 px-3 text-center">N°</th>
+                    <th className="py-2.5 px-3">Padre de Familia</th>
+                    <th className="py-2.5 px-3">Hijos</th>
+                    <th className="py-2.5 px-3">Institución</th>
+                    <th className="py-2.5 px-3 text-center">Almuerzos</th>
+                    <th className="py-2.5 px-3 text-right">Deuda</th>
+                    <th className="py-2.5 px-3 text-center print:hidden">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {fiadosFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-slate-400">
+                        No hay registros de fiados en esta selección.
+                      </td>
+                    </tr>
+                  ) : (
+                    fiadosFiltrados.map((p, idx) => (
+                      <tr key={p.padreId || p.telefono || idx} className="hover:bg-slate-50/80">
+                        <td className="py-2.5 px-3 text-center font-bold text-slate-500">{idx + 1}</td>
+                        <td className="py-2.5 px-3 font-bold text-slate-900">
+                          {p.nombrePadre}
+                          {p.telefono && <span className="block text-[10px] text-slate-400 font-normal">Tel: {p.telefono}</span>}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-700">
+                          {p.hijosNombres.join(', ')}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-600 text-[11px]">
+                          {p.colegioNombre}
+                        </td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <span className="font-semibold text-slate-800">{p.pedidos.filter(ped => ped.estadoPago !== 'PAGADO').length} pend</span>
+                          <span className="text-[10px] text-slate-400 block">de {p.totalPedidos} total</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-black text-amber-700 whitespace-nowrap">
+                          S/ {p.totalDeuda.toFixed(2)}
+                        </td>
+                        <td className="py-2.5 px-3 text-center print:hidden whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMostrarReporteGlobal(false);
+                              setPadreReporteModal(p);
+                            }}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer"
+                          >
+                            Ver detalle
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-amber-50 font-black border-t border-amber-200 text-xs">
+                    <td colSpan={5} className="py-3 px-3 text-right text-amber-900 uppercase">
+                      Total Global Adeudado:
+                    </td>
+                    <td className="py-3 px-3 text-right text-sm text-amber-700">
+                      S/ {totalDeudaGlobal.toFixed(2)}
+                    </td>
+                    <td className="print:hidden"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* Acciones */}
+            <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-2 print:hidden border-t border-slate-100">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <Printer className="w-4 h-4 text-slate-500" />
+                  <span>Imprimir Reporte</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={exportarReporteGlobalExcel}
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Exportar Excel</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMostrarReporteGlobal(false)}
+                className="w-full sm:w-auto px-5 py-2.5 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL DE REPORTE DETALLADO / ESTADO DE CUENTA FAMILIAR */}
       {padreReporteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -756,11 +1020,11 @@ export default function FiadoPage() {
               </button>
             </div>
 
-            {/* Datos del Apoderado y Estudiantes */}
+            {/* Datos del Padre de Familia y Estudiantes */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
                 <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">
-                  Apoderado / Padre:
+                  Padre de Familia:
                 </span>
                 <span className="font-black text-slate-900 text-sm block">
                   {padreReporteModal.nombrePadre}
@@ -784,81 +1048,100 @@ export default function FiadoPage() {
               </div>
             </div>
 
-            {/* Tabla Detallada con Fecha de Cada Hijo */}
-            <div className="space-y-2">
+            {/* Desglose Cronológico Agrupado por Hijo */}
+            <div className="space-y-3">
               <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                Detalle Cronológico de Almuerzos:
+                Detalle Cronológico por Estudiante:
               </h4>
-              <div className="border border-slate-200 rounded-2xl overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-[11px]">
-                      <th className="py-2.5 px-3">Fecha</th>
-                      <th className="py-2.5 px-3">Estudiante</th>
-                      <th className="py-2.5 px-3">Platos (Sopa o postre + Segundo)</th>
-                      <th className="py-2.5 px-3 text-center">Entrega</th>
-                      <th className="py-2.5 px-3 text-right">Monto</th>
-                      <th className="py-2.5 px-3 text-center">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {padreReporteModal.pedidos.map((ped) => (
-                      <tr key={ped.id}>
-                        <td className="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
-                          {ped.fecha}
-                        </td>
-                        <td className="py-2.5 px-3 font-bold text-slate-900">
-                          {ped.estudianteNombre}
-                          <span className="block text-[10px] font-normal text-slate-500">
-                            {ped.gradoSeccion}
+
+              {(() => {
+                const porHijo: Record<string, ItemFiadoPedido[]> = {};
+                padreReporteModal.pedidos.forEach((ped) => {
+                  if (!porHijo[ped.estudianteNombre]) porHijo[ped.estudianteNombre] = [];
+                  porHijo[ped.estudianteNombre].push(ped);
+                });
+
+                return Object.entries(porHijo).map(([hijoNombre, pedidosHijo]) => {
+                  const subtotalHijo = pedidosHijo
+                    .filter((p) => p.estadoPago !== 'PAGADO')
+                    .reduce((acc, p) => acc + (p.monto || 12), 0);
+                  const grado = pedidosHijo[0]?.gradoSeccion;
+
+                  return (
+                    <div key={hijoNombre} className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                      <div className="bg-slate-100 px-3.5 py-2 flex items-center justify-between border-b border-slate-200">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-lg bg-orange-100 text-orange-700 font-bold text-xs flex items-center justify-center">
+                            👦
                           </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-slate-700">
-                          <span className="block">
-                            {ped.entradaNombre ? `${ped.entradaNombre} + ` : ''}
-                            {ped.segundoNombre}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                          {ped.estadoPedido === 'ENTREGADO' ? (
-                            <span className="text-[10px] font-bold text-emerald-700">
-                              ✓ Entregado {ped.horaEntrega ? `(${ped.horaEntrega})` : ''}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-medium text-slate-500">
-                              Pendiente
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-black text-slate-900 whitespace-nowrap">
-                          S/ {(ped.monto || 12).toFixed(2)}
-                        </td>
-                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                          {ped.estadoPago === 'PAGADO' ? (
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">
-                              PAGADO
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 bg-amber-100 text-amber-900 rounded font-bold text-[10px]">
-                              PENDIENTE
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-slate-50 font-black border-t border-slate-200">
-                      <td colSpan={4} className="py-3 px-3 text-right text-slate-700 uppercase">
-                        Total Adeudado:
-                      </td>
-                      <td className="py-3 px-3 text-right text-base text-amber-600">
-                        S/ {padreReporteModal.totalDeuda.toFixed(2)}
-                      </td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
-                </table>
+                          <div>
+                            <span className="font-black text-slate-900 text-xs">{hijoNombre}</span>
+                            {grado && <span className="text-[10px] text-slate-500 font-medium ml-2">({grado})</span>}
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-black text-amber-700">
+                          Deuda hijo: S/ {subtotalHijo.toFixed(2)}
+                        </span>
+                      </div>
+
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-[10px]">
+                            <th className="py-2 px-3">Fecha</th>
+                            <th className="py-2 px-3">Platos (Sopa o postre + Segundo)</th>
+                            <th className="py-2 px-3 text-center">Entrega</th>
+                            <th className="py-2 px-3 text-right">Monto</th>
+                            <th className="py-2 px-3 text-center">Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-[11px]">
+                          {pedidosHijo.map((ped) => (
+                            <tr key={ped.id}>
+                              <td className="py-2 px-3 font-semibold text-slate-800 whitespace-nowrap">
+                                {ped.fecha}
+                              </td>
+                              <td className="py-2 px-3 text-slate-700">
+                                {ped.entradaNombre ? `${ped.entradaNombre} + ` : ''}
+                                {ped.segundoNombre}
+                              </td>
+                              <td className="py-2 px-3 text-center whitespace-nowrap">
+                                {ped.estadoPedido === 'ENTREGADO' ? (
+                                  <span className="text-[10px] font-bold text-emerald-700">
+                                    ✓ Entregado {ped.horaEntrega ? `(${ped.horaEntrega})` : ''}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-medium text-slate-500">
+                                    Pendiente
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-2 px-3 text-right font-black text-slate-900 whitespace-nowrap">
+                                S/ {(ped.monto || 12).toFixed(2)}
+                              </td>
+                              <td className="py-2 px-3 text-center whitespace-nowrap">
+                                {ped.estadoPago === 'PAGADO' ? (
+                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">
+                                    PAGADO
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 bg-amber-100 text-amber-900 rounded font-bold text-[10px]">
+                                    PENDIENTE
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                });
+              })()}
+
+              {/* Totalizador de la familia */}
+              <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 flex items-center justify-between text-xs">
+                <span className="font-bold text-amber-900 uppercase">Total Adeudado Familiar:</span>
+                <span className="text-lg font-black text-amber-700">S/ {padreReporteModal.totalDeuda.toFixed(2)}</span>
               </div>
             </div>
 

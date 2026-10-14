@@ -1,4 +1,4 @@
-export type TipoPlato = 'ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE';
+export type TipoPlato = 'ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE' | 'REFRIGERIO' | string;
 
 export type DiaSemana = 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES';
 
@@ -14,6 +14,7 @@ export interface Hijo {
   id: string;
   padreId: string;
   nombreCompleto: string;
+  colegioId?: string;
   colegioNombre: string;
   gradoSeccion: string;
   alergiasNotas?: string;
@@ -27,6 +28,7 @@ export interface UsuarioPadre {
   telefono: string;
   email?: string;
   rol: RolUsuario;
+  colegioId?: string;
   colegioNombre?: string; // Colegio asignado si es un Administrador de sede específica
   hijos: Hijo[];
 }
@@ -53,7 +55,8 @@ export interface ColegioDetallado {
 export interface Plato {
   id: string;
   menuId?: string;
-  colegioNombre?: string; // Colegio asignado si el menú es independiente por institución
+  colegioId?: string; // ID único del colegio para independencia estricta
+  colegioNombre?: string; // Nombre del colegio
   diaSemana: DiaSemana;
   tipo: TipoPlato;
   nombre: string;
@@ -80,13 +83,16 @@ export interface Pedido {
   fecha: string;
   diaSemana?: string;
   padreId?: string;
+  padreNombre?: string;
   hijoId?: string;
+  colegioId?: string;
   colegioNombre: string;
   gradoSeccion: string;
   estudianteNombre: string;
   telefonoContacto: string;
   entradaNombre: string;
   segundoNombre: string;
+  refrigerioNombre?: string;
   observacion?: string;
   metodoPago: MetodoPago;
   estadoPago: EstadoPago;

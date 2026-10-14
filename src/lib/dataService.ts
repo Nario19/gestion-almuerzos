@@ -318,6 +318,25 @@ function mapearPedidoDesdeSupabase(d: any, mapLocal: Record<string, string>): Pe
       obs = obs.replace(/\s*•?\s*\[Entregado:\s*[^\]]+\]/, '').trim() || undefined;
     }
   }
+
+  let padreNombre = d.padre_nombre || undefined;
+  if (obs && obs.includes('[Padre:')) {
+    const matchPadre = obs.match(/\[Padre:\s*([^\]]+)\]/);
+    if (matchPadre) {
+      padreNombre = matchPadre[1].trim();
+      obs = obs.replace(/\s*•?\s*\[Padre:\s*[^\]]+\]/, '').trim() || undefined;
+    }
+  }
+
+  let colegioId = d.colegio_id || undefined;
+  if (obs && obs.includes('[ColegioId:')) {
+    const matchColId = obs.match(/\[ColegioId:\s*([^\]]+)\]/);
+    if (matchColId) {
+      colegioId = matchColId[1].trim();
+      obs = obs.replace(/\s*•?\s*\[ColegioId:\s*[^\]]+\]/, '').trim() || undefined;
+    }
+  }
+
   // Normalización defensiva de fecha según la zona horaria de Perú (America/Lima)
   const fechaNormalizada = d.created_at
     ? obtenerFechaPeruDeIso(d.created_at)
@@ -329,7 +348,9 @@ function mapearPedidoDesdeSupabase(d: any, mapLocal: Record<string, string>): Pe
     fecha: fechaNormalizada,
     diaSemana: d.dia_semana,
     padreId: d.padre_id,
+    padreNombre: padreNombre || undefined,
     hijoId: d.hijo_id,
+    colegioId,
     colegioNombre: d.colegio_nombre,
     gradoSeccion: d.grado_seccion,
     estudianteNombre: d.estudiante_nombre,
@@ -348,9 +369,15 @@ function mapearPedidoDesdeSupabase(d: any, mapLocal: Record<string, string>): Pe
 }
 
 function mapearPlatoDesdeSupabase(d: any): Plato {
-  let colegioNombre: string | undefined = undefined;
+  let colegioNombre: string | undefined = d.colegio_nombre || undefined;
+  let colegioId: string | undefined = d.colegio_id || undefined;
   let descLimpia = d.descripcion || '';
   if (descLimpia) {
+    const matchId = descLimpia.match(/\[ColegioId:\s*([^\]]+)\]/);
+    if (matchId) {
+      colegioId = matchId[1].trim();
+      descLimpia = descLimpia.replace(/\s*\[ColegioId:\s*[^\]]+\]/, '').trim();
+    }
     const match = descLimpia.match(/\[Colegio:\s*([^\]]+)\]/);
     if (match) {
       colegioNombre = match[1].trim();
@@ -360,6 +387,7 @@ function mapearPlatoDesdeSupabase(d: any): Plato {
   return {
     id: d.id,
     menuId: d.menu_id,
+    colegioId,
     colegioNombre,
     diaSemana: d.dia_semana,
     tipo: d.tipo,
@@ -374,6 +402,7 @@ function mapearPlatoDesdeSupabase(d: any): Plato {
 
 export const dataService = {
   async obtenerPlatosPorDia(dia: DiaSemana, colegioNombre?: string): Promise<Plato[]> {
+    const colegioIdONombre = colegioNombre;
     let platos: Plato[] = [];
     if (isSupabaseConfigured && supabase) {
       try {
@@ -394,22 +423,20 @@ export const dataService = {
       platos = platosMemoria.filter((p) => p.diaSemana === dia);
     }
 
-    if (!colegioNombre || colegioNombre === 'TODOS') {
+    if (!colegioIdONombre || colegioIdONombre === 'TODOS') {
       return platos;
     }
 
-    // Filtrar platos del colegio solicitado
+    // Filtrar platos estrictamente por Colegio ID o Nombre para independencia total
+    const target = colegioIdONombre.toLowerCase().trim();
     const platosColegio = platos.filter(
-      (p) => p.colegioNombre && p.colegioNombre.toLowerCase() === colegioNombre.toLowerCase()
+      (p) =>
+        (p.colegioId && p.colegioId.toLowerCase().trim() === target) ||
+        (p.colegioNombre && p.colegioNombre.toLowerCase().trim() === target)
     );
 
-    // Si el colegio tiene platos propios configurados para este día, devolverlos
-    if (platosColegio.length > 0) {
-      return platosColegio;
-    }
-
-    // Si no tiene platos propios para este día, devolver la carta general (platos sin colegio)
-    return platos.filter((p) => !p.colegioNombre);
+    // Cada colegio es independiente: sólo devuelve platos de ese colegio
+    return platosColegio;
   },
 
   async agregarPlato(platoData: Omit<Plato, 'id'>): Promise<Plato> {
@@ -419,8 +446,11 @@ export const dataService = {
     };
 
     let descFinal = nuevoPlato.descripcion || '';
+    if (nuevoPlato.colegioId) {
+      descFinal = `[ColegioId: ${nuevoPlato.colegioId}] ${descFinal}`.trim();
+    }
     if (nuevoPlato.colegioNombre && nuevoPlato.colegioNombre !== 'TODOS') {
-      descFinal = descFinal ? `${descFinal} [Colegio: ${nuevoPlato.colegioNombre}]` : `[Colegio: ${nuevoPlato.colegioNombre}]`;
+      descFinal = `${descFinal} [Colegio: ${nuevoPlato.colegioNombre}]`.trim();
     }
 
     if (isSupabaseConfigured && supabase) {
@@ -546,6 +576,14 @@ export const dataService = {
       createdAt: new Date().toISOString(),
     };
 
+    let obsCompleta = nuevo.observacion || '';
+    if (nuevo.padreNombre) {
+      obsCompleta = obsCompleta ? `${obsCompleta} • [Padre: ${nuevo.padreNombre}]` : `[Padre: ${nuevo.padreNombre}]`;
+    }
+    if (nuevo.colegioId) {
+      obsCompleta = `${obsCompleta} • [ColegioId: ${nuevo.colegioId}]`;
+    }
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -563,7 +601,7 @@ export const dataService = {
               telefono_contacto: nuevo.telefonoContacto,
               entrada_nombre: nuevo.entradaNombre,
               segundo_nombre: nuevo.segundoNombre,
-              observacion: nuevo.observacion,
+              observacion: obsCompleta || null,
               metodo_pago: nuevo.metodoPago,
               estado_pago: nuevo.estadoPago,
               estado_pedido: nuevo.estadoPedido,
@@ -711,7 +749,7 @@ export const dataService = {
     todosLosPedidos.forEach((p) => {
       const clave = p.padreId || p.telefonoContacto || p.estudianteNombre;
       const datosPadre = p.padreId && mapaPadres[p.padreId] ? mapaPadres[p.padreId] : null;
-      const nombrePadre = datosPadre?.nombre || (p.padreId ? `Padre de ${p.estudianteNombre}` : `Apoderado (${p.estudianteNombre})`);
+      const nombrePadre = p.padreNombre || datosPadre?.nombre || `Padre de ${p.estudianteNombre}`;
       const telefono = datosPadre?.telefono || p.telefonoContacto || '';
 
       if (!gruposMap.has(clave)) {

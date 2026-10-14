@@ -65,10 +65,17 @@ export default function DespachoPage() {
   useEffect(() => {
     if (!esAdmin) return;
     cargarDatos();
+    // Auto-actualización periódica continua cada 4 segundos para reflejar nuevos pedidos al instante
+    const intervalo = setInterval(() => {
+      cargarDatos();
+    }, 4000);
     const desuscribir = dataService.suscribirCambios(() => {
       cargarDatos();
     });
-    return () => desuscribir();
+    return () => {
+      clearInterval(intervalo);
+      desuscribir();
+    };
   }, [esAdmin]);
 
   // Reiniciar a página 1 cuando cambia algún filtro
@@ -209,9 +216,10 @@ export default function DespachoPage() {
           }</td>
           <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${horaPedido}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px;">${gradoSeccionDetalle}</td>
-          <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${
-            p.estudianteNombre
-          }</td>
+          <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
+            ${p.estudianteNombre}
+            ${p.padreNombre ? `<br><span style="font-size: 10px; color: #475569; font-weight: normal;">Padre: ${p.padreNombre}</span>` : ''}
+          </td>
           <td style="border: 1px solid #cbd5e1; padding: 6px;">${pedidoDetalle}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; ${
             p.estadoPago === 'PAGADO' ? 'color: #047857;' : 'color: #b91c1c;'
@@ -603,6 +611,11 @@ export default function DespachoPage() {
                             <div className="font-black text-slate-900 text-xs sm:text-sm">
                               {p.estudianteNombre}
                             </div>
+                            {p.padreNombre && (
+                              <div className="text-[11px] text-slate-700 font-bold mt-0.5 flex items-center gap-1">
+                                <span className="text-slate-400 font-normal">Padre:</span> {p.padreNombre}
+                              </div>
+                            )}
                             {p.telefonoContacto && (
                               <div className="text-[11px] text-slate-400 font-medium mt-0.5">
                                 Tel: {p.telefonoContacto}
