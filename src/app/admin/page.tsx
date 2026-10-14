@@ -98,16 +98,31 @@ export default function AdminPage() {
   const [observaciones, setObservaciones] = useState<string[]>([]);
   const [nuevaObservacion, setNuevaObservacion] = useState('');
 
-  const cargarPlatos = async (dia: DiaSemana) => {
+  // Colegio activo para el menú
+  const [colegioMenuSeleccionado, setColegioMenuSeleccionado] = useState<string>(
+    !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : 'TODOS'
+  );
+
+  const cargarPlatos = async (dia: DiaSemana, colOverride?: string) => {
     setCargando(true);
-    const data = await dataService.obtenerPlatosPorDia(dia);
+    const colActivo = colOverride !== undefined ? colOverride : colegioMenuSeleccionado;
+    const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colActivo !== 'TODOS' ? colActivo : undefined);
+    const data = await dataService.obtenerPlatosPorDia(dia, colFiltro);
     setPlatos(data);
     setCargando(false);
   };
 
   useEffect(() => {
+    if (!esSuperAdmin && usuario?.colegioNombre) {
+      setColegioMenuSeleccionado(usuario.colegioNombre);
+    }
+  }, [usuario, esSuperAdmin]);
+
+  useEffect(() => {
     if (esAdmin) {
-      cargarPlatos(diaActivo);
+      cargarPlatos(diaActivo, colegioMenuSeleccionado);
       dataService.obtenerColegios().then(setColegios);
       dataService.obtenerGrados().then(setGrados);
       dataService.obtenerObservaciones().then(setObservaciones);
@@ -121,7 +136,7 @@ export default function AdminPage() {
       });
       return () => desuscribir();
     }
-  }, [diaActivo, esAdmin]);
+  }, [diaActivo, esAdmin, colegioMenuSeleccionado, usuario?.colegioNombre, esSuperAdmin]);
 
   const handleAgregarColegio = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,6 +240,10 @@ export default function AdminPage() {
     e.preventDefault();
     if (!nombreNuevo.trim()) return;
 
+    const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
     const nuevo = await dataService.agregarPlato({
       diaSemana: diaActivo,
       tipo: tipoNuevo,
@@ -234,6 +253,7 @@ export default function AdminPage() {
       imagenUrl: imagenUrlNueva || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
       disponible: true,
       orden: platos.length + 1,
+      colegioNombre: colFiltro,
     });
 
     setPlatos((prev) => [...prev, nuevo]);
@@ -857,6 +877,51 @@ export default function AdminPage() {
 
       {tabActiva === 'menu' && (
         <>
+          {/* SELECTOR DE SEDE ESCOLAR PARA EL MENÚ */}
+          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-orange-500" />
+                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                  Colegio del Menú:
+                </span>
+              </div>
+              {!esSuperAdmin && usuario?.colegioNombre ? (
+                <span className="text-xs font-black bg-orange-500 text-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center gap-1.5">
+                  🏫 Sede Asignada: {usuario.colegioNombre}
+                </span>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setColegioMenuSeleccionado('TODOS')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                      colegioMenuSeleccionado === 'TODOS'
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    General (Todos)
+                  </button>
+                  {colegios.map((col) => (
+                    <button
+                      key={col}
+                      type="button"
+                      onClick={() => setColegioMenuSeleccionado(col)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        colegioMenuSeleccionado === col
+                          ? 'bg-orange-500 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {col}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
           <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -908,7 +973,7 @@ export default function AdminPage() {
                       : 'border-slate-200 text-slate-600'
                   }`}
                 >
-                  Entrada
+                  Sopa o postre
                 </button>
                 <button
                   type="button"
@@ -993,17 +1058,17 @@ export default function AdminPage() {
 
         {/* COLUMNA 2 Y 3: LISTA DE PLATOS DEL DÍA CON FOTOS */}
         <div className="lg:col-span-2 space-y-6">
-          {/* ENTRADAS */}
+          {/* SOPAS O POSTRES */}
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
               <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
                 <Utensils className="w-4 h-4 text-orange-500" />
-                Entradas de {diaActivo} ({entradas.length})
+                Sopas o Postres de {diaActivo} ({entradas.length})
               </h3>
             </div>
 
             {entradas.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">No hay entradas para este día.</p>
+              <p className="text-xs text-slate-400 py-4 text-center">No hay sopas o postres para este día.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {entradas.map((plato) => (
@@ -1030,9 +1095,16 @@ export default function AdminPage() {
                       </button>
                     </div>
                     <div className="p-3">
-                      <h4 className="text-xs font-black text-slate-900">{plato.nombre}</h4>
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <h4 className="text-xs font-black text-slate-900">{plato.nombre}</h4>
+                        {plato.colegioNombre && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-800 text-[9px] font-bold shrink-0">
+                            {plato.colegioNombre}
+                          </span>
+                        )}
+                      </div>
                       {plato.descripcion && (
-                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{plato.descripcion}</p>
+                        <p className="text-[11px] text-slate-500 line-clamp-2">{plato.descripcion}</p>
                       )}
                     </div>
                   </div>
@@ -1081,9 +1153,16 @@ export default function AdminPage() {
                       </span>
                     </div>
                     <div className="p-3">
-                      <h4 className="text-xs font-black text-slate-900">{plato.nombre}</h4>
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <h4 className="text-xs font-black text-slate-900">{plato.nombre}</h4>
+                        {plato.colegioNombre && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-800 text-[9px] font-bold shrink-0">
+                            {plato.colegioNombre}
+                          </span>
+                        )}
+                      </div>
                       {plato.descripcion && (
-                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{plato.descripcion}</p>
+                        <p className="text-[11px] text-slate-500 line-clamp-2">{plato.descripcion}</p>
                       )}
                     </div>
                   </div>

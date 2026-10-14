@@ -67,6 +67,12 @@ export default function CocinaPage() {
   };
 
   useEffect(() => {
+    if (!esSuperAdmin && usuario?.colegioNombre) {
+      setColegioFiltro(usuario.colegioNombre);
+    }
+  }, [usuario, esSuperAdmin]);
+
+  useEffect(() => {
     if (!esAdmin) return;
     cargarDatos();
 
@@ -336,7 +342,7 @@ export default function CocinaPage() {
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
             <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
               <Utensils className="w-5 h-5 text-orange-500" />
-              Consolidado de Entradas
+              Consolidado de Sopas o Postres
             </h2>
             <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 text-orange-700 rounded-xl">
               {resumen.entradas.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
@@ -346,7 +352,7 @@ export default function CocinaPage() {
           <div className="space-y-3">
             {resumen.entradas.length === 0 ? (
               <p className="text-xs text-slate-400 text-center py-6">
-                No hay pedidos de entrada para {formatearFechaLegible(fechaFiltro)}.
+                No hay pedidos de sopas o postres para {formatearFechaLegible(fechaFiltro)}.
               </p>
             ) : (
               resumen.entradas.map((item) => (

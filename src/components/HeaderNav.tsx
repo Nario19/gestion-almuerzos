@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   BarChart3,
   Building2,
+  Receipt,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
@@ -31,8 +32,9 @@ export default function HeaderNav() {
   const adminNavItems = [
     ...(esSuperAdmin ? [{ href: '/superadmin', label: 'Colegios', icon: Building2 }] : []),
     { href: '/admin', label: 'Admin', icon: BarChart3 },
-    { href: '/despacho', label: 'Despacho', icon: PackageCheck },
     { href: '/cocina', label: 'Cocina', icon: ChefHat },
+    { href: '/fiado', label: 'Fiado', icon: Receipt },
+    { href: '/despacho', label: 'Despacho', icon: PackageCheck },
   ];
 
   return (

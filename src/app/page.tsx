@@ -153,13 +153,15 @@ function PedidoContent() {
     }
   }, [esAdmin]);
 
-  // Cargar platos cuando cambia el día
+  // Cargar platos cuando cambia el día o el colegio del hijo seleccionado
   useEffect(() => {
     if (esAdmin) return; // El admin no necesita cargar el formulario de compra
     let montado = true;
     setCargandoPlatos(true);
 
-    dataService.obtenerPlatosPorDia(diaSeleccionado).then((platos) => {
+    const colegioFiltro = hijoSeleccionado?.colegioNombre || colegio || undefined;
+
+    dataService.obtenerPlatosPorDia(diaSeleccionado, colegioFiltro).then((platos) => {
       if (!montado) return;
       setPlatosDelDia(platos);
       setCargandoPlatos(false);
@@ -173,7 +175,7 @@ function PedidoContent() {
     return () => {
       montado = false;
     };
-  }, [diaSeleccionado, esAdmin]);
+  }, [diaSeleccionado, esAdmin, hijoSeleccionado?.colegioNombre, colegio]);
 
   // Si el usuario tiene hijos o viene por parámetro URL
   useEffect(() => {
@@ -553,7 +555,7 @@ function PedidoContent() {
               </span>
             </div>
             <div className="flex justify-between pb-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Entrada:</span>
+              <span className="text-slate-500">Sopa o postre:</span>
               <span className="font-semibold text-orange-700">{pedidoCompletado.entradaNombre}</span>
             </div>
             <div className="flex justify-between pb-1.5 border-b border-slate-200">
@@ -890,20 +892,20 @@ function PedidoContent() {
       {/* FORMULARIO */}
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* 1. ENTRADAS */}
+        {/* 1. SOPAS O POSTRES */}
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
               <Utensils className="w-4 h-4 text-orange-500" />
-              1. Entrada ({diaSeleccionado})
+              1. Sopa o postre ({diaSeleccionado})
             </h2>
-            <span className="text-[11px] font-semibold text-slate-500">Incluida</span>
+            <span className="text-[11px] font-semibold text-slate-500">Incluido</span>
           </div>
 
           {cargandoPlatos ? (
             <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
           ) : entradas.length === 0 ? (
-            <p className="text-xs text-slate-400 py-3 text-center">No hay entradas registradas para este día.</p>
+            <p className="text-xs text-slate-400 py-3 text-center">No hay sopas o postres registrados para este día.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {entradas.map((plato) => {
@@ -1030,15 +1032,17 @@ function PedidoContent() {
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-3">
-            {(['Yape', 'Plin', 'Efectivo'] as MetodoPago[]).map((m) => (
+            {(['Yape', 'Plin', 'Pagar luego'] as MetodoPago[]).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMetodoPago(m)}
-                className={`py-2 rounded-xl text-xs font-bold border transition ${
+                className={`py-2 px-1 rounded-xl text-xs font-bold border transition text-center ${
                   metodoPago === m
-                    ? 'border-purple-600 bg-purple-50 text-purple-900'
-                    : 'border-slate-200 bg-white text-slate-600'
+                    ? m === 'Pagar luego'
+                      ? 'border-amber-500 bg-amber-50 text-amber-900 shadow-xs'
+                      : 'border-purple-600 bg-purple-50 text-purple-900 shadow-xs'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 {m}
@@ -1053,25 +1057,38 @@ function PedidoContent() {
             </div>
           )}
 
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1 flex items-center gap-1">
-              <FileImage className="w-3.5 h-3.5 text-slate-400" /> Captura de comprobante (Opcional)
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
-            />
-            {subiendoComprobante && (
-              <p className="text-xs text-orange-600 mt-1 animate-pulse">Optimizando imagen...</p>
-            )}
-            {comprimidoInfo && (
-              <p className="text-[11px] text-emerald-700 mt-1 font-bold">
-                ✓ Comprimido a {comprimidoInfo.compressedSizeKb} KB
+          {metodoPago === 'Pagar luego' && (
+            <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3 mb-3 text-xs text-amber-950">
+              <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                <Clock className="w-4 h-4 text-amber-600" /> Paga al recibir el almuerzo o en fiado
               </p>
-            )}
-          </div>
+              <p className="text-[11px] text-amber-800 mt-1">
+                El estudiante recibirá su almuerzo sin necesidad de comprobante previo. Se registrará en la cuenta de fiados para cancelar luego.
+              </p>
+            </div>
+          )}
+
+          {metodoPago !== 'Pagar luego' && (
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1 flex items-center gap-1">
+                <FileImage className="w-3.5 h-3.5 text-slate-400" /> Captura de comprobante (Opcional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
+              />
+              {subiendoComprobante && (
+                <p className="text-xs text-orange-600 mt-1 animate-pulse">Optimizando imagen...</p>
+              )}
+              {comprimidoInfo && (
+                <p className="text-[11px] text-emerald-700 mt-1 font-bold">
+                  ✓ Comprimido a {comprimidoInfo.compressedSizeKb} KB
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {errorValidacion && (
@@ -1325,7 +1342,7 @@ function PedidoContent() {
 
                 <div className="space-y-2 pt-0.5">
                   <div>
-                    <span className="text-[11px] font-bold text-orange-800 block">1. Entrada seleccionada:</span>
+                    <span className="text-[11px] font-bold text-orange-800 block">1. Sopa o postre seleccionado:</span>
                     <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
                       {entradaSeleccionada}
                     </p>

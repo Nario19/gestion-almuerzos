@@ -2,7 +2,7 @@ export type TipoPlato = 'ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE';
 
 export type DiaSemana = 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES';
 
-export type MetodoPago = 'Yape' | 'Plin' | 'Efectivo' | 'Mensual';
+export type MetodoPago = 'Yape' | 'Plin' | 'Pagar luego' | 'Efectivo' | 'Mensual';
 
 export type EstadoPago = 'PENDIENTE' | 'VERIFICANDO' | 'PAGADO';
 
@@ -53,6 +53,7 @@ export interface ColegioDetallado {
 export interface Plato {
   id: string;
   menuId?: string;
+  colegioNombre?: string; // Colegio asignado si el menú es independiente por institución
   diaSemana: DiaSemana;
   tipo: TipoPlato;
   nombre: string;
@@ -110,9 +111,40 @@ export interface ResumenCocinaItem {
 
 export interface ResumenCocina {
   totalPedidos: number;
-  entradas: ResumenCocinaItem[];
-  segundos: ResumenCocinaItem[];
+  entradas: ResumenCocinaItem[]; // Corresponde a 'Sopa o postre'
+  segundos: ResumenCocinaItem[]; // Corresponde a 'Segundo'
   pedidosConObservacion: number;
   pedidosPendientesPago: number;
   pedidosPagados: number;
 }
+
+export interface ItemFiadoPedido {
+  id: string;
+  codigoPedido: string;
+  fecha: string;
+  diaSemana?: string;
+  hijoId?: string;
+  estudianteNombre: string;
+  gradoSeccion: string;
+  colegioNombre: string;
+  entradaNombre: string; // Sopa o postre
+  segundoNombre: string; // Segundo
+  monto: number;
+  estadoPedido: EstadoPedido;
+  horaEntrega?: string;
+  estadoPago: EstadoPago;
+  createdAt: string;
+}
+
+export interface PadreFiadoResumen {
+  padreId?: string;
+  nombrePadre: string;
+  telefono: string;
+  colegioNombre: string;
+  hijosNombres: string[];
+  totalDeuda: number;
+  totalPedidos: number;
+  pedidosEntregados: number;
+  pedidos: ItemFiadoPedido[];
+}
+

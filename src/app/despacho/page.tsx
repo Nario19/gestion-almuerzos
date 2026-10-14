@@ -16,6 +16,7 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
+  Lock,
 } from 'lucide-react';
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
@@ -42,6 +43,7 @@ export default function DespachoPage() {
   const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [busqueda, setBusqueda] = useState('');
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
+  const [alertaBloqueoEntrega, setAlertaBloqueoEntrega] = useState<string | null>(null);
 
   // Estados de paginación para optimizar y no sobrecargar la vista
   const [paginaActual, setPaginaActual] = useState(1);
@@ -53,6 +55,12 @@ export default function DespachoPage() {
     const cols = await dataService.obtenerColegios();
     if (cols) setColegios(cols);
   };
+
+  useEffect(() => {
+    if (!esSuperAdmin && usuario?.colegioNombre) {
+      setColegioFiltro(usuario.colegioNombre);
+    }
+  }, [usuario, esSuperAdmin]);
 
   useEffect(() => {
     if (!esAdmin) return;
@@ -69,21 +77,28 @@ export default function DespachoPage() {
   }, [fechaFiltro, colegioFiltro, busqueda, porPagina]);
 
   const handleCambiarEstado = async (id: string, nuevoEstado: EstadoPedido) => {
-    await dataService.cambiarEstadoPedido(id, nuevoEstado);
-    // Si el admin pasa directo a ENTREGADO, asegurar que el pago quede como aceptado
+    const pedidoActual = pedidos.find((p) => p.id === id);
+    if (!pedidoActual) return;
+
+    // Regla estricta: Yape y Plin NO pueden marcarse como ENTREGADO si el pago no está confirmado
     if (nuevoEstado === 'ENTREGADO') {
-      const pedidoActual = pedidos.find((p) => p.id === id);
-      if (pedidoActual && pedidoActual.estadoPago !== 'PAGADO') {
-        await dataService.cambiarEstadoPago(id, 'PAGADO');
+      const esYapeOPlin = pedidoActual.metodoPago === 'Yape' || pedidoActual.metodoPago === 'Plin';
+      if (esYapeOPlin && pedidoActual.estadoPago !== 'PAGADO') {
+        setAlertaBloqueoEntrega(
+          `No se puede marcar como entregado el pedido #${pedidoActual.codigoPedido} de ${pedidoActual.estudianteNombre}: El pago por ${pedidoActual.metodoPago} debe ser confirmado antes de realizar la entrega.`
+        );
+        return;
       }
     }
+
+    await dataService.cambiarEstadoPedido(id, nuevoEstado);
     cargarDatos();
   };
 
   const handleCambiarPago = async (id: string, nuevoPago: EstadoPago) => {
-    // Si el pedido ya está entregado, el pago está finalizado y no se puede modificar
     const pedidoActual = pedidos.find((p) => p.id === id);
-    if (pedidoActual?.estadoPedido === 'ENTREGADO') {
+    // Si el pedido ya está entregado y pagado, no permitir revertir a PENDIENTE
+    if (pedidoActual?.estadoPedido === 'ENTREGADO' && pedidoActual?.estadoPago === 'PAGADO' && nuevoPago === 'PENDIENTE') {
       return;
     }
     await dataService.cambiarEstadoPago(id, nuevoPago);
@@ -169,7 +184,7 @@ export default function DespachoPage() {
     const filasHtml = pedidosFiltrados
       .map((p, idx) => {
         const pedidoDetalle = `${
-          p.entradaNombre ? `Entrada: ${p.entradaNombre} | ` : ''
+          p.entradaNombre ? `Sopa o postre: ${p.entradaNombre} | ` : ''
         }Segundo: ${p.segundoNombre}${
           p.observacion ? ` (Obs: ${p.observacion})` : ''
         }`;
@@ -609,7 +624,7 @@ export default function DespachoPage() {
                               </div>
                               {p.entradaNombre && (
                                 <div className="text-xs text-slate-700">
-                                  <span className="font-semibold text-orange-700">Entrada:</span>{' '}
+                                  <span className="font-semibold text-orange-700">Sopa o postre:</span>{' '}
                                   {p.entradaNombre}
                                 </div>
                               )}
@@ -629,6 +644,30 @@ export default function DespachoPage() {
                           {/* Columna: Pago y Aceptación */}
                           <td className="py-3.5 px-4">
                             <div className="flex flex-col gap-1.5 items-start">
+                              {/* Insignia del Método de Pago */}
+                              <div className="flex items-center gap-1.5">
+                                {p.metodoPago === 'Yape' && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs">
+                                    Yape
+                                  </span>
+                                )}
+                                {p.metodoPago === 'Plin' && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-100 text-sky-900 border border-sky-200 shadow-2xs">
+                                    Plin
+                                  </span>
+                                )}
+                                {(p.metodoPago === 'Pagar luego' || p.metodoPago === 'Efectivo') && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 shadow-2xs">
+                                    Pagar luego
+                                  </span>
+                                )}
+                                {!p.metodoPago && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                                    Pendiente
+                                  </span>
+                                )}
+                              </div>
+
                               {entregado ? (
                                 <div
                                   className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default select-none shadow-2xs"
@@ -704,12 +743,30 @@ export default function DespachoPage() {
                                     <span className="text-[10px] text-slate-400">Entregado</span>
                                   )}
                                 </>
+                              ) : (p.metodoPago === 'Yape' || p.metodoPago === 'Plin') && !pagado ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setAlertaBloqueoEntrega(
+                                      `No se puede marcar como entregado el pedido #${p.codigoPedido} de ${p.estudianteNombre}: El pago por ${p.metodoPago} debe ser confirmado antes de realizar la entrega.`
+                                    )
+                                  }
+                                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-300 hover:border-rose-300 flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                                  title="Bloqueado: Confirma el pago de Yape/Plin antes de entregar"
+                                >
+                                  <Lock className="w-3.5 h-3.5 text-rose-500" />
+                                  <span>Requiere Pago</span>
+                                </button>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={() => handleCambiarEstado(p.id, 'ENTREGADO')}
-                                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-300 hover:border-emerald-300 flex items-center gap-1.5 transition cursor-pointer active:scale-95"
-                                  title="Marcar como entregado y registrar hora de entrega"
+                                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-300 hover:border-emerald-300 flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
+                                  title={
+                                    p.metodoPago === 'Pagar luego'
+                                      ? 'Marcar como entregado (se registrará en Fiado si aún no está cancelado)'
+                                      : 'Marcar como entregado y registrar hora de entrega'
+                                  }
                                 >
                                   <PackageCheck className="w-3.5 h-3.5 text-slate-400" />
                                   <span>Marcar Entregado</span>
@@ -855,6 +912,34 @@ export default function DespachoPage() {
                 alt="Comprobante de pago"
                 className="max-h-[65vh] object-contain rounded-xl"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alerta de bloqueo de entrega sin pago previo */}
+      {alertaBloqueoEntrega && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-rose-100 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">Entrega No Permitida</h3>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  {alertaBloqueoEntrega}
+                </p>
+              </div>
+            </div>
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setAlertaBloqueoEntrega(null)}
+                className="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition cursor-pointer"
+              >
+                Entendido
+              </button>
             </div>
           </div>
         </div>
