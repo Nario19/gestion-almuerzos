@@ -1,4 +1,14 @@
-import { Pedido, Plato, MenuDia, ResumenCocina, EstadoPedido, EstadoPago, DiaSemana } from '@/types';
+import {
+  Pedido,
+  Plato,
+  MenuDia,
+  ResumenCocina,
+  EstadoPedido,
+  EstadoPago,
+  DiaSemana,
+  ColegioDetallado,
+  AdminColegioInfo,
+} from '@/types';
 import { supabase, isSupabaseConfigured } from './supabase';
 
 export const COLEGIOS_DEFAULT: string[] = [];
@@ -27,6 +37,13 @@ export const OBSERVACIONES_DEFAULT = [
   'Solo segundo',
 ];
 
+import {
+  obtenerFechaHoyPeru,
+  obtenerFechaPeruDeIso,
+  obtenerDiaActualSemanaPeru,
+  obtenerHoraActualPeru,
+} from '@/lib/dateUtils';
+
 export const DIAS_SEMANA: { key: DiaSemana; label: string; short: string }[] = [
   { key: 'LUNES', label: 'Lunes', short: 'Lun' },
   { key: 'MARTES', label: 'Martes', short: 'Mar' },
@@ -36,15 +53,7 @@ export const DIAS_SEMANA: { key: DiaSemana; label: string; short: string }[] = [
 ];
 
 export function obtenerDiaActualSemana(): DiaSemana {
-  const diaNum = new Date().getDay(); // 0 = Domingo, 1 = Lunes, ..., 5 = Viernes, 6 = Sábado
-  switch (diaNum) {
-    case 1: return 'LUNES';
-    case 2: return 'MARTES';
-    case 3: return 'MIERCOLES';
-    case 4: return 'JUEVES';
-    case 5: return 'VIERNES';
-    default: return 'LUNES'; // Fines de semana muestran Lunes por defecto
-  }
+  return obtenerDiaActualSemanaPeru();
 }
 
 // Catálogo inicial con fotografías reales de alta calidad (Unsplash food)
@@ -228,6 +237,7 @@ const PLATOS_INICIALES: Plato[] = [
 let platosMemoria: Plato[] = [...PLATOS_INICIALES];
 let pedidosMemoria: Pedido[] = [];
 let colegiosMemoria: string[] = [];
+let colegiosDetalladosMemoria: ColegioDetallado[] = [];
 let gradosMemoria: string[] = [...GRADOS_DEFAULT];
 let observacionesMemoria: string[] = [...OBSERVACIONES_DEFAULT];
 
@@ -237,6 +247,11 @@ if (typeof window !== 'undefined') {
     if (c) {
       const parsed = JSON.parse(c);
       if (Array.isArray(parsed) && parsed.length > 0) colegiosMemoria = parsed;
+    }
+    const cd = localStorage.getItem('config_colegios_detallados');
+    if (cd) {
+      const parsed = JSON.parse(cd);
+      if (Array.isArray(parsed) && parsed.length > 0) colegiosDetalladosMemoria = parsed;
     }
     const g = localStorage.getItem('config_grados');
     if (g) {
@@ -254,7 +269,80 @@ if (typeof window !== 'undefined') {
 const listeners: (() => void)[] = [];
 
 function notifyListeners() {
-  listeners.forEach((listener) => listener());
+  listeners.forEach((cb) => {
+    try {
+      cb();
+    } catch (_) {}
+  });
+}
+
+const LOCAL_STORAGE_HORAS_KEY = 'pedidos_horas_entrega';
+
+function obtenerMapaHorasEntrega(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_HORAS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function guardarHoraEntregaLocal(id: string, hora: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const map = obtenerMapaHorasEntrega();
+    map[id] = hora;
+    localStorage.setItem(LOCAL_STORAGE_HORAS_KEY, JSON.stringify(map));
+  } catch (_) {}
+}
+
+function eliminarHoraEntregaLocal(id: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const map = obtenerMapaHorasEntrega();
+    delete map[id];
+    localStorage.setItem(LOCAL_STORAGE_HORAS_KEY, JSON.stringify(map));
+  } catch (_) {}
+}
+
+function mapearPedidoDesdeSupabase(d: any, mapLocal: Record<string, string>): Pedido {
+  let horaEntrega = d.hora_entrega || mapLocal[d.id] || undefined;
+  let obs = d.observacion;
+  if (obs && obs.includes('[Entregado:')) {
+    const match = obs.match(/\[Entregado:\s*([^\]]+)\]/);
+    if (match) {
+      horaEntrega = match[1].trim();
+      obs = obs.replace(/\s*•?\s*\[Entregado:\s*[^\]]+\]/, '').trim() || undefined;
+    }
+  }
+  // Normalización defensiva de fecha según la zona horaria de Perú (America/Lima)
+  const fechaNormalizada = d.created_at
+    ? obtenerFechaPeruDeIso(d.created_at)
+    : (d.fecha || obtenerFechaHoyPeru());
+
+  return {
+    id: d.id,
+    codigoPedido: d.codigo_pedido,
+    fecha: fechaNormalizada,
+    diaSemana: d.dia_semana,
+    padreId: d.padre_id,
+    hijoId: d.hijo_id,
+    colegioNombre: d.colegio_nombre,
+    gradoSeccion: d.grado_seccion,
+    estudianteNombre: d.estudiante_nombre,
+    telefonoContacto: d.telefono_contacto,
+    entradaNombre: d.entrada_nombre,
+    segundoNombre: d.segundo_nombre,
+    observacion: obs,
+    metodoPago: d.metodo_pago,
+    estadoPago: d.estado_pago,
+    estadoPedido: d.estado_pedido,
+    comprobanteUrl: d.comprobante_url,
+    monto: Number(d.monto) || 12.0,
+    createdAt: d.created_at,
+    horaEntrega,
+  };
 }
 
 export const dataService = {
@@ -338,48 +426,65 @@ export const dataService = {
     notifyListeners();
   },
 
-  async obtenerPedidos(): Promise<Pedido[]> {
+  async obtenerPedidos(opciones?: { limit?: number; offset?: number }): Promise<Pedido[]> {
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('pedidos')
           .select('*')
           .order('created_at', { ascending: false });
 
+        if (typeof opciones?.limit === 'number' && opciones.limit > 0) {
+          const from = opciones.offset || 0;
+          const to = from + opciones.limit - 1;
+          query = query.range(from, to);
+        }
+
+        const { data, error } = await query;
+
         if (!error && data) {
-          return data.map((d) => ({
-            id: d.id,
-            codigoPedido: d.codigo_pedido,
-            fecha: d.fecha,
-            diaSemana: d.dia_semana,
-            padreId: d.padre_id,
-            hijoId: d.hijo_id,
-            colegioNombre: d.colegio_nombre,
-            gradoSeccion: d.grado_seccion,
-            estudianteNombre: d.estudiante_nombre,
-            telefonoContacto: d.telefono_contacto,
-            entradaNombre: d.entrada_nombre,
-            segundoNombre: d.segundo_nombre,
-            observacion: d.observacion,
-            metodoPago: d.metodo_pago,
-            estadoPago: d.estado_pago,
-            estadoPedido: d.estado_pedido,
-            comprobanteUrl: d.comprobante_url,
-            monto: Number(d.monto) || 12.0,
-            createdAt: d.created_at,
-          }));
+          const mapLocal = obtenerMapaHorasEntrega();
+          return data.map((d) => mapearPedidoDesdeSupabase(d, mapLocal));
         }
       } catch (err) {
         console.warn('Error leyendo pedidos de Supabase:', err);
       }
     }
-    return [...pedidosMemoria];
+    const mem = [...pedidosMemoria];
+    if (typeof opciones?.limit === 'number' && opciones.limit > 0) {
+      const from = opciones.offset || 0;
+      return mem.slice(from, from + opciones.limit);
+    }
+    return mem;
   },
 
   async obtenerPedidosPorPadre(padreId?: string, telefono?: string): Promise<Pedido[]> {
-    const todos = await this.obtenerPedidos();
     if (!padreId && !telefono) return [];
-    return todos.filter(
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let query = supabase
+          .from('pedidos')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (padreId && telefono) {
+          query = query.or(`padre_id.eq.${padreId},telefono_contacto.eq.${telefono}`);
+        } else if (padreId) {
+          query = query.eq('padre_id', padreId);
+        } else if (telefono) {
+          query = query.eq('telefono_contacto', telefono);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) {
+          const mapLocal = obtenerMapaHorasEntrega();
+          return data.map((d) => mapearPedidoDesdeSupabase(d, mapLocal));
+        }
+      } catch (err) {
+        console.warn('Error leyendo pedidos por padre de Supabase:', err);
+      }
+    }
+    return pedidosMemoria.filter(
       (p) => (padreId && p.padreId === padreId) || (telefono && p.telefonoContacto === telefono)
     );
   },
@@ -394,7 +499,7 @@ export const dataService = {
       ...pedidoData,
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}`,
       codigoPedido: randomCode,
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: obtenerFechaHoyPeru(),
       estadoPedido: 'REGISTRADO',
       estadoPago: pedidoData.estadoPago || 'PENDIENTE',
       createdAt: new Date().toISOString(),
@@ -443,15 +548,41 @@ export const dataService = {
     return nuevo;
   },
 
-  async cambiarEstadoPedido(id: string, nuevoEstado: EstadoPedido): Promise<void> {
+  async cambiarEstadoPedido(id: string, nuevoEstado: EstadoPedido, horaEntregaManual?: string): Promise<void> {
+    const hora = nuevoEstado === 'ENTREGADO'
+      ? (horaEntregaManual || obtenerHoraActualPeru())
+      : undefined;
+
     const index = pedidosMemoria.findIndex((p) => p.id === id);
+    let observacionOriginal = '';
     if (index !== -1) {
-      pedidosMemoria[index] = { ...pedidosMemoria[index], estadoPedido: nuevoEstado };
+      observacionOriginal = pedidosMemoria[index].observacion || '';
+      pedidosMemoria[index] = {
+        ...pedidosMemoria[index],
+        estadoPedido: nuevoEstado,
+        horaEntrega: hora,
+      };
+    }
+
+    if (nuevoEstado === 'ENTREGADO' && hora) {
+      guardarHoraEntregaLocal(id, hora);
+    } else {
+      eliminarHoraEntregaLocal(id);
     }
 
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from('pedidos').update({ estado_pedido: nuevoEstado }).eq('id', id);
+        let nuevaObs = observacionOriginal.replace(/\s*•?\s*\[Entregado:\s*[^\]]+\]/, '').trim();
+        if (nuevoEstado === 'ENTREGADO' && hora) {
+          nuevaObs = nuevaObs ? `${nuevaObs} • [Entregado: ${hora}]` : `[Entregado: ${hora}]`;
+        }
+        await supabase
+          .from('pedidos')
+          .update({
+            estado_pedido: nuevoEstado,
+            observacion: nuevaObs || null,
+          })
+          .eq('id', id);
       } catch (e) {
         console.error('Error actualizando pedido en Supabase:', e);
       }
@@ -572,7 +703,7 @@ export const dataService = {
     };
   },
 
-  // --- GESTIÓN DE COLEGIOS ---
+  // --- GESTIÓN DE COLEGIOS Y ADMINISTRADORES DE SEDE (SUPER ADMIN) ---
   async obtenerColegios(): Promise<string[]> {
     if (isSupabaseConfigured && supabase) {
       try {
@@ -614,6 +745,431 @@ export const dataService = {
     return [...colegiosMemoria];
   },
 
+  async obtenerColegiosDetallados(): Promise<ColegioDetallado[]> {
+    let colegiosBase: any[] = [];
+    let adminsMap: Record<string, AdminColegioInfo> = {};
+    let conteoPedidos: Record<string, number> = {};
+
+    // 1. Cargar desde Supabase si está disponible
+    if (isSupabaseConfigured && supabase) {
+      try {
+        // A. Cargar lista de colegios
+        const { data: colsData, error: errCols } = await supabase
+          .from('colegios')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (!errCols && colsData) {
+          colegiosBase = colsData;
+        }
+
+        // B. Cargar admins registrados en perfiles_padres
+        const { data: adminsData } = await supabase
+          .from('perfiles_padres')
+          .select('id, nombre_completo, dni, email, telefono, rol')
+          .in('rol', ['ADMIN', 'SUPER_ADMIN']);
+
+        const adminsPorDni: Record<string, any> = {};
+        if (adminsData) {
+          adminsData.forEach((a) => {
+            if (a.dni) adminsPorDni[a.dni] = a;
+            if (a.email) adminsPorDni[a.email] = a;
+          });
+        }
+
+        // C. Cargar diccionario de asignación de menus_dia (SABADO)
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (configRow && configRow.mensaje_aviso) {
+          try {
+            const parsed = JSON.parse(configRow.mensaje_aviso);
+            if (parsed.adminsColegio) {
+              adminsMap = parsed.adminsColegio;
+            }
+          } catch (_) {}
+        }
+
+        // D. Cargar conteo de pedidos por colegio
+        const { data: pedData } = await supabase.from('pedidos').select('colegio_nombre');
+        if (pedData) {
+          pedData.forEach((p) => {
+            if (p.colegio_nombre) {
+              conteoPedidos[p.colegio_nombre] = (conteoPedidos[p.colegio_nombre] || 0) + 1;
+            }
+          });
+        }
+
+        // Ensamblar los colegios detallados
+        const listaDetallada: ColegioDetallado[] = colegiosBase.map((c) => {
+          let sedeLimpia = c.sede || '';
+          let adminDniFromSede = '';
+          if (c.sede && c.sede.includes('|')) {
+            const partes = c.sede.split('|');
+            sedeLimpia = partes[0].trim();
+            adminDniFromSede = partes[1].trim();
+          } else if (c.sede && (c.sede.startsWith('ADM-') || c.sede.startsWith('admin_'))) {
+            adminDniFromSede = c.sede.trim();
+            sedeLimpia = '';
+          }
+
+          // Resolver admin asignado
+          let adminAsignado: AdminColegioInfo | null = null;
+          if (adminsMap[c.nombre]) {
+            adminAsignado = adminsMap[c.nombre];
+          } else if (adminDniFromSede && adminsPorDni[adminDniFromSede]) {
+            const a = adminsPorDni[adminDniFromSede];
+            adminAsignado = {
+              id: a.id,
+              nombreCompleto: a.nombre_completo,
+              dni: a.dni,
+              email: a.email || '',
+              telefono: a.telefono || '',
+            };
+          }
+
+          return {
+            id: c.id,
+            nombre: c.nombre,
+            sede: sedeLimpia,
+            activo: c.activo !== false,
+            admin: adminAsignado,
+            totalPedidos: conteoPedidos[c.nombre] || 0,
+            createdAt: c.created_at,
+          };
+        });
+
+        colegiosDetalladosMemoria = listaDetallada;
+        colegiosMemoria = listaDetallada.filter((c) => c.activo).map((c) => c.nombre);
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('config_colegios_detallados', JSON.stringify(listaDetallada));
+          localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+        }
+
+        return [...colegiosDetalladosMemoria];
+      } catch (e) {
+        console.warn('Error obteniendo colegios detallados de Supabase:', e);
+      }
+    }
+
+    // Fallback local
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('config_colegios_detallados');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            colegiosDetalladosMemoria = parsed;
+            return [...colegiosDetalladosMemoria];
+          }
+        }
+      } catch (_) {}
+    }
+
+    return [...colegiosDetalladosMemoria];
+  },
+
+  async crearColegioConAdmin(
+    colegio: { nombre: string; sede?: string; activo?: boolean },
+    admin: AdminColegioInfo
+  ): Promise<{ ok: boolean; error?: string; colegio?: ColegioDetallado }> {
+    const nombreLimpio = colegio.nombre.trim();
+    if (!nombreLimpio) {
+      return { ok: false, error: 'El nombre del colegio es obligatorio.' };
+    }
+    if (!admin.nombreCompleto?.trim() || !admin.dni?.trim() || !admin.password?.trim()) {
+      return { ok: false, error: 'Debe ingresar el nombre, usuario/DNI y contraseña del administrador.' };
+    }
+
+    const dniAdmin = admin.dni.trim();
+    const emailAdmin = admin.email?.trim() || `${dniAdmin.toLowerCase()}@almuerzos.com`;
+    const telAdmin = admin.telefono?.trim() || '999999999';
+    const sedeBase = (colegio.sede || '').trim().replace(/\|.*$/, '').trim();
+    const sedeConAdmin = (sedeBase ? `${sedeBase.slice(0, 50)} | ${dniAdmin}` : dniAdmin).slice(0, 95);
+
+    let nuevoId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `col-${Date.now()}`;
+    let adminId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `adm-${Date.now()}`;
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        // 1. Crear o actualizar usuario Administrador en perfiles_padres
+        const { data: usuarioData, error: errUsuario } = await supabase
+          .from('perfiles_padres')
+          .upsert(
+            [
+              {
+                nombre_completo: admin.nombreCompleto.trim(),
+                dni: dniAdmin,
+                email: emailAdmin,
+                telefono: telAdmin,
+                password_hash: admin.password,
+                rol: 'ADMIN',
+              },
+            ],
+            { onConflict: 'dni' }
+          )
+          .select()
+          .single();
+
+        if (errUsuario) {
+          console.error('Error creando admin en Supabase:', errUsuario);
+          return { ok: false, error: `Error al crear administrador: ${errUsuario.message}` };
+        }
+        if (usuarioData?.id) adminId = usuarioData.id;
+
+        // 2. Insertar Colegio en tabla colegios
+        const { data: colData, error: errCol } = await supabase
+          .from('colegios')
+          .insert([
+            {
+              nombre: nombreLimpio,
+              sede: sedeConAdmin,
+              activo: colegio.activo !== false,
+            },
+          ])
+          .select()
+          .single();
+
+        if (errCol) {
+          console.error('Error insertando colegio en Supabase:', errCol);
+          return { ok: false, error: `Error al registrar colegio: ${errCol.message}` };
+        }
+        if (colData?.id) nuevoId = colData.id;
+
+        // 3. Persistir mapeo en menus_dia (SABADO)
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: any = { grados: GRADOS_DEFAULT, observaciones: OBSERVACIONES_DEFAULT, adminsColegio: {} };
+        if (configRow && configRow.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+            if (!cfgObj.adminsColegio) cfgObj.adminsColegio = {};
+          } catch (_) {}
+        }
+        cfgObj.adminsColegio[nombreLimpio] = {
+          id: adminId,
+          nombreCompleto: admin.nombreCompleto.trim(),
+          dni: dniAdmin,
+          email: emailAdmin,
+          telefono: telAdmin,
+        };
+
+        await supabase
+          .from('menus_dia')
+          .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+          .eq('dia_semana', 'SABADO');
+      } catch (e: any) {
+        return { ok: false, error: e.message || 'Error general en base de datos' };
+      }
+    }
+
+    const nuevoColegioDetallado: ColegioDetallado = {
+      id: nuevoId,
+      nombre: nombreLimpio,
+      sede: sedeBase,
+      activo: colegio.activo !== false,
+      admin: {
+        id: adminId,
+        nombreCompleto: admin.nombreCompleto.trim(),
+        dni: dniAdmin,
+        email: emailAdmin,
+        telefono: telAdmin,
+      },
+      totalPedidos: 0,
+      createdAt: new Date().toISOString(),
+    };
+
+    colegiosDetalladosMemoria.push(nuevoColegioDetallado);
+    if (!colegiosMemoria.includes(nombreLimpio) && nuevoColegioDetallado.activo) {
+      colegiosMemoria.push(nombreLimpio);
+    }
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_colegios_detallados', JSON.stringify(colegiosDetalladosMemoria));
+      localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+    }
+
+    notifyListeners();
+    return { ok: true, colegio: nuevoColegioDetallado };
+  },
+
+  async actualizarColegioConAdmin(
+    colegioId: string,
+    colegio: { nombre: string; sede?: string; activo?: boolean },
+    admin?: AdminColegioInfo
+  ): Promise<{ ok: boolean; error?: string }> {
+    const nombreLimpio = colegio.nombre.trim();
+    if (!nombreLimpio) return { ok: false, error: 'El nombre es obligatorio.' };
+
+    const sedeBase = (colegio.sede || '').trim().replace(/\|.*$/, '').trim();
+    const dniAdmin = admin?.dni?.trim() || '';
+    const sedeConAdmin = dniAdmin
+      ? (sedeBase ? `${sedeBase.slice(0, 50)} | ${dniAdmin}` : dniAdmin).slice(0, 95)
+      : sedeBase.slice(0, 95);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        // 1. Actualizar datos del colegio
+        await supabase
+          .from('colegios')
+          .update({
+            nombre: nombreLimpio,
+            sede: sedeConAdmin,
+            activo: colegio.activo !== false,
+          })
+          .eq('id', colegioId);
+
+        // 2. Si se proporcionó información de admin, actualizar en perfiles_padres
+        if (admin && admin.dni) {
+          const updateData: any = {
+            nombre_completo: admin.nombreCompleto.trim(),
+            telefono: admin.telefono?.trim() || '999999999',
+            rol: 'ADMIN',
+          };
+          if (admin.email) updateData.email = admin.email.trim();
+          if (admin.password) updateData.password_hash = admin.password;
+
+          await supabase
+            .from('perfiles_padres')
+            .upsert(
+              [
+                {
+                  dni: admin.dni.trim(),
+                  ...updateData,
+                },
+              ],
+              { onConflict: 'dni' }
+            );
+
+          // Actualizar en diccionario de menus_dia (SABADO)
+          const { data: configRow } = await supabase
+            .from('menus_dia')
+            .select('mensaje_aviso')
+            .eq('dia_semana', 'SABADO')
+            .maybeSingle();
+
+          let cfgObj: any = { grados: GRADOS_DEFAULT, observaciones: OBSERVACIONES_DEFAULT, adminsColegio: {} };
+          if (configRow && configRow.mensaje_aviso) {
+            try {
+              cfgObj = JSON.parse(configRow.mensaje_aviso);
+              if (!cfgObj.adminsColegio) cfgObj.adminsColegio = {};
+            } catch (_) {}
+          }
+          cfgObj.adminsColegio[nombreLimpio] = {
+            nombreCompleto: admin.nombreCompleto.trim(),
+            dni: admin.dni.trim(),
+            email: admin.email?.trim() || '',
+            telefono: admin.telefono?.trim() || '',
+          };
+
+          await supabase
+            .from('menus_dia')
+            .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+            .eq('dia_semana', 'SABADO');
+        }
+      } catch (e: any) {
+        console.error('Error actualizando colegio con admin:', e);
+        return { ok: false, error: e.message };
+      }
+    }
+
+    // Actualizar memoria
+    const idx = colegiosDetalladosMemoria.findIndex((c) => c.id === colegioId || c.nombre === nombreLimpio);
+    if (idx !== -1) {
+      colegiosDetalladosMemoria[idx] = {
+        ...colegiosDetalladosMemoria[idx],
+        nombre: nombreLimpio,
+        sede: sedeBase,
+        activo: colegio.activo !== false,
+        admin: admin ? { ...colegiosDetalladosMemoria[idx].admin, ...admin } : colegiosDetalladosMemoria[idx].admin,
+      };
+    }
+
+    colegiosMemoria = colegiosDetalladosMemoria.filter((c) => c.activo).map((c) => c.nombre);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_colegios_detallados', JSON.stringify(colegiosDetalladosMemoria));
+      localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+    }
+
+    notifyListeners();
+    return { ok: true };
+  },
+
+  async eliminarColegioCompleto(colegioId: string, nombreColegio: string): Promise<{ ok: boolean; error?: string }> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('colegios').delete().eq('id', colegioId);
+
+        // Remover de config en menus_dia
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (configRow && configRow.mensaje_aviso) {
+          try {
+            const cfgObj = JSON.parse(configRow.mensaje_aviso);
+            if (cfgObj.adminsColegio && cfgObj.adminsColegio[nombreColegio]) {
+              delete cfgObj.adminsColegio[nombreColegio];
+              await supabase
+                .from('menus_dia')
+                .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+                .eq('dia_semana', 'SABADO');
+            }
+          } catch (_) {}
+        }
+      } catch (e: any) {
+        console.error('Error eliminando colegio de Supabase:', e);
+        return { ok: false, error: e.message };
+      }
+    }
+
+    colegiosDetalladosMemoria = colegiosDetalladosMemoria.filter(
+      (c) => c.id !== colegioId && c.nombre.toLowerCase() !== nombreColegio.toLowerCase()
+    );
+    colegiosMemoria = colegiosMemoria.filter((c) => c.toLowerCase() !== nombreColegio.toLowerCase());
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_colegios_detallados', JSON.stringify(colegiosDetalladosMemoria));
+      localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+    }
+
+    notifyListeners();
+    return { ok: true };
+  },
+
+  async cambiarEstadoColegio(colegioId: string, activo: boolean): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('colegios').update({ activo }).eq('id', colegioId);
+      } catch (e) {
+        console.error('Error cambiando estado del colegio:', e);
+      }
+    }
+
+    const idx = colegiosDetalladosMemoria.findIndex((c) => c.id === colegioId);
+    if (idx !== -1) {
+      colegiosDetalladosMemoria[idx].activo = activo;
+    }
+    colegiosMemoria = colegiosDetalladosMemoria.filter((c) => c.activo).map((c) => c.nombre);
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('config_colegios_detallados', JSON.stringify(colegiosDetalladosMemoria));
+      localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+    }
+
+    notifyListeners();
+  },
+
   async agregarColegio(nombre: string): Promise<string[]> {
     const limpio = nombre.trim();
     if (!limpio) return [...colegiosMemoria];
@@ -640,8 +1196,10 @@ export const dataService = {
   async eliminarColegio(nombre: string): Promise<string[]> {
     const target = nombre.trim();
     colegiosMemoria = colegiosMemoria.filter((c) => c.toLowerCase() !== target.toLowerCase());
+    colegiosDetalladosMemoria = colegiosDetalladosMemoria.filter((c) => c.nombre.toLowerCase() !== target.toLowerCase());
     if (typeof window !== 'undefined') {
       localStorage.setItem('config_colegios', JSON.stringify(colegiosMemoria));
+      localStorage.setItem('config_colegios_detallados', JSON.stringify(colegiosDetalladosMemoria));
     }
 
     if (isSupabaseConfigured && supabase) {

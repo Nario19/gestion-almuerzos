@@ -21,7 +21,7 @@ import { useAuth } from '@/lib/authContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, registro, usuario, esAdmin, cargando: cargandoAuth, logout } = useAuth();
+  const { login, registro, usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth, logout } = useAuth();
 
   const [esRegistro, setEsRegistro] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -41,6 +41,17 @@ export default function LoginPage() {
   const [identificadorLogin, setIdentificadorLogin] = useState('');
   const [passwordLogin, setPasswordLogin] = useState('');
 
+  // Si ya es admin con sesión activa, redirigir
+  React.useEffect(() => {
+    if (usuario) {
+      if (esSuperAdmin) {
+        router.replace('/superadmin');
+      } else if (esAdmin) {
+        router.replace('/admin');
+      }
+    }
+  }, [usuario, esAdmin, esSuperAdmin, router]);
+
   if (cargandoAuth) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
@@ -50,29 +61,55 @@ export default function LoginPage() {
     );
   }
 
-  // Si ya es admin con sesión activa, redirigir a /admin
-  React.useEffect(() => {
-    if (usuario && esAdmin) {
-      router.replace('/admin');
-    }
-  }, [usuario, esAdmin, router]);
-
   // Si ya tiene sesión activa
   if (usuario) {
     return (
       <div className="max-w-md mx-auto px-4 py-12 text-center">
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
           <div className="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mx-auto">
-            {esAdmin ? <ShieldCheck className="w-8 h-8" /> : <User className="w-8 h-8" />}
+            {esSuperAdmin ? (
+              <ShieldCheck className="w-8 h-8 text-purple-600" />
+            ) : esAdmin ? (
+              <ShieldCheck className="w-8 h-8" />
+            ) : (
+              <User className="w-8 h-8" />
+            )}
           </div>
           <h2 className="text-xl font-black text-slate-900">
             Sesión iniciada como {usuario.nombreCompleto}
           </h2>
           <p className="text-xs text-slate-500">
-            {esAdmin ? 'Cuenta con privilegios de Administrador' : `DNI: ${usuario.dni} • ${usuario.hijos.length} hijos registrados`}
+            {esSuperAdmin
+              ? 'Cuenta con privilegios de Super Administrador (Control Multi-Colegios)'
+              : esAdmin
+              ? usuario.colegioNombre
+                ? `Administrador de sede: ${usuario.colegioNombre}`
+                : 'Cuenta con privilegios de Administrador'
+              : `DNI: ${usuario.dni} • ${usuario.hijos.length} hijos registrados`}
           </p>
           <div className="flex flex-col gap-2 pt-2">
-            {esAdmin ? (
+            {esSuperAdmin ? (
+              <>
+                <Link
+                  href="/superadmin"
+                  className="py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl text-sm transition shadow-xs"
+                >
+                  Ir al Panel de Super Administrador
+                </Link>
+                <Link
+                  href="/admin"
+                  className="py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs transition"
+                >
+                  Ir al Panel de Menús & Operaciones
+                </Link>
+                <Link
+                  href="/despacho"
+                  className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition"
+                >
+                  Ir a Despacho & Excel
+                </Link>
+              </>
+            ) : esAdmin ? (
               <>
                 <Link
                   href="/admin"
@@ -171,7 +208,9 @@ export default function LoginPage() {
         if (!res.ok) {
           setErrorMsg(res.error || 'Credenciales no válidas.');
         } else {
-          if (res.esAdmin) {
+          if (res.esSuperAdmin) {
+            router.push('/superadmin');
+          } else if (res.esAdmin) {
             router.push('/admin');
           } else {
             router.push('/');

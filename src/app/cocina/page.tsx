@@ -19,45 +19,37 @@ import {
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
+import {
+  obtenerFechaHoyPeru,
+  formatearFechaLegiblePeru,
+  calcularOffsetFechaPeru,
+  obtenerHoraActualPeru,
+} from '@/lib/dateUtils';
 import { Pedido, ResumenCocina } from '@/types';
-
-// Obtener fecha actual en formato YYYY-MM-DD en hora local
-const obtenerFechaHoy = () => {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 
 // Formateador legible en español para la fecha
 const formatearFechaLegible = (fechaStr: string) => {
   if (fechaStr === 'TODAS') return 'Todas las fechas';
-  try {
-    const [y, m, d] = fechaStr.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString('es-PE', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  } catch (_) {
-    return fechaStr;
-  }
+  return formatearFechaLegiblePeru(fechaStr);
 };
 
 export default function CocinaPage() {
-  const { esAdmin, cargando: cargandoAuth } = useAuth();
-  const fechaHoy = obtenerFechaHoy();
+  const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
+  const fechaHoy = obtenerFechaHoyPeru();
 
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [colegios, setColegios] = useState<string[]>([]);
-  const [colegioFiltro, setColegioFiltro] = useState<string>('TODOS');
+  const [colegioFiltro, setColegioFiltro] = useState<string>(
+    !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : 'TODOS'
+  );
   // Por defecto Cocina muestra los pedidos de HOY
   const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [cargando, setCargando] = useState(true);
   const [ultimaActualizacion, setUltimaActualizacion] = useState<string>('');
+
+  // Paginación para observaciones y dietas especiales
+  const [paginaObs, setPaginaObs] = useState(1);
+  const obsPorPagina = 6;
 
   const cargarDatos = async () => {
     setCargando(true);
@@ -68,7 +60,7 @@ export default function CocinaPage() {
       ]);
       setPedidos(data);
       if (cols) setColegios(cols);
-      setUltimaActualizacion(new Date().toLocaleTimeString());
+      setUltimaActualizacion(obtenerHoraActualPeru());
     } finally {
       setCargando(false);
     }
@@ -92,15 +84,7 @@ export default function CocinaPage() {
       setFechaFiltro(fechaHoy);
       return;
     }
-    try {
-      const [y, m, d] = fechaFiltro.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      date.setDate(date.getDate() + offset);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      setFechaFiltro(`${year}-${month}-${day}`);
-    } catch (_) {}
+    setFechaFiltro(calcularOffsetFechaPeru(fechaFiltro, offset));
   };
 
   // 1. Filtrar por fecha seleccionada (por defecto HOY)
@@ -126,9 +110,22 @@ export default function CocinaPage() {
 
   const resumen: ResumenCocina = dataService.calcularResumenCocina(pedidosFiltrados);
 
+  // Reiniciar página de observaciones al cambiar filtros
+  useEffect(() => {
+    setPaginaObs(1);
+  }, [fechaFiltro, colegioFiltro]);
+
   // Extraer todas las observaciones críticas de los pedidos aceptados
   const pedidosConObs = pedidosFiltrados.filter(
     (p) => p.observacion && p.observacion.trim().length > 0
+  );
+
+  const totalObs = pedidosConObs.length;
+  const totalPaginasObs = Math.ceil(totalObs / obsPorPagina) || 1;
+  const paginaValidaObs = Math.min(Math.max(1, paginaObs), totalPaginasObs);
+  const obsPaginadas = pedidosConObs.slice(
+    (paginaValidaObs - 1) * obsPorPagina,
+    paginaValidaObs * obsPorPagina
   );
 
   if (cargandoAuth) {
@@ -255,19 +252,25 @@ export default function CocinaPage() {
           <span className="text-slate-400 font-bold flex items-center gap-1">
             <Filter className="w-3.5 h-3.5" /> Filtrar por:
           </span>
-          {['TODOS', ...colegios].map((c) => (
-            <button
-              key={c}
-              onClick={() => setColegioFiltro(c)}
-              className={`px-3 py-1.5 rounded-xl font-bold transition ${
-                colegioFiltro === c
-                  ? 'bg-orange-500 text-white shadow-sm'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-              {c}
-            </button>
-          ))}
+          {!esSuperAdmin && usuario?.colegioNombre ? (
+            <span className="px-3 py-1.5 rounded-xl font-black bg-orange-500 text-white shadow-sm flex items-center gap-1.5">
+              🏫 Sede Asignada: {usuario.colegioNombre}
+            </span>
+          ) : (
+            ['TODOS', ...colegios].map((c) => (
+              <button
+                key={c}
+                onClick={() => setColegioFiltro(c)}
+                className={`px-3 py-1.5 rounded-xl font-bold transition ${
+                  colegioFiltro === c
+                    ? 'bg-orange-500 text-white shadow-sm'
+                    : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                {c}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
@@ -401,7 +404,7 @@ export default function CocinaPage() {
 
       {/* SECCIÓN 2: ALERTA DE OBSERVACIONES CRÍTICAS (NO MÁS OBSERVACIONES PERDIDAS) */}
       <div className="bg-amber-50/70 rounded-3xl p-5 sm:p-6 border border-amber-200 shadow-xs mb-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
               <AlertTriangle className="w-5 h-5" />
@@ -412,18 +415,45 @@ export default function CocinaPage() {
               </h2>
             </div>
           </div>
-          <span className="text-xs font-black bg-amber-200 text-amber-900 px-3 py-1 rounded-full">
-            {pedidosConObs.length} Alertas
-          </span>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-xs font-black bg-amber-200 text-amber-900 px-3 py-1 rounded-full">
+              {totalObs} Alertas
+            </span>
+            {totalPaginasObs > 1 && (
+              <div className="flex items-center gap-1 bg-white border border-amber-200 rounded-xl px-2 py-1 shadow-xs">
+                <span className="text-xs font-semibold text-slate-600 mr-1">
+                  Pág. {paginaValidaObs} de {totalPaginasObs}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPaginaObs((prev) => Math.max(1, prev - 1))}
+                  disabled={paginaValidaObs <= 1}
+                  className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700"
+                  title="Página anterior"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaginaObs((prev) => Math.min(totalPaginasObs, prev + 1))}
+                  disabled={paginaValidaObs >= totalPaginasObs}
+                  className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700"
+                  title="Página siguiente"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {pedidosConObs.length === 0 ? (
+        {totalObs === 0 ? (
           <div className="bg-white rounded-2xl p-4 text-center text-xs text-slate-500">
             ✓ No hay observaciones especiales para los pedidos actuales.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {pedidosConObs.map((p) => (
+            {obsPaginadas.map((p) => (
               <div
                 key={p.id}
                 className="bg-white rounded-2xl p-3.5 border border-amber-300 shadow-xs space-y-1.5"

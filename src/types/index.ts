@@ -8,7 +8,7 @@ export type EstadoPago = 'PENDIENTE' | 'VERIFICANDO' | 'PAGADO';
 
 export type EstadoPedido = 'REGISTRADO' | 'EN_COCINA' | 'EMPACADO' | 'ENTREGADO';
 
-export type RolUsuario = 'PADRE' | 'ADMIN';
+export type RolUsuario = 'PADRE' | 'ADMIN' | 'SUPER_ADMIN';
 
 export interface Hijo {
   id: string;
@@ -27,7 +27,27 @@ export interface UsuarioPadre {
   telefono: string;
   email?: string;
   rol: RolUsuario;
+  colegioNombre?: string; // Colegio asignado si es un Administrador de sede específica
   hijos: Hijo[];
+}
+
+export interface AdminColegioInfo {
+  id?: string;
+  nombreCompleto: string;
+  dni: string;
+  email: string;
+  telefono: string;
+  password?: string;
+}
+
+export interface ColegioDetallado {
+  id: string;
+  nombre: string;
+  sede?: string;
+  activo: boolean;
+  admin?: AdminColegioInfo | null;
+  totalPedidos?: number;
+  createdAt?: string;
 }
 
 export interface Plato {
@@ -73,6 +93,7 @@ export interface Pedido {
   comprobanteUrl?: string;
   monto: number;
   createdAt: string;
+  horaEntrega?: string;
 }
 
 export interface ResumenCocinaItem {

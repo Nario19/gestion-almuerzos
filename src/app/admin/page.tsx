@@ -34,14 +34,43 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import { compressImage } from '@/lib/imageCompression';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
+import ModalConfirmacion from '@/components/ModalConfirmacion';
+import { obtenerFechaHoyPeru } from '@/lib/dateUtils';
 import { Plato, DiaSemana, TipoPlato, Pedido } from '@/types';
 
 export default function AdminPage() {
-  const { esAdmin, cargando: cargandoAuth } = useAuth();
+  const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
   const [diaActivo, setDiaActivo] = useState<DiaSemana>(obtenerDiaActualSemana());
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [cargando, setCargando] = useState(false);
   const [guardadoExitoso, setGuardadoExitoso] = useState(false);
+
+  // Estado para alertas y modales de confirmación de eliminación
+  const [confirmacion, setConfirmacion] = useState<{
+    abierto: boolean;
+    titulo: string;
+    mensaje: React.ReactNode;
+    textoBotonConfirmar?: string;
+    onConfirmar: () => Promise<void> | void;
+  }>({
+    abierto: false,
+    titulo: '',
+    mensaje: '',
+    onConfirmar: () => {},
+  });
+  const [ejecutandoConfirmacion, setEjecutandoConfirmacion] = useState(false);
+
+  const ejecutarAccionConfirmada = async () => {
+    setEjecutandoConfirmacion(true);
+    try {
+      await confirmacion.onConfirmar();
+      setConfirmacion((prev) => ({ ...prev, abierto: false }));
+    } catch (err) {
+      console.error('Error ejecutando acción de eliminación:', err);
+    } finally {
+      setEjecutandoConfirmacion(false);
+    }
+  };
 
   // Pedidos y Período para KPIs del Dashboard
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -104,10 +133,21 @@ export default function AdminPage() {
     setTimeout(() => setGuardadoExitoso(false), 2500);
   };
 
-  const handleEliminarColegio = async (nombre: string) => {
-    if (!confirm(`¿Eliminar ${nombre}?`)) return;
-    const res = await dataService.eliminarColegio(nombre);
-    setColegios(res);
+  const handleSolicitarEliminarColegio = (nombre: string) => {
+    setConfirmacion({
+      abierto: true,
+      titulo: `¿Eliminar colegio "${nombre}"?`,
+      mensaje: (
+        <span>
+          ¿Estás seguro de que deseas eliminar el colegio <strong>{nombre}</strong>? Los padres ya no podrán seleccionarlo al registrar a sus hijos.
+        </span>
+      ),
+      textoBotonConfirmar: 'Sí, eliminar colegio',
+      onConfirmar: async () => {
+        const res = await dataService.eliminarColegio(nombre);
+        setColegios(res);
+      },
+    });
   };
 
   const handleAgregarGrado = async (e: React.FormEvent) => {
@@ -120,10 +160,21 @@ export default function AdminPage() {
     setTimeout(() => setGuardadoExitoso(false), 2500);
   };
 
-  const handleEliminarGrado = async (nombre: string) => {
-    if (!confirm(`¿Eliminar ${nombre}?`)) return;
-    const res = await dataService.eliminarGrado(nombre);
-    setGrados(res);
+  const handleSolicitarEliminarGrado = (nombre: string) => {
+    setConfirmacion({
+      abierto: true,
+      titulo: `¿Eliminar grado "${nombre}"?`,
+      mensaje: (
+        <span>
+          ¿Estás seguro de que deseas eliminar <strong>{nombre}</strong>? Dejará de ofrecerse como opción de grado y sección escolar.
+        </span>
+      ),
+      textoBotonConfirmar: 'Sí, eliminar grado',
+      onConfirmar: async () => {
+        const res = await dataService.eliminarGrado(nombre);
+        setGrados(res);
+      },
+    });
   };
 
   const handleAgregarObservacion = async (e: React.FormEvent) => {
@@ -136,10 +187,21 @@ export default function AdminPage() {
     setTimeout(() => setGuardadoExitoso(false), 2500);
   };
 
-  const handleEliminarObservacion = async (tag: string) => {
-    if (!confirm(`¿Eliminar la etiqueta "${tag}"?`)) return;
-    const res = await dataService.eliminarObservacion(tag);
-    setObservaciones(res);
+  const handleSolicitarEliminarObservacion = (tag: string) => {
+    setConfirmacion({
+      abierto: true,
+      titulo: `¿Eliminar etiqueta "${tag}"?`,
+      mensaje: (
+        <span>
+          ¿Estás seguro de que deseas eliminar la indicación especial <strong>"{tag}"</strong>? Ya no se sugerirá en las notas rápidas de los pedidos.
+        </span>
+      ),
+      textoBotonConfirmar: 'Sí, eliminar etiqueta',
+      onConfirmar: async () => {
+        const res = await dataService.eliminarObservacion(tag);
+        setObservaciones(res);
+      },
+    });
   };
 
   // Manejador para comprimir foto del plato antes de guardarla
@@ -182,28 +244,35 @@ export default function AdminPage() {
     setTimeout(() => setGuardadoExitoso(false), 3000);
   };
 
-  const handleEliminar = async (id: string) => {
-    if (!confirm('¿Seguro que deseas retirar este plato del catálogo?')) return;
-    await dataService.eliminarPlato(id);
-    setPlatos((prev) => prev.filter((p) => p.id !== id));
+  const handleSolicitarEliminarPlato = (plato: Plato) => {
+    setConfirmacion({
+      abierto: true,
+      titulo: `¿Eliminar ${plato.tipo === 'ENTRADA' ? 'la entrada' : 'el segundo'} "${plato.nombre}"?`,
+      mensaje: (
+        <span>
+          ¿Estás seguro de que deseas retirar <strong>{plato.nombre}</strong> del catálogo de {plato.diaSemana.toLowerCase()}? Ya no aparecerá disponible para los pedidos de los padres.
+        </span>
+      ),
+      textoBotonConfirmar: 'Sí, eliminar plato',
+      onConfirmar: async () => {
+        await dataService.eliminarPlato(plato.id);
+        setPlatos((prev) => prev.filter((p) => p.id !== plato.id));
+      },
+    });
   };
 
   const entradas = platos.filter((p) => p.tipo === 'ENTRADA');
   const segundos = platos.filter((p) => p.tipo === 'SEGUNDO');
 
-  // Obtener fecha de hoy en formato local YYYY-MM-DD
-  const obtenerFechaHoyStr = () => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  // Fecha de hoy en formato estándar Perú (YYYY-MM-DD)
+  const fechaHoyStr = obtenerFechaHoyPeru();
 
-  const fechaHoyStr = obtenerFechaHoyStr();
+  // Filtrado de pedidos según el colegio asignado (para administradores de sede) y el período seleccionado
+  const pedidosBase = (!esSuperAdmin && usuario?.colegioNombre)
+    ? pedidos.filter((p) => p.colegioNombre === usuario.colegioNombre)
+    : pedidos;
 
-  // Filtrado de pedidos según el período seleccionado
-  const pedidosPeriodo = pedidos.filter((p) => {
+  const pedidosPeriodo = pedidosBase.filter((p) => {
     if (periodoKpi === 'todos') return true;
     const f = (p.fecha || '').slice(0, 10);
     if (periodoKpi === 'hoy') return f === fechaHoyStr;
@@ -296,6 +365,20 @@ export default function AdminPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {esSuperAdmin ? (
+            <Link
+              href="/superadmin"
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl transition flex items-center gap-1.5 shadow-sm"
+              title="Panel exclusivo para gestión de colegios y cuentas de administradores"
+            >
+              <Building2 className="w-4 h-4" />
+              <span>Gestión Colegios & Admins</span>
+            </Link>
+          ) : usuario?.colegioNombre ? (
+            <span className="px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 text-xs font-bold flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5" /> Sede: {usuario.colegioNombre}
+            </span>
+          ) : null}
           <span className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-1.5">
             <Cloud className="w-3.5 h-3.5" /> Supabase Activo
           </span>
@@ -337,18 +420,29 @@ export default function AdminPage() {
           Menú Semanal
         </button>
 
-        <button
-          type="button"
-          onClick={() => setTabActiva('colegios')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
-            tabActiva === 'colegios'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          Colegios ({colegios.length})
-        </button>
+        {esSuperAdmin ? (
+          <Link
+            href="/superadmin"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200"
+            title="Ir al panel de gestión de colegios y cuentas de administradores"
+          >
+            <Building2 className="w-4 h-4 text-purple-600" />
+            Colegios & Admins ({colegios.length})
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setTabActiva('colegios')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
+              tabActiva === 'colegios'
+                ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            {usuario?.colegioNombre ? `Mi Sede (${usuario.colegioNombre})` : `Colegios (${colegios.length})`}
+          </button>
+        )}
 
         <button
           type="button"
@@ -927,8 +1021,9 @@ export default function AdminPage() {
                         </div>
                       )}
                       <button
-                        onClick={() => handleEliminar(plato.id)}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition"
+                        type="button"
+                        onClick={() => handleSolicitarEliminarPlato(plato)}
+                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
                         title="Eliminar plato"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -974,8 +1069,9 @@ export default function AdminPage() {
                         </div>
                       )}
                       <button
-                        onClick={() => handleEliminar(plato.id)}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition"
+                        type="button"
+                        onClick={() => handleSolicitarEliminarPlato(plato)}
+                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
                         title="Eliminar plato"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1048,8 +1144,8 @@ export default function AdminPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleEliminarColegio(col)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                    onClick={() => handleSolicitarEliminarColegio(col)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                     title="Eliminar colegio"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -1107,8 +1203,8 @@ export default function AdminPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleEliminarGrado(g)}
-                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                    onClick={() => handleSolicitarEliminarGrado(g)}
+                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                     title="Eliminar grado"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -1172,8 +1268,8 @@ export default function AdminPage() {
                   <span>{tag}</span>
                   <button
                     type="button"
-                    onClick={() => handleEliminarObservacion(tag)}
-                    className="p-0.5 text-orange-400 hover:text-rose-600 transition"
+                    onClick={() => handleSolicitarEliminarObservacion(tag)}
+                    className="p-0.5 text-orange-400 hover:text-rose-600 transition cursor-pointer"
                     title="Eliminar etiqueta"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -1184,6 +1280,18 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Alerta de Confirmación de Eliminación */}
+      <ModalConfirmacion
+        abierto={confirmacion.abierto}
+        onCerrar={() => setConfirmacion((prev) => ({ ...prev, abierto: false }))}
+        onConfirmar={ejecutarAccionConfirmada}
+        cargando={ejecutandoConfirmacion}
+        titulo={confirmacion.titulo}
+        mensaje={confirmacion.mensaje}
+        textoBotonConfirmar={confirmacion.textoBotonConfirmar || 'Sí, eliminar'}
+        tipo="peligro"
+      />
     </div>
   );
 }

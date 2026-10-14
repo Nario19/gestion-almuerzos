@@ -7,11 +7,6 @@ import assert from 'node:assert';
  */
 function calcularEstadoTimeline(pedido) {
   const pagadoOAceptado = pedido.estadoPago === 'PAGADO' || pedido.estadoPedido !== 'REGISTRADO';
-  const enCocinaOListo =
-    pedido.estadoPedido === 'EN_COCINA' ||
-    pedido.estadoPedido === 'EMPACADO' ||
-    pedido.estadoPedido === 'ENTREGADO';
-  const empacadoOListo = pedido.estadoPedido === 'EMPACADO' || pedido.estadoPedido === 'ENTREGADO';
   const entregado = pedido.estadoPedido === 'ENTREGADO';
 
   const etapas = [
@@ -37,24 +32,12 @@ function calcularEstadoTimeline(pedido) {
     },
     {
       id: 3,
-      titulo: 'Preparado',
-      descripcion: (entregado || empacadoOListo)
-        ? 'Almuerzo preparado'
-        : pedido.estadoPedido === 'EN_COCINA'
-        ? 'En preparación'
-        : 'En cola',
-      // REGLA CLAVE: Si el admin pasa de frente de pago aceptado a entregado,
-      // preparado se considera completado automáticamente.
-      completado: empacadoOListo || entregado,
-      enCurso: (pagadoOAceptado || entregado) && !empacadoOListo && !entregado,
-      alerta: false,
-    },
-    {
-      id: 4,
       titulo: 'Entregado',
-      descripcion: entregado ? 'Entregado en colegio' : empacadoOListo ? 'Listo para entrega' : 'Programado',
+      descripcion: entregado
+        ? (pedido.horaEntrega ? `Entregado (${pedido.horaEntrega})` : 'Entregado en colegio')
+        : (pagadoOAceptado ? 'Programado para entrega' : 'Pendiente de pago'),
       completado: entregado,
-      enCurso: empacadoOListo && !entregado,
+      enCurso: (pagadoOAceptado || entregado) && !entregado,
       alerta: false,
     },
   ];
@@ -69,38 +52,28 @@ function calcularEstadoTimeline(pedido) {
   if (entregado) {
     estadoVivo = {
       titulo: '¡Almuerzo Entregado con Éxito!',
-      descripcion: `El pedido fue entregado puntualmente en el colegio ${pedido.colegioNombre} para ${pedido.estudianteNombre}.`,
+      descripcion: pedido.horaEntrega
+        ? `El pedido fue entregado a las ${pedido.horaEntrega} en el colegio ${pedido.colegioNombre} para ${pedido.estudianteNombre}.`
+        : `El pedido fue entregado puntualmente en el colegio ${pedido.colegioNombre} para ${pedido.estudianteNombre}.`,
       color: 'emerald',
-    };
-  } else if (pedido.estadoPedido === 'EMPACADO') {
-    estadoVivo = {
-      titulo: 'Lonchera Preparada y Empacada',
-      descripcion: `Almuerzo listo y empacado en envase térmico rotulado con el grado (${pedido.gradoSeccion}). En ruta de entrega al colegio.`,
-      color: 'purple',
-    };
-  } else if (pedido.estadoPedido === 'EN_COCINA') {
-    estadoVivo = {
-      titulo: 'En Preparación Activa en Cocina',
-      descripcion: `El equipo de cocina está elaborando la entrada (${pedido.entradaNombre}) y el segundo (${pedido.segundoNombre}).`,
-      color: 'orange',
-    };
-  } else if (pagadoOAceptado) {
-    estadoVivo = {
-      titulo: '¡Pago Aceptado! Orden en Cocina',
-      descripcion:
-        'El pago ha sido confirmado por administración. La orden ya está en cocina para su preparación.',
-      color: 'blue',
     };
   } else if (pedido.estadoPago === 'VERIFICANDO') {
     estadoVivo = {
       titulo: 'Comprobante en Revisión por Administración',
       descripcion:
-        'Hemos recibido tu comprobante de pago. En breve el administrador lo validará para aceptar tu orden y pasarla a cocina.',
+        'Hemos recibido tu comprobante de pago. En breve el administrador lo validará para confirmar tu orden.',
+      color: 'blue',
+    };
+  } else if (pagadoOAceptado) {
+    estadoVivo = {
+      titulo: '¡Pago Aceptado! Programado para Entrega',
+      descripcion:
+        `El pago ha sido confirmado. El almuerzo de ${pedido.estudianteNombre} está programado para ser entregado en el colegio ${pedido.colegioNombre}.`,
       color: 'blue',
     };
   }
 
-  return { etapas, estadoVivo, pagadoOAceptado, empacadoOListo, entregado };
+  return { etapas, estadoVivo, pagadoOAceptado, entregado };
 }
 
 /**
@@ -129,7 +102,7 @@ function filtrarPedidosParaCocina(pedidos, colegioFiltro = 'TODOS') {
   };
 }
 
-describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Preparado -> Entregado', () => {
+describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Entregado', () => {
   const basePedido = {
     id: 'ped-101',
     estudianteNombre: 'Mateo Quispe',
@@ -141,12 +114,14 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Prepara
     precioTotal: 15.0,
     estadoPedido: 'REGISTRADO',
     estadoPago: 'PENDIENTE',
+    createdAt: '2026-10-14T13:45:00.000Z',
   };
 
   test('1. Etapa 1: Orden recibida (recién registrado sin pagar)', () => {
     const pedido = { ...basePedido };
     const timeline = calcularEstadoTimeline(pedido);
 
+    assert.strictEqual(timeline.etapas.length, 3, 'El timeline debe constar de 3 etapas');
     assert.strictEqual(timeline.etapas[0].titulo, 'Orden recibida');
     assert.strictEqual(timeline.etapas[0].completado, true, 'Etapa 1 (Orden recibida) debe estar completada');
 
@@ -154,11 +129,8 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Prepara
     assert.strictEqual(timeline.etapas[1].completado, false, 'Etapa 2 (Pago aceptado) NO debe estar completada');
     assert.strictEqual(timeline.etapas[1].alerta, true, 'Etapa 2 debe mostrar alerta de pago');
 
-    assert.strictEqual(timeline.etapas[2].titulo, 'Preparado');
-    assert.strictEqual(timeline.etapas[2].completado, false, 'Etapa 3 (Preparado) NO debe estar completada');
-
-    assert.strictEqual(timeline.etapas[3].titulo, 'Entregado');
-    assert.strictEqual(timeline.etapas[3].completado, false, 'Etapa 4 (Entregado) NO debe estar completada');
+    assert.strictEqual(timeline.etapas[2].titulo, 'Entregado');
+    assert.strictEqual(timeline.etapas[2].completado, false, 'Etapa 3 (Entregado) NO debe estar completada');
     assert.strictEqual(timeline.estadoVivo.titulo, 'Orden Recibida - Esperando Pago');
 
     // Verificación en Cocina: NO debe aparecer en pedidos de cocina
@@ -188,8 +160,8 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Prepara
 
     assert.strictEqual(timeline.etapas[0].completado, true, 'Paso 1 (Orden recibida) completado');
     assert.strictEqual(timeline.etapas[1].completado, true, 'Paso 2 (Pago aceptado) completado');
-    assert.strictEqual(timeline.etapas[2].enCurso, true, 'Paso 3 (Preparado) en curso');
-    assert.strictEqual(timeline.estadoVivo.titulo, '¡Pago Aceptado! Orden en Cocina');
+    assert.strictEqual(timeline.etapas[2].enCurso, true, 'Paso 3 (Entregado) en curso / programado');
+    assert.strictEqual(timeline.estadoVivo.titulo, '¡Pago Aceptado! Programado para Entrega');
 
     // Ahora SÍ pasa a cocina
     const { pedidosAceptados, pedidosPendientesDespacho } = filtrarPedidosParaCocina([pedido]);
@@ -197,49 +169,52 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Prepara
     assert.strictEqual(pedidosPendientesDespacho.length, 0);
   });
 
-  test('4. Etapa 3: Cocina en preparación activa o empaque', () => {
-    const pedido = { ...basePedido, estadoPago: 'PAGADO', estadoPedido: 'EN_COCINA' };
+  test('4. Transición directa: De Pago aceptado a Entregado con registro de hora', () => {
+    // REGLA: El admin en despacho pasa directamente de Pago aceptado a Entregado (ya no hay paso de preparado en el timeline)
+    const pedido = {
+      ...basePedido,
+      estadoPago: 'PAGADO',
+      estadoPedido: 'ENTREGADO',
+      horaEntrega: '12:30 p. m.',
+    };
     const timeline = calcularEstadoTimeline(pedido);
 
-    assert.strictEqual(timeline.etapas[1].completado, true);
-    assert.strictEqual(timeline.etapas[2].enCurso, true);
-    assert.strictEqual(timeline.estadoVivo.titulo, 'En Preparación Activa en Cocina');
-    assert.ok(timeline.estadoVivo.descripcion.includes('Arroz con Pollo'));
-
-    const { pedidosAceptados } = filtrarPedidosParaCocina([pedido]);
-    assert.strictEqual(pedidosAceptados.length, 1);
-  });
-
-  test('5. Etapa 3 completada: Preparado / Empacado en lonchera', () => {
-    const pedido = { ...basePedido, estadoPago: 'PAGADO', estadoPedido: 'EMPACADO' };
-    const timeline = calcularEstadoTimeline(pedido);
-
-    assert.strictEqual(timeline.etapas[0].completado, true);
-    assert.strictEqual(timeline.etapas[1].completado, true);
-    assert.strictEqual(timeline.etapas[2].completado, true, 'Paso 3 Preparado está completado');
-    assert.strictEqual(timeline.etapas[3].enCurso, true, 'Paso 4 Entregado está en curso');
-    assert.strictEqual(timeline.estadoVivo.titulo, 'Lonchera Preparada y Empacada');
-
-    const { pedidosAceptados } = filtrarPedidosParaCocina([pedido]);
-    assert.strictEqual(pedidosAceptados.length, 1);
-  });
-
-  test('6. REGLA CLAVE: Si admin pasa directo de Pago aceptado a Entregado, Preparado queda completado automáticamente', () => {
-    // Pedido que estaba en Pago aceptado (PAGADO, REGISTRADO) y el admin lo pasa directo a ENTREGADO
-    const pedido = { ...basePedido, estadoPago: 'PAGADO', estadoPedido: 'ENTREGADO' };
-    const timeline = calcularEstadoTimeline(pedido);
-
-    // Todos los 4 pasos deben figurar como completados
-    assert.strictEqual(timeline.etapas[0].completado, true, '1. Orden recibida debe estar completada');
-    assert.strictEqual(timeline.etapas[1].completado, true, '2. Pago aceptado debe estar completado');
-    assert.strictEqual(timeline.etapas[2].completado, true, '3. Preparado DEBE estar completado automáticamente al saltar a Entregado');
-    assert.strictEqual(timeline.etapas[2].enCurso, false, '3. Preparado ya no está en curso');
-    assert.strictEqual(timeline.etapas[3].completado, true, '4. Entregado debe estar completado');
-    assert.strictEqual(timeline.etapas[3].enCurso, false);
+    assert.strictEqual(timeline.etapas.length, 3);
+    assert.strictEqual(timeline.etapas[0].completado, true, '1. Orden recibida completada');
+    assert.strictEqual(timeline.etapas[1].completado, true, '2. Pago aceptado completado');
+    assert.strictEqual(timeline.etapas[2].completado, true, '3. Entregado completado');
+    assert.strictEqual(timeline.etapas[2].descripcion, 'Entregado (12:30 p. m.)');
     assert.strictEqual(timeline.estadoVivo.titulo, '¡Almuerzo Entregado con Éxito!');
+    assert.ok(timeline.estadoVivo.descripcion.includes('12:30 p. m.'));
 
     const { pedidosAceptados } = filtrarPedidosParaCocina([pedido]);
     assert.strictEqual(pedidosAceptados.length, 1, 'Cocina contabiliza el pedido entregado');
+  });
+
+  test('5. Despacho: Captura y formato de hora de creación y hora de entrega en Perú (America/Lima)', () => {
+    const pedido = {
+      ...basePedido,
+      createdAt: '2026-10-14T17:15:00.000Z', // 12:15 p. m. en Perú UTC-5
+      horaEntrega: '12:45 p. m.',
+    };
+
+    const formatearHoraPeru = (fechaIso) => {
+      try {
+        const d = new Date(fechaIso);
+        return d.toLocaleTimeString('es-PE', {
+          timeZone: 'America/Lima',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+      } catch {
+        return '';
+      }
+    };
+
+    const horaPedido = formatearHoraPeru(pedido.createdAt);
+    assert.ok(horaPedido.includes('12:15'), `La hora del pedido debe convertirse a America/Lima (12:15): ${horaPedido}`);
+    assert.strictEqual(pedido.horaEntrega, '12:45 p. m.');
   });
 
   test('7. Filtro por Colegio en Cocina respeta órdenes aceptadas', () => {

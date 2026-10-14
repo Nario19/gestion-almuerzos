@@ -26,6 +26,7 @@ import {
   ShoppingBag,
   BarChart3,
   X,
+  ClipboardCheck,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
@@ -92,6 +93,10 @@ function PedidoContent() {
   const [alergiasNuevoHijo, setAlergiasNuevoHijo] = useState('');
   const [guardandoNuevoHijo, setGuardandoNuevoHijo] = useState(false);
   const [errorModalHijo, setErrorModalHijo] = useState<string | null>(null);
+
+  // Modal de confirmación y corroboración con el resumen de todo lo pedido
+  const [mostrarModalConfirmacionPedido, setMostrarModalConfirmacionPedido] = useState(false);
+  const [hijoParaConfirmar, setHijoParaConfirmar] = useState<Hijo | null>(null);
 
   // Listas dinámicas configurables por el admin
   const [listaColegios, setListaColegios] = useState<string[]>([]);
@@ -264,6 +269,18 @@ function PedidoContent() {
     });
   };
 
+  // Cerrar modal de confirmación con Escape
+  useEffect(() => {
+    if (!mostrarModalConfirmacionPedido) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isPending) {
+        setMostrarModalConfirmacionPedido(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mostrarModalConfirmacionPedido, isPending]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorValidacion(null);
@@ -283,7 +300,15 @@ function PedidoContent() {
       return;
     }
 
-    ejecutarCreacionPedido(hijoSeleccionado);
+    // Corroboración: abrir alerta/modal de confirmación con todo lo pedido
+    const target = hijoSeleccionado || (usuario?.hijos && usuario.hijos.length > 0 ? usuario.hijos[0] : null);
+    setHijoParaConfirmar(target);
+    setMostrarModalConfirmacionPedido(true);
+  };
+
+  const handleConfirmarPedidoFinal = () => {
+    setMostrarModalConfirmacionPedido(false);
+    ejecutarCreacionPedido(hijoParaConfirmar || hijoSeleccionado);
   };
 
   const handleGuardarHijoYConfirmar = async (e: React.FormEvent) => {
@@ -332,7 +357,8 @@ function PedidoContent() {
 
       seleccionarHijo(hijoCreado);
       setMostrarModalAgregarHijo(false);
-      ejecutarCreacionPedido(hijoCreado);
+      setHijoParaConfirmar(hijoCreado);
+      setMostrarModalConfirmacionPedido(true);
     } catch (err: any) {
       setErrorModalHijo(err.message || 'Error al registrar estudiante.');
     } finally {
@@ -1203,6 +1229,183 @@ function PedidoContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN Y CORROBORACIÓN DEL PEDIDO */}
+      {mostrarModalConfirmacionPedido && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-confirmacion-pedido-titulo"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isPending) {
+              setMostrarModalConfirmacionPedido(false);
+            }
+          }}
+        >
+          <div
+            className="bg-white w-full max-w-md sm:max-w-lg rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cabecera */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 shadow-xs ring-4 ring-orange-50">
+                  <ClipboardCheck className="w-6 h-6 stroke-[2.2]" />
+                </div>
+                <div>
+                  <h3
+                    id="modal-confirmacion-pedido-titulo"
+                    className="text-base sm:text-lg font-black text-slate-900 leading-snug"
+                  >
+                    Corrobora tu Pedido
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Revisa que los datos y los platos sean correctos
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMostrarModalConfirmacionPedido(false)}
+                disabled={isPending}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer disabled:opacity-50"
+                aria-label="Cerrar corroboración"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contenido de la Corroboración */}
+            <div className="space-y-3 text-xs sm:text-sm">
+              {/* Estudiante y Colegio */}
+              <div className="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Estudiante y Destino
+                </span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-slate-500">Estudiante:</span>
+                  <span className="font-black text-slate-900 text-sm text-right">
+                    {hijoParaConfirmar?.nombreCompleto || estudiante || 'Estudiante'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-slate-500">Colegio:</span>
+                  <span className="font-bold text-slate-800 text-right">
+                    {hijoParaConfirmar?.colegioNombre || colegio || 'No especificado'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-slate-500">Grado y Sección:</span>
+                  <span className="font-bold text-slate-800 text-right">
+                    {hijoParaConfirmar?.gradoSeccion || grado || 'No especificado'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-slate-500">Teléfono:</span>
+                  <span className="font-semibold text-slate-700 text-right">
+                    {telefono.trim() || usuario?.telefono || 'No especificado'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Día y Menú Seleccionado */}
+              <div className="bg-orange-50/70 p-3.5 sm:p-4 rounded-2xl border border-orange-200/80 space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-orange-200/60">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-orange-800 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-orange-600" /> Día Programado:
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-lg bg-orange-500 text-white font-black text-xs uppercase tracking-wide">
+                    {diaSeleccionado}
+                  </span>
+                </div>
+
+                <div className="space-y-2 pt-0.5">
+                  <div>
+                    <span className="text-[11px] font-bold text-orange-800 block">1. Entrada seleccionada:</span>
+                    <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
+                      {entradaSeleccionada}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-orange-800 block">2. Plato de fondo (Segundo):</span>
+                    <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
+                      {segundoSeleccionado}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Observaciones / Alergias */}
+              {((observacion && observacion.trim().length > 0) || (hijoParaConfirmar?.alergiasNotas)) ? (
+                <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">Observaciones especiales / Alergias:</span>
+                    <span className="text-amber-800 font-medium">
+                      {observacion.trim() || (hijoParaConfirmar?.alergiasNotas ? `Alergias: ${hijoParaConfirmar.alergiasNotas}` : '')}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-3.5 py-2.5 bg-slate-50 rounded-2xl border border-slate-200/60 text-xs text-slate-500 flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Sin observaciones especiales (Menú regular).</span>
+                </div>
+              )}
+
+              {/* Método de Pago y Monto Total */}
+              <div className="bg-slate-900 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-300">
+                  <span>Método de Pago:</span>
+                  <span className="font-bold text-white flex items-center gap-1.5">
+                    {metodoPago}
+                    {comprimidoInfo && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md font-bold">
+                        Comprobante adjunto
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                  <span className="text-xs sm:text-sm font-bold text-slate-300">Total a Pagar:</span>
+                  <span className="text-lg sm:text-xl font-black text-emerald-400">
+                    S/ 12.00
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Botones de Acción */}
+            <div className="pt-2 flex flex-col-reverse sm:flex-row items-center gap-2.5 sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setMostrarModalConfirmacionPedido(false)}
+                disabled={isPending}
+                className="w-full sm:w-auto px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-2xl transition cursor-pointer text-center disabled:opacity-50"
+              >
+                Modificar Pedido
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmarPedidoFinal}
+                disabled={isPending}
+                className="w-full sm:w-auto px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-black text-white bg-orange-500 hover:bg-orange-600 active:scale-95 rounded-2xl shadow-md shadow-orange-500/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+              >
+                {isPending ? (
+                  <span className="animate-pulse">Registrando pedido...</span>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Sí, Confirmar Pedido</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

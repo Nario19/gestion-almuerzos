@@ -8,7 +8,8 @@ interface AuthContextType {
   usuario: UsuarioPadre | null;
   cargando: boolean;
   esAdmin: boolean;
-  login: (identificador: string, password?: string) => Promise<{ ok: boolean; error?: string; esAdmin?: boolean }>;
+  esSuperAdmin: boolean;
+  login: (identificador: string, password?: string) => Promise<{ ok: boolean; error?: string; esAdmin?: boolean; esSuperAdmin?: boolean }>;
   registro: (datos: {
     nombreCompleto: string;
     dni: string;
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const u: UsuarioPadre = JSON.parse(sesionGuardada);
         setUsuario(u);
-        if (u.id && u.rol !== 'ADMIN') {
+        if (u.id && u.rol !== 'ADMIN' && u.rol !== 'SUPER_ADMIN') {
           cargarHijosDeSupabase(u.id).then((hijosActualizados) => {
             if (hijosActualizados) {
               const actualizado = { ...u, hijos: hijosActualizados };
@@ -156,19 +157,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (identificador: string, password?: string) => {
     const idLimpio = identificador.trim();
 
-    // Comprobación directa para cuenta Administrador inicial (seeder/fallback)
+    // 1. Comprobación directa para Super Administrador inicial (fallback / seeder)
+    if (
+      (idLimpio === '00000001' ||
+        idLimpio.toLowerCase() === 'superadmin' ||
+        idLimpio.toLowerCase() === 'superadmin@almuerzos.com') &&
+      password === 'superadmin123'
+    ) {
+      const superAdminUser: UsuarioPadre = {
+        id: 'superadmin-sistema-id',
+        nombreCompleto: 'Super Administrador',
+        dni: '00000001',
+        telefono: '999999998',
+        email: 'superadmin@almuerzos.com',
+        rol: 'SUPER_ADMIN',
+        hijos: [],
+      };
+      setUsuario(superAdminUser);
+      localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(superAdminUser));
+      return { ok: true, esAdmin: true, esSuperAdmin: true };
+    }
+
+    // 2. Comprobación directa para Administrador General inicial (seeder/fallback)
     if ((idLimpio === '00000000' || idLimpio.toLowerCase() === 'admin') && password === 'admin123') {
       const adminUser: UsuarioPadre = {
         id: 'admin-sistema-id',
         nombreCompleto: 'Administrador General',
         dni: '00000000',
         telefono: '999999999',
+        email: 'admin@almuerzos.com',
         rol: 'ADMIN',
         hijos: [],
       };
       setUsuario(adminUser);
       localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(adminUser));
-      return { ok: true, esAdmin: true };
+      return { ok: true, esAdmin: true, esSuperAdmin: false };
     }
 
     if (isSupabaseConfigured && supabase) {
@@ -199,8 +222,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { ok: false, error: 'Contraseña incorrecta.' };
         }
 
-        const esAdmin = data.rol === 'ADMIN' || data.dni === '00000000';
+        const esSuperAdmin = data.rol === 'SUPER_ADMIN' || data.dni === '00000001';
+        const esAdmin = esSuperAdmin || data.rol === 'ADMIN' || data.dni === '00000000';
         const hijos = esAdmin ? [] : (await cargarHijosDeSupabase(data.id)) || [];
+
+        // Si es administrador regular (no superadmin), detectar colegio asignado
+        let colegioAsignado: string | undefined = undefined;
+        if (esAdmin && !esSuperAdmin) {
+          try {
+            // 1. Buscar en tabla colegios por campo sede que contiene "| ADM-DNI"
+            const { data: cols } = await supabase
+              .from('colegios')
+              .select('nombre, sede')
+              .order('created_at', { ascending: false });
+
+            if (cols) {
+              const colMatch = cols.find(
+                (c) =>
+                  c.sede &&
+                  (c.sede.includes(`| ${data.dni}`) ||
+                    c.sede.includes(data.dni) ||
+                    (data.email && c.sede.includes(data.email)))
+              );
+              if (colMatch) {
+                colegioAsignado = colMatch.nombre;
+              }
+            }
+
+            // 2. Si no encontró en sede, revisar el registro central de admins en menus_dia SABADO
+            if (!colegioAsignado) {
+              const { data: configRow } = await supabase
+                .from('menus_dia')
+                .select('mensaje_aviso')
+                .eq('dia_semana', 'SABADO')
+                .maybeSingle();
+              if (configRow && configRow.mensaje_aviso) {
+                try {
+                  const cfg = JSON.parse(configRow.mensaje_aviso);
+                  if (cfg.adminsColegio) {
+                    for (const [colNombre, adminInfo] of Object.entries(cfg.adminsColegio) as any) {
+                      if (
+                        adminInfo.dni === data.dni ||
+                        adminInfo.email === data.email ||
+                        adminInfo.adminId === data.id
+                      ) {
+                        colegioAsignado = colNombre;
+                        break;
+                      }
+                    }
+                  }
+                } catch (_) {}
+              }
+            }
+          } catch (e) {
+            console.warn('Error resolviendo colegio asignado para admin:', e);
+          }
+
+          // Fallback a localStorage si offline o en caché
+          if (!colegioAsignado && typeof window !== 'undefined') {
+            try {
+              const cached = localStorage.getItem('config_admins_colegio');
+              if (cached) {
+                const map = JSON.parse(cached);
+                for (const [colNombre, adminInfo] of Object.entries(map) as any) {
+                  if (adminInfo.dni === data.dni || adminInfo.email === data.email) {
+                    colegioAsignado = colNombre;
+                    break;
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+        }
+
+        const rolFinal: RolUsuario = esSuperAdmin ? 'SUPER_ADMIN' : esAdmin ? 'ADMIN' : 'PADRE';
 
         const u: UsuarioPadre = {
           id: data.id,
@@ -208,13 +303,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           dni: data.dni,
           telefono: data.telefono,
           email: data.email,
-          rol: esAdmin ? 'ADMIN' : 'PADRE',
+          rol: rolFinal,
+          colegioNombre: colegioAsignado,
           hijos,
         };
 
         setUsuario(u);
         localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
-        return { ok: true, esAdmin };
+        return { ok: true, esAdmin, esSuperAdmin };
       } catch (err: any) {
         return { ok: false, error: err.message || 'Error al iniciar sesión' };
       }
@@ -230,7 +326,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUsuario(u);
       localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
-      return { ok: true, esAdmin: false };
+      return { ok: true, esAdmin: false, esSuperAdmin: false };
     }
   };
 
@@ -323,7 +419,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const esAdmin = Boolean(usuario && usuario.rol === 'ADMIN');
+  const esSuperAdmin = Boolean(usuario && usuario.rol === 'SUPER_ADMIN');
+  const esAdmin = Boolean(usuario && (usuario.rol === 'ADMIN' || usuario.rol === 'SUPER_ADMIN'));
 
   return (
     <AuthContext.Provider
@@ -331,6 +428,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         usuario,
         cargando,
         esAdmin,
+        esSuperAdmin,
         login,
         registro,
         logout,

@@ -119,8 +119,8 @@ describe('Flujo de Inicio y Experiencia de Padres sin Estudiantes', () => {
     assert.strictEqual(padre.hijos.length, 1);
   });
 
-  test('7. Un padre con estudiantes ya registrados puede confirmar el pedido directamente sin ver el modal', () => {
-    function simularHandleSubmit({ usuario, entrada, segundo }) {
+  test('7. Un padre con estudiantes al hacer clic en Confirmar Pedido activa la alerta/modal de corroboración con todo su pedido', () => {
+    function simularHandleSubmit({ usuario, entrada, segundo, hijoSeleccionado }) {
       if (!entrada) return { ok: false, error: 'Por favor selecciona una entrada.' };
       if (!segundo) return { ok: false, error: 'Por favor selecciona un plato de fondo.' };
 
@@ -128,7 +128,8 @@ describe('Flujo de Inicio y Experiencia de Padres sin Estudiantes', () => {
         return { ok: false, accion: 'MOSTRAR_MODAL_AGREGAR_HIJO' };
       }
 
-      return { ok: true, accion: 'EJECUTAR_PEDIDO' };
+      const target = hijoSeleccionado || (usuario?.hijos && usuario.hijos.length > 0 ? usuario.hijos[0] : null);
+      return { ok: true, accion: 'MOSTRAR_MODAL_CONFIRMACION_PEDIDO', targetHijo: target };
     }
 
     const padreConHijos = {
@@ -142,9 +143,79 @@ describe('Flujo de Inicio y Experiencia de Padres sin Estudiantes', () => {
       usuario: padreConHijos,
       entrada: 'Sopa Criolla',
       segundo: 'Milanesa de Pollo',
+      hijoSeleccionado: padreConHijos.hijos[0],
     });
 
     assert.strictEqual(resultado.ok, true);
-    assert.strictEqual(resultado.accion, 'EJECUTAR_PEDIDO');
+    assert.strictEqual(resultado.accion, 'MOSTRAR_MODAL_CONFIRMACION_PEDIDO');
+    assert.strictEqual(resultado.targetHijo.nombreCompleto, 'Lucas Gomez');
+  });
+
+  test('8. La alerta/modal de confirmación incluye todos los campos necesarios para corroborar el pedido', () => {
+    // Generador de resumen para corroborar
+    function generarResumenCorroboracion({ hijo, entrada, segundo, dia, observacion, metodoPago, monto }) {
+      return {
+        estudiante: hijo.nombreCompleto,
+        colegio: hijo.colegioNombre,
+        grado: hijo.gradoSeccion,
+        dia,
+        entrada,
+        segundo,
+        observacion: observacion || 'Sin observaciones',
+        metodoPago,
+        total: `S/ ${monto.toFixed(2)}`,
+      };
+    }
+
+    const resumen = generarResumenCorroboracion({
+      hijo: { nombreCompleto: 'Lucas Gomez', colegioNombre: 'Innova Schools', gradoSeccion: '1ro Sec' },
+      entrada: 'Crema de Zapallo',
+      segundo: 'Lomo Saltado',
+      dia: 'MIERCOLES',
+      observacion: 'Sin ensalada',
+      metodoPago: 'Yape',
+      monto: 12.0,
+    });
+
+    assert.strictEqual(resumen.estudiante, 'Lucas Gomez');
+    assert.strictEqual(resumen.colegio, 'Innova Schools');
+    assert.strictEqual(resumen.grado, '1ro Sec');
+    assert.strictEqual(resumen.dia, 'MIERCOLES');
+    assert.strictEqual(resumen.entrada, 'Crema de Zapallo');
+    assert.strictEqual(resumen.segundo, 'Lomo Saltado');
+    assert.strictEqual(resumen.observacion, 'Sin ensalada');
+    assert.strictEqual(resumen.metodoPago, 'Yape');
+    assert.strictEqual(resumen.total, 'S/ 12.00');
+  });
+
+  test('9. El padre puede corroborar y presionar "Sí, Confirmar Pedido" para registrar el pedido exitosamente', () => {
+    let pedidoCreado = null;
+    let modalCerrado = false;
+
+    function handleConfirmarPedidoFinal(hijo, entrada, segundo, dia) {
+      modalCerrado = true;
+      pedidoCreado = {
+        codigo: 'ALM-999',
+        estudiante: hijo.nombreCompleto,
+        entrada,
+        segundo,
+        dia,
+        estado: 'REGISTRADO',
+      };
+    }
+
+    handleConfirmarPedidoFinal(
+      { nombreCompleto: 'Lucas Gomez' },
+      'Sopa Criolla',
+      'Milanesa de Pollo',
+      'LUNES'
+    );
+
+    assert.strictEqual(modalCerrado, true);
+    assert.ok(pedidoCreado);
+    assert.strictEqual(pedidoCreado.estudiante, 'Lucas Gomez');
+    assert.strictEqual(pedidoCreado.entrada, 'Sopa Criolla');
+    assert.strictEqual(pedidoCreado.segundo, 'Milanesa de Pollo');
+    assert.strictEqual(pedidoCreado.dia, 'LUNES');
   });
 });

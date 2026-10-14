@@ -14,13 +14,14 @@ import {
   ShieldCheck,
   ShoppingBag,
   BarChart3,
+  Building2,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
 export default function HeaderNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { usuario, esAdmin, logout } = useAuth();
+  const { usuario, esAdmin, esSuperAdmin, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -28,6 +29,7 @@ export default function HeaderNav() {
   };
 
   const adminNavItems = [
+    ...(esSuperAdmin ? [{ href: '/superadmin', label: 'Colegios', icon: Building2 }] : []),
     { href: '/admin', label: 'Admin', icon: BarChart3 },
     { href: '/despacho', label: 'Despacho', icon: PackageCheck },
     { href: '/cocina', label: 'Cocina', icon: ChefHat },
@@ -49,12 +51,18 @@ export default function HeaderNav() {
             </div>
           </Link>
 
-          {/* Menú Operativo (SOLO VISIBLE PARA ADMINISTRADORES) */}
+          {/* Menú Operativo (SOLO VISIBLE PARA ADMINISTRADORES Y SUPER ADMIN) */}
           {esAdmin && (
             <nav className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
-              <span className="text-[10px] font-black uppercase text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg mr-1 hidden sm:inline-flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> Admin
-              </span>
+              {esSuperAdmin ? (
+                <span className="text-[10px] font-black uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded-lg mr-1 hidden sm:inline-flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" /> Super Admin
+                </span>
+              ) : (
+                <span className="text-[10px] font-black uppercase text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg mr-1 hidden sm:inline-flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" /> Admin
+                </span>
+              )}
               {adminNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -64,7 +72,9 @@ export default function HeaderNav() {
                     href={item.href}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                       isActive
-                        ? 'bg-orange-500 text-white shadow-xs'
+                        ? item.href === '/superadmin'
+                          ? 'bg-purple-600 text-white shadow-xs'
+                          : 'bg-orange-500 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                     }`}
                   >
@@ -114,10 +124,15 @@ export default function HeaderNav() {
                   </div>
                 )}
 
-                {/* Si es Admin, muestra indicador de Admin */}
-                {esAdmin && (
-                  <span className="text-xs font-bold text-slate-600 hidden sm:inline">
-                    Admin ({usuario.nombreCompleto.split(' ')[0]})
+                {/* Si es Super Admin o Admin */}
+                {esSuperAdmin && (
+                  <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200 hidden sm:inline">
+                    Super Admin
+                  </span>
+                )}
+                {esAdmin && !esSuperAdmin && (
+                  <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 hidden sm:inline">
+                    Admin ({usuario.colegioNombre ? usuario.colegioNombre : usuario.nombreCompleto.split(' ')[0]})
                   </span>
                 )}
 

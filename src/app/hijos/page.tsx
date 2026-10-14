@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { dataService } from '@/lib/dataService';
+import ModalConfirmacion from '@/components/ModalConfirmacion';
 
 function HijosContent() {
   const router = useRouter();
@@ -34,6 +35,19 @@ function HijosContent() {
   const [cargandoConfig, setCargandoConfig] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [hijoAEliminar, setHijoAEliminar] = useState<{ id: string; nombre: string } | null>(null);
+  const [eliminandoHijo, setEliminandoHijo] = useState(false);
+
+  const confirmarEliminarHijo = async () => {
+    if (!hijoAEliminar) return;
+    setEliminandoHijo(true);
+    try {
+      await eliminarHijo(hijoAEliminar.id);
+      setHijoAEliminar(null);
+    } finally {
+      setEliminandoHijo(false);
+    }
+  };
 
   useEffect(() => {
     let montado = true;
@@ -99,7 +113,7 @@ function HijosContent() {
     );
   }
 
-  if (usuario.rol === 'ADMIN') {
+  if (usuario.rol === 'ADMIN' || usuario.rol === 'SUPER_ADMIN') {
     return (
       <div className="max-w-md mx-auto px-4 py-12 text-center">
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
@@ -315,8 +329,8 @@ function HijosContent() {
                   </div>
 
                   <button
-                    onClick={() => eliminarHijo(hijo.id)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                    onClick={() => setHijoAEliminar({ id: hijo.id, nombre: hijo.nombreCompleto })}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                     title="Eliminar estudiante"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -335,6 +349,22 @@ function HijosContent() {
           )}
         </div>
       </div>
+
+      {/* Modal de Alerta de Confirmación de Eliminación */}
+      <ModalConfirmacion
+        abierto={Boolean(hijoAEliminar)}
+        onCerrar={() => setHijoAEliminar(null)}
+        onConfirmar={confirmarEliminarHijo}
+        cargando={eliminandoHijo}
+        titulo={`¿Eliminar a ${hijoAEliminar?.nombre || 'estudiante'}?`}
+        mensaje={
+          <span>
+            ¿Estás seguro de que deseas retirar a <strong>{hijoAEliminar?.nombre}</strong> del registro de tus hijos? No se afectarán los pedidos de almuerzos que ya hayas solicitado previamente.
+          </span>
+        }
+        textoBotonConfirmar="Sí, eliminar estudiante"
+        tipo="peligro"
+      />
     </div>
   );
 }

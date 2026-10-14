@@ -1,0 +1,1027 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  Building2,
+  Plus,
+  ShieldCheck,
+  ShieldAlert,
+  User,
+  Key,
+  Lock,
+  Phone,
+  Mail,
+  Edit3,
+  Trash2,
+  CheckCircle2,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Search,
+  RefreshCw,
+  BarChart3,
+  PackageCheck,
+  ChefHat,
+  ArrowRight,
+  Sparkles,
+  ToggleLeft,
+  ToggleRight,
+  ExternalLink,
+} from 'lucide-react';
+import { useAuth } from '@/lib/authContext';
+import { dataService } from '@/lib/dataService';
+import AccesoRestringido from '@/components/AccesoRestringido';
+import ModalConfirmacion from '@/components/ModalConfirmacion';
+import { ColegioDetallado, AdminColegioInfo } from '@/types';
+
+export default function SuperAdminPage() {
+  const { usuario, esSuperAdmin, cargando: cargandoAuth } = useAuth();
+
+  const [colegios, setColegios] = useState<ColegioDetallado[]>([]);
+  const [cargandoDatos, setCargandoDatos] = useState(true);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState<'TODOS' | 'ACTIVOS' | 'INACTIVOS'>('TODOS');
+  const [guardando, setGuardando] = useState(false);
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+
+  // Modal para Crear / Editar Colegio con Administrador
+  const [modalColegioAbierto, setModalColegioAbierto] = useState(false);
+  const [colegioEnEdicion, setColegioEnEdicion] = useState<ColegioDetallado | null>(null);
+
+  // Campos del Formulario Colegio
+  const [nombreColegio, setNombreColegio] = useState('');
+  const [sedeColegio, setSedeColegio] = useState('');
+  const [activoColegio, setActivoColegio] = useState(true);
+
+  // Campos del Administrador asignado
+  const [adminNombre, setAdminNombre] = useState('');
+  const [adminDni, setAdminDni] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminTelefono, setAdminTelefono] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [verPassword, setVerPassword] = useState(false);
+
+  // Modal rápido para editar credenciales de Admin
+  const [modalAdminRapido, setModalAdminRapido] = useState<{
+    abierto: boolean;
+    colegio: ColegioDetallado | null;
+  }>({
+    abierto: false,
+    colegio: null,
+  });
+
+  // Modal de confirmación para eliminar
+  const [confirmacion, setConfirmacion] = useState<{
+    abierto: boolean;
+    titulo: string;
+    mensaje: React.ReactNode;
+    onConfirmar: () => Promise<void> | void;
+  }>({
+    abierto: false,
+    titulo: '',
+    mensaje: '',
+    onConfirmar: () => {},
+  });
+  const [ejecutandoConfirmacion, setEjecutandoConfirmacion] = useState(false);
+
+  const cargarColegios = async () => {
+    setCargandoDatos(true);
+    try {
+      const data = await dataService.obtenerColegiosDetallados();
+      setColegios(data);
+    } catch (e) {
+      console.error('Error cargando colegios detallados:', e);
+    } finally {
+      setCargandoDatos(false);
+    }
+  };
+
+  useEffect(() => {
+    if (esSuperAdmin) {
+      cargarColegios();
+      const desuscribir = dataService.suscribirCambios(() => {
+        cargarColegios();
+      });
+      return () => desuscribir();
+    }
+  }, [esSuperAdmin]);
+
+  const abrirCrearColegio = () => {
+    setColegioEnEdicion(null);
+    setNombreColegio('');
+    setSedeColegio('');
+    setActivoColegio(true);
+    setAdminNombre('');
+    setAdminDni('');
+    setAdminEmail('');
+    setAdminTelefono('');
+    setAdminPassword('');
+    setVerPassword(false);
+    setModalColegioAbierto(true);
+  };
+
+  const abrirEditarColegio = (col: ColegioDetallado) => {
+    setColegioEnEdicion(col);
+    setNombreColegio(col.nombre);
+    setSedeColegio(col.sede || '');
+    setActivoColegio(col.activo);
+
+    if (col.admin) {
+      setAdminNombre(col.admin.nombreCompleto);
+      setAdminDni(col.admin.dni);
+      setAdminEmail(col.admin.email);
+      setAdminTelefono(col.admin.telefono);
+      setAdminPassword(col.admin.password || '');
+    } else {
+      setAdminNombre(`Admin ${col.nombre.replace(/^COLEGIO\s+/i, '')}`);
+      setAdminDni(`ADM-${col.nombre.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()}`);
+      setAdminEmail(`${col.nombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 10)}@almuerzos.com`);
+      setAdminTelefono('999999999');
+      setAdminPassword('colegio123');
+    }
+    setVerPassword(false);
+    setModalColegioAbierto(true);
+  };
+
+  const abrirEditarAdminRapido = (col: ColegioDetallado) => {
+    setModalAdminRapido({ abierto: true, colegio: col });
+    if (col.admin) {
+      setAdminNombre(col.admin.nombreCompleto);
+      setAdminDni(col.admin.dni);
+      setAdminEmail(col.admin.email);
+      setAdminTelefono(col.admin.telefono);
+      setAdminPassword(col.admin.password || '');
+    } else {
+      setAdminNombre(`Admin ${col.nombre.replace(/^COLEGIO\s+/i, '')}`);
+      setAdminDni(`ADM-${col.nombre.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()}`);
+      setAdminEmail(`${col.nombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 10)}@almuerzos.com`);
+      setAdminTelefono('999999999');
+      setAdminPassword('colegio123');
+    }
+    setVerPassword(false);
+  };
+
+  const handleGuardarColegio = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombreColegio.trim()) {
+      alert('Por favor ingresa el nombre del colegio.');
+      return;
+    }
+    if (!adminNombre.trim() || !adminDni.trim()) {
+      alert('Por favor completa el nombre y usuario/DNI del administrador.');
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      const datosAdmin: AdminColegioInfo = {
+        nombreCompleto: adminNombre.trim(),
+        dni: adminDni.trim(),
+        email: adminEmail.trim() || `${adminDni.trim().toLowerCase()}@almuerzos.com`,
+        telefono: adminTelefono.trim() || '999999999',
+        password: adminPassword.trim() || 'colegio123',
+      };
+
+      if (colegioEnEdicion) {
+        // Actualizar colegio existente
+        const res = await dataService.actualizarColegioConAdmin(
+          colegioEnEdicion.id,
+          {
+            nombre: nombreColegio.trim(),
+            sede: sedeColegio.trim(),
+            activo: activoColegio,
+          },
+          datosAdmin
+        );
+        if (!res.ok) {
+          alert(res.error || 'Error al actualizar el colegio');
+          return;
+        }
+        setMensajeExito(`¡Colegio "${nombreColegio}" y administrador actualizados exitosamente!`);
+      } else {
+        // Crear nuevo colegio con administrador
+        const res = await dataService.crearColegioConAdmin(
+          {
+            nombre: nombreColegio.trim(),
+            sede: sedeColegio.trim(),
+            activo: activoColegio,
+          },
+          datosAdmin
+        );
+        if (!res.ok) {
+          alert(res.error || 'Error al registrar el colegio');
+          return;
+        }
+        setMensajeExito(`¡Colegio "${nombreColegio}" creado y vinculado con su administrador!`);
+      }
+
+      setModalColegioAbierto(false);
+      await cargarColegios();
+      setTimeout(() => setMensajeExito(null), 4000);
+    } catch (err: any) {
+      console.error('Error guardando colegio:', err);
+      alert('Ocurrió un error al procesar el colegio.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleGuardarAdminRapido = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalAdminRapido.colegio) return;
+
+    setGuardando(true);
+    try {
+      const col = modalAdminRapido.colegio;
+      const datosAdmin: AdminColegioInfo = {
+        nombreCompleto: adminNombre.trim(),
+        dni: adminDni.trim(),
+        email: adminEmail.trim(),
+        telefono: adminTelefono.trim(),
+        password: adminPassword.trim() || undefined,
+      };
+
+      await dataService.actualizarColegioConAdmin(
+        col.id,
+        {
+          nombre: col.nombre,
+          sede: col.sede,
+          activo: col.activo,
+        },
+        datosAdmin
+      );
+
+      setMensajeExito(`¡Credenciales del administrador de "${col.nombre}" actualizadas!`);
+      setModalAdminRapido({ abierto: false, colegio: null });
+      await cargarColegios();
+      setTimeout(() => setMensajeExito(null), 4000);
+    } catch (e: any) {
+      alert(e.message || 'Error actualizando administrador');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleToggleEstado = async (col: ColegioDetallado) => {
+    try {
+      await dataService.cambiarEstadoColegio(col.id, !col.activo);
+      setColegios((prev) =>
+        prev.map((c) => (c.id === col.id ? { ...c, activo: !c.activo } : c))
+      );
+    } catch (e) {
+      console.error('Error cambiando estado del colegio:', e);
+    }
+  };
+
+  const handleSolicitarEliminar = (col: ColegioDetallado) => {
+    setConfirmacion({
+      abierto: true,
+      titulo: `¿Eliminar "${col.nombre}"?`,
+      mensaje: (
+        <div className="space-y-2">
+          <p>
+            Estás a punto de eliminar permanentemente la sede escolar{' '}
+            <strong className="text-slate-900">{col.nombre}</strong> del sistema.
+          </p>
+          <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 space-y-1">
+            <p className="font-bold flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              Consecuencias de esta acción:
+            </p>
+            <ul className="list-disc pl-4 space-y-0.5 text-amber-700">
+              <li>Los padres de familia ya no podrán seleccionar este colegio al hacer pedidos.</li>
+              <li>El administrador asignado ({col.admin?.dni || 'Sin admin'}) perderá el acceso a esta sede.</li>
+              <li>Los pedidos históricos mantendrán el registro para trazabilidad.</li>
+            </ul>
+          </div>
+        </div>
+      ),
+      onConfirmar: async () => {
+        await dataService.eliminarColegioCompleto(col.id, col.nombre);
+        setColegios((prev) => prev.filter((c) => c.id !== col.id));
+        setMensajeExito(`Sede "${col.nombre}" eliminada correctamente.`);
+        setTimeout(() => setMensajeExito(null), 4000);
+      },
+    });
+  };
+
+  const ejecutarAccionConfirmada = async () => {
+    setEjecutandoConfirmacion(true);
+    try {
+      await confirmacion.onConfirmar();
+      setConfirmacion((prev) => ({ ...prev, abierto: false }));
+    } catch (err) {
+      console.error('Error ejecutando confirmación:', err);
+    } finally {
+      setEjecutandoConfirmacion(false);
+    }
+  };
+
+  if (cargandoAuth) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-semibold text-slate-600">Verificando nivel de privilegios...</p>
+      </div>
+    );
+  }
+
+  if (!esSuperAdmin) {
+    return (
+      <AccesoRestringido mensaje="Esta pantalla es de acceso exclusivo para la cuenta de Super Administrador de Placeres Culinarios." />
+    );
+  }
+
+  // Filtrado de colegios
+  const colegiosFiltrados = colegios.filter((c) => {
+    const matchBusqueda =
+      c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+      (c.sede && c.sede.toLowerCase().includes(busqueda.toLowerCase())) ||
+      (c.admin && c.admin.nombreCompleto.toLowerCase().includes(busqueda.toLowerCase())) ||
+      (c.admin && c.admin.dni.toLowerCase().includes(busqueda.toLowerCase())) ||
+      (c.admin && c.admin.email.toLowerCase().includes(busqueda.toLowerCase()));
+
+    const matchEstado =
+      filtroEstado === 'TODOS' ||
+      (filtroEstado === 'ACTIVOS' && c.activo) ||
+      (filtroEstado === 'INACTIVOS' && !c.activo);
+
+    return matchBusqueda && matchEstado;
+  });
+
+  // Métricas
+  const totalColegios = colegios.length;
+  const colegiosActivos = colegios.filter((c) => c.activo).length;
+  const adminsAsignados = colegios.filter((c) => c.admin).length;
+  const totalPedidosSistema = colegios.reduce((acc, c) => acc + (c.totalPedidos || 0), 0);
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24">
+      {/* Notificación de éxito flotante */}
+      {mensajeExito && (
+        <div className="fixed top-20 right-4 z-50 bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs sm:text-sm font-bold animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>{mensajeExito}</span>
+        </div>
+      )}
+
+      {/* BANNER PRINCIPAL DE SUPER ADMIN */}
+      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 text-white rounded-3xl p-5 sm:p-7 shadow-xl mb-6 relative overflow-hidden border border-purple-500/20">
+        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-48 h-48 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/30 text-purple-300 text-xs font-black border border-purple-400/30">
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-300" /> SUPER ADMINISTRADOR
+              </span>
+              <span className="text-xs text-slate-400 font-medium">Control Central Multi-Colegios</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5">
+              <Building2 className="w-8 h-8 text-purple-400" />
+              Gestión de Colegios & Administradores
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl mt-1">
+              Crea sedes escolares con sus propios administradores independientes, administra
+              sus credenciales de acceso y supervisa el volumen operativo de cada colegio.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/admin"
+              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-white/10"
+              title="Ir al panel de menús y KPIs"
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Panel Operativo</span>
+            </Link>
+            <Link
+              href="/despacho"
+              className="px-3.5 py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5"
+              title="Ir al panel de despacho y empaque"
+            >
+              <PackageCheck className="w-3.5 h-3.5" />
+              <span>Despacho</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* TARJETAS DE KPIS DEL SUPER ADMIN */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+            Total de Colegios
+          </span>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900">{totalColegios}</div>
+          <p className="text-[11px] text-slate-500 mt-0.5">Sedes registradas en el sistema</p>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+          <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">
+            Colegios Activos
+          </span>
+          <div className="text-2xl sm:text-3xl font-black text-emerald-700">{colegiosActivos}</div>
+          <p className="text-[11px] text-emerald-600 mt-0.5">Disponibles para pedidos de padres</p>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+          <span className="text-[11px] font-bold text-purple-600 uppercase tracking-wider block mb-1">
+            Admins Asignados
+          </span>
+          <div className="text-2xl sm:text-3xl font-black text-purple-700">{adminsAsignados}</div>
+          <p className="text-[11px] text-purple-600 mt-0.5">Cuentas con acceso a su colegio</p>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+          <span className="text-[11px] font-bold text-orange-600 uppercase tracking-wider block mb-1">
+            Almuerzos Atendidos
+          </span>
+          <div className="text-2xl sm:text-3xl font-black text-orange-700">{totalPedidosSistema}</div>
+          <p className="text-[11px] text-orange-600 mt-0.5">Raciones globales solicitadas</p>
+        </div>
+      </div>
+
+      {/* BARRA DE ACCIÓN Y BÚSQUEDA */}
+      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Campo de búsqueda */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Buscar colegio, sede, admin o DNI..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-purple-500 focus:outline-hidden transition"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {/* Filtros de estado */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 text-xs font-bold">
+              {(['TODOS', 'ACTIVOS', 'INACTIVOS'] as const).map((est) => (
+                <button
+                  key={est}
+                  type="button"
+                  onClick={() => setFiltroEstado(est)}
+                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                    filtroEstado === est
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  {est === 'TODOS' ? 'Todos' : est === 'ACTIVOS' ? 'Activos' : 'Pausados'}
+                </button>
+              ))}
+            </div>
+
+            {/* Botón Refrescar */}
+            <button
+              type="button"
+              onClick={cargarColegios}
+              disabled={cargandoDatos}
+              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition cursor-pointer"
+              title="Refrescar lista"
+            >
+              <RefreshCw className={`w-4 h-4 ${cargandoDatos ? 'animate-spin' : ''}`} />
+            </button>
+
+            {/* BOTÓN PRINCIPAL: NUEVO COLEGIO & ADMINISTRADOR */}
+            <button
+              type="button"
+              onClick={abrirCrearColegio}
+              className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-black rounded-2xl shadow-sm shadow-purple-600/30 transition cursor-pointer active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Nuevo Colegio & Admin</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* LISTADO DE COLEGIOS Y ADMINISTRADORES */}
+      <div className="space-y-3.5">
+        <div className="flex items-center justify-between px-2">
+          <h2 className="text-sm font-black text-slate-800 tracking-tight">
+            Sedes Escolares Registradas ({colegiosFiltrados.length} de {colegios.length})
+          </h2>
+          <span className="text-xs text-slate-500">
+            Cada colegio tiene su cuenta de administrador asociada
+          </span>
+        </div>
+
+        {cargandoDatos ? (
+          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-xs font-semibold text-slate-500">Cargando sedes y administradores...</p>
+          </div>
+        ) : colegiosFiltrados.length === 0 ? (
+          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs space-y-3">
+            <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">No se encontraron colegios</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              {busqueda
+                ? 'Ninguna sede o administrador coincide con tu término de búsqueda.'
+                : 'Aún no has registrado ningún colegio. Haz clic en "Nuevo Colegio & Admin" para empezar.'}
+            </p>
+            {busqueda ? (
+              <button
+                type="button"
+                onClick={() => setBusqueda('')}
+                className="text-xs font-bold text-purple-600 hover:underline cursor-pointer"
+              >
+                Limpiar búsqueda
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={abrirCrearColegio}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+              >
+                Registrar Primer Colegio
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3.5">
+            {colegiosFiltrados.map((col) => (
+              <div
+                key={col.id}
+                className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all duration-200 shadow-xs hover:shadow-md ${
+                  col.activo
+                    ? 'border-slate-200 hover:border-purple-200'
+                    : 'border-slate-200/60 bg-slate-50/50 opacity-80'
+                }`}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  {/* Columna 1: Información del Colegio */}
+                  <div className="flex items-start gap-3.5">
+                    <div
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${
+                        col.activo
+                          ? 'bg-gradient-to-tr from-purple-500 to-indigo-600 text-white'
+                          : 'bg-slate-200 text-slate-500'
+                      }`}
+                    >
+                      <Building2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-black text-slate-900 tracking-tight">
+                          {col.nombre}
+                        </h3>
+                        {col.activo ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Activo
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-200 text-slate-600">
+                            Pausado
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {col.sede ? `Sede: ${col.sede}` : 'Sede Principal / Sin dirección'} •{' '}
+                        <span className="font-semibold text-orange-600">
+                          {col.totalPedidos || 0} pedidos recibidos
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Columna 2: Administrador Asignado a este Colegio */}
+                  <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 min-w-[280px]">
+                    <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-200/60 text-[11px]">
+                      <span className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5 text-purple-600" /> Admin Asignado
+                      </span>
+                      {col.admin ? (
+                        <button
+                          type="button"
+                          onClick={() => abrirEditarAdminRapido(col)}
+                          className="text-[11px] font-bold text-purple-600 hover:underline flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <Key className="w-3 h-3" /> Clave
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => abrirEditarColegio(col)}
+                          className="text-[11px] font-black text-orange-600 hover:underline cursor-pointer"
+                        >
+                          + Asignar Admin
+                        </button>
+                      )}
+                    </div>
+
+                    {col.admin ? (
+                      <div className="space-y-1 text-xs">
+                        <div className="font-black text-slate-900 flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{col.admin.nombreCompleto}</span>
+                        </div>
+                        <div className="text-slate-600 text-[11px] flex items-center justify-between gap-2">
+                          <span className="font-semibold">
+                            Usuario: <code className="bg-white px-1.5 py-0.5 rounded text-purple-700 font-mono font-bold">{col.admin.dni}</code>
+                          </span>
+                          {col.admin.telefono && (
+                            <span className="text-slate-500 flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-slate-400" /> {col.admin.telefono}
+                            </span>
+                          )}
+                        </div>
+                        {col.admin.email && (
+                          <div className="text-[11px] text-slate-500 truncate flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-slate-400" /> {col.admin.email}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="py-1 text-center">
+                        <span className="text-xs font-semibold text-amber-700 bg-amber-100/60 px-2.5 py-1 rounded-xl inline-block">
+                          ⚠️ Sin administrador asignado
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Columna 3: Acciones */}
+                  <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
+                    {/* Botón Alternar Estado Activo / Pausado */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleEstado(col)}
+                      className={`p-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                        col.activo
+                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                          : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
+                      }`}
+                      title={col.activo ? 'Pausar colegio (no aparecerá en compras de padres)' : 'Activar colegio'}
+                    >
+                      {col.activo ? (
+                        <>
+                          <ToggleRight className="w-4 h-4 text-emerald-600" />
+                          <span className="hidden sm:inline">Pausar</span>
+                        </>
+                      ) : (
+                        <>
+                          <ToggleLeft className="w-4 h-4 text-slate-400" />
+                          <span className="hidden sm:inline">Activar</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Botón Editar Colegio y Admin */}
+                    <button
+                      type="button"
+                      onClick={() => abrirEditarColegio(col)}
+                      className="p-2 bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                      title="Editar colegio y credenciales de administrador"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Editar</span>
+                    </button>
+
+                    {/* Botón Eliminar Colegio */}
+                    <button
+                      type="button"
+                      onClick={() => handleSolicitarEliminar(col)}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                      title="Eliminar colegio del sistema"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* MODAL: CREAR / EDITAR COLEGIO CON ADMINISTRADOR */}
+      {modalColegioAbierto && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    {colegioEnEdicion ? 'Editar Colegio & Administrador' : 'Nuevo Colegio & Administrador'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Configura la sede escolar y su cuenta de acceso
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalColegioAbierto(false)}
+                className="text-xs font-bold text-slate-400 hover:text-slate-700 px-2 py-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarColegio} className="space-y-4">
+              {/* SECCIÓN 1: DATOS DEL COLEGIO */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+                <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider block">
+                  1. Datos de la Sede Escolar
+                </span>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Nombre del Colegio *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. COLEGIO SAN AGUSTÍN"
+                    value={nombreColegio}
+                    onChange={(e) => setNombreColegio(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Sede / Ubicación
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Sede San Isidro"
+                      value={sedeColegio}
+                      onChange={(e) => setSedeColegio(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Estado Operativo
+                    </label>
+                    <select
+                      value={activoColegio ? 'true' : 'false'}
+                      onChange={(e) => setActivoColegio(e.target.value === 'true')}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    >
+                      <option value="true">Activo (Visible para padres)</option>
+                      <option value="false">Pausado (Oculto temporalmente)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECCIÓN 2: CUENTA DEL ADMINISTRADOR DE ESTE COLEGIO */}
+              <div className="p-4 bg-purple-50/50 rounded-2xl border border-purple-200/80 space-y-3">
+                <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider block">
+                  2. Cuenta del Administrador para este Colegio
+                </span>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Nombre Completo del Administrador *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Admin Sede San Agustín"
+                    value={adminNombre}
+                    onChange={(e) => setAdminNombre(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Usuario / DNI para Login *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. ADM-SANAGUSTIN o DNI"
+                      value={adminDni}
+                      onChange={(e) => setAdminDni(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-mono"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Teléfono de Contacto
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="Ej. 987654321"
+                      value={adminTelefono}
+                      onChange={(e) => setAdminTelefono(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Ej. sanagustin@almuerzos.com"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Contraseña de Acceso *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={verPassword ? 'text' : 'password'}
+                      placeholder={colegioEnEdicion ? 'Nueva contraseña o dejar actual' : 'Contraseña de acceso'}
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-3 pr-10 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-mono"
+                      required={!colegioEnEdicion}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setVerPassword(!verPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                    >
+                      {verPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-slate-500 mt-1 block">
+                    {colegioEnEdicion
+                      ? 'Deja la contraseña en blanco si no deseas cambiarla.'
+                      : 'El administrador usará su Usuario/DNI y esta clave para ingresar.'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setModalColegioAbierto(false)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardando}
+                  className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm transition shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  {guardando
+                    ? 'Guardando...'
+                    : colegioEnEdicion
+                    ? 'Actualizar Colegio & Admin'
+                    : 'Guardar Colegio & Admin'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL RÁPIDO: EDITAR CONTRASEÑA / ADMIN */}
+      {modalAdminRapido.abierto && modalAdminRapido.colegio && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                  <Key className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Credenciales del Administrador
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Colegio: {modalAdminRapido.colegio.nombre}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalAdminRapido({ abierto: false, colegio: null })}
+                className="text-xs font-bold text-slate-400 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarAdminRapido} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nombre del Administrador *
+                </label>
+                <input
+                  type="text"
+                  value={adminNombre}
+                  onChange={(e) => setAdminNombre(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Usuario / DNI de Login *
+                </label>
+                <input
+                  type="text"
+                  value={adminDni}
+                  onChange={(e) => setAdminDni(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500 font-mono"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nueva Contraseña
+                </label>
+                <div className="relative">
+                  <input
+                    type={verPassword ? 'text' : 'password'}
+                    placeholder="Escribe la nueva contraseña"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-10 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setVerPassword(!verPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                  >
+                    {verPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Dejar en blanco para conservar la clave actual.
+                </span>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setModalAdminRapido({ abierto: false, colegio: null })}
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardando}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs transition disabled:opacity-50"
+                >
+                  {guardando ? 'Guardando...' : 'Guardar Credenciales'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para eliminar */}
+      <ModalConfirmacion
+        abierto={confirmacion.abierto}
+        titulo={confirmacion.titulo}
+        mensaje={confirmacion.mensaje}
+        textoBotonConfirmar="Sí, Eliminar Sede"
+        textoBotonCancelar="Cancelar"
+        tipo="peligro"
+        cargando={ejecutandoConfirmacion}
+        onConfirmar={ejecutarAccionConfirmada}
+        onCerrar={() => setConfirmacion((prev) => ({ ...prev, abierto: false }))}
+      />
+    </div>
+  );
+}

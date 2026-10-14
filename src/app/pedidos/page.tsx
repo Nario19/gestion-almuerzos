@@ -24,24 +24,24 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { dataService } from '@/lib/dataService';
+import {
+  obtenerFechaHoyPeru,
+  formatearFechaLegiblePeru,
+  formatearFechaCortaPeru,
+  calcularOffsetFechaPeru,
+} from '@/lib/dateUtils';
 import { Pedido, EstadoPedido, EstadoPago } from '@/types';
-
-const obtenerFechaHoy = () => {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 
 function PedidosContent() {
   const { usuario, cargando: cargandoAuth } = useAuth();
-  const fechaHoy = obtenerFechaHoy();
+  const fechaHoy = obtenerFechaHoyPeru();
 
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [cargandoPedidos, setCargandoPedidos] = useState(true);
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
   const [fechaFiltro, setFechaFiltro] = useState<string>('TODAS');
+  const [paginaActual, setPaginaActual] = useState(1);
+  const porPagina = 5;
 
   const cargarPedidos = async () => {
     if (!usuario) return;
@@ -109,8 +109,8 @@ function PedidosContent() {
     );
   }
 
-  // Si es un administrador
-  if (usuario.rol === 'ADMIN') {
+  // Si es un administrador o super administrador
+  if (usuario.rol === 'ADMIN' || usuario.rol === 'SUPER_ADMIN') {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xs space-y-4">
@@ -142,32 +142,21 @@ function PedidosContent() {
 
   const badgeEstadoPedido = (estado: EstadoPedido) => {
     switch (estado) {
-      case 'REGISTRADO':
-        return (
-          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
-            <Clock className="w-3 h-3" /> Orden recibida
-          </span>
-        );
-      case 'EN_COCINA':
-        return (
-          <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold rounded-xl flex items-center gap-1 animate-pulse">
-            <Utensils className="w-3 h-3" /> En cocina
-          </span>
-        );
-      case 'EMPACADO':
-        return (
-          <span className="px-2.5 py-1 bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
-            <ShoppingBag className="w-3 h-3" /> Preparado
-          </span>
-        );
       case 'ENTREGADO':
         return (
           <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> Entregado
           </span>
         );
+      case 'REGISTRADO':
+      case 'EN_COCINA':
+      case 'EMPACADO':
       default:
-        return null;
+        return (
+          <span className="px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
+            <Clock className="w-3 h-3 text-slate-500" /> No entregado
+          </span>
+        );
     }
   };
 
@@ -197,11 +186,6 @@ function PedidosContent() {
 
   const obtenerEstadoTimeline = (pedido: Pedido) => {
     const pagadoOAceptado = pedido.estadoPago === 'PAGADO' || pedido.estadoPedido !== 'REGISTRADO';
-    const enCocinaOListo =
-      pedido.estadoPedido === 'EN_COCINA' ||
-      pedido.estadoPedido === 'EMPACADO' ||
-      pedido.estadoPedido === 'ENTREGADO';
-    const empacadoOListo = pedido.estadoPedido === 'EMPACADO' || pedido.estadoPedido === 'ENTREGADO';
     const entregado = pedido.estadoPedido === 'ENTREGADO';
 
     const etapas = [
@@ -229,25 +213,13 @@ function PedidosContent() {
       },
       {
         id: 3,
-        titulo: 'Preparado',
-        descripcion: (entregado || empacadoOListo)
-          ? 'Almuerzo preparado'
-          : pedido.estadoPedido === 'EN_COCINA'
-          ? 'En preparación'
-          : 'En cola',
-        icono: ChefHat,
-        // Si el admin pasa de frente de pago aceptado a entregado, preparado se da por completado automáticamente
-        completado: empacadoOListo || entregado,
-        enCurso: (pagadoOAceptado || entregado) && !empacadoOListo && !entregado,
-        alerta: false,
-      },
-      {
-        id: 4,
         titulo: 'Entregado',
-        descripcion: entregado ? 'Entregado en colegio' : empacadoOListo ? 'Listo para entrega' : 'Programado',
+        descripcion: entregado
+          ? (pedido.horaEntrega ? `Entregado (${pedido.horaEntrega})` : 'Entregado en colegio')
+          : (pagadoOAceptado ? 'Programado para entrega' : 'Pendiente de pago'),
         icono: PackageCheck,
         completado: entregado,
-        enCurso: empacadoOListo && !entregado,
+        enCurso: (pagadoOAceptado || entregado) && !entregado,
         alerta: false,
       },
     ];
@@ -263,43 +235,31 @@ function PedidosContent() {
     if (entregado) {
       estadoVivo = {
         titulo: '¡Almuerzo Entregado con Éxito!',
-        descripcion: `El pedido fue entregado puntualmente en el colegio ${pedido.colegioNombre} para ${pedido.estudianteNombre}.`,
+        descripcion: pedido.horaEntrega
+          ? `El pedido fue entregado a las ${pedido.horaEntrega} en el colegio ${pedido.colegioNombre} para ${pedido.estudianteNombre}.`
+          : `El pedido fue entregado puntualmente en el colegio ${pedido.colegioNombre} para ${pedido.estudianteNombre}.`,
         color: 'emerald',
-        icono: CheckCircle2,
-      };
-    } else if (pedido.estadoPedido === 'EMPACADO') {
-      estadoVivo = {
-        titulo: 'Lonchera Preparada y Empacada',
-        descripcion: `Almuerzo listo y empacado en envase térmico rotulado con el grado (${pedido.gradoSeccion}). En ruta de entrega al colegio.`,
-        color: 'purple',
-        icono: PackageCheck,
-      };
-    } else if (pedido.estadoPedido === 'EN_COCINA') {
-      estadoVivo = {
-        titulo: 'En Preparación Activa en Cocina',
-        descripcion: `El equipo de cocina está elaborando la entrada (${pedido.entradaNombre}) y el segundo (${pedido.segundoNombre}).`,
-        color: 'orange',
-        icono: ChefHat,
-      };
-    } else if (pagadoOAceptado) {
-      estadoVivo = {
-        titulo: '¡Pago Aceptado! Orden en Cocina',
-        descripcion:
-          'El pago ha sido confirmado por administración. La orden ya está en cocina para su preparación.',
-        color: 'blue',
         icono: CheckCircle2,
       };
     } else if (pedido.estadoPago === 'VERIFICANDO') {
       estadoVivo = {
         titulo: 'Comprobante en Revisión por Administración',
         descripcion:
-          'Hemos recibido tu comprobante de pago. En breve el administrador lo validará para aceptar tu orden y pasarla a cocina.',
+          'Hemos recibido tu comprobante de pago. En breve el administrador lo validará para confirmar tu orden.',
         color: 'blue',
         icono: Clock,
       };
+    } else if (pagadoOAceptado) {
+      estadoVivo = {
+        titulo: '¡Pago Aceptado! Programado para Entrega',
+        descripcion:
+          `El pago ha sido confirmado. El almuerzo de ${pedido.estudianteNombre} está programado para ser entregado en el colegio ${pedido.colegioNombre}.`,
+        color: 'blue',
+        icono: PackageCheck,
+      };
     }
 
-    return { etapas, estadoVivo, pagadoOAceptado, empacadoOListo, entregado };
+    return { etapas, estadoVivo, pagadoOAceptado, entregado };
   };
 
   const abrirConsultaWhatsApp = (pedido: Pedido) => {
@@ -318,34 +278,11 @@ function PedidosContent() {
 
   const formatearFechaLegible = (fechaStr: string) => {
     if (fechaStr === 'TODAS') return 'Todos los pedidos';
-    try {
-      const [y, m, d] = fechaStr.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      return date.toLocaleDateString('es-PE', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-    } catch (_) {
-      return fechaStr;
-    }
+    return formatearFechaLegiblePeru(fechaStr);
   };
 
   const formatearFechaCorta = (fechaStr?: string, diaSemana?: string) => {
-    if (!fechaStr) return diaSemana || 'Hoy';
-    try {
-      const [y, m, d] = fechaStr.slice(0, 10).split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      const fechaFormateada = date.toLocaleDateString('es-PE', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
-      return `${diaSemana ? `${diaSemana} • ` : ''}${fechaFormateada}`;
-    } catch (_) {
-      return `${diaSemana ? `${diaSemana} • ` : ''}${fechaStr}`;
-    }
+    return formatearFechaCortaPeru(fechaStr?.slice(0, 10), diaSemana);
   };
 
   const cambiarDia = (offset: number) => {
@@ -353,22 +290,27 @@ function PedidosContent() {
       setFechaFiltro(fechaHoy);
       return;
     }
-    try {
-      const [y, m, d] = fechaFiltro.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      date.setDate(date.getDate() + offset);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      setFechaFiltro(`${year}-${month}-${day}`);
-    } catch (_) {}
+    setFechaFiltro(calcularOffsetFechaPeru(fechaFiltro, offset));
   };
+
+  // Reiniciar a página 1 cuando cambia el filtro de fecha
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [fechaFiltro]);
 
   const pedidosFiltrados = pedidos.filter((p) => {
     if (fechaFiltro === 'TODAS') return true;
     const fechaPedido = (p.fecha || '').slice(0, 10);
     return fechaPedido === fechaFiltro;
   });
+
+  // Paginación para no sobrecargar la vista del padre
+  const totalFiltrados = pedidosFiltrados.length;
+  const totalPaginas = Math.ceil(totalFiltrados / porPagina) || 1;
+  const paginaValida = Math.min(Math.max(1, paginaActual), totalPaginas);
+  const indiceInicio = (paginaValida - 1) * porPagina;
+  const indiceFin = Math.min(indiceInicio + porPagina, totalFiltrados);
+  const pedidosPaginados = pedidosFiltrados.slice(indiceInicio, indiceFin);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28">
@@ -543,8 +485,8 @@ function PedidosContent() {
         </div>
       ) : (
         <div className="space-y-4">
-          {pedidosFiltrados.map((pedido) => {
-            const { etapas, estadoVivo, pagadoOAceptado, empacadoOListo, entregado } =
+          {pedidosPaginados.map((pedido) => {
+            const { etapas, estadoVivo, pagadoOAceptado, entregado } =
               obtenerEstadoTimeline(pedido);
             const EstadoIcono = estadoVivo.icono;
 
@@ -580,12 +522,10 @@ function PedidosContent() {
                     </span>
                     <span className="text-orange-600 font-bold lowercase">
                       {entregado
-                        ? '4 de 4 completado (entregado)'
-                        : empacadoOListo
-                        ? '3 de 4 completado (preparado)'
+                        ? '3 de 3 completado (entregado)'
                         : pagadoOAceptado
-                        ? '2 de 4 completado (pago aceptado)'
-                        : '1 de 4 (orden recibida)'}
+                        ? '2 de 3 completado (pago aceptado)'
+                        : '1 de 3 (orden recibida)'}
                     </span>
                   </div>
 
@@ -600,10 +540,8 @@ function PedidosContent() {
                       style={{
                         width: entregado
                           ? 'calc(100% - 4rem)'
-                          : empacadoOListo
-                          ? '66%'
                           : pagadoOAceptado
-                          ? '33%'
+                          ? '50%'
                           : '0%',
                       }}
                     />
@@ -755,6 +693,38 @@ function PedidosContent() {
             </div>
           );
         })}
+
+        {/* BARRA DE PAGINACIÓN */}
+        {totalPaginas > 1 && (
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center justify-between text-xs text-slate-600 mt-4">
+            <span className="font-medium text-slate-500">
+              Página <strong className="text-slate-800">{paginaValida}</strong> de{' '}
+              <strong className="text-slate-900">{totalPaginas}</strong> ({totalFiltrados} pedidos)
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+                disabled={paginaValida === 1}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 font-bold cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Anterior</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                disabled={paginaValida === totalPaginas}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 font-bold cursor-pointer"
+              >
+                <span>Siguiente</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )}
 

@@ -20,28 +20,32 @@ import {
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
+import {
+  obtenerFechaHoyPeru,
+  formatearFechaLegiblePeru,
+  formatearHoraPeru,
+  calcularOffsetFechaPeru,
+  formatearFechaEmisionPeru,
+} from '@/lib/dateUtils';
 import { Pedido, EstadoPedido, EstadoPago } from '@/types';
 
-// Obtener fecha actual en formato YYYY-MM-DD en hora local
-const obtenerFechaHoy = () => {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 export default function DespachoPage() {
-  const { esAdmin, cargando: cargandoAuth } = useAuth();
-  const fechaHoy = obtenerFechaHoy();
+  const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
+  const fechaHoy = obtenerFechaHoyPeru();
 
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [colegios, setColegios] = useState<string[]>([]);
-  const [colegioFiltro, setColegioFiltro] = useState<string>('TODOS');
+  const [colegioFiltro, setColegioFiltro] = useState<string>(
+    !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : 'TODOS'
+  );
   // Por defecto el filtro de fecha es el día de hoy
   const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [busqueda, setBusqueda] = useState('');
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
+
+  // Estados de paginación para optimizar y no sobrecargar la vista
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [porPagina, setPorPagina] = useState(10);
 
   const cargarDatos = async () => {
     const data = await dataService.obtenerPedidos();
@@ -59,6 +63,11 @@ export default function DespachoPage() {
     return () => desuscribir();
   }, [esAdmin]);
 
+  // Reiniciar a página 1 cuando cambia algún filtro
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [fechaFiltro, colegioFiltro, busqueda, porPagina]);
+
   const handleCambiarEstado = async (id: string, nuevoEstado: EstadoPedido) => {
     await dataService.cambiarEstadoPedido(id, nuevoEstado);
     // Si el admin pasa directo a ENTREGADO, asegurar que el pago quede como aceptado
@@ -72,6 +81,11 @@ export default function DespachoPage() {
   };
 
   const handleCambiarPago = async (id: string, nuevoPago: EstadoPago) => {
+    // Si el pedido ya está entregado, el pago está finalizado y no se puede modificar
+    const pedidoActual = pedidos.find((p) => p.id === id);
+    if (pedidoActual?.estadoPedido === 'ENTREGADO') {
+      return;
+    }
     await dataService.cambiarEstadoPago(id, nuevoPago);
     cargarDatos();
   };
@@ -79,18 +93,13 @@ export default function DespachoPage() {
   // Formateador legible en español para la fecha
   const formatearFechaLegible = (fechaStr: string) => {
     if (fechaStr === 'TODAS') return 'Todas las fechas';
-    try {
-      const [y, m, d] = fechaStr.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      return date.toLocaleDateString('es-PE', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-    } catch (_) {
-      return fechaStr;
-    }
+    return formatearFechaLegiblePeru(fechaStr);
+  };
+
+  // Formateador de hora en formato Perú (12h con a. m. / p. m.)
+  const formatearHora = (fechaIso?: string) => {
+    const h = formatearHoraPeru(fechaIso);
+    return h || '--:--';
   };
 
   // Navegar día anterior o siguiente
@@ -99,15 +108,7 @@ export default function DespachoPage() {
       setFechaFiltro(fechaHoy);
       return;
     }
-    try {
-      const [y, m, d] = fechaFiltro.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      date.setDate(date.getDate() + offset);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      setFechaFiltro(`${year}-${month}-${day}`);
-    } catch (_) {}
+    setFechaFiltro(calcularOffsetFechaPeru(fechaFiltro, offset));
   };
 
   // Filtrado de pedidos por Calendario (Fecha), Colegio y Búsqueda
@@ -122,7 +123,7 @@ export default function DespachoPage() {
     return matchFecha && matchColegio && matchBusqueda;
   });
 
-  // Métricas rápidas
+  // Métricas rápidas (sobre el consolidado total de la fecha y filtros)
   const total = pedidosFiltrados.length;
   const entregados = pedidosFiltrados.filter((p) => p.estadoPedido === 'ENTREGADO').length;
   const faltaEntregar = pedidosFiltrados.filter(
@@ -133,8 +134,15 @@ export default function DespachoPage() {
   const pagados = pedidosFiltrados.filter((p) => p.estadoPago === 'PAGADO').length;
   const pendientesPago = total - pagados;
 
-  // Agrupar pedidos por Colegio
-  const gruposColegio = pedidosFiltrados.reduce((acc, pedido) => {
+  // Cálculo de Paginación para no sobrecargar el renderizado
+  const totalPaginas = Math.ceil(total / porPagina) || 1;
+  const paginaValida = Math.min(Math.max(1, paginaActual), totalPaginas);
+  const indiceInicio = (paginaValida - 1) * porPagina;
+  const indiceFin = Math.min(indiceInicio + porPagina, total);
+  const pedidosPaginados = pedidosFiltrados.slice(indiceInicio, indiceFin);
+
+  // Agrupar pedidos paginados por Colegio para la vista actual
+  const gruposColegio = pedidosPaginados.reduce((acc, pedido) => {
     const key = pedido.colegioNombre || 'Colegio General';
     if (!acc[key]) {
       acc[key] = [];
@@ -155,7 +163,7 @@ export default function DespachoPage() {
       colegioFiltro === 'TODOS'
         ? 'Todos_los_Colegios'
         : colegioFiltro.replace(/\s+/g, '_');
-    const fecha = new Date().toISOString().slice(0, 10);
+    const fecha = obtenerFechaHoyPeru();
     const filename = `Reporte_Despacho_${nombreColegio}_${nombreFecha}_${fecha}.xls`;
 
     const filasHtml = pedidosFiltrados
@@ -173,12 +181,18 @@ export default function DespachoPage() {
           colegioFiltro === 'TODOS'
             ? `${p.colegioNombre} - ${p.gradoSeccion}`
             : p.gradoSeccion;
+        const horaPedido = formatearHora(p.createdAt);
+        const entregaDetalle =
+          p.estadoPedido === 'ENTREGADO'
+            ? `ENTREGADO${p.horaEntrega ? ` (${p.horaEntrega})` : ''}`
+            : 'NO ENTREGADO';
 
         return `
         <tr>
           <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${
             idx + 1
           }</td>
+          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${horaPedido}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px;">${gradoSeccionDetalle}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${
             p.estudianteNombre
@@ -187,6 +201,9 @@ export default function DespachoPage() {
           <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; ${
             p.estadoPago === 'PAGADO' ? 'color: #047857;' : 'color: #b91c1c;'
           }">${pagoDetalle}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; ${
+            p.estadoPedido === 'ENTREGADO' ? 'color: #047857;' : 'color: #64748b;'
+          }">${entregaDetalle}</td>
         </tr>
       `;
       })
@@ -221,17 +238,19 @@ export default function DespachoPage() {
         <p style="color: #475569; margin-top: 0; margin-bottom: 12px;">
           <strong>Fecha Filtrada:</strong> ${fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)} &nbsp;|&nbsp;
           <strong>Colegio:</strong> ${colegioFiltro} &nbsp;|&nbsp;
-          <strong>Fecha de Emisión:</strong> ${new Date().toLocaleDateString('es-PE')} &nbsp;|&nbsp;
+          <strong>Fecha de Emisión:</strong> ${formatearFechaEmisionPeru()} &nbsp;|&nbsp;
           <strong>Total Pedidos:</strong> ${pedidosFiltrados.length}
         </p>
         <table>
           <thead>
             <tr>
               <th style="width: 45px; text-align: center;">N°</th>
-              <th style="width: 200px;">Grado y Sección</th>
-              <th style="width: 240px;">Nombres</th>
-              <th style="width: 320px;">Pedido</th>
-              <th style="width: 160px;">Pago</th>
+              <th style="width: 100px; text-align: center;">Hora Pedido</th>
+              <th style="width: 180px;">Grado y Sección</th>
+              <th style="width: 220px;">Nombres</th>
+              <th style="width: 280px;">Pedido</th>
+              <th style="width: 150px;">Pago</th>
+              <th style="width: 150px;">Entrega</th>
             </tr>
           </thead>
           <tbody>
@@ -433,19 +452,25 @@ export default function DespachoPage() {
           <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
             <Filter className="w-3.5 h-3.5 text-emerald-600" /> Colegio:
           </span>
-          {['TODOS', ...colegios].map((c) => (
-            <button
-              key={c}
-              onClick={() => setColegioFiltro(c)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer ${
-                colegioFiltro === c
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {c}
-            </button>
-          ))}
+          {!esSuperAdmin && usuario?.colegioNombre ? (
+            <span className="px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-600 text-white shadow-xs flex items-center gap-1.5">
+              🏫 Sede Asignada: {usuario.colegioNombre}
+            </span>
+          ) : (
+            ['TODOS', ...colegios].map((c) => (
+              <button
+                key={c}
+                onClick={() => setColegioFiltro(c)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer ${
+                  colegioFiltro === c
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {c}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
@@ -453,7 +478,7 @@ export default function DespachoPage() {
       <div className="hidden print:block mb-4">
         <h2 className="text-xl font-black text-slate-900">Reporte de Despacho y Empaque</h2>
         <p className="text-xs text-slate-600">
-          Fecha: <strong>{fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)}</strong> | Colegio: <strong>{colegioFiltro}</strong> | Fecha de Emisión: <strong>{new Date().toLocaleDateString('es-PE')}</strong> | Total: <strong>{total}</strong>
+          Fecha: <strong>{fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)}</strong> | Colegio: <strong>{colegioFiltro}</strong> | Fecha de Emisión: <strong>{formatearFechaEmisionPeru()}</strong> | Total: <strong>{total}</strong>
         </p>
       </div>
 
@@ -511,36 +536,43 @@ export default function DespachoPage() {
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
                     <tr className="bg-slate-100/75 text-slate-600 uppercase text-[11px] font-black tracking-wider border-b border-slate-200">
-                      <th className="py-3 px-4 text-center w-14">N°</th>
-                      <th className="py-3 px-4 w-44">Grado y Sección</th>
-                      <th className="py-3 px-4 w-52">Nombres</th>
+                      <th className="py-3 px-4 text-center w-20">N° / Hora</th>
+                      <th className="py-3 px-4 w-40">Grado y Sección</th>
+                      <th className="py-3 px-4 w-48">Nombres</th>
                       <th className="py-3 px-4">Pedido</th>
                       <th className="py-3 px-4 w-44">Pago</th>
-                      <th className="py-3 px-4 text-right w-36 print:hidden">Empaque</th>
+                      <th className="py-3 px-4 text-left w-44 print:hidden">Entrega</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
                     {listaPedidos.map((p, idx) => {
-                      const empacado =
-                        p.estadoPedido === 'EMPACADO' || p.estadoPedido === 'ENTREGADO';
+                      const entregado = p.estadoPedido === 'ENTREGADO';
                       const pagado = p.estadoPago === 'PAGADO';
+                      const numeroGlobal = pedidosFiltrados.findIndex((item) => item.id === p.id) + 1;
 
                       return (
                         <tr
                           key={p.id}
                           className={`transition-colors ${
-                            empacado
-                              ? 'bg-slate-50/60 opacity-80'
+                            entregado
+                              ? 'bg-emerald-50/30'
                               : 'hover:bg-slate-50/50'
                           }`}
                         >
-                          {/* Columna: N° */}
+                          {/* Columna: N° y Hora del Pedido */}
                           <td className="py-3.5 px-4 text-center">
-                            <span className="font-mono font-bold text-slate-800 text-xs sm:text-sm">
-                              {idx + 1}
+                            <span className="font-mono font-bold text-slate-800 text-xs sm:text-sm block">
+                              {numeroGlobal || idx + 1}
                             </span>
                             <span className="block text-[10px] text-slate-400 font-mono">
                               #{p.codigoPedido}
+                            </span>
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md mt-1"
+                              title="Hora en que se registró el pedido"
+                            >
+                              <Clock className="w-2.5 h-2.5 text-orange-500" />
+                              {formatearHora(p.createdAt)}
                             </span>
                           </td>
 
@@ -566,13 +598,15 @@ export default function DespachoPage() {
                           {/* Columna: Pedido */}
                           <td className="py-3.5 px-4">
                             <div className="space-y-1">
-                              {fechaFiltro === 'TODAS' && (
-                                <div>
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-md bg-orange-100 text-orange-800">
-                                    📅 {p.fecha ? p.fecha.slice(0, 10) : p.diaSemana || 'Hoy'}
-                                  </span>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                                  📅 {p.fecha ? p.fecha.slice(0, 10) : p.diaSemana || 'Hoy'}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200">
+                                  <Clock className="w-2.5 h-2.5 text-orange-500" />
+                                  {formatearHora(p.createdAt)}
+                                </span>
+                              </div>
                               {p.entradaNombre && (
                                 <div className="text-xs text-slate-700">
                                   <span className="font-semibold text-orange-700">Entrada:</span>{' '}
@@ -595,34 +629,44 @@ export default function DespachoPage() {
                           {/* Columna: Pago y Aceptación */}
                           <td className="py-3.5 px-4">
                             <div className="flex flex-col gap-1.5 items-start">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleCambiarPago(p.id, pagado ? 'PENDIENTE' : 'PAGADO')
-                                }
-                                className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
-                                  pagado
-                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
-                                    : 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs'
-                                }`}
-                                title={
-                                  pagado
-                                    ? 'Orden aceptada y pagada (Clic para revertir a pendiente)'
-                                    : 'Aceptar orden y enviar a cocina'
-                                }
-                              >
-                                {pagado ? (
-                                  <>
-                                    <Check className="w-3.5 h-3.5 text-emerald-700" />
-                                    <span>✓ Pago Aceptado ({p.metodoPago || 'Pagado'})</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle className="w-3.5 h-3.5" />
-                                    <span>Aceptar Pago ({p.metodoPago || 'Por Cobrar'})</span>
-                                  </>
-                                )}
-                              </button>
+                              {entregado ? (
+                                <div
+                                  className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default select-none shadow-2xs"
+                                  title="El pedido ya está entregado al estudiante; el pago está confirmado y no se puede modificar."
+                                >
+                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>✓ Pago Confirmado ({p.metodoPago || 'Pagado'})</span>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleCambiarPago(p.id, pagado ? 'PENDIENTE' : 'PAGADO')
+                                  }
+                                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                                    pagado
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                                      : 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs'
+                                  }`}
+                                  title={
+                                    pagado
+                                      ? 'Orden aceptada y pagada (Clic para revertir a pendiente)'
+                                      : 'Aceptar orden y pago'
+                                  }
+                                >
+                                  {pagado ? (
+                                    <>
+                                      <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                      <span>✓ Pago Aceptado ({p.metodoPago || 'Pagado'})</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                      <span>Aceptar Pago ({p.metodoPago || 'Por Cobrar'})</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
 
                               {p.comprobanteUrl && (
                                 <button
@@ -637,24 +681,40 @@ export default function DespachoPage() {
                             </div>
                           </td>
 
-                          {/* Columna Acciones / Estado en Empaque */}
-                          <td className="py-3.5 px-4 text-right print:hidden">
-                            <div className="inline-flex items-center gap-1.5 justify-end">
-                              <select
-                                value={p.estadoPedido === 'ENTREGADO' ? 'ENTREGADO' : 'EMPACADO'}
-                                onChange={(e) =>
-                                  handleCambiarEstado(p.id, e.target.value as EstadoPedido)
-                                }
-                                className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition cursor-pointer focus:outline-hidden ${
-                                  p.estadoPedido === 'ENTREGADO'
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                    : 'bg-purple-50 text-purple-800 border-purple-300'
-                                }`}
-                                title="Estado en empaque: Preparado o Entregado"
-                              >
-                                <option value="EMPACADO">Preparado</option>
-                                <option value="ENTREGADO">Entregado</option>
-                              </select>
+                          {/* Columna: Entrega (al costado de Pago) */}
+                          <td className="py-3.5 px-4 text-left print:hidden">
+                            <div className="flex flex-col gap-1 items-start">
+                              {entregado ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCambiarEstado(p.id, 'REGISTRADO')}
+                                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
+                                    title="Pedido entregado (Clic para marcar como no entregado)"
+                                  >
+                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                    <span>✓ Entregado</span>
+                                  </button>
+                                  {p.horaEntrega ? (
+                                    <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                                      <Clock className="w-3 h-3 text-emerald-600" />
+                                      Hora: {p.horaEntrega}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] text-slate-400">Entregado</span>
+                                  )}
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCambiarEstado(p.id, 'ENTREGADO')}
+                                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-300 hover:border-emerald-300 flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                                  title="Marcar como entregado y registrar hora de entrega"
+                                >
+                                  <PackageCheck className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Marcar Entregado</span>
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -665,6 +725,113 @@ export default function DespachoPage() {
               </div>
             </div>
           ))}
+
+          {/* BARRA DE PAGINACIÓN */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 print:hidden">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-slate-500">
+                Mostrando <strong className="text-slate-800">{total > 0 ? indiceInicio + 1 : 0}</strong> a{' '}
+                <strong className="text-slate-800">{indiceFin}</strong> de{' '}
+                <strong className="text-slate-900">{total}</strong> pedidos
+              </span>
+              <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
+              <label className="flex items-center gap-1.5 text-slate-500 font-medium">
+                <span>Por página:</span>
+                <select
+                  value={porPagina}
+                  onChange={(e) => setPorPagina(Number(e.target.value))}
+                  className="bg-slate-50 border border-slate-200 text-slate-800 font-bold rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </label>
+            </div>
+
+            {totalPaginas > 1 && (
+              <div className="flex items-center gap-1">
+                {/* Botón Primera Página */}
+                <button
+                  type="button"
+                  onClick={() => setPaginaActual(1)}
+                  disabled={paginaValida === 1}
+                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-bold cursor-pointer"
+                  title="Primera página"
+                >
+                  «
+                </button>
+
+                {/* Botón Anterior */}
+                <button
+                  type="button"
+                  onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+                  disabled={paginaValida === 1}
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 font-bold cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Anterior</span>
+                </button>
+
+                {/* Números de página */}
+                <div className="flex items-center gap-1 mx-1">
+                  {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                    .filter((p) => {
+                      return (
+                        p === 1 ||
+                        p === totalPaginas ||
+                        Math.abs(p - paginaValida) <= 1
+                      );
+                    })
+                    .map((p, i, arr) => {
+                      const prev = arr[i - 1];
+                      const mostrarPuntos = prev && p - prev > 1;
+                      return (
+                        <React.Fragment key={p}>
+                          {mostrarPuntos && (
+                            <span className="px-1 text-slate-400 font-bold">...</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setPaginaActual(p)}
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center ${
+                              p === paginaValida
+                                ? 'bg-orange-500 text-white shadow-xs'
+                                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
+                </div>
+
+                {/* Botón Siguiente */}
+                <button
+                  type="button"
+                  onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaValida === totalPaginas}
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 font-bold cursor-pointer"
+                >
+                  <span className="hidden sm:inline">Siguiente</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Botón Última Página */}
+                <button
+                  type="button"
+                  onClick={() => setPaginaActual(totalPaginas)}
+                  disabled={paginaValida === totalPaginas}
+                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-bold cursor-pointer"
+                  title="Última página"
+                >
+                  »
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
