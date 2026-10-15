@@ -74,6 +74,8 @@ Ninguna tarea se considerará concluida ni entregable al usuario si no cumple co
 6. **Documentación actualizada:** Se actualizó `MEMORY.md` y/o la documentación técnica si se tomó una decisión arquitectónica o de negocio relevante.
 7. **Riesgos residuales identificados:** Se documentaron con transparencia las limitaciones técnicas, dependencias externas o validaciones pendientes.
 8. **Resumen de archivos modificados:** Se entregó un reporte claro y conciso de los archivos alterados y las razones técnicas de cada cambio.
+9. **Despliegue a producción ejecutado:** El cambio validado se sube a la rama `main` en GitHub (`git push origin main`), activando el despliegue automático en Vercel.
+10. **Verificación en producción aprobada:** Se realizan las pruebas pertinentes directamente en el entorno de producción en vivo (`https://gestion-almuerzos-six.vercel.app`), confirmando respuesta HTTP 200 y reflejo en los bundles productivos.
 
 ---
 

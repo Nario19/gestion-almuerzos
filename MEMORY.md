@@ -79,6 +79,16 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   4. Soporte en `dataService.obtenerFiados` para parámetro opcional `fechaFiltro` y fusión garantizada de pedidos locales en memoria para que órdenes registradas hoy bajo "Pagar luego" aparezcan de inmediato sin latencia.
   5. Creación de la suite de pruebas `tests/fiado-filtro-fechas.test.mjs`.
 
+### D-008 — 2026-10-15 — Regla obligatoria de despliegue a producción y verificación en vivo
+
+- Decisión: En absolutamente cada cambio, mejora, corrección o refactorización, además de ejecutar y aprobar toda la suite local de pruebas (`node tests/...`), el agente DEBE obligatoriamente subir los cambios a producción (rama `main` de GitHub -> Vercel) y realizar las pruebas y verificaciones correspondientes en el entorno de producción en vivo (`https://gestion-almuerzos-six.vercel.app`).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. Actualización de `skills/deployment-and-devops/SKILL.md` (Sección 1: Regla Obligatoria de Despliegue Continuo y Verificación Productiva).
+  2. Actualización de `skills/professional-engineering-workflow/SKILL.md` (Pasos 8 y 9 dedicados a despliegue automático y verificación en vivo).
+  3. Actualización de `AGENTS.md` (Criterios de Finalización 9 y 10).
+  4. Ninguna tarea se reportará como finalizada sin haber sido probada en local, subida a `origin/main` y verificada en vivo en `https://gestion-almuerzos-six.vercel.app`.
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

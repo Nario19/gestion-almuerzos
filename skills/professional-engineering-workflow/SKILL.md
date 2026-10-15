@@ -19,10 +19,10 @@ flowchart TD
     P3 --> P4[4. PLANIFICAR]
     P4 --> P5[5. PROTEGER]
     P5 --> P6[6. IMPLEMENTAR]
-    P6 --> P7[7. VALIDAR]
-    P7 --> P8[8. REVISAR]
-    P8 --> P9[9. DOCUMENTAR]
-    P9 --> P10[10. INFORMAR]
+    P6 --> P7[7. VALIDAR LOCAL]
+    P7 --> P8[8. DESPLEGAR PRODUCCIÓN]
+    P8 --> P9[9. VERIFICAR EN VIVO]
+    P9 --> P10[10. DOCUMENTAR E INFORMAR]
 ```
 
 ### PASO 1 — COMPRENDER
@@ -53,24 +53,27 @@ flowchart TD
 - Mantener tipado estricto en TypeScript sin utilizar `any`.
 - Respetar la convención arquitectónica existente.
 
-### PASO 7 — VALIDAR
-- Ejecutar la prueba específica creada o modificada.
-- Ejecutar la suite completa de pruebas de regresión local.
-- Ejecutar verificación estática: `npx tsc --noEmit` y `npm run lint`.
-- Ejecutar compilación de producción: `npm run build`.
+### PASO 7 — VALIDAR LOCALMENTE
+- Ejecutar la prueba específica creada o modificada (`node tests/...`).
+- Ejecutar la suite completa de pruebas de regresión local (100% en verde).
+- Ejecutar verificación estática: `npx tsc --noEmit` y `npm run lint` (0 errores).
+- Ejecutar compilación de producción: `npm run build` (100% páginas limpias).
 
-### PASO 8 — REVISAR
-- Verificar que ninguna funcionalidad existente se haya roto.
-- Comprobar permisos, aislamiento de colegios y reglas de negocio.
-- Descartar errores en consola o llamadas de red innecesarias.
+### PASO 8 — DESPLEGAR A PRODUCCIÓN (OBLIGATORIO)
+- Realizar commit limpio y descriptivo en Git.
+- Enviar de inmediato los cambios a la rama `main` en GitHub (`git push origin main`).
+- Activar y monitorizar el despliegue automático en Vercel.
 
-### PASO 9 — DOCUMENTAR
-- Actualizar `MEMORY.md` si se formalizó una decisión técnica o de negocio duradera.
+### PASO 9 — VERIFICAR EN PRODUCCIÓN EN VIVO (OBLIGATORIO)
+- Comprobar que la URL canónica responda con HTTP 200: `https://gestion-almuerzos-six.vercel.app`.
+- Verificar directamente que la pantalla o funcionalidad modificada (ej. `/fiado`, `/despacho`, `/cocina`) refleje los cambios en el bundle productivo.
+- Descartar excepciones de hidratación, errores 500 o fallos de red en vivo.
+
+### PASO 10 — DOCUMENTAR E INFORMAR
+- Actualizar `MEMORY.md` registrando la decisión técnica o de negocio confirmada.
 - Actualizar la documentación técnica o tests cuando corresponda.
-
-### PASO 10 — INFORMAR
 - Entregar un resumen claro, estructurado y transparente al usuario:
   - Qué cambió.
-  - Por qué se implementó de esa manera.
-  - Qué pruebas se ejecutaron y sus resultados exactos.
-  - Qué riesgos residuales o limitaciones externas quedan identificadas.
+  - Resultados exactos de las pruebas locales.
+  - Confirmación del commit y del despliegue en producción.
+  - Comprobación y estado verificado en vivo.
