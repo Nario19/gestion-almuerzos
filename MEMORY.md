@@ -99,7 +99,19 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   3. Eliminación de etiquetas y textos secundarios redundantes en tarjetas de KPIs (textos explicativos innecesarios bajo los números).
   4. Simplificación visual de cabeceras de familias: badges concisos de deudas, fechas de consumo compactas sin etiquetas decorativas y tabla expandida con visualización limpia de pedidos.
   5. Incorporación de prueba automatizada en `tests/fiado-filtro-fechas.test.mjs` (paso 6).
-  6. Compilación de producción limpia y verificación exitosa en vivo en `https://gestion-almuerzos-six.vercel.app/fiado`.
+### D-010 — 2026-10-15 — Seeder integral de prueba en base de datos en la nube
+- Decisión: A petición explícita y temporal del usuario ("no hay problema con insertar datos fake en la bd de n la nube porque aun no esta en producción entonces podemos hacer eso y luego lo borramos solo es por esta vez..."), vaciar las tablas de Supabase y generar un juego completo de datos realistas para pruebas:
+  1. 1 Super Administrador del Sistema.
+  2. 3 Colegios con sus respectivos Administradores de Sede.
+  3. Exactamente 60 estudiantes (hijos) por colegio (180 en total).
+  4. Padres de familia vinculados con 1 o 2 hijos (40 padres por colegio: 20 padres con 2 hijos y 20 padres con 1 hijo, total 120 padres).
+  5. Catálogo de 20 platos por colegio para toda la semana escolar (LUNES a VIERNES).
+  6. 120 pedidos de prueba con fiados pendientes y pagados para validar el módulo de `/fiado` y su paginación.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. Creación del script ejecutable `scripts/seed-completo.mjs` y adición del comando `npm run seed:completo`.
+  2. Limpieza e inserción exitosa en Supabase (`https://mpautcrhfdsktnutrzpt.supabase.co`).
+  3. Ejecución y aprobación de los 85 tests locales en verde.
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
