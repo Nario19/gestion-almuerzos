@@ -68,6 +68,17 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
 - Fuente: solicitud explícita del usuario mediante la Directiva Maestra de Ingeniería Profesional.
 - Impacto: actualización de `AGENTS.md`, creación/consolidación de las 12 Skills en `skills/`, auditoría integral del código fuente y mitigación de problemas de calidad estática y tipos.
 
+### D-007 — 2026-10-15 — Visualización y filtrado de fechas en Fiados
+
+- Decisión: En la lista de fiados (`/fiado`), debe visualizarse explícitamente la fecha de cada consumo, deben aparecer y destacarse los consumos de "Hoy" y debe permitirse filtrar por fecha de manera flexible.
+- Fuente: solicitud explícita del usuario.
+- Impacto:
+  1. Integración de barra de filtrado por fecha con selector de calendario (`input[type="date"]`), navegación de días (`<` / `>`), botón de acceso directo "Hoy" (con contador en vivo) y botón "Todas las Fechas" (histórico).
+  2. Detección y destaque automático de pedidos de la fecha actual con badge `Consumo de HOY` en cabeceras de familias, desglose expandido, modal de reporte global y exportación a Excel.
+  3. Cálculo de deuda segregada de la fecha seleccionada preservando el total acumulado histórico.
+  4. Soporte en `dataService.obtenerFiados` para parámetro opcional `fechaFiltro` y fusión garantizada de pedidos locales en memoria para que órdenes registradas hoy bajo "Pagar luego" aparezcan de inmediato sin latencia.
+  5. Creación de la suite de pruebas `tests/fiado-filtro-fechas.test.mjs`.
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

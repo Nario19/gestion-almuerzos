@@ -5,7 +5,6 @@ import Link from 'next/link';
 import {
   Receipt,
   Search,
-  Filter,
   DollarSign,
   Users,
   CheckCircle2,
@@ -14,13 +13,13 @@ import {
   Printer,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   GraduationCap,
   Phone,
   FileText,
   Building2,
-  Sparkles,
   PackageCheck,
-  AlertCircle,
   X,
   CreditCard,
   Utensils,
@@ -34,14 +33,15 @@ import ModalConfirmacion from '@/components/ModalConfirmacion';
 import {
   obtenerFechaHoyPeru,
   formatearFechaLegiblePeru,
-  formatearHoraPeru,
   formatearFechaEmisionPeru,
+  calcularOffsetFechaPeru,
 } from '@/lib/dateUtils';
 import { PadreFiadoResumen, ItemFiadoPedido } from '@/types';
 
 export default function FiadoPage() {
   const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
 
+  const fechaHoy = useMemo(() => obtenerFechaHoyPeru(), []);
   const [fiados, setFiados] = useState<PadreFiadoResumen[]>([]);
   const [colegios, setColegios] = useState<string[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -51,7 +51,13 @@ export default function FiadoPage() {
     !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : 'TODOS'
   );
   const [filtroEstado, setFiltroEstado] = useState<'PENDIENTES' | 'TODOS' | 'SALDADOS'>('PENDIENTES');
+  const [fechaFiltro, setFechaFiltro] = useState<string>('TODAS');
   const [busqueda, setBusqueda] = useState('');
+
+  const cambiarDia = (offset: number) => {
+    const base = fechaFiltro === 'TODAS' ? fechaHoy : fechaFiltro;
+    setFechaFiltro(calcularOffsetFechaPeru(base, offset));
+  };
 
   // Estados de interfaz
   const [tarjetasExpandidas, setTarjetasExpandidas] = useState<Record<string, boolean>>({});
@@ -113,25 +119,79 @@ export default function FiadoPage() {
     };
   }, [esAdmin, colegioFiltro, usuario?.colegioNombre, esSuperAdmin]);
 
-  // Filtrado de padres según búsqueda y estado
+  // Conteo total de almuerzos fiados pendientes de HOY
+  const totalFiadosHoy = useMemo(() => {
+    return fiados.reduce((acc, p) => {
+      return (
+        acc +
+        p.pedidos.filter((ped) => ped.fecha === fechaHoy && ped.estadoPago !== 'PAGADO').length
+      );
+    }, 0);
+  }, [fiados, fechaHoy]);
+
+  // Filtrado de padres según búsqueda, estado y fecha de consumo
   const fiadosFiltrados = useMemo(() => {
-    return fiados.filter((padre) => {
-      // Filtro de estado
-      if (filtroEstado === 'PENDIENTES' && padre.totalDeuda <= 0) return false;
-      if (filtroEstado === 'SALDADOS' && padre.totalDeuda > 0) return false;
+    return fiados
+      .map((padre) => {
+        // Todas las fechas únicas en las que este padre tiene consumos
+        const fechasUnicas = Array.from(new Set(padre.pedidos.map((p) => p.fecha))).sort((a, b) =>
+          b.localeCompare(a)
+        );
+        const tieneConsumoHoy = padre.pedidos.some((p) => p.fecha === fechaHoy);
 
-      // Filtro de búsqueda
-      if (!busqueda.trim()) return true;
-      const term = busqueda.toLowerCase();
-      const matchNombre = padre.nombrePadre.toLowerCase().includes(term);
-      const matchTelefono = padre.telefono.includes(term);
-      const matchHijos = padre.hijosNombres.some((h) => h.toLowerCase().includes(term));
-      const matchColegio = padre.colegioNombre.toLowerCase().includes(term);
-      const matchCodigos = padre.pedidos.some((p) => p.codigoPedido.toLowerCase().includes(term));
+        // Si se filtra por fecha específica, aislamos los pedidos de esa fecha
+        const pedidosCorrespondientes =
+          fechaFiltro === 'TODAS'
+            ? padre.pedidos
+            : padre.pedidos.filter((p) => p.fecha === fechaFiltro);
 
-      return matchNombre || matchTelefono || matchHijos || matchColegio || matchCodigos;
-    });
-  }, [fiados, filtroEstado, busqueda]);
+        const deudaCorrespondiente = pedidosCorrespondientes
+          .filter((p) => p.estadoPago !== 'PAGADO')
+          .reduce((acc, p) => acc + (Number(p.monto) || 12.0), 0);
+
+        const entregadosCorrespondientes = pedidosCorrespondientes.filter(
+          (p) => p.estadoPedido === 'ENTREGADO'
+        ).length;
+
+        return {
+          ...padre,
+          pedidos: pedidosCorrespondientes,
+          totalDeuda: deudaCorrespondiente,
+          totalDeudaHistorica: padre.totalDeuda,
+          totalPedidos: pedidosCorrespondientes.length,
+          pedidosEntregados: entregadosCorrespondientes,
+          tieneConsumoHoy,
+          fechasUnicas,
+        };
+      })
+      .filter((padre) => {
+        // Si hay filtro de fecha activo y la familia no tiene pedidos en esa fecha, se excluye
+        if (fechaFiltro !== 'TODAS' && padre.totalPedidos === 0) return false;
+
+        // Filtro de estado
+        if (filtroEstado === 'PENDIENTES' && padre.totalDeuda <= 0) return false;
+        if (filtroEstado === 'SALDADOS' && padre.totalDeuda > 0) return false;
+
+        // Filtro de búsqueda
+        if (!busqueda.trim()) return true;
+        const term = busqueda.toLowerCase();
+        const matchNombre = padre.nombrePadre.toLowerCase().includes(term);
+        const matchTelefono = padre.telefono.includes(term);
+        const matchHijos = padre.hijosNombres.some((h) => h.toLowerCase().includes(term));
+        const matchColegio = padre.colegioNombre.toLowerCase().includes(term);
+        const matchCodigos = padre.pedidos.some((p) => p.codigoPedido.toLowerCase().includes(term));
+        const matchFechas = padre.fechasUnicas.some((f) => f.includes(term));
+
+        return (
+          matchNombre ||
+          matchTelefono ||
+          matchHijos ||
+          matchColegio ||
+          matchCodigos ||
+          matchFechas
+        );
+      });
+  }, [fiados, filtroEstado, busqueda, fechaFiltro, fechaHoy]);
 
   // KPIs
   const totalDeudaGlobal = useMemo(() => {
@@ -222,12 +282,14 @@ export default function FiadoPage() {
         const entregadosSinCobrar = p.pedidos.filter(
           (ped) => ped.estadoPedido === 'ENTREGADO' && ped.estadoPago !== 'PAGADO'
         ).length;
+        const fechasStr = p.fechasUnicas.join(', ');
         return `
         <tr>
           <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${idx + 1}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${p.nombrePadre}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px;">${p.telefono || 'Sin teléfono'}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px;">${p.colegioNombre}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 6px;">${fechasStr}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px;">${hijosStr}</td>
           <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${totalPeds} (${pendPeds} pend / ${entregadosSinCobrar} entregados)</td>
           <td style="text-align: right; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; color: #b45309;">S/ ${p.totalDeuda.toFixed(2)}</td>
@@ -235,6 +297,11 @@ export default function FiadoPage() {
       `;
       })
       .join('');
+
+    const fechaFiltroLabel =
+      fechaFiltro === 'TODAS'
+        ? 'Todas las Fechas (Histórico Completo)'
+        : formatearFechaLegiblePeru(fechaFiltro);
 
     const excelHtml = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -250,6 +317,7 @@ export default function FiadoPage() {
         <h2 style="color: #92400e; margin-bottom: 2px;">REPORTE GLOBAL DE FIADOS / PAGAR LUEGO - PLACERES CULINARIOS</h2>
         <p style="color: #475569; margin-top: 0; margin-bottom: 12px;">
           <strong>Institución:</strong> ${colStr} &nbsp;|&nbsp;
+          <strong>Fecha de Consumo:</strong> ${fechaFiltroLabel} &nbsp;|&nbsp;
           <strong>Emisión:</strong> ${formatearFechaEmisionPeru()} &nbsp;|&nbsp;
           <strong>Familias con Deuda:</strong> ${totalFamiliasConDeuda} &nbsp;|&nbsp;
           <strong>Total Deuda Acumulada:</strong> S/ ${totalDeudaGlobal.toFixed(2)}
@@ -261,6 +329,7 @@ export default function FiadoPage() {
               <th style="width: 220px;">Padre de Familia</th>
               <th style="width: 120px;">Teléfono</th>
               <th style="width: 180px;">Colegio</th>
+              <th style="width: 160px;">Fechas de Consumo</th>
               <th style="width: 220px;">Hijos</th>
               <th style="width: 180px; text-align: center;">Almuerzos Fiados</th>
               <th style="width: 130px; text-align: right;">Deuda Pendiente</th>
@@ -271,7 +340,7 @@ export default function FiadoPage() {
           </tbody>
           <tfoot>
             <tr style="font-weight: bold; background-color: #fef3c7;">
-              <td colspan="6" style="text-align: right; border: 1px solid #cbd5e1; padding: 8px;">TOTAL GENERAL ADEUDADO:</td>
+              <td colspan="7" style="text-align: right; border: 1px solid #cbd5e1; padding: 8px;">TOTAL GENERAL ADEUDADO:</td>
               <td style="text-align: right; border: 1px solid #cbd5e1; padding: 8px; font-weight: bold; color: #b45309;">S/ ${totalDeudaGlobal.toFixed(2)}</td>
             </tr>
           </tfoot>
@@ -292,7 +361,7 @@ export default function FiadoPage() {
   };
 
   // Acción: Marcar un almuerzo individual como pagado
-  const handleSolicitarPagoIndividual = (pedido: ItemFiadoPedido, padre: PadreFiadoResumen) => {
+  const handleSolicitarPagoIndividual = (pedido: ItemFiadoPedido) => {
     setConfirmacion({
       abierto: true,
       titulo: `¿Registrar pago del almuerzo?`,
@@ -363,10 +432,6 @@ export default function FiadoPage() {
     }
   };
 
-  // Formateador de fecha
-  const formatearFecha = (f: string) => {
-    return formatearFechaLegiblePeru(f);
-  };
 
   if (cargandoAuth) {
     return (
@@ -494,8 +559,100 @@ export default function FiadoPage() {
           )}
         </div>
 
+        {/* Selector de Fecha de Consumo */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                Filtrar por Fecha de Consumo:
+              </span>
+              <span className="text-xs sm:text-sm font-black text-slate-800 capitalize">
+                {fechaFiltro === 'TODAS'
+                  ? 'Todas las Fechas (Histórico)'
+                  : formatearFechaLegiblePeru(fechaFiltro)}
+                {fechaFiltro === fechaHoy && (
+                  <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider">
+                    Hoy
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Navegación Día Anterior */}
+            <button
+              type="button"
+              onClick={() => cambiarDia(-1)}
+              className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+              title="Día anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {/* Input nativo de Calendario */}
+            <input
+              type="date"
+              value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
+              onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
+              className="bg-slate-50 border border-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer shadow-2xs"
+              title="Haz clic para seleccionar cualquier fecha en el calendario"
+            />
+
+            {/* Navegación Día Siguiente */}
+            <button
+              type="button"
+              onClick={() => cambiarDia(1)}
+              className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+              title="Día siguiente"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Botón rápido HOY */}
+            <button
+              type="button"
+              onClick={() => setFechaFiltro(fechaHoy)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                fechaFiltro === fechaHoy
+                  ? 'bg-orange-500 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+              }`}
+            >
+              <span>Hoy</span>
+              {totalFiadosHoy > 0 && (
+                <span
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                    fechaFiltro === fechaHoy
+                      ? 'bg-white text-orange-600'
+                      : 'bg-amber-500 text-white'
+                  }`}
+                >
+                  {totalFiadosHoy}
+                </span>
+              )}
+            </button>
+
+            {/* Botón Ver Todas las Fechas */}
+            <button
+              type="button"
+              onClick={() => setFechaFiltro('TODAS')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                fechaFiltro === 'TODAS'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+              }`}
+            >
+              Todas las Fechas
+            </button>
+          </div>
+        </div>
+
         {/* Buscador y Filtro de Estado */}
-        <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -673,13 +830,47 @@ export default function FiadoPage() {
                         • {padre.pedidos.length} almuerzos registrados ({padre.pedidosEntregados} entregados)
                       </div>
                     </div>
+
+                    {/* Resumen visible de Fechas de Consumo */}
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      {padre.tieneConsumoHoy && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black border border-amber-300">
+                          <Clock className="w-3 h-3 text-amber-700" />
+                          Consumo de HOY ({fechaHoy})
+                        </span>
+                      )}
+                      {padre.fechasUnicas && padre.fechasUnicas.length > 0 && (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" /> Fechas:
+                          </span>
+                          {padre.fechasUnicas.map((f) => (
+                            <button
+                              key={f}
+                              type="button"
+                              onClick={() => setFechaFiltro(f)}
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition cursor-pointer ${
+                                f === fechaHoy
+                                  ? 'bg-amber-200 text-amber-950 font-black border border-amber-300 hover:bg-amber-300'
+                                  : fechaFiltro === f
+                                  ? 'bg-slate-900 text-white'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                              }`}
+                              title={`Filtrar listado por fecha ${f}`}
+                            >
+                              {f === fechaHoy ? `Hoy (${f})` : formatearFechaLegiblePeru(f)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Resumen de Deuda y Botones de Acción */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
                     <div className="text-left sm:text-right">
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Saldo Pendiente
+                        {fechaFiltro === 'TODAS' ? 'Saldo Pendiente' : 'Saldo de la Fecha'}
                       </span>
                       <span
                         className={`text-xl sm:text-2xl font-black block leading-none mt-0.5 ${
@@ -688,6 +879,11 @@ export default function FiadoPage() {
                       >
                         S/ {padre.totalDeuda.toFixed(2)}
                       </span>
+                      {fechaFiltro !== 'TODAS' && padre.totalDeudaHistorica > padre.totalDeuda && (
+                        <span className="text-[10px] font-bold text-slate-400 block mt-0.5">
+                          Total acumulado: S/ {padre.totalDeudaHistorica.toFixed(2)}
+                        </span>
+                      )}
                       {tieneDeuda ? (
                         <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 mt-1 inline-block">
                           {pedidosPendientes.length} por cobrar
@@ -788,8 +984,22 @@ export default function FiadoPage() {
                             return (
                               <tr key={ped.id} className="hover:bg-slate-50/70 transition">
                                 <td className="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
-                                  {ped.fecha}
-                                  {ped.diaSemana && ped.diaSemana !== 'HOY' && (
+                                  {ped.fecha === fechaHoy ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+                                        HOY
+                                      </span>
+                                      <span className="font-bold text-slate-900">{ped.fecha}</span>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <span className="font-bold text-slate-900">{ped.fecha}</span>
+                                      <span className="block text-[10px] text-slate-400 capitalize">
+                                        {formatearFechaLegiblePeru(ped.fecha)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {ped.diaSemana && ped.diaSemana !== 'HOY' && ped.fecha !== fechaHoy && (
                                     <span className="block text-[10px] text-slate-400 uppercase">
                                       {ped.diaSemana}
                                     </span>
@@ -836,7 +1046,7 @@ export default function FiadoPage() {
                                   {!pagado ? (
                                     <button
                                       type="button"
-                                      onClick={() => handleSolicitarPagoIndividual(ped, padre)}
+                                      onClick={() => handleSolicitarPagoIndividual(ped)}
                                       className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg transition shadow-2xs cursor-pointer"
                                     >
                                       Marcar Pagado
@@ -875,7 +1085,7 @@ export default function FiadoPage() {
                   Reporte Global de Fiados (Pagar luego)
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  {colegioFiltro === 'TODOS' ? 'Todos los Colegios' : colegioFiltro} • Emisión: {formatearFechaEmisionPeru()}
+                  {colegioFiltro === 'TODOS' ? 'Todos los Colegios' : colegioFiltro} • Fecha: {fechaFiltro === 'TODAS' ? 'Todas las Fechas (Histórico Completo)' : formatearFechaLegiblePeru(fechaFiltro)} • Emisión: {formatearFechaEmisionPeru()}
                 </p>
               </div>
               <button
@@ -914,6 +1124,7 @@ export default function FiadoPage() {
                   <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-[11px]">
                     <th className="py-2.5 px-3 text-center">N°</th>
                     <th className="py-2.5 px-3">Padre de Familia</th>
+                    <th className="py-2.5 px-3">Fechas</th>
                     <th className="py-2.5 px-3">Hijos</th>
                     <th className="py-2.5 px-3">Institución</th>
                     <th className="py-2.5 px-3 text-center">Almuerzos</th>
@@ -924,7 +1135,7 @@ export default function FiadoPage() {
                 <tbody className="divide-y divide-slate-100">
                   {fiadosFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">
+                      <td colSpan={8} className="py-8 text-center text-slate-400">
                         No hay registros de fiados en esta selección.
                       </td>
                     </tr>
@@ -935,6 +1146,22 @@ export default function FiadoPage() {
                         <td className="py-2.5 px-3 font-bold text-slate-900">
                           {p.nombrePadre}
                           {p.telefono && <span className="block text-[10px] text-slate-400 font-normal">Tel: {p.telefono}</span>}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-800 whitespace-nowrap">
+                          <div className="flex flex-wrap gap-1 max-w-[150px]">
+                            {p.fechasUnicas.map((f) => (
+                              <span
+                                key={f}
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                  f === fechaHoy
+                                    ? 'bg-amber-100 text-amber-900 border border-amber-300 font-black'
+                                    : 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                {f === fechaHoy ? 'Hoy' : f}
+                              </span>
+                            ))}
+                          </div>
                         </td>
                         <td className="py-2.5 px-3 text-slate-700">
                           {p.hijosNombres.join(', ')}
@@ -967,7 +1194,7 @@ export default function FiadoPage() {
                 </tbody>
                 <tfoot>
                   <tr className="bg-amber-50 font-black border-t border-amber-200 text-xs">
-                    <td colSpan={5} className="py-3 px-3 text-right text-amber-900 uppercase">
+                    <td colSpan={6} className="py-3 px-3 text-right text-amber-900 uppercase">
                       Total Global Adeudado:
                     </td>
                     <td className="py-3 px-3 text-right text-sm text-amber-700">
@@ -1116,7 +1343,13 @@ export default function FiadoPage() {
                           {pedidosHijo.map((ped) => (
                             <tr key={ped.id}>
                               <td className="py-2 px-3 font-semibold text-slate-800 whitespace-nowrap">
-                                {ped.fecha}
+                                {ped.fecha === fechaHoy ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                                    HOY ({ped.fecha})
+                                  </span>
+                                ) : (
+                                  <span>{ped.fecha}</span>
+                                )}
                               </td>
                               <td className="py-2 px-3 text-slate-700">
                                 {ped.entradaNombre ? `${ped.entradaNombre} + ` : ''}

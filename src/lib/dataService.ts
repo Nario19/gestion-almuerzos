@@ -136,11 +136,6 @@ interface ObservacionCocinaItem {
   observacion: string;
 }
 
-interface FiltroColegioParam {
-  colegioId?: string;
-  colegioNombre?: string;
-}
-
 // Catálogo inicial vacío: NO hay platos inventados; todo se gestiona desde la BD por colegio
 export const PLATOS_INICIALES: Plato[] = [];
 
@@ -320,11 +315,8 @@ function mapearPlatoDesdeSupabase(d: PlatoRowSupabase): Plato {
 }
 
 export const dataService = {
-  async obtenerPlatosPorDia(dia: DiaSemana, colegioNombre?: string | FiltroColegioParam): Promise<Plato[]> {
-    const colegioIdONombre =
-      typeof colegioNombre === 'object' && colegioNombre !== null
-        ? (colegioNombre.colegioNombre || colegioNombre.colegioId)
-        : colegioNombre;
+  async obtenerPlatosPorDia(dia: DiaSemana, colegioNombre?: string): Promise<Plato[]> {
+    const colegioIdONombre = colegioNombre;
 
     let platos: Plato[] = [];
     if (isSupabaseConfigured && supabase) {
@@ -350,26 +342,12 @@ export const dataService = {
       return platos;
     }
 
-    let targetId = '';
-    let targetNombre = '';
-
-    if (typeof colegioNombre === 'object' && colegioNombre !== null) {
-      targetId = (colegioNombre.colegioId || '').toLowerCase().trim();
-      targetNombre = (colegioNombre.colegioNombre || '').toLowerCase().trim();
-    }
-
-    if (typeof colegioIdONombre === 'string') {
-      const val = colegioIdONombre.toLowerCase().trim();
-      if (val === 'todos' || !val) {
-        return platos;
-      }
-      if (!targetId) targetId = val;
-      if (!targetNombre) targetNombre = val;
-    }
-
-    if (!targetId && !targetNombre) {
+    const val = (colegioIdONombre || '').toLowerCase().trim();
+    if (val === 'todos' || !val) {
       return platos;
     }
+    const targetId = val;
+    const targetNombre = val;
 
     // Filtrar platos estrictamente por Colegio ID o Nombre para independencia total
     const platosColegio = platos.filter((p) => {
@@ -679,18 +657,31 @@ export const dataService = {
     notifyListeners();
   },
 
-  async obtenerFiados(colegioNombre?: string): Promise<PadreFiadoResumen[]> {
+  async obtenerFiados(colegioNombre?: string, fechaFiltro?: string): Promise<PadreFiadoResumen[]> {
     let todosLosPedidos: Pedido[] = [];
     if (isSupabaseConfigured && supabase) {
       try {
         let query = supabase
           .from('pedidos')
           .select('*')
-          .in('metodo_pago', ['Pagar luego', 'Efectivo', 'pagar_luego'])
+          .in('metodo_pago', [
+            'Pagar luego',
+            'pagar luego',
+            'Pagar Luego',
+            'pagar_luego',
+            'PAGAR_LUEGO',
+            'Efectivo',
+            'efectivo',
+            'EFECTIVO',
+          ])
           .order('created_at', { ascending: false });
 
         if (colegioNombre && colegioNombre !== 'TODOS') {
           query = query.eq('colegio_nombre', colegioNombre);
+        }
+
+        if (fechaFiltro && fechaFiltro !== 'TODAS') {
+          query = query.eq('fecha', fechaFiltro);
         }
 
         const { data, error } = await query;
@@ -703,14 +694,19 @@ export const dataService = {
       }
     }
 
-    if (todosLosPedidos.length === 0) {
-      todosLosPedidos = pedidosMemoria.filter(
-        (p) => p.metodoPago === 'Pagar luego' || p.metodoPago === 'Efectivo'
-      );
-      if (colegioNombre && colegioNombre !== 'TODOS') {
-        todosLosPedidos = todosLosPedidos.filter((p) => p.colegioNombre === colegioNombre);
-      }
-    }
+    // Fusionar con pedidos en memoria para garantizar que pedidos recién creados hoy en la sesión se muestren de inmediato
+    const idsCargados = new Set(todosLosPedidos.map((p) => p.id));
+    const pedidosMemoriaFiados = pedidosMemoria.filter((p) => {
+      const metodo = String(p.metodoPago || '').toLowerCase();
+      const esFiado = metodo.includes('luego') || metodo.includes('efectivo');
+      const coincideCol =
+        !colegioNombre ||
+        colegioNombre === 'TODOS' ||
+        (p.colegioNombre && p.colegioNombre.toLowerCase() === colegioNombre.toLowerCase());
+      const coincideFecha = !fechaFiltro || fechaFiltro === 'TODAS' || p.fecha === fechaFiltro;
+      return esFiado && coincideCol && coincideFecha && !idsCargados.has(p.id);
+    });
+    todosLosPedidos = [...todosLosPedidos, ...pedidosMemoriaFiados];
 
     const mapaPadres: Record<string, { nombre: string; telefono: string }> = {};
     if (isSupabaseConfigured && supabase) {
@@ -816,7 +812,10 @@ export const dataService = {
       const coincideColegio = !colegioNombre || colegioNombre === 'TODOS' || p.colegioNombre === colegioNombre;
       const debeLiquidar = tieneIds ? matchId : (coincidePadre && coincideColegio);
 
-      if (debeLiquidar && (p.metodoPago === 'Pagar luego' || p.metodoPago === 'Efectivo') && p.estadoPago !== 'PAGADO') {
+      const metodo = String(p.metodoPago || '').toLowerCase();
+      const esMetodoFiado = metodo.includes('luego') || metodo.includes('efectivo');
+
+      if (debeLiquidar && esMetodoFiado && p.estadoPago !== 'PAGADO') {
         p.estadoPago = 'PAGADO';
         idsAActualizar.push(p.id);
       }
@@ -827,7 +826,16 @@ export const dataService = {
         let query = supabase
           .from('pedidos')
           .update({ estado_pago: 'PAGADO' })
-          .in('metodo_pago', ['Pagar luego', 'Efectivo'])
+          .in('metodo_pago', [
+            'Pagar luego',
+            'pagar luego',
+            'Pagar Luego',
+            'pagar_luego',
+            'PAGAR_LUEGO',
+            'Efectivo',
+            'efectivo',
+            'EFECTIVO',
+          ])
           .neq('estado_pago', 'PAGADO');
 
         if (tieneIds) {
