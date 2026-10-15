@@ -88,9 +88,11 @@ export default function CocinaPage() {
   };
 
   // 1. Filtrar por fecha seleccionada (por defecto HOY)
+  // Ignorar pedidos cancelados: cocina SOLO prepara y lista pedidos activos
   const pedidosFecha = pedidos.filter((p) => {
     const f = (p.fecha || '').slice(0, 10);
-    return fechaFiltro === 'TODAS' || f === fechaFiltro;
+    const matchFecha = fechaFiltro === 'TODAS' || f === fechaFiltro;
+    return matchFecha && p.estadoPedido !== 'CANCELADO';
   });
 
   // 2. Scoping por colegio: Super Admin puede ver 'TODOS' o elegir uno; Admin de colegio ve exclusivamente el suyo

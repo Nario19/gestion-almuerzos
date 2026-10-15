@@ -695,7 +695,12 @@ export const dataService = {
     return nuevo;
   },
 
-  async cambiarEstadoPedido(id: string, nuevoEstado: EstadoPedido, horaEntregaManual?: string): Promise<void> {
+  async cambiarEstadoPedido(
+    id: string,
+    nuevoEstado: EstadoPedido,
+    horaEntregaManual?: string,
+    motivoCancelacion?: string
+  ): Promise<void> {
     const hora = nuevoEstado === 'ENTREGADO'
       ? (horaEntregaManual || obtenerHoraActualPeru())
       : undefined;
@@ -725,10 +730,14 @@ export const dataService = {
 
         // Limpiar únicamente marcas de entrega previas conservando todas las notas, alergias y etiquetas
         const limpiaObs = observacionExistente.replace(/\s*•?\s*\[Entregado:\s*[^\]]+\]/g, '').trim();
-        let nuevaObs: string | null = limpiaObs || null;
+        const limpiaCancelado = limpiaObs.replace(/\s*•?\s*\[Cancelado:\s*[^\]]+\]/g, '').trim();
+        let nuevaObs: string | null = limpiaCancelado || null;
 
         if (nuevoEstado === 'ENTREGADO' && hora) {
-          nuevaObs = limpiaObs ? `${limpiaObs} • [Entregado: ${hora}]` : `[Entregado: ${hora}]`;
+          nuevaObs = limpiaCancelado ? `${limpiaCancelado} • [Entregado: ${hora}]` : `[Entregado: ${hora}]`;
+        } else if (nuevoEstado === 'CANCELADO') {
+          const motivoTexto = motivoCancelacion ? `[Cancelado: ${motivoCancelacion}]` : '[Cancelado: Cancelado por administración]';
+          nuevaObs = limpiaCancelado ? `${limpiaCancelado} • ${motivoTexto}` : motivoTexto;
         }
 
         await supabase
@@ -757,6 +766,10 @@ export const dataService = {
     }
 
     notifyListeners();
+  },
+
+  async cancelarPedido(id: string, motivo?: string): Promise<void> {
+    await this.cambiarEstadoPedido(id, 'CANCELADO', undefined, motivo);
   },
 
   async cambiarEstadoPago(id: string, nuevoEstado: EstadoPago): Promise<void> {
@@ -792,6 +805,7 @@ export const dataService = {
             'efectivo',
             'EFECTIVO',
           ])
+          .neq('estado_pedido', 'CANCELADO')
           .order('created_at', { ascending: false });
 
         if (colegioNombre && colegioNombre !== 'TODOS') {
@@ -805,7 +819,9 @@ export const dataService = {
         const { data, error } = await query;
         if (!error && data) {
           const mapLocal = obtenerMapaHorasEntrega();
-          todosLosPedidos = data.map((d) => mapearPedidoDesdeSupabase(d, mapLocal));
+          todosLosPedidos = data
+            .filter((d) => d.estado_pedido !== 'CANCELADO')
+            .map((d) => mapearPedidoDesdeSupabase(d, mapLocal));
         }
       } catch (e) {
         console.error('Error obteniendo fiados de Supabase:', e);
@@ -822,9 +838,10 @@ export const dataService = {
         colegioNombre === 'TODOS' ||
         (p.colegioNombre && p.colegioNombre.toLowerCase() === colegioNombre.toLowerCase());
       const coincideFecha = !fechaFiltro || fechaFiltro === 'TODAS' || p.fecha === fechaFiltro;
-      return esFiado && coincideCol && coincideFecha && !idsCargados.has(p.id);
+      const noCancelado = p.estadoPedido !== 'CANCELADO';
+      return esFiado && coincideCol && coincideFecha && noCancelado && !idsCargados.has(p.id);
     });
-    todosLosPedidos = [...todosLosPedidos, ...pedidosMemoriaFiados];
+    todosLosPedidos = [...todosLosPedidos, ...pedidosMemoriaFiados].filter((p) => p.estadoPedido !== 'CANCELADO');
 
     const mapaPadres: Record<string, { nombre: string; telefono: string }> = {};
     if (isSupabaseConfigured && supabase) {
@@ -933,7 +950,7 @@ export const dataService = {
       const metodo = String(p.metodoPago || '').toLowerCase();
       const esMetodoFiado = metodo.includes('luego') || metodo.includes('efectivo');
 
-      if (debeLiquidar && esMetodoFiado && p.estadoPago !== 'PAGADO') {
+      if (debeLiquidar && esMetodoFiado && p.estadoPago !== 'PAGADO' && p.estadoPedido !== 'CANCELADO') {
         p.estadoPago = 'PAGADO';
         idsAActualizar.push(p.id);
       }
@@ -954,7 +971,8 @@ export const dataService = {
             'efectivo',
             'EFECTIVO',
           ])
-          .neq('estado_pago', 'PAGADO');
+          .neq('estado_pago', 'PAGADO')
+          .neq('estado_pedido', 'CANCELADO');
 
         if (tieneIds) {
           query = query.in('id', pedidoIds);
@@ -994,6 +1012,9 @@ export const dataService = {
   },
 
   calcularResumenCocina(pedidos: Pedido[]): ResumenCocina {
+    // Excluir pedidos cancelados: Cocina sólo prepara pedidos activos
+    const pedidosActivos = pedidos.filter((p) => p.estadoPedido !== 'CANCELADO');
+
     const entradasMap = new Map<string, { count: number; obs: ObservacionCocinaItem[] }>();
     const segundosMap = new Map<string, { count: number; obs: ObservacionCocinaItem[] }>();
 
@@ -1001,7 +1022,7 @@ export const dataService = {
     let pendientesPago = 0;
     let pagados = 0;
 
-    pedidos.forEach((p) => {
+    pedidosActivos.forEach((p) => {
       if (p.estadoPago === 'PAGADO') pagados++;
       else pendientesPago++;
 
@@ -1051,7 +1072,7 @@ export const dataService = {
 
     // Desglose independiente de platos por colegio
     const pedidosPorColegioMap = new Map<string, Pedido[]>();
-    pedidos.forEach((p) => {
+    pedidosActivos.forEach((p) => {
       const col = p.colegioNombre || 'General';
       if (!pedidosPorColegioMap.has(col)) {
         pedidosPorColegioMap.set(col, []);
@@ -1098,7 +1119,7 @@ export const dataService = {
     });
 
     return {
-      totalPedidos: pedidos.length,
+      totalPedidos: pedidosActivos.length,
       entradas,
       segundos,
       pedidosConObservacion,
@@ -1244,7 +1265,10 @@ export const dataService = {
 
         // D. Cargar conteo de pedidos por colegio (asociación exacta sin duplicación)
         const pedidosPorColegio: Record<string, number> = {};
-        const { data: pedData } = await supabase.from('pedidos').select('colegio_id, colegio_nombre');
+        const { data: pedData } = await supabase
+          .from('pedidos')
+          .select('colegio_id, colegio_nombre')
+          .neq('estado_pedido', 'CANCELADO');
         if (pedData) {
           pedData.forEach((p) => {
             const colMatch = colegiosBase.find(

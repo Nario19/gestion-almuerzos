@@ -6,7 +6,7 @@ export type MetodoPago = 'Yape' | 'Plin' | 'Pagar luego' | 'Efectivo' | 'Mensual
 
 export type EstadoPago = 'PENDIENTE' | 'VERIFICANDO' | 'PAGADO';
 
-export type EstadoPedido = 'REGISTRADO' | 'EN_COCINA' | 'EMPACADO' | 'ENTREGADO';
+export type EstadoPedido = 'REGISTRADO' | 'EN_COCINA' | 'EMPACADO' | 'ENTREGADO' | 'CANCELADO';
 
 export type RolUsuario = 'PADRE' | 'ADMIN' | 'SUPER_ADMIN';
 

@@ -144,6 +144,32 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   2. Modificación en `src/app/page.tsx` (selector y banners de métodos de pago).
   3. Nueva suite `tests/despacho-columna-pago-estilos.test.mjs`.
 
+### D-013 — 2026-10-15 — Opción de Cancelar Pedido en Despacho e Impacto Transversal en el Sistema
+- Decisión: A petición explícita del usuario ("ahora agregaras la opcion de cancelar pedido en despacho debe haber una opcion de cancelar pedido, y este afectará a todo lo que tenga que ver con pedido obviamente"):
+  1. Estado `CANCELADO`: Agregado formalmente a `EstadoPedido` en `src/types/index.ts`.
+  2. Despacho (`/despacho`):
+     - Botón "Cancelar pedido" en cada fila con modal de confirmación detallado (muestra estudiante, grado, colegio, plato y motivo opcional) para evitar cancelaciones accidentales.
+     - Filas canceladas muestran badge distintivo `CANCELADO`, no muestran botones de cobro activo ("Pedido cancelado") y ofrecen la opción de "Reactivar pedido" en caso de error.
+     - Métricas operativas (`faltaEntregar`, `pendientesPago`, `pagados`) excluyen automáticamente los pedidos cancelados.
+  3. Cocina (`/cocina`): Los pedidos cancelados se excluyen estrictamente de las preparaciones, desglose por platos, colegios y alertas de alergias u observaciones.
+  4. Fiados (`/fiado`):
+     - `obtenerFiados` y `liquidarDeudaPadre` excluyen pedidos con `estado_pedido = 'CANCELADO'`, evitando que se atribuya deuda o se exija cobro a los padres por pedidos no servidos.
+  5. Panel Administrativo (`/admin`):
+     - Los indicadores financieros y operacionales (ventas totales, almuerzos activos, por cobrar) operan exclusivamente sobre pedidos activos, excluyendo cancelados.
+     - La tabla de pedidos recientes muestra la insignia `CANCELADO` en color rosa/rojo.
+  6. Historial de Pedidos para Padres (`/pedidos`):
+     - Las órdenes canceladas muestran el estado "Cancelado" con badge representativo y timeline informativo indicando la cancelación.
+  7. Suite de prueba automatizada completa en `tests/cancelar-pedido-despacho-integracion.test.mjs` con 114 tests del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/types/index.ts`
+  2. `src/lib/dataService.ts` (`cancelarPedido`, `cambiarEstadoPedido`, `calcularResumenCocina`, `obtenerFiados`, `liquidarDeudaPadre`, `obtenerColegiosDetallados`)
+  3. `src/app/despacho/page.tsx`
+  4. `src/app/cocina/page.tsx`
+  5. `src/app/admin/page.tsx`
+  6. `src/app/pedidos/page.tsx`
+  7. `tests/cancelar-pedido-despacho-integracion.test.mjs`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -354,18 +354,19 @@ export default function AdminPage() {
     return true;
   });
 
-  // Métricas financieras y volumen
-  const totalAlmuerzos = pedidosPeriodo.length;
-  const ventasTotales = pedidosPeriodo.reduce((acc, p) => acc + (p.monto || 12), 0);
-  const pedidosPagados = pedidosPeriodo.filter((p) => p.estadoPago === 'PAGADO');
+  // Métricas financieras y volumen (excluyendo cancelados)
+  const pedidosActivos = pedidosPeriodo.filter((p) => p.estadoPedido !== 'CANCELADO');
+  const totalAlmuerzos = pedidosActivos.length;
+  const ventasTotales = pedidosActivos.reduce((acc, p) => acc + (p.monto || 12), 0);
+  const pedidosPagados = pedidosActivos.filter((p) => p.estadoPago === 'PAGADO');
   const ingresosRecaudados = pedidosPagados.reduce((acc, p) => acc + (p.monto || 12), 0);
-  const pedidosPendientes = pedidosPeriodo.filter((p) => p.estadoPago !== 'PAGADO');
+  const pedidosPendientes = pedidosActivos.filter((p) => p.estadoPago !== 'PAGADO');
   const montoPorCobrar = pedidosPendientes.reduce((acc, p) => acc + (p.monto || 12), 0);
   const porcentajeCobrado = totalAlmuerzos > 0 ? Math.round((pedidosPagados.length / totalAlmuerzos) * 100) : 0;
   const ticketPromedio = totalAlmuerzos > 0 ? (ventasTotales / totalAlmuerzos).toFixed(2) : '12.00';
 
   // Métricas operativas: Entregados vs Falta Entregar (con pago aceptado y preparados)
-  const pedidosOperativos = pedidosPeriodo.filter(
+  const pedidosOperativos = pedidosActivos.filter(
     (p) => p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'
   );
   const entregados = pedidosOperativos.filter((p) => p.estadoPedido === 'ENTREGADO').length;
@@ -374,7 +375,7 @@ export default function AdminPage() {
   const porcentajeEntrega = totalParaEntrega > 0 ? Math.round((entregados / totalParaEntrega) * 100) : 0;
 
   // Distribución por colegio
-  const pedidosPorColegio = pedidosPeriodo.reduce((acc, p) => {
+  const pedidosPorColegio = pedidosActivos.reduce((acc, p) => {
     const col = p.colegioNombre || 'Colegio General';
     acc[col] = (acc[col] || 0) + 1;
     return acc;
@@ -383,7 +384,7 @@ export default function AdminPage() {
   const rankingColegios = Object.entries(pedidosPorColegio).sort((a, b) => b[1] - a[1]);
 
   // Ranking de segundos más solicitados
-  const segundosFrecuencia = pedidosPeriodo.reduce((acc, p) => {
+  const segundosFrecuencia = pedidosActivos.reduce((acc, p) => {
     if (p.segundoNombre) {
       acc[p.segundoNombre] = (acc[p.segundoNombre] || 0) + 1;
     }
@@ -395,7 +396,7 @@ export default function AdminPage() {
     .slice(0, 5);
 
   // Ranking de entradas más solicitadas
-  const entradasFrecuencia = pedidosPeriodo.reduce((acc, p) => {
+  const entradasFrecuencia = pedidosActivos.reduce((acc, p) => {
     if (p.entradaNombre) {
       acc[p.entradaNombre] = (acc[p.entradaNombre] || 0) + 1;
     }
@@ -901,7 +902,15 @@ export default function AdminPage() {
                           </span>
                         </td>
                         <td className="py-2.5 text-center">
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700">
+                          <span
+                            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
+                              p.estadoPedido === 'CANCELADO'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                : p.estadoPedido === 'ENTREGADO'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
                             {p.estadoPedido}
                           </span>
                         </td>

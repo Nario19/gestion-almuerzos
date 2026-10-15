@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Lock,
+  XCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
@@ -44,6 +46,9 @@ export default function DespachoPage() {
   const [busqueda, setBusqueda] = useState('');
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
   const [alertaBloqueoEntrega, setAlertaBloqueoEntrega] = useState<string | null>(null);
+  const [pedidoACancelar, setPedidoACancelar] = useState<Pedido | null>(null);
+  const [motivoCancelacion, setMotivoCancelacion] = useState('');
+  const [procesandoCancelacion, setProcesandoCancelacion] = useState(false);
 
   // Estados de paginación para optimizar y no sobrecargar la vista
   const [paginaActual, setPaginaActual] = useState(1);
@@ -109,6 +114,32 @@ export default function DespachoPage() {
     cargarDatos();
   };
 
+  const confirmarCancelarPedido = async () => {
+    if (!pedidoACancelar) return;
+    setProcesandoCancelacion(true);
+    try {
+      await dataService.cancelarPedido(pedidoACancelar.id, motivoCancelacion.trim() || undefined);
+      setPedidoACancelar(null);
+      setMotivoCancelacion('');
+      await cargarDatos();
+    } catch (err) {
+      console.error('Error al cancelar pedido:', err);
+      alert('Ocurrió un error al cancelar el pedido.');
+    } finally {
+      setProcesandoCancelacion(false);
+    }
+  };
+
+  const reactivarPedido = async (id: string) => {
+    try {
+      await dataService.cambiarEstadoPedido(id, 'REGISTRADO');
+      await cargarDatos();
+    } catch (err) {
+      console.error('Error al reactivar pedido:', err);
+      alert('Ocurrió un error al reactivar el pedido.');
+    }
+  };
+
   // Formateador legible en español para la fecha
   const formatearFechaLegible = (fechaStr: string) => {
     if (fechaStr === 'TODAS') return 'Todas las fechas';
@@ -147,14 +178,16 @@ export default function DespachoPage() {
 
   // Métricas rápidas (sobre el consolidado total de la fecha y filtros)
   const total = pedidosFiltrados.length;
-  const entregados = pedidosFiltrados.filter((p) => p.estadoPedido === 'ENTREGADO').length;
-  const faltaEntregar = pedidosFiltrados.filter(
+  const cancelados = pedidosFiltrados.filter((p) => p.estadoPedido === 'CANCELADO').length;
+  const pedidosActivos = pedidosFiltrados.filter((p) => p.estadoPedido !== 'CANCELADO');
+  const entregados = pedidosActivos.filter((p) => p.estadoPedido === 'ENTREGADO').length;
+  const faltaEntregar = pedidosActivos.filter(
     (p) =>
       (p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO') &&
       p.estadoPedido !== 'ENTREGADO'
   ).length;
-  const pagados = pedidosFiltrados.filter((p) => p.estadoPago === 'PAGADO').length;
-  const pendientesPago = total - pagados;
+  const pagados = pedidosActivos.filter((p) => p.estadoPago === 'PAGADO').length;
+  const pendientesPago = pedidosActivos.length - pagados;
 
   // Cálculo de Paginación para no sobrecargar el renderizado
   const totalPaginas = Math.ceil(total / porPagina) || 1;
@@ -202,7 +235,9 @@ export default function DespachoPage() {
           p.observacion ? ` (Obs: ${p.observacion})` : ''
         }`;
         const pagoDetalle =
-          p.estadoPago === 'PAGADO'
+          p.estadoPedido === 'CANCELADO'
+            ? `CANCELADO (${p.metodoPago || 'Sin pago'})`
+            : p.estadoPago === 'PAGADO'
             ? `PAGADO (${p.metodoPago || 'Yape'})`
             : `POR PAGAR (S/ 12.00 - ${p.metodoPago || 'Pendiente'})`;
         const gradoSeccionDetalle =
@@ -211,7 +246,9 @@ export default function DespachoPage() {
             : p.gradoSeccion;
         const horaPedido = formatearHora(p.createdAt);
         const entregaDetalle =
-          p.estadoPedido === 'ENTREGADO'
+          p.estadoPedido === 'CANCELADO'
+            ? 'CANCELADO'
+            : p.estadoPedido === 'ENTREGADO'
             ? `ENTREGADO${p.horaEntrega ? ` (${p.horaEntrega})` : ''}`
             : 'NO ENTREGADO';
 
@@ -365,7 +402,14 @@ export default function DespachoPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 print:hidden">
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
           <span className="text-[11px] font-bold text-slate-400 uppercase">Total Pedidos</span>
-          <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{total}</div>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 flex items-baseline gap-1.5">
+            <span>{pedidosActivos.length}</span>
+            {cancelados > 0 && (
+              <span className="text-xs font-bold text-rose-500">
+                ({cancelados} cancelado{cancelados > 1 ? 's' : ''})
+              </span>
+            )}
+          </div>
         </div>
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
           <span className="text-[11px] font-bold text-emerald-600 uppercase">Entregados</span>
@@ -594,6 +638,7 @@ export default function DespachoPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
                     {listaPedidos.map((p, idx) => {
+                      const cancelado = p.estadoPedido === 'CANCELADO';
                       const entregado = p.estadoPedido === 'ENTREGADO';
                       const pagado = p.estadoPago === 'PAGADO';
                       const matchNum = (p.codigoPedido || '').match(/-(\d+)$/);
@@ -603,7 +648,9 @@ export default function DespachoPage() {
                         <tr
                           key={p.id}
                           className={`transition-colors ${
-                            entregado
+                            cancelado
+                              ? 'bg-rose-50/40 opacity-80'
+                              : entregado
                               ? 'bg-emerald-50/30'
                               : 'hover:bg-slate-50/50'
                           }`}
@@ -611,12 +658,17 @@ export default function DespachoPage() {
                           {/* Columna: N° y Hora del Pedido */}
                           <td className="py-3.5 px-4 text-center">
                             <div className="flex flex-col items-center justify-center">
-                              <span className="font-mono font-black text-slate-900 text-xs sm:text-sm block">
+                              <span className={`font-mono font-black text-xs sm:text-sm block ${cancelado ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                                 Almuerzo #{numeroAlmuerzo}
                               </span>
                               <span className="inline-block text-[10px] font-mono font-black px-2 py-0.5 rounded-md bg-orange-100 text-orange-900 border border-orange-200 mt-0.5">
                                 #{p.codigoPedido}
                               </span>
+                              {cancelado && (
+                                <span className="inline-block text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-200 mt-1">
+                                  CANCELADO
+                                </span>
+                              )}
                               <span
                                 className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md mt-1"
                                 title="Hora en que se registró el pedido"
@@ -636,7 +688,7 @@ export default function DespachoPage() {
 
                           {/* Columna: Nombres */}
                           <td className="py-3.5 px-4">
-                            <div className="font-black text-slate-900 text-xs sm:text-sm">
+                            <div className={`font-black text-xs sm:text-sm ${cancelado ? 'text-slate-500' : 'text-slate-900'}`}>
                               {p.estudianteNombre}
                             </div>
                             {p.padreNombre && (
@@ -664,12 +716,12 @@ export default function DespachoPage() {
                                 </span>
                               </div>
                               {p.entradaNombre && (
-                                <div className="text-xs text-slate-700">
+                                <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-slate-700'}`}>
                                   <span className="font-semibold text-orange-700">Sopa o postre:</span>{' '}
                                   {p.entradaNombre}
                                 </div>
                               )}
-                              <div className="text-xs text-slate-800 font-medium">
+                              <div className={`text-xs font-medium ${cancelado ? 'line-through text-slate-400' : 'text-slate-800'}`}>
                                 <span className="font-bold text-amber-800">Segundo:</span>{' '}
                                 {p.segundoNombre}
                               </div>
@@ -720,7 +772,11 @@ export default function DespachoPage() {
                                 )}
                               </div>
 
-                              {pagado ? (
+                              {cancelado ? (
+                                <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                  Pedido cancelado
+                                </span>
+                              ) : pagado ? (
                                 entregado ? (
                                   <div
                                     className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default select-none shadow-2xs"
@@ -757,7 +813,23 @@ export default function DespachoPage() {
                           {/* Columna: Entrega (al costado de Pago) */}
                           <td className="py-3.5 px-4 text-left print:hidden">
                             <div className="flex flex-col gap-1 items-start">
-                              {entregado ? (
+                              {cancelado ? (
+                                <>
+                                  <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1">
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    Cancelado
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => reactivarPedido(p.id)}
+                                    className="text-[11px] font-bold text-slate-600 hover:text-slate-900 underline flex items-center gap-1 mt-1 cursor-pointer transition"
+                                    title="Reactivar pedido a estado registrado"
+                                  >
+                                    <RotateCcw className="w-3 h-3 text-slate-500" />
+                                    Reactivar pedido
+                                  </button>
+                                </>
+                              ) : entregado ? (
                                 <>
                                   <button
                                     type="button"
@@ -776,35 +848,75 @@ export default function DespachoPage() {
                                   ) : (
                                     <span className="text-[10px] text-slate-400">Entregado</span>
                                   )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPedidoACancelar(p);
+                                      setMotivoCancelacion('');
+                                    }}
+                                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1 mt-1 transition cursor-pointer"
+                                    title="Cancelar pedido de almuerzo"
+                                  >
+                                    <XCircle className="w-3 h-3" />
+                                    Cancelar pedido
+                                  </button>
                                 </>
                               ) : (p.metodoPago === 'Yape' || p.metodoPago === 'Plin') && !pagado ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setAlertaBloqueoEntrega(
-                                      `No se puede marcar como entregado el pedido #${p.codigoPedido} de ${p.estudianteNombre}: El pago por ${p.metodoPago} debe ser confirmado antes de realizar la entrega.`
-                                    )
-                                  }
-                                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-300 hover:border-rose-300 flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-                                  title="Bloqueado: Confirma el pago de Yape/Plin antes de entregar"
-                                >
-                                  <Lock className="w-3.5 h-3.5 text-rose-500" />
-                                  <span>Requiere Pago</span>
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setAlertaBloqueoEntrega(
+                                        `No se puede marcar como entregado el pedido #${p.codigoPedido} de ${p.estudianteNombre}: El pago por ${p.metodoPago} debe ser confirmado antes de realizar la entrega.`
+                                      )
+                                    }
+                                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-300 hover:border-rose-300 flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                                    title="Bloqueado: Confirma el pago de Yape/Plin antes de entregar"
+                                  >
+                                    <Lock className="w-3.5 h-3.5 text-rose-500" />
+                                    <span>Requiere Pago</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPedidoACancelar(p);
+                                      setMotivoCancelacion('');
+                                    }}
+                                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1 mt-1 transition cursor-pointer"
+                                    title="Cancelar pedido de almuerzo"
+                                  >
+                                    <XCircle className="w-3 h-3" />
+                                    Cancelar pedido
+                                  </button>
+                                </>
                               ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => handleCambiarEstado(p.id, 'ENTREGADO')}
-                                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-300 hover:border-emerald-300 flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
-                                  title={
-                                    p.metodoPago === 'Pagar luego'
-                                      ? 'Marcar como entregado (se registrará en Fiado si aún no está cancelado)'
-                                      : 'Marcar como entregado y registrar hora de entrega'
-                                  }
-                                >
-                                  <PackageCheck className="w-3.5 h-3.5 text-slate-400" />
-                                  <span>Marcar Entregado</span>
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCambiarEstado(p.id, 'ENTREGADO')}
+                                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-300 hover:border-emerald-300 flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
+                                    title={
+                                      p.metodoPago === 'Pagar luego'
+                                        ? 'Marcar como entregado (se registrará en Fiado si aún no está cancelado)'
+                                        : 'Marcar como entregado y registrar hora de entrega'
+                                    }
+                                  >
+                                    <PackageCheck className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Marcar Entregado</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPedidoACancelar(p);
+                                      setMotivoCancelacion('');
+                                    }}
+                                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1 mt-1 transition cursor-pointer"
+                                    title="Cancelar pedido de almuerzo"
+                                  >
+                                    <XCircle className="w-3 h-3" />
+                                    Cancelar pedido
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
@@ -976,6 +1088,84 @@ export default function DespachoPage() {
                 className="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition cursor-pointer"
               >
                 Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para cancelar pedido */}
+      {pedidoACancelar && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <XCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">
+                  ¿Cancelar Pedido #{pedidoACancelar.codigoPedido}?
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Esta acción actualizará cocina, fiados y el consolidado de pedidos.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200 text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Estudiante:</span>
+                <span className="font-bold text-slate-900">{pedidoACancelar.estudianteNombre}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Colegio / Grado:</span>
+                <span className="font-bold text-slate-800">
+                  {pedidoACancelar.colegioNombre} - {pedidoACancelar.gradoSeccion}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Plato:</span>
+                <span className="font-bold text-slate-800">{pedidoACancelar.segundoNombre}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Método de pago:</span>
+                <span className="font-bold text-slate-800">{pedidoACancelar.metodoPago || 'No especificado'}</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Motivo de la cancelación (opcional):
+              </label>
+              <textarea
+                rows={2}
+                value={motivoCancelacion}
+                onChange={(e) => setMotivoCancelacion(e.target.value)}
+                placeholder="Ej. Alumno no asistió, error de fecha, pedido duplicado..."
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+              />
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={procesandoCancelacion}
+                onClick={() => {
+                  setPedidoACancelar(null);
+                  setMotivoCancelacion('');
+                }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                No, volver
+              </button>
+              <button
+                type="button"
+                disabled={procesandoCancelacion}
+                onClick={confirmarCancelarPedido}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-black text-xs rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
+              >
+                <XCircle className="w-4 h-4" />
+                {procesandoCancelacion ? 'Cancelando...' : 'Sí, cancelar pedido'}
               </button>
             </div>
           </div>
