@@ -688,24 +688,35 @@ export default function DespachoPage() {
                               {/* Insignia del Método de Pago */}
                               <div className="flex items-center gap-1.5">
                                 {p.metodoPago === 'Yape' && (
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs">
+                                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-purple-600 text-white shadow-xs">
                                     Yape
                                   </span>
                                 )}
                                 {p.metodoPago === 'Plin' && (
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-100 text-sky-900 border border-sky-200 shadow-2xs">
+                                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-sky-500 text-white shadow-xs">
                                     Plin
                                   </span>
                                 )}
                                 {(p.metodoPago === 'Pagar luego' || p.metodoPago === 'Efectivo') && (
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 shadow-2xs">
+                                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-yellow-400 text-slate-950 shadow-xs">
                                     Pagar luego
                                   </span>
                                 )}
                                 {!p.metodoPago && (
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-600">
                                     Pendiente
                                   </span>
+                                )}
+                                {p.comprobanteUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setComprobanteModal(p.comprobanteUrl || null)}
+                                    className="text-[11px] font-bold text-purple-700 hover:underline flex items-center gap-0.5 print:hidden cursor-pointer"
+                                    title="Ver comprobante adjunto"
+                                  >
+                                    <FileImage className="w-3.5 h-3.5" />
+                                    <span>Voucher</span>
+                                  </button>
                                 )}
                               </div>
 
@@ -713,53 +724,31 @@ export default function DespachoPage() {
                                 entregado ? (
                                   <div
                                     className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default select-none shadow-2xs"
-                                    title="El pedido ya está entregado al estudiante y el pago ha sido confirmado."
+                                    title="Pago aceptado"
                                   >
                                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                    <span>✓ Pago Confirmado ({p.metodoPago || 'Pagado'})</span>
+                                    <span>Pago aceptado</span>
                                   </div>
                                 ) : (
                                   <button
                                     type="button"
                                     onClick={() => handleCambiarPago(p.id, 'PENDIENTE')}
                                     className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 shadow-2xs"
-                                    title="Orden aceptada y pagada (Clic para revertir a pendiente si aún no se entregó)"
+                                    title="Pago aceptado (Clic para revertir si aún no se entregó)"
                                   >
                                     <Check className="w-3.5 h-3.5 text-emerald-700" />
-                                    <span>✓ Pago Aceptado ({p.metodoPago || 'Pagado'})</span>
+                                    <span>Pago aceptado</span>
                                   </button>
                                 )
                               ) : (
-                                <div className="flex flex-col gap-1 items-start">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCambiarPago(p.id, 'PAGADO')}
-                                    className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-xs"
-                                    title={
-                                      p.metodoPago === 'Pagar luego'
-                                        ? 'Pago pendiente (Pagar luego). Clic para confirmar el pago cuando se cobre.'
-                                        : 'Aceptar orden y pago'
-                                    }
-                                  >
-                                    <CheckCircle className="w-3.5 h-3.5" />
-                                    <span>Aceptar Pago ({p.metodoPago || 'Por Cobrar'})</span>
-                                  </button>
-                                  {p.metodoPago === 'Pagar luego' && (
-                                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">
-                                      {entregado ? 'Entregado • Pendiente en Fiado' : 'Pendiente en Fiado'}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-
-                              {p.comprobanteUrl && (
                                 <button
                                   type="button"
-                                  onClick={() => setComprobanteModal(p.comprobanteUrl || null)}
-                                  className="text-[11px] font-bold text-purple-700 hover:underline flex items-center gap-1 print:hidden cursor-pointer"
+                                  onClick={() => handleCambiarPago(p.id, 'PAGADO')}
+                                  className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-xs"
+                                  title="Aceptar pago"
                                 >
-                                  <FileImage className="w-3.5 h-3.5" />
-                                  Ver Voucher
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  <span>Aceptar pago</span>
                                 </button>
                               )}
                             </div>

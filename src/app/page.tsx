@@ -1113,8 +1113,10 @@ function PedidoContent() {
                 className={`py-2 px-1 rounded-xl text-xs font-bold border transition text-center ${
                   metodoPago === m
                     ? m === 'Pagar luego'
-                      ? 'border-amber-500 bg-amber-50 text-amber-900 shadow-xs'
-                      : 'border-purple-600 bg-purple-50 text-purple-900 shadow-xs'
+                      ? 'border-yellow-500 bg-yellow-50 text-yellow-950 shadow-xs'
+                      : m === 'Plin'
+                      ? 'border-sky-500 bg-sky-50 text-sky-950 shadow-xs'
+                      : 'border-purple-600 bg-purple-50 text-purple-950 shadow-xs'
                     : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -1123,10 +1125,17 @@ function PedidoContent() {
             ))}
           </div>
 
-          {(metodoPago === 'Yape' || metodoPago === 'Plin') && (
+          {metodoPago === 'Yape' && (
             <div className="bg-purple-50/60 border border-purple-100 rounded-xl p-3 mb-3 text-xs text-purple-950">
-              <p className="font-bold">Número de {metodoPago}: 999-999-999</p>
+              <p className="font-bold">Número de Yape: 999-999-999</p>
               <p className="text-[11px] text-purple-700">Placeres Culinarios</p>
+            </div>
+          )}
+
+          {metodoPago === 'Plin' && (
+            <div className="bg-sky-50/60 border border-sky-100 rounded-xl p-3 mb-3 text-xs text-sky-950">
+              <p className="font-bold">Número de Plin: 999-999-999</p>
+              <p className="text-[11px] text-sky-700">Placeres Culinarios</p>
             </div>
           )}
 

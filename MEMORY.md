@@ -128,6 +128,22 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   3. UI de `/despacho` y `/cocina` actualizadas para reflejar códigos y almuerzos por colegio.
   4. `scripts/seed-completo.mjs` actualizado con 60 platos únicos y 120 pedidos clasificados con prefijos `CLA-xxx`, `CSA-xxx` y `CSR-xxx`.
 
+### D-012 — 2026-10-15 — Estandarización de colores de pago y simplificación de botón en Despacho
+- Decisión: A petición explícita del usuario ("en la columna de pago el yape debe aparecer de morado el plinde celeeste y el pagar luego de amarillo. y el boton solo debe decir aceptar pago y el metodo depago solo debeir eso en esa columna para todos"):
+  1. Yape: Insignia en color morado representativo (`bg-purple-600 text-white font-black`).
+  2. Plin: Insignia en color celeste representativo (`bg-sky-500 text-white font-black`).
+  3. Pagar luego: Insignia en color amarillo representativo (`bg-yellow-400 text-slate-950 font-black`).
+  4. Botón de pago en Despacho: Texto estricto "Aceptar pago" para todas las órdenes pendientes de pago (sin sufijos de método ni `(Por Cobrar)`).
+  5. Estado pagado en Despacho: Texto estricto "Pago aceptado" (sin sufijos ni paréntesis).
+  6. Columna de Pago limpia y uniforme: Eliminación de insignias accesorias como "Pendiente en Fiado" para mantener la vista minimalista y sin sobrecarga de etiquetas.
+  7. Selector de pagos en Home (`/`): Alineación de Plin a celeste (`border-sky-500 bg-sky-50 text-sky-950`), Yape a morado y Pagar luego a amarillo.
+  8. Suite de prueba automatizada en `tests/despacho-columna-pago-estilos.test.mjs` con 99 tests locales aprobados en verde.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. Modificación en `src/app/despacho/page.tsx` (columna de Pago).
+  2. Modificación en `src/app/page.tsx` (selector y banners de métodos de pago).
+  3. Nueva suite `tests/despacho-columna-pago-estilos.test.mjs`.
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
