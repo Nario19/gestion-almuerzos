@@ -76,13 +76,46 @@ async function runSeedSuperAdmin() {
     console.log('6️⃣  Inicializando configuración de menús semanales...');
     await supabase.from('menus_dia').delete().neq('dia_semana', '___DUMMY___');
 
+    const GRADOS_DEFAULT = [
+      '1.° Primaria',
+      '2.° Primaria',
+      '3.° Primaria',
+      '4.° Primaria',
+      '5.° Primaria A',
+      '5.° Primaria B',
+      '6.° Primaria',
+      '1.° Secundaria (7mo)',
+      '2.° Secundaria (8vo)',
+      '3.° Secundaria (9no C)',
+      '3.° Secundaria (9no A)',
+      '4.° Secundaria',
+      '5.° Secundaria',
+    ];
+
+    const OBSERVACIONES_DEFAULT = [
+      'Sin cebolla',
+      'Poca crema',
+      'Sin ensalada',
+      'Presa sin piel',
+      'Solo segundo',
+    ];
+
     const diasSemana = [
       { dia_semana: 'LUNES', activo: true, hora_cierre: '09:30:00', mensaje_aviso: 'Pedidos hasta las 09:30 AM para entrega puntual.' },
       { dia_semana: 'MARTES', activo: true, hora_cierre: '09:30:00', mensaje_aviso: 'Pedidos hasta las 09:30 AM para entrega puntual.' },
       { dia_semana: 'MIERCOLES', activo: true, hora_cierre: '09:30:00', mensaje_aviso: 'Pedidos hasta las 09:30 AM para entrega puntual.' },
       { dia_semana: 'JUEVES', activo: true, hora_cierre: '09:30:00', mensaje_aviso: 'Pedidos hasta las 09:30 AM para entrega puntual.' },
       { dia_semana: 'VIERNES', activo: true, hora_cierre: '09:30:00', mensaje_aviso: 'Pedidos hasta las 09:30 AM para entrega puntual.' },
-      { dia_semana: 'SABADO', activo: false, hora_cierre: '09:30:00', mensaje_aviso: JSON.stringify({ adminsColegio: {} }) },
+      {
+        dia_semana: 'SABADO',
+        activo: false,
+        hora_cierre: '09:30:00',
+        mensaje_aviso: JSON.stringify({
+          grados: GRADOS_DEFAULT,
+          observaciones: OBSERVACIONES_DEFAULT,
+          adminsColegio: {},
+        }),
+      },
     ];
 
     const { error: errMenus } = await supabase.from('menus_dia').insert(diasSemana);

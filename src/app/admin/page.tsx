@@ -910,7 +910,7 @@ export default function AdminPage() {
               </div>
               {!esSuperAdmin && usuario?.colegioNombre ? (
                 <span className="text-xs font-black bg-orange-500 text-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center gap-1.5">
-                  🏫 Sede Asignada: {usuario.colegioNombre}
+                  🏫 Colegio: {usuario.colegioNombre}
                 </span>
               ) : (
                 <div className="flex flex-wrap items-center gap-2">

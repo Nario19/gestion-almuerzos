@@ -374,7 +374,7 @@ export default function SuperAdminPage() {
       onConfirmar: async () => {
         await dataService.eliminarColegioCompleto(col.id, col.nombre);
         setColegios((prev) => prev.filter((c) => c.id !== col.id));
-        setMensajeExito(`Sede "${col.nombre}" eliminada correctamente.`);
+        setMensajeExito(`Colegio "${col.nombre}" eliminado correctamente.`);
         setTimeout(() => setMensajeExito(null), 4000);
       },
     });
@@ -489,7 +489,7 @@ export default function SuperAdminPage() {
             Total de Colegios
           </span>
           <div className="text-2xl sm:text-3xl font-black text-slate-900">{totalColegios}</div>
-          <p className="text-[11px] text-slate-500 mt-0.5">Sedes registradas en el sistema</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">Colegios registrados en el sistema</p>
         </div>
 
         <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
@@ -579,7 +579,7 @@ export default function SuperAdminPage() {
       <div className="space-y-3.5">
         <div className="flex items-center justify-between px-2">
           <h2 className="text-sm font-black text-slate-800 tracking-tight">
-            Sedes Escolares Registradas ({colegiosFiltrados.length} de {colegios.length})
+            Colegios Registrados ({colegiosFiltrados.length} de {colegios.length})
           </h2>
           <span className="text-xs text-slate-500">
             Cada colegio tiene su cuenta de administrador asociada
@@ -589,7 +589,7 @@ export default function SuperAdminPage() {
         {cargandoDatos ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
             <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs font-semibold text-slate-500">Cargando sedes y administradores...</p>
+            <p className="text-xs font-semibold text-slate-500">Cargando colegios y administradores...</p>
           </div>
         ) : colegiosFiltrados.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs space-y-3">
@@ -876,7 +876,7 @@ export default function SuperAdminPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="Ej. Admin Sede San Agustín"
+                    placeholder="Ej. Admin San Agustín"
                     value={adminNombre}
                     onChange={(e) => setAdminNombre(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
@@ -1332,7 +1332,7 @@ export default function SuperAdminPage() {
         abierto={confirmacion.abierto}
         titulo={confirmacion.titulo}
         mensaje={confirmacion.mensaje}
-        textoBotonConfirmar="Sí, Eliminar Sede"
+        textoBotonConfirmar="Sí, Eliminar Colegio"
         textoBotonCancelar="Cancelar"
         tipo="peligro"
         cargando={ejecutandoConfirmacion}

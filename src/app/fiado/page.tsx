@@ -442,7 +442,7 @@ export default function FiadoPage() {
 
           {!esSuperAdmin && usuario?.colegioNombre ? (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-800">
-              <span>🏫 Sede Asignada:</span>
+              <span>🏫 Colegio:</span>
               <span className="text-slate-900 font-black">{usuario.colegioNombre}</span>
             </div>
           ) : (

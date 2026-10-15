@@ -59,185 +59,10 @@ export function obtenerDiaActualSemana(): DiaSemana {
   return obtenerDiaActualSemanaPeru();
 }
 
-// Catálogo inicial con fotografías reales de alta calidad (Unsplash food)
-const PLATOS_INICIALES: Plato[] = [
-  // LUNES
-  {
-    id: 'p-lun-1',
-    diaSemana: 'LUNES',
-    tipo: 'ENTRADA',
-    nombre: 'Crema rosada',
-    descripcion: 'Deliciosa crema de beterraga con queso fresco y galletas',
-    precio: 0,
-    imagenUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-  {
-    id: 'p-lun-2',
-    diaSemana: 'LUNES',
-    tipo: 'ENTRADA',
-    nombre: 'Crema de huancaína tradicional',
-    descripcion: 'Clásica salsa huancaína con papa sancochada y huevo duro',
-    precio: 0,
-    imagenUrl: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 2,
-  },
-  {
-    id: 'p-lun-3',
-    diaSemana: 'LUNES',
-    tipo: 'SEGUNDO',
-    nombre: 'Seco de pollo con frijoles y arroz',
-    descripcion: 'Jugosa presa de pollo al culantro acompañada de frijoles canarios',
-    precio: 12.0,
-    imagenUrl: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-  {
-    id: 'p-lun-4',
-    diaSemana: 'LUNES',
-    tipo: 'SEGUNDO',
-    nombre: 'Tallarines rojos con pollo',
-    descripcion: 'Spaghetti con salsa de tomate casera y presa de pollo dorada',
-    precio: 12.0,
-    imagenUrl: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281691?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 2,
-  },
+// Catálogo inicial vacío: NO hay platos inventados; todo se gestiona desde la BD por colegio
+export const PLATOS_INICIALES: Plato[] = [];
 
-  // MARTES
-  {
-    id: 'p-mar-1',
-    diaSemana: 'MARTES',
-    tipo: 'ENTRADA',
-    nombre: 'Sopa de verduras y pollo',
-    descripcion: 'Caldo reconfortante con verduras frescas y trozos de pollo',
-    precio: 0,
-    imagenUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-  {
-    id: 'p-mar-2',
-    diaSemana: 'MARTES',
-    tipo: 'ENTRADA',
-    nombre: 'Ensalada fresca con palta',
-    descripcion: 'Lechuga orgánica, tomate, choclo y palta en láminas',
-    precio: 0,
-    imagenUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 2,
-  },
-  {
-    id: 'p-mar-3',
-    diaSemana: 'MARTES',
-    tipo: 'SEGUNDO',
-    nombre: 'Pescado frito con arroz y ensalada',
-    descripcion: 'Filete de pescado fresco dorado con salsa criolla y arroz',
-    precio: 12.0,
-    imagenUrl: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-  {
-    id: 'p-mar-4',
-    diaSemana: 'MARTES',
-    tipo: 'SEGUNDO',
-    nombre: 'Milanesa de pollo con puré de papa',
-    descripcion: 'Milanesa crocante con suave puré de papa amarilla y arroz',
-    precio: 12.0,
-    imagenUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 2,
-  },
-
-  // MIÉRCOLES
-  {
-    id: 'p-mie-1',
-    diaSemana: 'MIERCOLES',
-    tipo: 'ENTRADA',
-    nombre: 'Tequeños de queso con guacamole',
-    descripcion: '4 tequeños crujientes rellenos de queso andino',
-    precio: 0,
-    imagenUrl: 'https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-  {
-    id: 'p-mie-2',
-    diaSemana: 'MIERCOLES',
-    tipo: 'SEGUNDO',
-    nombre: 'Lomo saltado criollo con papas fritas',
-    descripcion: 'Trozos tiernos salteados al wok con cebolla, tomate y papas',
-    precio: 13.0,
-    imagenUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-  {
-    id: 'p-mie-3',
-    diaSemana: 'MIERCOLES',
-    tipo: 'SEGUNDO',
-    nombre: 'Ají de gallina con huevo y aceituna',
-    descripcion: 'Crema suave de ají amarillo con pollo deshilachado y arroz',
-    precio: 12.0,
-    imagenUrl: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 2,
-  },
-
-  // JUEVES
-  {
-    id: 'p-jue-1',
-    diaSemana: 'JUEVES',
-    tipo: 'ENTRADA',
-    nombre: 'Solterito de queso arequipeño',
-    descripcion: 'Habas, choclo, queso fresco y aceitunas con vinagreta',
-    precio: 0,
-    imagenUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-  {
-    id: 'p-jue-2',
-    diaSemana: 'JUEVES',
-    tipo: 'SEGUNDO',
-    nombre: 'Arroz con pollo criollo y papa a la huancaína',
-    descripcion: 'Arroz al culantro graneado con presa de pollo y salsa huancaína',
-    precio: 12.0,
-    imagenUrl: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-
-  // VIERNES
-  {
-    id: 'p-vie-1',
-    diaSemana: 'VIERNES',
-    tipo: 'ENTRADA',
-    nombre: 'Crema de zapallo macre',
-    descripcion: 'Crema suave con crutones y un toque de crema de leche',
-    precio: 0,
-    imagenUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-  {
-    id: 'p-vie-2',
-    diaSemana: 'VIERNES',
-    tipo: 'SEGUNDO',
-    nombre: 'Chicharrón de pescado con yucas y tártara',
-    descripcion: 'Trocitos crocantes de pescado con yuca frita y salsa tártara',
-    precio: 13.0,
-    imagenUrl: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80',
-    disponible: true,
-    orden: 1,
-  },
-];
-
-let platosMemoria: Plato[] = [...PLATOS_INICIALES];
+let platosMemoria: Plato[] = [];
 let pedidosMemoria: Pedido[] = [];
 let colegiosMemoria: string[] = [];
 let colegiosDetalladosMemoria: ColegioDetallado[] = [];
@@ -1645,7 +1470,6 @@ export const dataService = {
   async guardarConfiguracionSistema(nuevosGrados?: string[], nuevasObs?: string[]): Promise<void> {
     const g = nuevosGrados || gradosMemoria;
     const o = nuevasObs || observacionesMemoria;
-    const jsonStr = JSON.stringify({ grados: g, observaciones: o });
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('config_grados', JSON.stringify(g));
@@ -1654,6 +1478,24 @@ export const dataService = {
 
     if (isSupabaseConfigured && supabase) {
       try {
+        let adminsColegio = {};
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (configRow && configRow.mensaje_aviso) {
+          try {
+            const parsed = JSON.parse(configRow.mensaje_aviso);
+            if (parsed.adminsColegio) {
+              adminsColegio = parsed.adminsColegio;
+            }
+          } catch (_) {}
+        }
+
+        const jsonStr = JSON.stringify({ grados: g, observaciones: o, adminsColegio });
+
         await supabase
           .from('menus_dia')
           .update({ mensaje_aviso: jsonStr })
