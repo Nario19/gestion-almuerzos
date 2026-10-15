@@ -412,6 +412,86 @@ export default function CocinaPage() {
         </div>
       </div>
 
+      {/* SECCIÓN 1.5: DESGLOSE INDEPENDIENTE DE ALMUERZOS POR CADA COLEGIO */}
+      {resumen.porColegio && resumen.porColegio.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+              <span className="text-xl">🏫</span>
+              Almuerzos Independientes por Colegio
+            </h2>
+            <span className="text-xs font-bold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-xl">
+              {resumen.porColegio.length} sedes con pedidos
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {resumen.porColegio.map((col) => (
+              <div
+                key={col.colegioNombre}
+                className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded-md font-mono font-black text-xs bg-orange-100 text-orange-900 border border-orange-200">
+                        {col.identificador}
+                      </span>
+                      <h3 className="font-black text-slate-900 text-sm">{col.colegioNombre}</h3>
+                    </div>
+                    <span className="text-xs font-black px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg">
+                      {col.totalPedidos} almuerzos
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block mb-1.5">
+                        Platos de Fondo (Segundos):
+                      </span>
+                      <div className="space-y-1.5">
+                        {col.segundos.map((s) => (
+                          <div
+                            key={s.plato}
+                            className="flex items-center justify-between p-2 bg-slate-50 rounded-xl"
+                          >
+                            <span className="font-medium text-slate-800">{s.plato}</span>
+                            <span className="font-black text-slate-900 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-xs">
+                              {s.cantidad}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {col.entradas.length > 0 && (
+                      <div className="pt-2 border-t border-slate-100">
+                        <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block mb-1.5">
+                          Sopas o Postres:
+                        </span>
+                        <div className="space-y-1.5">
+                          {col.entradas.map((e) => (
+                            <div
+                              key={e.plato}
+                              className="flex items-center justify-between p-2 bg-slate-50 rounded-xl"
+                            >
+                              <span className="font-medium text-slate-800">{e.plato}</span>
+                              <span className="font-black text-slate-900 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-xs">
+                                {e.cantidad}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* SECCIÓN 2: ALERTA DE OBSERVACIONES CRÍTICAS (NO MÁS OBSERVACIONES PERDIDAS) */}
       <div className="bg-amber-50/70 rounded-3xl p-5 sm:p-6 border border-amber-200 shadow-xs mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -463,28 +543,42 @@ export default function CocinaPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {obsPaginadas.map((p) => (
-              <div
-                key={p.id}
-                className="bg-white rounded-2xl p-3.5 border border-amber-300 shadow-xs space-y-1.5"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-black text-slate-900">{p.estudianteNombre}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-600">
-                    {p.gradoSeccion}
-                  </span>
+            {obsPaginadas.map((p) => {
+              const matchNum = (p.codigoPedido || '').match(/-(\d+)$/);
+              const numAlm = matchNum ? parseInt(matchNum[1], 10) : undefined;
+              return (
+                <div
+                  key={p.id}
+                  className="bg-white rounded-2xl p-3.5 border border-amber-300 shadow-xs space-y-1.5"
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono font-black text-xs text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md">
+                        #{p.codigoPedido}
+                      </span>
+                      {numAlm && (
+                        <span className="text-[10px] font-bold text-slate-500">
+                          Almuerzo #{numAlm}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-600">
+                      {p.gradoSeccion}
+                    </span>
+                  </div>
+                  <div className="font-black text-slate-900 text-sm">{p.estudianteNombre}</div>
+                  <p className="text-xs text-slate-500 font-medium">🏫 {p.colegioNombre}</p>
+                  <div className="text-xs text-slate-700">
+                    <span className="text-orange-600 font-semibold">{p.entradaNombre}</span> +{' '}
+                    <span className="text-slate-800 font-semibold">{p.segundoNombre}</span>
+                  </div>
+                  <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 flex items-start gap-1.5">
+                    <span className="shrink-0">⚠️</span>
+                    <span>{p.observacion}</span>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500 font-medium">{p.colegioNombre}</p>
-                <div className="text-xs text-slate-700">
-                  <span className="text-orange-600 font-semibold">{p.entradaNombre}</span> +{' '}
-                  <span className="text-slate-800 font-semibold">{p.segundoNombre}</span>
-                </div>
-                <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 flex items-start gap-1.5">
-                  <span className="shrink-0">⚠️</span>
-                  <span>{p.observacion}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

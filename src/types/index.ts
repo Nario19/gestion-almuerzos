@@ -110,12 +110,21 @@ export interface ResumenCocinaItem {
   plato: string;
   tipo: TipoPlato;
   cantidad: number;
+  colegioNombre?: string;
   observacionesEspeciales: {
     estudiante: string;
     grado: string;
     colegio: string;
     observacion: string;
   }[];
+}
+
+export interface ResumenCocinaColegio {
+  colegioNombre: string;
+  identificador: string;
+  totalPedidos: number;
+  entradas: ResumenCocinaItem[];
+  segundos: ResumenCocinaItem[];
 }
 
 export interface ResumenCocina {
@@ -125,6 +134,7 @@ export interface ResumenCocina {
   pedidosConObservacion: number;
   pedidosPendientesPago: number;
   pedidosPagados: number;
+  porColegio?: ResumenCocinaColegio[];
 }
 
 export interface ItemFiadoPedido {

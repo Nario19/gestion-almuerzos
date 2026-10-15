@@ -113,6 +113,21 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   2. Limpieza e inserción exitosa en Supabase (`https://mpautcrhfdsktnutrzpt.supabase.co`).
   3. Ejecución y aprobación de los 85 tests locales en verde.
 
+### D-011 — 2026-10-15 — Independencia estricta de almuerzos, códigos correlativos y vistas por colegio
+- Decisión: A petición explícita del usuario ("los almuerzos estan mezclados entre todos, es decir es global los pedidos, los pedidos deben ser independientes por cada colegio. es decir que le pondras un identificador por cada colegio y el numero de almuerzo. cada colegio tiene sus propios almuerzo eso corrige y crea las pruebas respectivas"):
+  1. Identificadores canónicos por colegio: `CLA` (Colegio Claretiano), `CSA` (Colegio San Agustín), `CSR` (Colegio Santa Rosa), `CLS` (Colegio La Salle), `INC` (Inmaculada Concepción) y generación dinámica de siglas representativas para colegios adicionales.
+  2. Correlativo secuencial de almuerzos aislado e independiente por colegio: `CLA-001`, `CLA-002`, `CSA-001`, `CSR-001`.
+  3. Catálogo de platos de menú independiente por colegio: cada colegio tiene sus propios platos distintivos (ej. Seco de pollo claretiano, Arroz chaufa agustino, Pollo doradito santarrosino) sin mezclarse.
+  4. Despacho (`/despacho`): visualización de "N° Almuerzo / Hora" con badge escolar (`#CLA-001`, `Almuerzo #1`) y exportación a Excel con columnas `Código` y `N° Almuerzo`.
+  5. Cocina (`/cocina`): desglose independiente por colegio con tarjetas visuales exclusivas por sede, identificador y totales aislados.
+  6. Suite automatizada completa en `tests/almuerzos-pedidos-independientes-colegios.test.mjs` con 92 tests en verde.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. Tipado extendido en `src/types/index.ts` (`ResumenCocinaColegio`).
+  2. Funciones `obtenerIdentificadorColegio`, `obtenerSiguienteNumeroAlmuerzoColegio`, `crearPedido` y `calcularResumenCocina` en `src/lib/dataService.ts`.
+  3. UI de `/despacho` y `/cocina` actualizadas para reflejar códigos y almuerzos por colegio.
+  4. `scripts/seed-completo.mjs` actualizado con 60 platos únicos y 120 pedidos clasificados con prefijos `CLA-xxx`, `CSA-xxx` y `CSR-xxx`.
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -233,39 +233,96 @@ async function ejecutarSeederCompleto() {
     await supabase.from('menus_dia').insert(menusSemanales);
 
     // --------------------------------------------------------------------------
-    // 4. CREAR PLATOS DE MENÚ PARA LA SEMANA
+    // 4. CREAR PLATOS DE MENÚ INDEPENDIENTES PARA CADA COLEGIO
     // --------------------------------------------------------------------------
-    console.log('\n🍲 4. Creando catálogo de platos de menú escolar...');
-    const platosBase = [
-      { dia: 'LUNES', tipo: 'ENTRADA', nombre: 'Crema de zapallo y verduras', desc: 'Sopa casera calientita', orden: 1 },
-      { dia: 'LUNES', tipo: 'ENTRADA', nombre: 'Ensalada fresca de lechuga y palta', desc: 'Ensalada con vinagreta de limón', orden: 2 },
-      { dia: 'LUNES', tipo: 'SEGUNDO', nombre: 'Seco de pollo con frijoles y arroz', desc: 'Pollo al culantro con arroz blanco', orden: 1 },
-      { dia: 'LUNES', tipo: 'SEGUNDO', nombre: 'Tallarines rojos con pollo', desc: 'Spaghetti en salsa de tomate y pollo', orden: 2 },
+    console.log('\n🍲 4. Creando catálogo de platos de menú escolar independiente por colegio...');
+    const menusPorColegio = {
+      'Colegio Claretiano': [
+        { dia: 'LUNES', tipo: 'ENTRADA', nombre: 'Crema de zapallo criolla', desc: 'Sopa casera calientita', orden: 1 },
+        { dia: 'LUNES', tipo: 'ENTRADA', nombre: 'Ensalada fresca de lechuga y palta', desc: 'Ensalada con vinagreta de limón', orden: 2 },
+        { dia: 'LUNES', tipo: 'SEGUNDO', nombre: 'Seco de pollo claretiano con frijoles', desc: 'Pollo al culantro con arroz blanco', orden: 1 },
+        { dia: 'LUNES', tipo: 'SEGUNDO', nombre: 'Tallarines verdes con milanesa', desc: 'Spaghetti al pesto con milanesa crocante', orden: 2 },
 
-      { dia: 'MARTES', tipo: 'ENTRADA', nombre: 'Sopa de fideos y pollo', desc: 'Caldo de pollo con verduras', orden: 1 },
-      { dia: 'MARTES', tipo: 'ENTRADA', nombre: 'Papa a la huancaína', desc: 'Papas sancochadas con salsa tradicional', orden: 2 },
-      { dia: 'MARTES', tipo: 'SEGUNDO', nombre: 'Milanesa de pollo con puré de papa', desc: 'Pechuga crocante con puré y arroz', orden: 1 },
-      { dia: 'MARTES', tipo: 'SEGUNDO', nombre: 'Pescado frito con salsa criolla', desc: 'Filete dorado con arroz y ensalada', orden: 2 },
+        { dia: 'MARTES', tipo: 'ENTRADA', nombre: 'Sopa minuta limeña', desc: 'Caldo de carne con fideos cabello de ángel', orden: 1 },
+        { dia: 'MARTES', tipo: 'ENTRADA', nombre: 'Papa a la huancaína tradicional', desc: 'Papas con salsa huancaína casera', orden: 2 },
+        { dia: 'MARTES', tipo: 'SEGUNDO', nombre: 'Milanesa de pollo con puré de papa', desc: 'Pechuga crocante con puré y arroz', orden: 1 },
+        { dia: 'MARTES', tipo: 'SEGUNDO', nombre: 'Arroz con pollo criollo', desc: 'Pollo tierno con arroz verde y salsa criolla', orden: 2 },
 
-      { dia: 'MIERCOLES', tipo: 'ENTRADA', nombre: 'Tequeños con crema de palta', desc: '4 tequeños rellenos de queso', orden: 1 },
-      { dia: 'MIERCOLES', tipo: 'ENTRADA', nombre: 'Crema de espinaca', desc: 'Crema suave de espinacas', orden: 2 },
-      { dia: 'MIERCOLES', tipo: 'SEGUNDO', nombre: 'Lomo saltado con papas fritas', desc: 'Trozos de lomo con cebolla y tomate', orden: 1 },
-      { dia: 'MIERCOLES', tipo: 'SEGUNDO', nombre: 'Ají de gallina criollo', desc: 'Pollo deshilachado con crema de ají', orden: 2 },
+        { dia: 'MIERCOLES', tipo: 'ENTRADA', nombre: 'Tequeños claretianos con guacamole', desc: '4 tequeños rellenos con crema de palta', orden: 1 },
+        { dia: 'MIERCOLES', tipo: 'ENTRADA', nombre: 'Crema de verduras casera', desc: 'Crema suave de zapallo y espinaca', orden: 2 },
+        { dia: 'MIERCOLES', tipo: 'SEGUNDO', nombre: 'Lomo saltado tradicional', desc: 'Trozos de lomo con cebolla y tomate', orden: 1 },
+        { dia: 'MIERCOLES', tipo: 'SEGUNDO', nombre: 'Estofado de res con papas', desc: 'Carne guisada con zanahorias y arvejas', orden: 2 },
 
-      { dia: 'JUEVES', tipo: 'ENTRADA', nombre: 'Sopa wantán escolar', desc: 'Caldo con fideos y wantanes', orden: 1 },
-      { dia: 'JUEVES', tipo: 'ENTRADA', nombre: 'Solterito de queso y choclo', desc: 'Ensalada de choclo, queso y habas', orden: 2 },
-      { dia: 'JUEVES', tipo: 'SEGUNDO', nombre: 'Arroz chaufa con pollo y wantán', desc: 'Chaufa criollo bien sazonado', orden: 1 },
-      { dia: 'JUEVES', tipo: 'SEGUNDO', nombre: 'Estofado de pollo con arvejas', desc: 'Pollo guisado en salsa de tomate', orden: 2 },
+        { dia: 'JUEVES', tipo: 'ENTRADA', nombre: 'Caldo de gallina escolar', desc: 'Caldo sustancioso con fideos y huevo', orden: 1 },
+        { dia: 'JUEVES', tipo: 'ENTRADA', nombre: 'Solterito arequipeño', desc: 'Ensalada de choclo, queso y habas', orden: 2 },
+        { dia: 'JUEVES', tipo: 'SEGUNDO', nombre: 'Ají de gallina claretiano', desc: 'Pechuga deshilachada en crema de ají', orden: 1 },
+        { dia: 'JUEVES', tipo: 'SEGUNDO', nombre: 'Pollo al horno con puré', desc: 'Presa doradita con puré de papa amarilla', orden: 2 },
 
-      { dia: 'VIERNES', tipo: 'ENTRADA', nombre: 'Crema de maíz tierno', desc: 'Sopa cremosa con choclo dulce', orden: 1 },
-      { dia: 'VIERNES', tipo: 'ENTRADA', nombre: 'Causa rellena de pollo', desc: 'Masa de papa amarilla con pollo', orden: 2 },
-      { dia: 'VIERNES', tipo: 'SEGUNDO', nombre: 'Carapulcra con sopa seca y cerdo', desc: 'Clásica carapulcra chinchana', orden: 1 },
-      { dia: 'VIERNES', tipo: 'SEGUNDO', nombre: 'Pollo al horno con ensalada rusa', desc: 'Presa horneada con papas doradas', orden: 2 },
-    ];
+        { dia: 'VIERNES', tipo: 'ENTRADA', nombre: 'Aguadito de pollo clásico', desc: 'Sopa espesa de arroz con pollo y culantro', orden: 1 },
+        { dia: 'VIERNES', tipo: 'ENTRADA', nombre: 'Causa rellena limeña', desc: 'Masa de papa amarilla con pollo y mayonesa', orden: 2 },
+        { dia: 'VIERNES', tipo: 'SEGUNDO', nombre: 'Pescado frito con salsa criolla', desc: 'Filete dorado con arroz blanco y frijol', orden: 1 },
+        { dia: 'VIERNES', tipo: 'SEGUNDO', nombre: 'Carapulcra con sopa seca chinchana', desc: 'Clásica carapulcra con chancho', orden: 2 },
+      ],
+
+      'Colegio San Agustín': [
+        { dia: 'LUNES', tipo: 'ENTRADA', nombre: 'Sopa de fideos con verduras', desc: 'Caldo reconfortante con verduras picaditas', orden: 1 },
+        { dia: 'LUNES', tipo: 'ENTRADA', nombre: 'Causa agustina de atún', desc: 'Causa de papa con relleno de atún', orden: 2 },
+        { dia: 'LUNES', tipo: 'SEGUNDO', nombre: 'Arroz chaufa especial de pollo', desc: 'Chaufa criollo al wok con pollo y cebollita china', orden: 1 },
+        { dia: 'LUNES', tipo: 'SEGUNDO', nombre: 'Seco de res agustino con frijoles', desc: 'Carne en salsa de culantro con frejoles', orden: 2 },
+
+        { dia: 'MARTES', tipo: 'ENTRADA', nombre: 'Crema de espinacas agustina', desc: 'Crema verde suave con crutones', orden: 1 },
+        { dia: 'MARTES', tipo: 'ENTRADA', nombre: 'Choclo con queso andino', desc: 'Choclo tierno desgranado con queso fresco', orden: 2 },
+        { dia: 'MARTES', tipo: 'SEGUNDO', nombre: 'Pollo a la plancha con ensalada rusa', desc: 'Filete de pechuga con ensalada de betarraga', orden: 1 },
+        { dia: 'MARTES', tipo: 'SEGUNDO', nombre: 'Tallarines a la huancaína con lomo', desc: 'Spaghetti en crema huancaína con carne salteada', orden: 2 },
+
+        { dia: 'MIERCOLES', tipo: 'ENTRADA', nombre: 'Menestrón criollo', desc: 'Sopa sustanciosa con albahaca y carne', orden: 1 },
+        { dia: 'MIERCOLES', tipo: 'ENTRADA', nombre: 'Ensalada agustina de palta', desc: 'Palta fresca con tomate y limón', orden: 2 },
+        { dia: 'MIERCOLES', tipo: 'SEGUNDO', nombre: 'Pastel de papa con carne molida', desc: 'Capas de papa con relleno de carne y queso', orden: 1 },
+        { dia: 'MIERCOLES', tipo: 'SEGUNDO', nombre: 'Milanesa de res con papas doradas', desc: 'Carne apanada con arroz y papas', orden: 2 },
+
+        { dia: 'JUEVES', tipo: 'ENTRADA', nombre: 'Sopa wantán escolar', desc: 'Caldo oriental con wantanes de pollo', orden: 1 },
+        { dia: 'JUEVES', tipo: 'ENTRADA', nombre: 'Empanaditas de pollo al horno', desc: '2 empanaditas calientes de pollo', orden: 2 },
+        { dia: 'JUEVES', tipo: 'SEGUNDO', nombre: 'Asado de res con puré de papa', desc: 'Carne horneada en su jugo con puré', orden: 1 },
+        { dia: 'JUEVES', tipo: 'SEGUNDO', nombre: 'Pollo al sillao agustino', desc: 'Guiso oriental de pollo con pimientos', orden: 2 },
+
+        { dia: 'VIERNES', tipo: 'ENTRADA', nombre: 'Chupe de verduras escolar', desc: 'Caldo andino con choclo, queso y habas', orden: 1 },
+        { dia: 'VIERNES', tipo: 'ENTRADA', nombre: 'Salpicón de pollo agustino', desc: 'Pollo deshilachado con choclo y vainitas', orden: 2 },
+        { dia: 'VIERNES', tipo: 'SEGUNDO', nombre: 'Filete de pollo en salsa de champiñones', desc: 'Pechuga tierna con salsa blanca y arroz', orden: 1 },
+        { dia: 'VIERNES', tipo: 'SEGUNDO', nombre: 'Guiso de lentejas con churrasco', desc: 'Lentejitas caseras con filete y arroz', orden: 2 },
+      ],
+
+      'Colegio Santa Rosa': [
+        { dia: 'LUNES', tipo: 'ENTRADA', nombre: 'Crema de maíz tierno', desc: 'Crema suave de choclo con toques de queso', orden: 1 },
+        { dia: 'LUNES', tipo: 'ENTRADA', nombre: 'Palta rellena santarrosina', desc: 'Media palta con ensalada de verduras y pollo', orden: 2 },
+        { dia: 'LUNES', tipo: 'SEGUNDO', nombre: 'Pollo doradito con papas doradas', desc: 'Presa sazonada al horno con arroz blanco', orden: 1 },
+        { dia: 'LUNES', tipo: 'SEGUNDO', nombre: 'Tallarines rojos con albóndigas', desc: 'Spaghetti con salsa de tomate y albóndigas', orden: 2 },
+
+        { dia: 'MARTES', tipo: 'ENTRADA', nombre: 'Sopa criolla escolar', desc: 'Caldo de carne con fideos y toque de leche', orden: 1 },
+        { dia: 'MARTES', tipo: 'ENTRADA', nombre: 'Ensalada fresca del huerto', desc: 'Lechuga, zanahoria rallada y tomate con limón', orden: 2 },
+        { dia: 'MARTES', tipo: 'SEGUNDO', nombre: 'Estofado de pollo casero', desc: 'Pollo en salsa roja con papas y arroz', orden: 1 },
+        { dia: 'MARTES', tipo: 'SEGUNDO', nombre: 'Bisteck con papas fritas y arroz', desc: 'Bistec suave a la plancha con papas', orden: 2 },
+
+        { dia: 'MIERCOLES', tipo: 'ENTRADA', nombre: 'Sopa de sémola con verduras', desc: 'Sopa ligera con apio, poro y zanahoria', orden: 1 },
+        { dia: 'MIERCOLES', tipo: 'ENTRADA', nombre: 'Tamalito verde piurano', desc: 'Masa de choclo al culantro con salsa criolla', orden: 2 },
+        { dia: 'MIERCOLES', tipo: 'SEGUNDO', nombre: 'Arroz con pollo a la chiclayana', desc: 'Arroz verde con chicha de jora y pollo', orden: 1 },
+        { dia: 'MIERCOLES', tipo: 'SEGUNDO', nombre: 'Lomo saltado de pollo', desc: 'Pechuga en trozos salteada con cebolla y tomate', orden: 2 },
+
+        { dia: 'JUEVES', tipo: 'ENTRADA', nombre: 'Crema de arvejas verdes', desc: 'Crema nutritiva con papitas al hilo', orden: 1 },
+        { dia: 'JUEVES', tipo: 'ENTRADA', nombre: 'Huevos a la rusa', desc: 'Huevos duros con ensalada de papa y betarraga', orden: 2 },
+        { dia: 'JUEVES', tipo: 'SEGUNDO', nombre: 'Pollo al horno santarrosino', desc: 'Presa macerada con hierbas y puré', orden: 1 },
+        { dia: 'JUEVES', tipo: 'SEGUNDO', nombre: 'Seco de pollo a la norteña', desc: 'Pollo al culantro con frejoles canarios', orden: 2 },
+
+        { dia: 'VIERNES', tipo: 'ENTRADA', nombre: 'Sopa de morón andino', desc: 'Caldo nutritivo de trigo morón con carne', orden: 1 },
+        { dia: 'VIERNES', tipo: 'ENTRADA', nombre: 'Ensalada mixta con vinagreta', desc: 'Verduras frescas con aderezo casero', orden: 2 },
+        { dia: 'VIERNES', tipo: 'SEGUNDO', nombre: 'Pescado apanado con ensalada fresca', desc: 'Filete crocante con arroz y ensalada', orden: 1 },
+        { dia: 'VIERNES', tipo: 'SEGUNDO', nombre: 'Ají de gallina santarrosino', desc: 'Receta tradicional con aceituna y huevo', orden: 2 },
+      ],
+    };
 
     const platosInsertar = [];
     for (const col of colegiosCreados) {
-      for (const p of platosBase) {
+      const catalogoColegio = menusPorColegio[col.nombre] || [];
+      for (const p of catalogoColegio) {
         platosInsertar.push({
           dia_semana: p.dia,
           tipo: p.tipo,
@@ -279,7 +336,7 @@ async function ejecutarSeederCompleto() {
     }
     const { error: errPlatosIns } = await supabase.from('platos').insert(platosInsertar);
     if (errPlatosIns) throw new Error(`Error insertando platos: ${errPlatosIns.message}`);
-    console.log(`   ✅ ${platosInsertar.length} platos creados (distribuidos entre los 3 colegios).`);
+    console.log(`   ✅ ${platosInsertar.length} platos creados (20 platos únicos e independientes para cada colegio).`);
 
     // --------------------------------------------------------------------------
     // 5. CREAR PADRES E HIJOS (EXACTAMENTE 60 HIJOS POR COLEGIO)
@@ -289,7 +346,6 @@ async function ejecutarSeederCompleto() {
     const todosLosPadres = [];
     const todosLosHijos = [];
     const todosLosPedidos = [];
-    let pedidoContador = 100;
 
     for (let cIdx = 0; cIdx < colegiosCreados.length; cIdx++) {
       const col = colegiosCreados[cIdx];
@@ -389,15 +445,27 @@ async function ejecutarSeederCompleto() {
       console.log(`      ✓ Creados ${padresInsertados.length} padres y ${hijosInsertados.length} estudiantes.`);
 
       // ------------------------------------------------------------------------
-      // 6. GENERAR PEDIDOS DE MUESTRA (Fiados, Pagados, Entregados de Hoy y Ayer)
+      // 6. GENERAR PEDIDOS DE MUESTRA CON IDENTIFICADOR Y NÚMERO DE ALMUERZO
       // ------------------------------------------------------------------------
-      // Para que /fiado tenga datos reales paginados con fiados de hoy y días anteriores
+      // Identificador del colegio: 'CLA', 'CSA', 'CSR'
+      const colPrefijo = col.nombre.includes('Claretiano')
+        ? 'CLA'
+        : col.nombre.includes('San Agustín')
+        ? 'CSA'
+        : 'CSR';
+
+      const catalogoColegio = menusPorColegio[col.nombre] || [];
+      const segundosColegio = catalogoColegio.filter((p) => p.tipo === 'SEGUNDO');
+      const entradasColegio = catalogoColegio.filter((p) => p.tipo === 'ENTRADA');
+
+      let numeroAlmuerzoColegio = 0;
+
       for (let hIdx = 0; hIdx < hijosInsertados.length; hIdx++) {
         // Alrededor del 45% de los estudiantes tienen pedidos fiados o pagados
         if (hIdx % 2 === 0 || hIdx % 3 === 0) {
           const hijo = hijosInsertados[hIdx];
           const infoHijo = hijosColegio[hIdx];
-          pedidoContador++;
+          numeroAlmuerzoColegio++;
 
           // Estado: 70% Fiados pendientes ("Pagar luego"), 30% Pagados
           const esFiadoPendiente = hIdx % 3 !== 0;
@@ -405,8 +473,11 @@ async function ejecutarSeederCompleto() {
           const estadoPedido = fechaPedido === fechaHoy ? (hIdx % 2 === 0 ? 'ENTREGADO' : 'REGISTRADO') : 'ENTREGADO';
           const horaEntrega = estadoPedido === 'ENTREGADO' ? (hIdx % 2 === 0 ? '12:45 p. m.' : '01:10 p. m.') : null;
 
+          const entradaSeleccionada = entradasColegio[hIdx % entradasColegio.length]?.nombre || 'Sopa casera';
+          const segundoSeleccionado = segundosColegio[hIdx % segundosColegio.length]?.nombre || 'Segundo criollo';
+
           todosLosPedidos.push({
-            codigo_pedido: `ALM-${String(pedidoContador).padStart(4, '0')}`,
+            codigo_pedido: `${colPrefijo}-${String(numeroAlmuerzoColegio).padStart(3, '0')}`,
             fecha: fechaPedido,
             dia_semana: fechaPedido === fechaHoy ? 'HOY' : 'ANTERIOR',
             padre_id: hijo.padre_id,
@@ -415,8 +486,8 @@ async function ejecutarSeederCompleto() {
             estudiante_nombre: hijo.nombre_completo,
             grado_seccion: hijo.grado_seccion,
             telefono_contacto: infoHijo.padreTel,
-            entrada_nombre: 'Crema de verduras casera',
-            segundo_nombre: hIdx % 2 === 0 ? 'Seco de pollo con frijoles' : 'Milanesa de pollo con puré',
+            entrada_nombre: entradaSeleccionada,
+            segundo_nombre: segundoSeleccionado,
             observacion: `[Padre: ${infoHijo.padreNombre}] [ColegioId: ${col.id}]${horaEntrega ? ` [Entregado: ${horaEntrega}]` : ''}`,
             metodo_pago: 'Pagar luego',
             estado_pago: esFiadoPendiente ? 'PENDIENTE' : 'PAGADO',

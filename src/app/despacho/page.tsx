@@ -190,6 +190,12 @@ export default function DespachoPage() {
 
     const filasHtml = pedidosFiltrados
       .map((p, idx) => {
+        const matchNum = (p.codigoPedido || '').match(/-(\d+)$/);
+        const numeroAlmuerzoColegio = matchNum ? parseInt(matchNum[1], 10) : undefined;
+        const pedidosMismoColegio = pedidosFiltrados.filter((item) => item.colegioNombre === p.colegioNombre);
+        const indiceEnColegio = pedidosMismoColegio.findIndex((item) => item.id === p.id) + 1;
+        const numeroAlmuerzo = numeroAlmuerzoColegio || indiceEnColegio || idx + 1;
+
         const pedidoDetalle = `${
           p.entradaNombre ? `Sopa o postre: ${p.entradaNombre} | ` : ''
         }Segundo: ${p.segundoNombre}${
@@ -211,9 +217,8 @@ export default function DespachoPage() {
 
         return `
         <tr>
-          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${
-            idx + 1
-          }</td>
+          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; font-family: monospace;">#${p.codigoPedido}</td>
+          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">Almuerzo #${numeroAlmuerzo}</td>
           <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${horaPedido}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px;">${gradoSeccionDetalle}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
@@ -267,7 +272,8 @@ export default function DespachoPage() {
         <table>
           <thead>
             <tr>
-              <th style="width: 45px; text-align: center;">N°</th>
+              <th style="width: 110px; text-align: center;">Código</th>
+              <th style="width: 100px; text-align: center;">N° Almuerzo</th>
               <th style="width: 100px; text-align: center;">Hora Pedido</th>
               <th style="width: 180px;">Grado y Sección</th>
               <th style="width: 220px;">Nombres</th>
@@ -578,7 +584,7 @@ export default function DespachoPage() {
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
                     <tr className="bg-slate-100/75 text-slate-600 uppercase text-[11px] font-black tracking-wider border-b border-slate-200">
-                      <th className="py-3 px-4 text-center w-20">N° / Hora</th>
+                      <th className="py-3 px-4 text-center w-28">N° Almuerzo / Hora</th>
                       <th className="py-3 px-4 w-40">Grado y Sección</th>
                       <th className="py-3 px-4 w-48">Nombres</th>
                       <th className="py-3 px-4">Pedido</th>
@@ -590,7 +596,8 @@ export default function DespachoPage() {
                     {listaPedidos.map((p, idx) => {
                       const entregado = p.estadoPedido === 'ENTREGADO';
                       const pagado = p.estadoPago === 'PAGADO';
-                      const numeroGlobal = pedidosFiltrados.findIndex((item) => item.id === p.id) + 1;
+                      const matchNum = (p.codigoPedido || '').match(/-(\d+)$/);
+                      const numeroAlmuerzo = matchNum ? parseInt(matchNum[1], 10) : (idx + 1);
 
                       return (
                         <tr
@@ -603,19 +610,21 @@ export default function DespachoPage() {
                         >
                           {/* Columna: N° y Hora del Pedido */}
                           <td className="py-3.5 px-4 text-center">
-                            <span className="font-mono font-bold text-slate-800 text-xs sm:text-sm block">
-                              {numeroGlobal || idx + 1}
-                            </span>
-                            <span className="block text-[10px] text-slate-400 font-mono">
-                              #{p.codigoPedido}
-                            </span>
-                            <span
-                              className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md mt-1"
-                              title="Hora en que se registró el pedido"
-                            >
-                              <Clock className="w-2.5 h-2.5 text-orange-500" />
-                              {formatearHora(p.createdAt)}
-                            </span>
+                            <div className="flex flex-col items-center justify-center">
+                              <span className="font-mono font-black text-slate-900 text-xs sm:text-sm block">
+                                Almuerzo #{numeroAlmuerzo}
+                              </span>
+                              <span className="inline-block text-[10px] font-mono font-black px-2 py-0.5 rounded-md bg-orange-100 text-orange-900 border border-orange-200 mt-0.5">
+                                #{p.codigoPedido}
+                              </span>
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md mt-1"
+                                title="Hora en que se registró el pedido"
+                              >
+                                <Clock className="w-2.5 h-2.5 text-orange-500" />
+                                {formatearHora(p.createdAt)}
+                              </span>
+                            </div>
                           </td>
 
                           {/* Columna: Grado y Sección */}

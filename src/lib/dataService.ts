@@ -62,6 +62,42 @@ export function obtenerDiaActualSemana(): DiaSemana {
   return obtenerDiaActualSemanaPeru();
 }
 
+/**
+ * Retorna el identificador / sigla estándar de 3 a 4 letras de un colegio
+ * para su uso en códigos de pedidos y numeración independiente de almuerzos.
+ */
+export function obtenerIdentificadorColegio(colegioNombre?: string): string {
+  if (!colegioNombre) return 'COL';
+  const normalizado = colegioNombre.trim().toLowerCase();
+
+  // Mapeos canónicos explícitos para colegios registrados
+  if (normalizado.includes('claretiano')) return 'CLA';
+  if (normalizado.includes('san agustin') || normalizado.includes('san agustín')) return 'CSA';
+  if (normalizado.includes('santa rosa')) return 'CSR';
+  if (normalizado.includes('la salle')) return 'CLS';
+  if (normalizado.includes('inmaculada')) return 'INC';
+
+  // Si el colegio viene con separador de sede o admin (ej: "Colegio Claretiano | 10000001")
+  const soloNombre = normalizado.split('|')[0].trim();
+
+  // Reemplazar signos de puntuación por espacios para tokenizar limpiamente
+  const sinPuntuacion = soloNombre.replace(/[.,\-_/]/g, ' ');
+
+  // Descartar palabras genéricas para extraer la sigla representativa
+  const palabrasLimpias = sinPuntuacion
+    .split(/\s+/)
+    .filter((w) => !/^(colegio|ie|i|e|institucion|institución|educativa|de|del|la|las|los|el|y)$/i.test(w))
+    .filter(Boolean);
+
+  if (palabrasLimpias.length >= 2) {
+    const acronimo = palabrasLimpias.map((w) => w[0]).join('').toUpperCase().slice(0, 4);
+    if (acronimo.length >= 2) return acronimo;
+  }
+
+  const primeraPalabra = (palabrasLimpias[0] || soloNombre).replace(/[^a-z0-9]/gi, '').toUpperCase();
+  return primeraPalabra.slice(0, 3) || 'COL';
+}
+
 interface PedidoRowSupabase {
   id: string;
   codigo?: string | null;
@@ -505,18 +541,71 @@ export const dataService = {
     );
   },
 
+  async obtenerSiguienteNumeroAlmuerzoColegio(colegioNombre: string): Promise<number> {
+    const prefijo = obtenerIdentificadorColegio(colegioNombre);
+
+    // 1. Si Supabase está configurado, consultar los pedidos existentes de este colegio o con este prefijo
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('pedidos')
+          .select('codigo_pedido')
+          .or(`colegio_nombre.eq.${colegioNombre},codigo_pedido.ilike.${prefijo}-%`);
+
+        if (!error && data && data.length > 0) {
+          let maxNum = 0;
+          const regex = new RegExp(`^${prefijo}-(\\d+)`, 'i');
+          for (const item of data) {
+            const cod = item.codigo_pedido || '';
+            const match = cod.match(regex);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (!isNaN(num) && num > maxNum) maxNum = num;
+            }
+          }
+          if (maxNum > 0) return maxNum + 1;
+          return data.length + 1;
+        }
+      } catch (err) {
+        console.warn('Error leyendo correlativo de pedidos en Supabase:', err);
+      }
+    }
+
+    // 2. Si no hay Supabase o no hay registros aún en BD, consultar en pedidosMemoria
+    const pedidosEsteColegio = pedidosMemoria.filter(
+      (p) =>
+        (p.colegioNombre && p.colegioNombre.trim().toLowerCase() === colegioNombre.trim().toLowerCase()) ||
+        (p.codigoPedido && p.codigoPedido.toUpperCase().startsWith(`${prefijo}-`))
+    );
+
+    let maxNumMem = 0;
+    const regexMem = new RegExp(`^${prefijo}-(\\d+)`, 'i');
+    for (const p of pedidosEsteColegio) {
+      const match = (p.codigoPedido || '').match(regexMem);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNumMem) maxNumMem = num;
+      }
+    }
+
+    if (maxNumMem > 0) return maxNumMem + 1;
+    return pedidosEsteColegio.length + 1;
+  },
+
   async crearPedido(
     pedidoData: Omit<Pedido, 'id' | 'codigoPedido' | 'createdAt' | 'fecha' | 'estadoPedido' | 'estadoPago'> & {
       estadoPago?: EstadoPago;
     }
   ): Promise<Pedido> {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const timePart = Date.now().toString().slice(-4);
-    const randomCode = `ALM-${timePart}-${randomNum}`;
+    const colegioNom = pedidoData.colegioNombre || 'General';
+    const prefijo = obtenerIdentificadorColegio(colegioNom);
+    const siguienteNum = await this.obtenerSiguienteNumeroAlmuerzoColegio(colegioNom);
+    const codigoInicial = `${prefijo}-${String(siguienteNum).padStart(3, '0')}`;
+
     const nuevo: Pedido = {
       ...pedidoData,
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}`,
-      codigoPedido: randomCode,
+      codigoPedido: codigoInicial,
       fecha: obtenerFechaHoyPeru(),
       estadoPedido: 'REGISTRADO',
       estadoPago: pedidoData.estadoPago || 'PENDIENTE',
@@ -532,43 +621,72 @@ export const dataService = {
     }
 
     if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('pedidos')
-          .insert([
-            {
-              codigo_pedido: nuevo.codigoPedido,
-              fecha: nuevo.fecha,
-              dia_semana: nuevo.diaSemana || 'HOY',
-              padre_id: nuevo.padreId,
-              hijo_id: nuevo.hijoId,
-              colegio_nombre: nuevo.colegioNombre,
-              grado_seccion: nuevo.gradoSeccion,
-              estudiante_nombre: nuevo.estudianteNombre,
-              telefono_contacto: nuevo.telefonoContacto,
-              entrada_nombre: nuevo.entradaNombre,
-              segundo_nombre: nuevo.segundoNombre,
-              observacion: obsCompleta || null,
-              metodo_pago: nuevo.metodoPago,
-              estado_pago: nuevo.estadoPago,
-              estado_pedido: nuevo.estadoPedido,
-              comprobante_url: nuevo.comprobanteUrl,
-              monto: nuevo.monto,
-            },
-          ])
-          .select()
-          .single();
+      let intento = 0;
+      let exito = false;
+      let codigoActual = codigoInicial;
+      let numActual = siguienteNum;
 
-        if (error) {
-          console.error('Error insertando pedido en Supabase:', error);
-          throw new Error(`Error al registrar pedido: ${error.message || 'No se pudo guardar la orden'}`);
+      while (!exito && intento < 5) {
+        intento++;
+        try {
+          nuevo.codigoPedido = codigoActual;
+          const { data, error } = await supabase
+            .from('pedidos')
+            .insert([
+              {
+                codigo_pedido: nuevo.codigoPedido,
+                fecha: nuevo.fecha,
+                dia_semana: nuevo.diaSemana || 'HOY',
+                padre_id: nuevo.padreId,
+                hijo_id: nuevo.hijoId,
+                colegio_nombre: nuevo.colegioNombre,
+                grado_seccion: nuevo.gradoSeccion,
+                estudiante_nombre: nuevo.estudianteNombre,
+                telefono_contacto: nuevo.telefonoContacto,
+                entrada_nombre: nuevo.entradaNombre,
+                segundo_nombre: nuevo.segundoNombre,
+                observacion: obsCompleta || null,
+                metodo_pago: nuevo.metodoPago,
+                estado_pago: nuevo.estadoPago,
+                estado_pedido: nuevo.estadoPedido,
+                comprobante_url: nuevo.comprobanteUrl,
+                monto: nuevo.monto,
+              },
+            ])
+            .select()
+            .single();
+
+          if (error) {
+            const errStr = (error.message || '').toLowerCase();
+            if (error.code === '23505' || errStr.includes('duplicate key') || errStr.includes('unique')) {
+              numActual++;
+              if (intento > 2) {
+                // En caso de colisión persistente por concurrencia, asegurar unicidad combinando sufijo aleatorio
+                codigoActual = `${prefijo}-${String(numActual).padStart(3, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+              } else {
+                codigoActual = `${prefijo}-${String(numActual).padStart(3, '0')}`;
+              }
+              continue;
+            }
+            console.error('Error insertando pedido en Supabase:', error);
+            throw new Error(`Error al registrar pedido: ${error.message || 'No se pudo guardar la orden'}`);
+          }
+          if (data) {
+            nuevo.id = data.id;
+          }
+          exito = true;
+        } catch (err: unknown) {
+          if (intento >= 5) {
+            console.error('Fallo al crear pedido en Supabase tras varios intentos:', err);
+            throw err;
+          }
+          numActual++;
+          if (intento > 2) {
+            codigoActual = `${prefijo}-${String(numActual).padStart(3, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+          } else {
+            codigoActual = `${prefijo}-${String(numActual).padStart(3, '0')}`;
+          }
         }
-        if (data) {
-          nuevo.id = data.id;
-        }
-      } catch (err: unknown) {
-        console.error('Fallo al crear pedido en Supabase:', err);
-        throw err;
       }
     }
 
@@ -931,6 +1049,54 @@ export const dataService = {
       observacionesEspeciales: data.obs,
     }));
 
+    // Desglose independiente de platos por colegio
+    const pedidosPorColegioMap = new Map<string, Pedido[]>();
+    pedidos.forEach((p) => {
+      const col = p.colegioNombre || 'General';
+      if (!pedidosPorColegioMap.has(col)) {
+        pedidosPorColegioMap.set(col, []);
+      }
+      pedidosPorColegioMap.get(col)!.push(p);
+    });
+
+    const porColegio = Array.from(pedidosPorColegioMap.entries()).map(([colNom, pedidosCol]) => {
+      const segMapCol = new Map<string, number>();
+      const entMapCol = new Map<string, number>();
+
+      pedidosCol.forEach((p) => {
+        if (p.segundoNombre) {
+          segMapCol.set(p.segundoNombre, (segMapCol.get(p.segundoNombre) || 0) + 1);
+        }
+        if (p.entradaNombre) {
+          entMapCol.set(p.entradaNombre, (entMapCol.get(p.entradaNombre) || 0) + 1);
+        }
+      });
+
+      const segundosCol = Array.from(segMapCol.entries()).map(([plato, cantidad]) => ({
+        plato,
+        tipo: 'SEGUNDO' as const,
+        cantidad,
+        colegioNombre: colNom,
+        observacionesEspeciales: [],
+      }));
+
+      const entradasCol = Array.from(entMapCol.entries()).map(([plato, cantidad]) => ({
+        plato,
+        tipo: 'ENTRADA' as const,
+        cantidad,
+        colegioNombre: colNom,
+        observacionesEspeciales: [],
+      }));
+
+      return {
+        colegioNombre: colNom,
+        identificador: obtenerIdentificadorColegio(colNom),
+        totalPedidos: pedidosCol.length,
+        segundos: segundosCol,
+        entradas: entradasCol,
+      };
+    });
+
     return {
       totalPedidos: pedidos.length,
       entradas,
@@ -938,6 +1104,7 @@ export const dataService = {
       pedidosConObservacion,
       pedidosPendientesPago: pendientesPago,
       pedidosPagados: pagados,
+      porColegio,
     };
   },
 
