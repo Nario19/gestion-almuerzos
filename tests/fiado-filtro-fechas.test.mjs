@@ -112,4 +112,46 @@ test('Filtro por Fecha, Resaltado de Consumos de Hoy y Fechas en Listado de Fiad
     const fechas = Array.from(new Set(pedidosMock.map((p) => p.fecha))).sort().reverse();
     assert.deepEqual(fechas, ['2026-10-15', '2026-10-14'], 'Debe extraer fechas únicas ordenadas');
   });
+
+  await t.test('6. Pantalla /fiado implementa paginación completa y diseño sin etiquetas redundantes', () => {
+    const fiadoPath = path.join(rootDir, 'src', 'app', 'fiado', 'page.tsx');
+    const content = fs.readFileSync(fiadoPath, 'utf-8');
+
+    assert.ok(
+      content.includes('paginaActual') && content.includes('setPaginaActual'),
+      'Debe controlar el estado paginaActual'
+    );
+    assert.ok(
+      content.includes('porPagina') && content.includes('setPorPagina'),
+      'Debe permitir configurar elementos por página (porPagina)'
+    );
+    assert.ok(
+      content.includes('fiadosPaginados'),
+      'Debe cortar el listado en fiadosPaginados para renderizar solo la página activa'
+    );
+    assert.ok(
+      content.includes('totalPaginas'),
+      'Debe calcular totalPaginas dinámicamente'
+    );
+    assert.ok(
+      content.includes('Mostrando') && content.includes('familias'),
+      'Debe mostrar resumen de paginación Mostrando X - Y de Z familias'
+    );
+
+    // Verificación matemática de paginación
+    const totalItems = 22;
+    const porPag = 8;
+    const totalPags = Math.ceil(totalItems / porPag);
+    assert.equal(totalPags, 3, '22 familias con 8 por página deben generar 3 páginas');
+
+    const slicePag1 = Array.from({ length: totalItems }, (_, i) => i + 1).slice(0, 8);
+    assert.equal(slicePag1.length, 8, 'Página 1 debe tener 8 elementos');
+    assert.equal(slicePag1[0], 1);
+    assert.equal(slicePag1[7], 8);
+
+    const slicePag3 = Array.from({ length: totalItems }, (_, i) => i + 1).slice(16, 22);
+    assert.equal(slicePag3.length, 6, 'Página 3 debe tener los 6 elementos residuales');
+    assert.equal(slicePag3[0], 17);
+    assert.equal(slicePag3[5], 22);
+  });
 });

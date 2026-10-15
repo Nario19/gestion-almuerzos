@@ -54,10 +54,21 @@ export default function FiadoPage() {
   const [fechaFiltro, setFechaFiltro] = useState<string>('TODAS');
   const [busqueda, setBusqueda] = useState('');
 
+  // Paginación de Familias
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [porPagina, setPorPagina] = useState(8);
+
   const cambiarDia = (offset: number) => {
     const base = fechaFiltro === 'TODAS' ? fechaHoy : fechaFiltro;
     setFechaFiltro(calcularOffsetFechaPeru(base, offset));
   };
+
+  // Resetear a primera página al modificar cualquier filtro o búsqueda
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [busqueda, colegioFiltro, filtroEstado, fechaFiltro, porPagina]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Estados de interfaz
   const [tarjetasExpandidas, setTarjetasExpandidas] = useState<Record<string, boolean>>({});
@@ -192,6 +203,14 @@ export default function FiadoPage() {
         );
       });
   }, [fiados, filtroEstado, busqueda, fechaFiltro, fechaHoy]);
+
+  // Cálculo de Paginación de Familias
+  const totalFamilias = fiadosFiltrados.length;
+  const totalPaginas = Math.ceil(totalFamilias / porPagina) || 1;
+  const paginaValida = Math.min(Math.max(1, paginaActual), totalPaginas);
+  const indiceInicio = (paginaValida - 1) * porPagina;
+  const indiceFin = Math.min(indiceInicio + porPagina, totalFamilias);
+  const fiadosPaginados = fiadosFiltrados.slice(indiceInicio, indiceFin);
 
   // KPIs
   const totalDeudaGlobal = useMemo(() => {
@@ -471,7 +490,7 @@ export default function FiadoPage() {
                 </span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Almuerzos entregados o solicitados con pago posterior y seguimiento de cobranza
+                Cuentas por cobrar y cobranza
               </p>
             </div>
           </div>
@@ -514,18 +533,18 @@ export default function FiadoPage() {
       </div>
 
       {/* Selector de Colegio Asignado o Filtro Global */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6 space-y-3">
+        {/* Selector de Colegio */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-slate-500" />
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Institución Educativa:
+              Colegio:
             </span>
           </div>
 
           {!esSuperAdmin && usuario?.colegioNombre ? (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-800">
-              <span>🏫 Colegio:</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-800">
               <span className="text-slate-900 font-black">{usuario.colegioNombre}</span>
             </div>
           ) : (
@@ -560,26 +579,19 @@ export default function FiadoPage() {
         </div>
 
         {/* Selector de Fecha de Consumo */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-3 border-t border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                Filtrar por Fecha de Consumo:
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-orange-500" />
+            <span className="text-xs sm:text-sm font-black text-slate-800 capitalize">
+              {fechaFiltro === 'TODAS'
+                ? 'Todas las Fechas'
+                : formatearFechaLegiblePeru(fechaFiltro)}
+            </span>
+            {fechaFiltro === fechaHoy && (
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider">
+                Hoy
               </span>
-              <span className="text-xs sm:text-sm font-black text-slate-800 capitalize">
-                {fechaFiltro === 'TODAS'
-                  ? 'Todas las Fechas (Histórico)'
-                  : formatearFechaLegiblePeru(fechaFiltro)}
-                {fechaFiltro === fechaHoy && (
-                  <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider">
-                    Hoy
-                  </span>
-                )}
-              </span>
-            </div>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
@@ -599,7 +611,7 @@ export default function FiadoPage() {
               value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
               onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
               className="bg-slate-50 border border-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer shadow-2xs"
-              title="Haz clic para seleccionar cualquier fecha en el calendario"
+              title="Seleccionar fecha en el calendario"
             />
 
             {/* Navegación Día Siguiente */}
@@ -652,7 +664,7 @@ export default function FiadoPage() {
         </div>
 
         {/* Buscador y Filtro de Estado */}
-        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-0.5">
           <div className="relative w-full sm:max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -674,7 +686,7 @@ export default function FiadoPage() {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              Pendientes de Cobro
+              Pendientes
             </button>
             <button
               type="button"
@@ -685,7 +697,7 @@ export default function FiadoPage() {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              Saldados / Historial
+              Saldados
             </button>
             <button
               type="button"
@@ -696,7 +708,7 @@ export default function FiadoPage() {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              Todos los Registros
+              Todos
             </button>
           </div>
         </div>
@@ -716,7 +728,6 @@ export default function FiadoPage() {
           <div className="text-xl sm:text-2xl font-black text-amber-600">
             S/ {totalDeudaGlobal.toFixed(2)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Saldo acumulado en fiados</p>
         </div>
 
         <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs">
@@ -731,7 +742,6 @@ export default function FiadoPage() {
           <div className="text-xl sm:text-2xl font-black text-slate-900">
             {totalFamiliasConDeuda} <span className="text-xs text-slate-400 font-normal">familias</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Con almuerzos por saldar</p>
         </div>
 
         <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs">
@@ -746,7 +756,6 @@ export default function FiadoPage() {
           <div className="text-xl sm:text-2xl font-black text-orange-600">
             {totalAlmuerzosFiados} <span className="text-xs text-slate-400 font-normal">platos</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Pendientes de abono</p>
         </div>
 
         <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs">
@@ -761,7 +770,6 @@ export default function FiadoPage() {
           <div className="text-xl sm:text-2xl font-black text-emerald-600">
             {totalEntregadosSinCobrar} <span className="text-xs text-slate-400 font-normal">entregados</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Consumidos por estudiantes</p>
         </div>
       </div>
 
@@ -789,7 +797,7 @@ export default function FiadoPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {fiadosFiltrados.map((padre, idx) => {
+          {fiadosPaginados.map((padre, idx) => {
             const claveCard = padre.padreId || padre.telefono || `card-${idx}`;
             const expandido = Boolean(tarjetasExpandidas[claveCard]);
             const tieneDeuda = padre.totalDeuda > 0;
@@ -815,7 +823,7 @@ export default function FiadoPage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
+                    <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
                       {padre.telefono && (
                         <div className="flex items-center gap-1 font-medium text-slate-600">
                           <Phone className="w-3.5 h-3.5 text-slate-400" />
@@ -827,12 +835,12 @@ export default function FiadoPage() {
                         <span>Hijos: {padre.hijosNombres.join(', ')}</span>
                       </div>
                       <div className="text-slate-400">
-                        • {padre.pedidos.length} almuerzos registrados ({padre.pedidosEntregados} entregados)
+                        • {padre.pedidos.length} {padre.pedidos.length === 1 ? 'almuerzo' : 'almuerzos'}
                       </div>
                     </div>
 
-                    {/* Resumen visible de Fechas de Consumo */}
-                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                    {/* Resumen de Fechas de Consumo */}
+                    <div className="flex items-center gap-2 flex-wrap pt-0.5">
                       {padre.tieneConsumoHoy && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black border border-amber-300">
                           <Clock className="w-3 h-3 text-amber-700" />
@@ -841,10 +849,7 @@ export default function FiadoPage() {
                       )}
                       {padre.fechasUnicas && padre.fechasUnicas.length > 0 && (
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" /> Fechas:
-                          </span>
-                          {padre.fechasUnicas.map((f) => (
+                          {padre.fechasUnicas.slice(0, 4).map((f) => (
                             <button
                               key={f}
                               type="button"
@@ -858,9 +863,14 @@ export default function FiadoPage() {
                               }`}
                               title={`Filtrar listado por fecha ${f}`}
                             >
-                              {f === fechaHoy ? `Hoy (${f})` : formatearFechaLegiblePeru(f)}
+                              {f === fechaHoy ? `Hoy (${f})` : f}
                             </button>
                           ))}
+                          {padre.fechasUnicas.length > 4 && (
+                            <span className="text-[10px] text-slate-400 font-semibold">
+                              +{padre.fechasUnicas.length - 4}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -869,11 +879,8 @@ export default function FiadoPage() {
                   {/* Resumen de Deuda y Botones de Acción */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
                     <div className="text-left sm:text-right">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                        {fechaFiltro === 'TODAS' ? 'Saldo Pendiente' : 'Saldo de la Fecha'}
-                      </span>
                       <span
-                        className={`text-xl sm:text-2xl font-black block leading-none mt-0.5 ${
+                        className={`text-xl sm:text-2xl font-black block leading-none ${
                           tieneDeuda ? 'text-amber-600' : 'text-emerald-600'
                         }`}
                       >
@@ -886,7 +893,7 @@ export default function FiadoPage() {
                       )}
                       {tieneDeuda ? (
                         <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 mt-1 inline-block">
-                          {pedidosPendientes.length} por cobrar
+                          {pedidosPendientes.length} pendientes
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 mt-1 inline-block">
@@ -901,11 +908,11 @@ export default function FiadoPage() {
                         <button
                           type="button"
                           onClick={() => enviarCobroWhatsApp(padre)}
-                          className="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                          className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
                           title="Enviar estado de cuenta y recordatorio por WhatsApp"
                         >
                           <Send className="w-3.5 h-3.5" />
-                          <span>Cobrar por WhatsApp</span>
+                          <span>WhatsApp</span>
                         </button>
                       )}
 
@@ -992,17 +999,7 @@ export default function FiadoPage() {
                                       <span className="font-bold text-slate-900">{ped.fecha}</span>
                                     </div>
                                   ) : (
-                                    <div>
-                                      <span className="font-bold text-slate-900">{ped.fecha}</span>
-                                      <span className="block text-[10px] text-slate-400 capitalize">
-                                        {formatearFechaLegiblePeru(ped.fecha)}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {ped.diaSemana && ped.diaSemana !== 'HOY' && ped.fecha !== fechaHoy && (
-                                    <span className="block text-[10px] text-slate-400 uppercase">
-                                      {ped.diaSemana}
-                                    </span>
+                                    <span className="font-bold text-slate-800">{ped.fecha}</span>
                                   )}
                                 </td>
                                 <td className="py-2.5 px-3 font-bold text-slate-900 whitespace-nowrap">
@@ -1068,6 +1065,104 @@ export default function FiadoPage() {
               </div>
             );
           })}
+
+          {/* Barra de Paginación */}
+          {totalFamilias > 0 && (
+            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 mt-4">
+              <div className="flex items-center gap-3">
+                <span className="font-medium text-slate-500">
+                  Mostrando <strong className="text-slate-800">{indiceInicio + 1}</strong> -{' '}
+                  <strong className="text-slate-800">{indiceFin}</strong> de{' '}
+                  <strong className="text-slate-900">{totalFamilias}</strong> familias
+                </span>
+
+                <label className="flex items-center gap-1.5 text-slate-500">
+                  <span>Por pág:</span>
+                  <select
+                    value={porPagina}
+                    onChange={(e) => setPorPagina(Number(e.target.value))}
+                    className="bg-slate-50 border border-slate-200 text-slate-800 font-bold rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                  >
+                    <option value={5}>5</option>
+                    <option value={8}>8</option>
+                    <option value={15}>15</option>
+                    <option value={25}>25</option>
+                  </select>
+                </label>
+              </div>
+
+              {totalPaginas > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPaginaActual(1)}
+                    disabled={paginaValida === 1}
+                    className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-bold cursor-pointer"
+                    title="Primera página"
+                  >
+                    «
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+                    disabled={paginaValida === 1}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 font-bold cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Anterior</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 mx-1">
+                    {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                      .filter((p) => {
+                        return p === 1 || p === totalPaginas || Math.abs(p - paginaValida) <= 1;
+                      })
+                      .map((p, i, arr) => {
+                        const prev = arr[i - 1];
+                        const mostrarPuntos = prev && p - prev > 1;
+                        return (
+                          <React.Fragment key={p}>
+                            {mostrarPuntos && <span className="px-1 text-slate-400 font-bold">...</span>}
+                            <button
+                              type="button"
+                              onClick={() => setPaginaActual(p)}
+                              className={`w-7 h-7 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                paginaValida === p
+                                  ? 'bg-amber-500 text-white shadow-xs'
+                                  : 'text-slate-600 hover:bg-slate-100 border border-slate-200'
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaValida === totalPaginas}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 font-bold cursor-pointer"
+                  >
+                    <span className="hidden sm:inline">Siguiente</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaginaActual(totalPaginas)}
+                    disabled={paginaValida === totalPaginas}
+                    className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-bold cursor-pointer"
+                    title="Última página"
+                  >
+                    »
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
