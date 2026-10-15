@@ -89,6 +89,18 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   3. Actualización de `AGENTS.md` (Criterios de Finalización 9 y 10).
   4. Ninguna tarea se reportará como finalizada sin haber sido probada en local, subida a `origin/main` y verificada en vivo en `https://gestion-almuerzos-six.vercel.app`.
 
+### D-009 — 2026-10-15 — Paginación y simplificación visual en Control de Fiados
+
+- Decisión: La pantalla de fiados (`/fiado`) debe contar con paginación de familias y una interfaz limpia y minimalista, reduciendo etiquetas redundantes y mostrando únicamente la información esencial para la cobranza y liquidación.
+- Fuente: instrucción explícita del usuario ("debe tener pagination tambien el fiado y no dbe tener muchas labels que no sean necesarios mientras menos informacion ojo pero solo la necesaria estaria perfecto").
+- Impacto:
+  1. Paginación de tarjetas de familia con selector de registros por página (5, 8, 15, 25), navegación con primera página (`«`), anterior (`<`), números de página con elipsis, siguiente (`>`) y última página (`»`).
+  2. Reset automático de página a 1 ante cualquier cambio en filtros de búsqueda, fecha, colegio o estado.
+  3. Eliminación de etiquetas y textos secundarios redundantes en tarjetas de KPIs (textos explicativos innecesarios bajo los números).
+  4. Simplificación visual de cabeceras de familias: badges concisos de deudas, fechas de consumo compactas sin etiquetas decorativas y tabla expandida con visualización limpia de pedidos.
+  5. Incorporación de prueba automatizada en `tests/fiado-filtro-fechas.test.mjs` (paso 6).
+  6. Compilación de producción limpia y verificación exitosa en vivo en `https://gestion-almuerzos-six.vercel.app/fiado`.
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
