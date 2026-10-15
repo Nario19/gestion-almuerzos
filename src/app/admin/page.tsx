@@ -44,6 +44,7 @@ export default function AdminPage() {
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [cargando, setCargando] = useState(false);
   const [guardadoExitoso, setGuardadoExitoso] = useState(false);
+  const [guardandoPlato, setGuardandoPlato] = useState(false);
 
   // Estado para alertas y modales de confirmación de eliminación
   const [confirmacion, setConfirmacion] = useState<{
@@ -231,31 +232,44 @@ export default function AdminPage() {
 
   const handleCrearPlato = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombreNuevo.trim()) return;
+    if (!nombreNuevo.trim() || guardandoPlato) return;
 
     const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
       ? usuario.colegioNombre
       : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
 
-    const esSopa = tipoNuevo === 'Sopa o postre' || tipoNuevo === 'ENTRADA';
-    const nuevo = await dataService.agregarPlato({
-      diaSemana: diaActivo,
-      tipo: tipoNuevo,
-      nombre: nombreNuevo.trim(),
-      descripcion: descripcionNueva.trim() || undefined,
-      precio: esSopa ? 0 : parseFloat(precioNuevo) || 12.0,
-      imagenUrl: imagenUrlNueva || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
-      disponible: true,
-      orden: platos.length + 1,
-      colegioNombre: colFiltro,
-    });
+    const colIdFiltro = (!esSuperAdmin && usuario?.colegioId)
+      ? usuario.colegioId
+      : undefined;
 
-    setPlatos((prev) => [...prev, nuevo]);
-    setNombreNuevo('');
-    setDescripcionNueva('');
-    setImagenUrlNueva('');
-    setGuardadoExitoso(true);
-    setTimeout(() => setGuardadoExitoso(false), 3000);
+    const esSopa = tipoNuevo === 'Sopa o postre' || tipoNuevo === 'ENTRADA';
+    setGuardandoPlato(true);
+    try {
+      const nuevo = await dataService.agregarPlato({
+        diaSemana: diaActivo,
+        tipo: tipoNuevo,
+        nombre: nombreNuevo.trim(),
+        descripcion: descripcionNueva.trim() || undefined,
+        precio: esSopa ? 0 : parseFloat(precioNuevo) || 12.0,
+        imagenUrl: imagenUrlNueva || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+        disponible: true,
+        orden: platos.length + 1,
+        colegioNombre: colFiltro,
+        colegioId: colIdFiltro,
+      });
+
+      setPlatos((prev) => [...prev, nuevo]);
+      setNombreNuevo('');
+      setDescripcionNueva('');
+      setImagenUrlNueva('');
+      setGuardadoExitoso(true);
+      setTimeout(() => setGuardadoExitoso(false), 3000);
+    } catch (err: any) {
+      console.error('Error al guardar plato en el menú:', err);
+      alert(err.message || 'Error al guardar el plato en la base de datos.');
+    } finally {
+      setGuardandoPlato(false);
+    }
   };
 
   const handleSolicitarEliminarPlato = (plato: Plato) => {

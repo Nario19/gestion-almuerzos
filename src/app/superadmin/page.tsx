@@ -28,12 +28,16 @@ import {
   ToggleLeft,
   ToggleRight,
   ExternalLink,
+  GraduationCap,
+  Download,
+  Printer,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { dataService } from '@/lib/dataService';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
-import { ColegioDetallado, AdminColegioInfo } from '@/types';
+import { ColegioDetallado, AdminColegioInfo, EstudianteColegioInfo } from '@/types';
 
 export default function SuperAdminPage() {
   const { usuario, esSuperAdmin, cargando: cargandoAuth } = useAuth();
@@ -84,6 +88,76 @@ export default function SuperAdminPage() {
     onConfirmar: () => {},
   });
   const [ejecutandoConfirmacion, setEjecutandoConfirmacion] = useState(false);
+
+  // Modal para Ver Estudiantes (Hijos) del Colegio
+  const [modalEstudiantes, setModalEstudiantes] = useState<{
+    abierto: boolean;
+    colegio: ColegioDetallado | null;
+    estudiantes: EstudianteColegioInfo[];
+    cargando: boolean;
+    busquedaEstudiante: string;
+  }>({
+    abierto: false,
+    colegio: null,
+    estudiantes: [],
+    cargando: false,
+    busquedaEstudiante: '',
+  });
+
+  const abrirModalEstudiantes = async (col: ColegioDetallado) => {
+    setModalEstudiantes({
+      abierto: true,
+      colegio: col,
+      estudiantes: [],
+      cargando: true,
+      busquedaEstudiante: '',
+    });
+
+    try {
+      const data = await dataService.obtenerEstudiantesPorColegio(col.nombre);
+      setModalEstudiantes((prev) => ({
+        ...prev,
+        estudiantes: data,
+        cargando: false,
+      }));
+    } catch (err) {
+      console.error('Error cargando estudiantes del colegio:', err);
+      setModalEstudiantes((prev) => ({ ...prev, cargando: false }));
+    }
+  };
+
+  const exportarEstudiantesCSV = () => {
+    if (!modalEstudiantes.colegio || modalEstudiantes.estudiantes.length === 0) return;
+    const ests = modalEstudiantes.estudiantes;
+    const headers = [
+      'Estudiante',
+      'Grado y Seccion',
+      'Colegio',
+      'Alergias / Notas',
+      'Padre / Apoderado',
+      'Telefono',
+      'DNI Padre',
+      'Fecha Registro',
+    ];
+    const rows = ests.map((e) => [
+      `"${e.nombreCompleto.replace(/"/g, '""')}"`,
+      `"${e.gradoSeccion.replace(/"/g, '""')}"`,
+      `"${e.colegioNombre.replace(/"/g, '""')}"`,
+      `"${(e.alergiasNotas || 'Ninguna').replace(/"/g, '""')}"`,
+      `"${(e.padreNombre || '').replace(/"/g, '""')}"`,
+      `"${e.padreTelefono || ''}"`,
+      `"${e.padreDni || ''}"`,
+      `"${e.createdAt ? e.createdAt.slice(0, 10) : ''}"`,
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Estudiantes_${modalEstudiantes.colegio.nombre.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const cargarColegios = async () => {
     setCargandoDatos(true);
@@ -571,9 +645,14 @@ export default function SuperAdminPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-base font-black text-slate-900 tracking-tight">
+                        <button
+                          type="button"
+                          onClick={() => abrirModalEstudiantes(col)}
+                          className="text-base font-black text-slate-900 tracking-tight hover:text-purple-700 hover:underline text-left cursor-pointer transition"
+                          title="Clic para ver los hijos/estudiantes vinculados a este colegio"
+                        >
                           {col.nombre}
-                        </h3>
+                        </button>
                         {col.activo ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
                             Activo
@@ -584,11 +663,20 @@ export default function SuperAdminPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">
-                          {col.totalPedidos || 0} pedidos recibidos
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => abrirModalEstudiantes(col)}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-2.5 py-1 rounded-xl transition cursor-pointer"
+                          title="Ver lista de estudiantes asociados a este colegio"
+                        >
+                          <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
+                          <span>{col.totalEstudiantes || 0} estudiantes</span>
+                        </button>
+                        <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded-xl">
+                          {col.totalPedidos || 0} pedidos
                         </span>
-                      </p>
+                      </div>
                     </div>
                   </div>
 
@@ -650,6 +738,17 @@ export default function SuperAdminPage() {
 
                   {/* Columna 3: Acciones */}
                   <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
+                    {/* Botón Ver Estudiantes del Colegio */}
+                    <button
+                      type="button"
+                      onClick={() => abrirModalEstudiantes(col)}
+                      className="p-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                      title="Ver lista de estudiantes (hijos) registrados en este colegio"
+                    >
+                      <GraduationCap className="w-4 h-4 text-purple-600" />
+                      <span className="hidden sm:inline">Alumnos ({col.totalEstudiantes || 0})</span>
+                    </button>
+
                     {/* Botón Alternar Estado Activo / Pausado */}
                     <button
                       type="button"
@@ -990,6 +1089,240 @@ export default function SuperAdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: VER ESTUDIANTES ASOCIADOS AL COLEGIO */}
+      {modalEstudiantes.abierto && modalEstudiantes.colegio && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden my-6 border border-slate-200 flex flex-col max-h-[90vh]">
+            {/* Cabecera del Modal */}
+            <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 text-white flex items-center justify-between gap-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-600/40 text-purple-200 border border-purple-400/30 flex items-center justify-center font-bold">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-purple-500/30 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-400/20">
+                      Estudiantes Vinculados
+                    </span>
+                    <span className="text-xs text-purple-200 font-medium">
+                      {modalEstudiantes.estudiantes.length} alumno(s)
+                    </span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-black tracking-tight text-white mt-0.5">
+                    {modalEstudiantes.colegio.nombre}
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setModalEstudiantes((prev) => ({ ...prev, abierto: false }))}
+                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
+                title="Cerrar ventana"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Barra de herramientas: Búsqueda y Botones de Acción */}
+            <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar por estudiante, grado, apoderado, teléfono..."
+                  value={modalEstudiantes.busquedaEstudiante}
+                  onChange={(e) =>
+                    setModalEstudiantes((prev) => ({ ...prev, busquedaEstudiante: e.target.value }))
+                  }
+                  className="w-full pl-10 pr-4 py-2 bg-white rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (modalEstudiantes.colegio) {
+                      abrirModalEstudiantes(modalEstudiantes.colegio);
+                    }
+                  }}
+                  className="p-2 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                  title="Refrescar listado"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={exportarEstudiantesCSV}
+                  disabled={modalEstudiantes.estudiantes.length === 0}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  title="Descargar lista de estudiantes en formato Excel/CSV"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Exportar Excel</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  title="Imprimir nómina de alumnos"
+                >
+                  <Printer className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="hidden sm:inline">Imprimir</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contenido / Listado con scroll */}
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+              {modalEstudiantes.cargando ? (
+                <div className="py-16 text-center">
+                  <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-xs font-semibold text-slate-500">
+                    Consultando lista de hijos asociados a este colegio...
+                  </p>
+                </div>
+              ) : (() => {
+                const q = modalEstudiantes.busquedaEstudiante.toLowerCase().trim();
+                const filtrados = modalEstudiantes.estudiantes.filter(
+                  (e) =>
+                    e.nombreCompleto.toLowerCase().includes(q) ||
+                    e.gradoSeccion.toLowerCase().includes(q) ||
+                    (e.padreNombre && e.padreNombre.toLowerCase().includes(q)) ||
+                    (e.padreTelefono && e.padreTelefono.includes(q)) ||
+                    (e.padreDni && e.padreDni.includes(q)) ||
+                    (e.alergiasNotas && e.alergiasNotas.toLowerCase().includes(q))
+                );
+
+                if (modalEstudiantes.estudiantes.length === 0) {
+                  return (
+                    <div className="py-12 text-center space-y-3">
+                      <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto">
+                        <GraduationCap className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-800">
+                        No hay estudiantes registrados para este colegio aún
+                      </h4>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                        Cuando los padres de familia registren a sus hijos seleccionando{' '}
+                        <strong>{modalEstudiantes.colegio.nombre}</strong>, aparecerán listados aquí con sus datos de contacto y grado.
+                      </p>
+                    </div>
+                  );
+                }
+
+                if (filtrados.length === 0) {
+                  return (
+                    <div className="py-10 text-center text-xs text-slate-500">
+                      No se encontraron estudiantes que coincidan con &quot;{modalEstudiantes.busquedaEstudiante}&quot;.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px] tracking-wider bg-slate-50/50">
+                            <th className="py-2.5 px-3">#</th>
+                            <th className="py-2.5 px-3">Estudiante</th>
+                            <th className="py-2.5 px-3">Grado y Sección</th>
+                            <th className="py-2.5 px-3">Padre / Apoderado</th>
+                            <th className="py-2.5 px-3">Contacto WhatsApp</th>
+                            <th className="py-2.5 px-3">Alergias / Notas</th>
+                            <th className="py-2.5 px-3 text-right">Registro</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filtrados.map((est, idx) => {
+                            const telLimpio = est.padreTelefono ? est.padreTelefono.replace(/\D/g, '') : '';
+                            const waLink = telLimpio ? `https://wa.me/51${telLimpio}` : null;
+
+                            return (
+                              <tr key={est.id} className="hover:bg-purple-50/30 transition-colors">
+                                <td className="py-3 px-3 font-mono text-slate-400 text-[11px] font-bold">
+                                  {idx + 1}
+                                </td>
+                                <td className="py-3 px-3">
+                                  <div className="font-bold text-slate-900 text-xs">
+                                    {est.nombreCompleto}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-3">
+                                  <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-100 text-[11px]">
+                                    {est.gradoSeccion}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3">
+                                  <div className="font-semibold text-slate-800">
+                                    {est.padreNombre || 'No especificado'}
+                                  </div>
+                                  {est.padreDni && (
+                                    <span className="text-[10px] text-slate-400">
+                                      DNI: {est.padreDni}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3">
+                                  {waLink ? (
+                                    <a
+                                      href={waLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                                    >
+                                      <Phone className="w-3 h-3 text-emerald-500" />
+                                      <span>{est.padreTelefono}</span>
+                                    </a>
+                                  ) : (
+                                    <span className="text-slate-400">{est.padreTelefono || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3">
+                                  {est.alergiasNotas ? (
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">
+                                      <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
+                                      <span>{est.alergiasNotas}</span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 text-[11px]">Ninguna</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3 text-right font-mono text-slate-400 text-[11px]">
+                                  {est.createdAt ? est.createdAt.slice(0, 10) : '-'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Pie del Modal */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
+              <span>
+                Mostrando estudiantes matriculados en <strong>{modalEstudiantes.colegio.nombre}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setModalEstudiantes((prev) => ({ ...prev, abierto: false }))}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

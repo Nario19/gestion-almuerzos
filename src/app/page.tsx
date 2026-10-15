@@ -159,15 +159,24 @@ function PedidoContent() {
     let montado = true;
     setCargandoPlatos(true);
 
-    const colegioFiltro = hijoSeleccionado?.colegioId || hijoSeleccionado?.colegioNombre || colegio || undefined;
+    const colegioFiltro = hijoSeleccionado?.colegioNombre || hijoSeleccionado?.colegioId || colegio || undefined;
 
     dataService.obtenerPlatosPorDia(diaSeleccionado, colegioFiltro).then((platos) => {
       if (!montado) return;
       setPlatosDelDia(platos);
       setCargandoPlatos(false);
 
-      const primeraEntrada = platos.find((p) => (p.tipo === 'ENTRADA' || p.tipo === 'Sopa o postre') && p.disponible);
-      const primerSegundo = platos.find((p) => (p.tipo === 'SEGUNDO' || p.tipo === 'Segundo') && p.disponible);
+      const esEntradaTipo = (t: string) => {
+        const s = (t || '').toLowerCase().trim();
+        return s === 'entrada' || s.includes('sopa') || s.includes('postre');
+      };
+      const esSegundoTipo = (t: string) => {
+        const s = (t || '').toLowerCase().trim();
+        return s === 'segundo' || (!esEntradaTipo(t) && s !== 'bebida');
+      };
+
+      const primeraEntrada = platos.find((p) => p.disponible && esEntradaTipo(p.tipo));
+      const primerSegundo = platos.find((p) => p.disponible && esSegundoTipo(p.tipo));
       if (primeraEntrada) setEntradaSeleccionada(primeraEntrada.nombre);
       if (primerSegundo) setSegundoSeleccionado(primerSegundo.nombre);
     });
@@ -175,7 +184,7 @@ function PedidoContent() {
     return () => {
       montado = false;
     };
-  }, [diaSeleccionado, esAdmin, hijoSeleccionado?.colegioNombre, colegio]);
+  }, [diaSeleccionado, esAdmin, hijoSeleccionado?.id, hijoSeleccionado?.colegioNombre, hijoSeleccionado?.colegioId, colegio]);
 
   // Si el usuario tiene hijos o viene por parámetro URL
   useEffect(() => {
@@ -613,8 +622,17 @@ function PedidoContent() {
   // CATÁLOGO LIMPIO PARA CLIENTES / PADRES
   // (Sin frases de relleno)
   // ----------------------------------------------------
-  const entradas = platosDelDia.filter((p) => p.tipo === 'ENTRADA' || p.tipo === 'Sopa o postre');
-  const segundos = platosDelDia.filter((p) => p.tipo === 'SEGUNDO' || p.tipo === 'Segundo');
+  const esEntrada = (t: string) => {
+    const s = (t || '').toLowerCase().trim();
+    return s === 'entrada' || s.includes('sopa') || s.includes('postre');
+  };
+  const esSegundo = (t: string) => {
+    const s = (t || '').toLowerCase().trim();
+    return s === 'segundo' || (!esEntrada(t) && s !== 'bebida');
+  };
+
+  const entradas = platosDelDia.filter((p) => esEntrada(p.tipo));
+  const segundos = platosDelDia.filter((p) => esSegundo(p.tipo));
   const diaActual = obtenerDiaActualSemana();
 
   // ----------------------------------------------------

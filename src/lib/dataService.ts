@@ -10,6 +10,7 @@ import {
   AdminColegioInfo,
   PadreFiadoResumen,
   ItemFiadoPedido,
+  EstudianteColegioInfo,
 } from '@/types';
 import { supabase, isSupabaseConfigured } from './supabase';
 
@@ -371,8 +372,17 @@ function mapearPedidoDesdeSupabase(d: any, mapLocal: Record<string, string>): Pe
 function mapearPlatoDesdeSupabase(d: any): Plato {
   let colegioNombre: string | undefined = d.colegio_nombre || undefined;
   let colegioId: string | undefined = d.colegio_id || undefined;
+  let tipoFinal: string = d.tipo;
+  if (tipoFinal === 'ENTRADA') tipoFinal = 'Sopa o postre';
+  else if (tipoFinal === 'SEGUNDO') tipoFinal = 'Segundo';
+
   let descLimpia = d.descripcion || '';
   if (descLimpia) {
+    const matchTipo = descLimpia.match(/\[TipoOriginal:\s*([^\]]+)\]/);
+    if (matchTipo) {
+      tipoFinal = matchTipo[1].trim();
+      descLimpia = descLimpia.replace(/\s*\[TipoOriginal:\s*[^\]]+\]/, '').trim();
+    }
     const matchId = descLimpia.match(/\[ColegioId:\s*([^\]]+)\]/);
     if (matchId) {
       colegioId = matchId[1].trim();
@@ -390,7 +400,7 @@ function mapearPlatoDesdeSupabase(d: any): Plato {
     colegioId,
     colegioNombre,
     diaSemana: d.dia_semana,
-    tipo: d.tipo,
+    tipo: tipoFinal,
     nombre: d.nombre,
     descripcion: descLimpia || undefined,
     precio: Number(d.precio) || 12.0,
@@ -402,7 +412,11 @@ function mapearPlatoDesdeSupabase(d: any): Plato {
 
 export const dataService = {
   async obtenerPlatosPorDia(dia: DiaSemana, colegioNombre?: string): Promise<Plato[]> {
-    const colegioIdONombre = colegioNombre;
+    const colegioIdONombre =
+      typeof colegioNombre === 'object' && colegioNombre !== null
+        ? (colegioNombre as any).colegioNombre || (colegioNombre as any).colegioId
+        : colegioNombre;
+
     let platos: Plato[] = [];
     if (isSupabaseConfigured && supabase) {
       try {
@@ -423,17 +437,40 @@ export const dataService = {
       platos = platosMemoria.filter((p) => p.diaSemana === dia);
     }
 
-    if (!colegioIdONombre || colegioIdONombre === 'TODOS') {
+    if (!colegioIdONombre) {
+      return platos;
+    }
+
+    let targetId = '';
+    let targetNombre = '';
+
+    if (typeof colegioNombre === 'object' && colegioNombre !== null) {
+      targetId = ((colegioNombre as any).colegioId || '').toLowerCase().trim();
+      targetNombre = ((colegioNombre as any).colegioNombre || '').toLowerCase().trim();
+    }
+
+    if (typeof colegioIdONombre === 'string') {
+      const val = colegioIdONombre.toLowerCase().trim();
+      if (val === 'todos' || !val) {
+        return platos;
+      }
+      if (!targetId) targetId = val;
+      if (!targetNombre) targetNombre = val;
+    }
+
+    if (!targetId && !targetNombre) {
       return platos;
     }
 
     // Filtrar platos estrictamente por Colegio ID o Nombre para independencia total
-    const target = colegioIdONombre.toLowerCase().trim();
-    const platosColegio = platos.filter(
-      (p) =>
-        (p.colegioId && p.colegioId.toLowerCase().trim() === target) ||
-        (p.colegioNombre && p.colegioNombre.toLowerCase().trim() === target)
-    );
+    const platosColegio = platos.filter((p) => {
+      const pId = (p.colegioId || '').toLowerCase().trim();
+      const pNom = (p.colegioNombre || '').toLowerCase().trim();
+
+      if (targetId && (pId === targetId || pNom === targetId)) return true;
+      if (targetNombre && (pNom === targetNombre || pId === targetNombre)) return true;
+      return false;
+    });
 
     // Cada colegio es independiente: sólo devuelve platos de ese colegio
     return platosColegio;
@@ -445,7 +482,23 @@ export const dataService = {
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `plato-${Date.now()}`,
     };
 
+    // Mapeo seguro para el constraint 'platos_tipo_check' de la BD ('ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE')
+    let tipoColumna: 'ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE' = 'SEGUNDO';
+    const tipoNormalizado = (nuevoPlato.tipo || '').trim().toUpperCase();
+    if (tipoNormalizado === 'ENTRADA' || tipoNormalizado.includes('SOPA')) {
+      tipoColumna = 'ENTRADA';
+    } else if (tipoNormalizado === 'BEBIDA') {
+      tipoColumna = 'BEBIDA';
+    } else if (tipoNormalizado === 'POSTRE') {
+      tipoColumna = 'POSTRE';
+    } else {
+      tipoColumna = 'SEGUNDO';
+    }
+
     let descFinal = nuevoPlato.descripcion || '';
+    if (nuevoPlato.tipo) {
+      descFinal = `[TipoOriginal: ${nuevoPlato.tipo}] ${descFinal}`.trim();
+    }
     if (nuevoPlato.colegioId) {
       descFinal = `[ColegioId: ${nuevoPlato.colegioId}] ${descFinal}`.trim();
     }
@@ -460,7 +513,7 @@ export const dataService = {
           .insert([
             {
               dia_semana: nuevoPlato.diaSemana,
-              tipo: nuevoPlato.tipo,
+              tipo: tipoColumna,
               nombre: nuevoPlato.nombre,
               descripcion: descFinal || null,
               precio: nuevoPlato.precio,
@@ -472,11 +525,16 @@ export const dataService = {
           .select()
           .single();
 
-        if (!error && data) {
+        if (error) {
+          console.error('Error insertando plato en Supabase:', error);
+          throw new Error(`Error en base de datos al guardar plato: ${error.message}`);
+        }
+        if (data) {
           nuevoPlato.id = data.id;
         }
-      } catch (e) {
-        console.error('Error insertando plato en Supabase:', e);
+      } catch (e: any) {
+        console.error('Error en agregarPlato:', e);
+        throw e;
       }
     }
 
@@ -1052,6 +1110,22 @@ export const dataService = {
           });
         }
 
+        // E. Cargar conteo de estudiantes (hijos) asociados a cada colegio
+        const conteoEstudiantes: Record<string, number> = {};
+        const { data: hijosData } = await supabase.from('hijos').select('colegio_id, colegio_nombre');
+        if (hijosData) {
+          hijosData.forEach((h) => {
+            if (h.colegio_id) {
+              conteoEstudiantes[h.colegio_id] = (conteoEstudiantes[h.colegio_id] || 0) + 1;
+            }
+            if (h.colegio_nombre) {
+              conteoEstudiantes[h.colegio_nombre] = (conteoEstudiantes[h.colegio_nombre] || 0) + 1;
+              conteoEstudiantes[h.colegio_nombre.toLowerCase().trim()] =
+                (conteoEstudiantes[h.colegio_nombre.toLowerCase().trim()] || 0) + 1;
+            }
+          });
+        }
+
         // Ensamblar los colegios detallados
         const listaDetallada: ColegioDetallado[] = colegiosBase.map((c) => {
           let sedeLimpia = c.sede || '';
@@ -1080,6 +1154,12 @@ export const dataService = {
             };
           }
 
+          const totalEstudiantes =
+            (c.id && conteoEstudiantes[c.id]) ||
+            conteoEstudiantes[c.nombre] ||
+            conteoEstudiantes[c.nombre.toLowerCase().trim()] ||
+            0;
+
           return {
             id: c.id,
             nombre: c.nombre,
@@ -1087,6 +1167,7 @@ export const dataService = {
             activo: c.activo !== false,
             admin: adminAsignado,
             totalPedidos: conteoPedidos[c.nombre] || 0,
+            totalEstudiantes,
             createdAt: c.created_at,
           };
         });
@@ -1120,6 +1201,63 @@ export const dataService = {
     }
 
     return [...colegiosDetalladosMemoria];
+  },
+
+  async obtenerEstudiantesPorColegio(colegioNombreOId?: string): Promise<EstudianteColegioInfo[]> {
+    let estudiantes: EstudianteColegioInfo[] = [];
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: hijos, error: errH } = await supabase
+          .from('hijos')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!errH && hijos) {
+          const { data: padres } = await supabase
+            .from('perfiles_padres')
+            .select('id, nombre_completo, telefono, dni');
+
+          const padreMap: Record<string, { nombre_completo?: string; telefono?: string; dni?: string }> = {};
+          if (padres) {
+            padres.forEach((p) => {
+              padreMap[p.id] = p;
+            });
+          }
+
+          estudiantes = hijos.map((h: any) => {
+            const p = padreMap[h.padre_id] || {};
+            return {
+              id: h.id,
+              padreId: h.padre_id,
+              nombreCompleto: h.nombre_completo || '',
+              colegioNombre: h.colegio_nombre || '',
+              colegioId: h.colegio_id || undefined,
+              gradoSeccion: h.grado_seccion || '',
+              alergiasNotas: h.alergias_notas || undefined,
+              createdAt: h.created_at || new Date().toISOString(),
+              padreNombre: p.nombre_completo || 'No especificado',
+              padreTelefono: p.telefono || 'Sin teléfono',
+              padreDni: p.dni || '',
+            };
+          });
+        }
+      } catch (e) {
+        console.warn('Error obteniendo estudiantes de Supabase:', e);
+      }
+    }
+
+    // Filtrar por colegio si se especificó
+    if (colegioNombreOId && colegioNombreOId !== 'TODOS') {
+      const target = colegioNombreOId.toLowerCase().trim();
+      estudiantes = estudiantes.filter((est) => {
+        const idMatch = est.colegioId && est.colegioId.toLowerCase().trim() === target;
+        const nombreMatch = est.colegioNombre && est.colegioNombre.toLowerCase().trim() === target;
+        return idMatch || nombreMatch;
+      });
+    }
+
+    return estudiantes;
   },
 
   async crearColegioConAdmin(

@@ -49,6 +49,7 @@ export interface ColegioDetallado {
   activo: boolean;
   admin?: AdminColegioInfo | null;
   totalPedidos?: number;
+  totalEstudiantes?: number;
   createdAt?: string;
 }
 
@@ -153,4 +154,19 @@ export interface PadreFiadoResumen {
   pedidosEntregados: number;
   pedidos: ItemFiadoPedido[];
 }
+
+export interface EstudianteColegioInfo {
+  id: string;
+  padreId: string;
+  nombreCompleto: string;
+  colegioNombre: string;
+  colegioId?: string;
+  gradoSeccion: string;
+  alergiasNotas?: string;
+  createdAt: string;
+  padreNombre?: string;
+  padreTelefono?: string;
+  padreDni?: string;
+}
+
 
