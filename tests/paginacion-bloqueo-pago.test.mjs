@@ -47,18 +47,24 @@ test('Seguridad de Pagos y Paginación en Despacho, Cocina y Pedidos', async (t)
     assert.equal(resultadoPermitido, true, 'Debe permitir cambiar el pago si no está entregado');
     assert.deepEqual(llamadaCambiarPago, { id: 'ped-2', nuevoPago: 'PENDIENTE' });
 
-    // Caso 3: Al marcar un pedido como ENTREGADO, su pago debe asegurarse como PAGADO
-    const simularHandleCambiarEstado = (id, nuevoEstado) => {
-      const pedido = pedidosMock.find((p) => p.id === id);
-      if (nuevoEstado === 'ENTREGADO' && pedido && pedido.estadoPago !== 'PAGADO') {
-        pedido.estadoPago = 'PAGADO';
-      }
+    // Caso 3: Marcar pedido como ENTREGADO con método 'Pagar luego' NO lo pasa automáticamente a PAGADO
+    const pedidoPagarLuego = {
+      id: 'ped-pl',
+      metodoPago: 'Pagar luego',
+      estadoPedido: 'REGISTRADO',
+      estadoPago: 'PENDIENTE',
+    };
+    const simularHandleCambiarEstado = (pedido, nuevoEstado) => {
+      // Regla: entregar NO actualiza el pago a PAGADO automáticamente
       pedido.estadoPedido = nuevoEstado;
     };
+    simularHandleCambiarEstado(pedidoPagarLuego, 'ENTREGADO');
+    assert.equal(pedidoPagarLuego.estadoPedido, 'ENTREGADO');
+    assert.equal(pedidoPagarLuego.estadoPago, 'PENDIENTE', 'Pagar luego entregado debe mantenerse PENDIENTE');
 
-    simularHandleCambiarEstado('ped-3', 'ENTREGADO');
-    assert.equal(pedidosMock[2].estadoPedido, 'ENTREGADO');
-    assert.equal(pedidosMock[2].estadoPago, 'PAGADO', 'Al entregar debe marcarse como PAGADO');
+    // Solo al confirmar explícitamente el pago pasa a PAGADO
+    pedidoPagarLuego.estadoPago = 'PAGADO';
+    assert.equal(pedidoPagarLuego.estadoPago, 'PAGADO', 'Solo pasa a PAGADO tras aceptar pago o liquidar en fiado');
   });
 
   await t.test('2. Paginación en Despacho: Cálculo de páginas, rangos y numeración global continua', () => {

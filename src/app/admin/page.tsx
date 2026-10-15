@@ -112,6 +112,10 @@ export default function AdminPage() {
     !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : 'TODOS'
   );
 
+  const colegioObjetivo = (!esSuperAdmin && usuario?.colegioNombre)
+    ? usuario.colegioNombre
+    : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : (colegios[0] || ''));
+
   const cargarPlatos = async (dia: DiaSemana, colOverride?: string) => {
     setCargando(true);
     const colActivo = colOverride !== undefined ? colOverride : colegioMenuSeleccionado;
@@ -124,28 +128,35 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (!esSuperAdmin && usuario?.colegioNombre) {
-      setColegioMenuSeleccionado(usuario.colegioNombre);
-    }
-  }, [usuario, esSuperAdmin]);
-
-  useEffect(() => {
     if (esAdmin) {
-      cargarPlatos(diaActivo, colegioMenuSeleccionado);
-      dataService.obtenerColegios().then(setColegios);
-      dataService.obtenerGrados().then(setGrados);
-      dataService.obtenerObservaciones().then(setObservaciones);
-      dataService.obtenerPedidos().then(setPedidos);
+      let cancelado = false;
+      const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
+        ? usuario.colegioNombre
+        : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
+      dataService.obtenerPlatosPorDia(diaActivo, colFiltro).then((data) => {
+        if (!cancelado) {
+          setPlatos(data);
+          setCargando(false);
+        }
+      });
+      dataService.obtenerColegios().then((cols) => { if (!cancelado) setColegios(cols); });
+      dataService.obtenerGrados(colegioObjetivo).then((g) => { if (!cancelado) setGrados(g); });
+      dataService.obtenerObservaciones(colegioObjetivo).then((obs) => { if (!cancelado) setObservaciones(obs); });
+      dataService.obtenerPedidos().then((peds) => { if (!cancelado) setPedidos(peds); });
 
       const desuscribir = dataService.suscribirCambios(() => {
         dataService.obtenerPedidos().then(setPedidos);
         dataService.obtenerColegios().then(setColegios);
-        dataService.obtenerGrados().then(setGrados);
-        dataService.obtenerObservaciones().then(setObservaciones);
+        dataService.obtenerGrados(colegioObjetivo).then(setGrados);
+        dataService.obtenerObservaciones(colegioObjetivo).then(setObservaciones);
       });
-      return () => desuscribir();
+      return () => {
+        cancelado = true;
+        desuscribir();
+      };
     }
-  }, [diaActivo, esAdmin, colegioMenuSeleccionado, usuario?.colegioNombre, esSuperAdmin]);
+  }, [diaActivo, esAdmin, colegioMenuSeleccionado, usuario?.colegioNombre, esSuperAdmin, colegioObjetivo]);
 
   const handleAgregarTipoPersonalizado = () => {
     const val = otroTipoInput.trim();
@@ -162,7 +173,7 @@ export default function AdminPage() {
   const handleAgregarGrado = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nuevoGrado.trim()) return;
-    const res = await dataService.agregarGrado(nuevoGrado.trim());
+    const res = await dataService.agregarGrado(nuevoGrado.trim(), colegioObjetivo);
     setGrados(res);
     setNuevoGrado('');
     setGuardadoExitoso(true);
@@ -175,12 +186,13 @@ export default function AdminPage() {
       titulo: `¿Eliminar grado "${nombre}"?`,
       mensaje: (
         <span>
-          ¿Estás seguro de que deseas eliminar <strong>{nombre}</strong>? Dejará de ofrecerse como opción de grado y sección escolar.
+          ¿Estás seguro de que deseas eliminar <strong>{nombre}</strong> del colegio{' '}
+          <strong>{colegioObjetivo || 'actual'}</strong>? Dejará de ofrecerse como opción de grado y sección escolar.
         </span>
       ),
       textoBotonConfirmar: 'Sí, eliminar grado',
       onConfirmar: async () => {
-        const res = await dataService.eliminarGrado(nombre);
+        const res = await dataService.eliminarGrado(nombre, colegioObjetivo);
         setGrados(res);
       },
     });
@@ -189,7 +201,7 @@ export default function AdminPage() {
   const handleAgregarObservacion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nuevaObservacion.trim()) return;
-    const res = await dataService.agregarObservacion(nuevaObservacion.trim());
+    const res = await dataService.agregarObservacion(nuevaObservacion.trim(), colegioObjetivo);
     setObservaciones(res);
     setNuevaObservacion('');
     setGuardadoExitoso(true);
@@ -202,12 +214,13 @@ export default function AdminPage() {
       titulo: `¿Eliminar etiqueta "${tag}"?`,
       mensaje: (
         <span>
-          ¿Estás seguro de que deseas eliminar la indicación especial <strong>"{tag}"</strong>? Ya no se sugerirá en las notas rápidas de los pedidos.
+          ¿Estás seguro de que deseas eliminar la indicación especial <strong>&quot;{tag}&quot;</strong> del colegio{' '}
+          <strong>{colegioObjetivo || 'actual'}</strong>? Ya no se sugerirá en las notas rápidas de los pedidos.
         </span>
       ),
       textoBotonConfirmar: 'Sí, eliminar etiqueta',
       onConfirmar: async () => {
-        const res = await dataService.eliminarObservacion(tag);
+        const res = await dataService.eliminarObservacion(tag, colegioObjetivo);
         setObservaciones(res);
       },
     });
@@ -264,9 +277,10 @@ export default function AdminPage() {
       setImagenUrlNueva('');
       setGuardadoExitoso(true);
       setTimeout(() => setGuardadoExitoso(false), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error al guardar plato en el menú:', err);
-      alert(err.message || 'Error al guardar el plato en la base de datos.');
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(msg || 'Error al guardar el plato en la base de datos.');
     } finally {
       setGuardandoPlato(false);
     }
@@ -403,6 +417,10 @@ export default function AdminPage() {
 
   if (!esAdmin) {
     return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para la administración del menú de Placeres Culinarios." />;
+  }
+
+  if (!esSuperAdmin && !usuario?.colegioNombre) {
+    return <AccesoRestringido mensaje="Tu cuenta de administrador no tiene un colegio activo asignado. Contacta al Super Administrador." />;
   }
 
   return (
@@ -1201,58 +1219,92 @@ export default function AdminPage() {
 
       {/* PESTAÑA: GRADOS Y SECCIONES */}
       {tabActiva === 'grados' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Formulario nuevo grado */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
-            <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
-              <GraduationCap className="w-4 h-4 text-orange-500" />
-              Nuevo Grado / Sección
-            </h2>
-            <form onSubmit={handleAgregarGrado} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Nombre del Grado / Sección *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. 1.° Primaria B"
-                  value={nuevoGrado}
-                  onChange={(e) => setNuevoGrado(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                  required
-                />
+        <div className="space-y-4">
+          {/* Header de colegio seleccionado */}
+          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-orange-500" />
+              <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                Colegio Activo:
+              </span>
+            </div>
+            {!esSuperAdmin && usuario?.colegioNombre ? (
+              <span className="text-xs font-black bg-orange-500 text-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center gap-1.5">
+                🏫 {usuario.colegioNombre}
+              </span>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                {colegios.map((col) => (
+                  <button
+                    key={col}
+                    type="button"
+                    onClick={() => setColegioMenuSeleccionado(col)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      colegioObjetivo === col
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {col}
+                  </button>
+                ))}
               </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <Plus className="w-4 h-4" /> Agregar Grado / Sección
-              </button>
-            </form>
+            )}
           </div>
 
-          {/* Lista de grados */}
-          <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
-            <h2 className="text-sm font-black text-slate-900 mb-2">
-              Grados y Secciones Activas ({grados.length})
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {grados.map((g) => (
-                <div key={g} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-orange-500 shrink-0" />
-                    <span className="text-xs font-bold text-slate-800">{g}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSolicitarEliminarGrado(g)}
-                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                    title="Eliminar grado"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Formulario nuevo grado */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
+              <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-orange-500" />
+                Nuevo Grado / Sección
+              </h2>
+              <form onSubmit={handleAgregarGrado} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Nombre del Grado / Sección *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. 1.° Primaria B"
+                    value={nuevoGrado}
+                    onChange={(e) => setNuevoGrado(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    required
+                  />
                 </div>
-              ))}
+                <button
+                  type="submit"
+                  className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
+                >
+                  <Plus className="w-4 h-4" /> Agregar Grado / Sección
+                </button>
+              </form>
+            </div>
+
+            {/* Lista de grados */}
+            <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
+              <h2 className="text-sm font-black text-slate-900 mb-2">
+                Grados y Secciones Activas ({grados.length}) — {colegioObjetivo || 'General'}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {grados.map((g) => (
+                  <div key={g} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 text-orange-500 shrink-0" />
+                      <span className="text-xs font-bold text-slate-800">{g}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSolicitarEliminarGrado(g)}
+                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                      title="Eliminar grado"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1260,64 +1312,98 @@ export default function AdminPage() {
 
       {/* PESTAÑA: OBSERVACIONES / RESTRICCIONES */}
       {tabActiva === 'observaciones' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Formulario nueva observacion */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
-            <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-orange-500" />
-              Nueva Observación Rápida
-            </h2>
-            <p className="text-xs text-slate-500 mb-3">
-              Estas etiquetas aparecen como botones rápidos para que los padres las seleccionen al ordenar.
-            </p>
-            <form onSubmit={handleAgregarObservacion} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Etiqueta / Restricción *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Sin cebolla, Presa pecho..."
-                  value={nuevaObservacion}
-                  onChange={(e) => setNuevaObservacion(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                  required
-                />
+        <div className="space-y-4">
+          {/* Header de colegio seleccionado */}
+          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-orange-500" />
+              <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                Colegio Activo:
+              </span>
+            </div>
+            {!esSuperAdmin && usuario?.colegioNombre ? (
+              <span className="text-xs font-black bg-orange-500 text-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center gap-1.5">
+                🏫 {usuario.colegioNombre}
+              </span>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                {colegios.map((col) => (
+                  <button
+                    key={col}
+                    type="button"
+                    onClick={() => setColegioMenuSeleccionado(col)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      colegioObjetivo === col
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {col}
+                  </button>
+                ))}
               </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <Plus className="w-4 h-4" /> Agregar Etiqueta
-              </button>
-            </form>
+            )}
           </div>
 
-          {/* Lista de observaciones */}
-          <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
-            <h2 className="text-sm font-black text-slate-900 mb-2">
-              Etiquetas Configuradas ({observaciones.length})
-            </h2>
-            <p className="text-xs text-slate-500 mb-3">
-              Los padres verán estas opciones al realizar su pedido para agregar notas en un toque:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {observaciones.map((tag) => (
-                <div
-                  key={tag}
-                  className="px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-orange-900 text-xs font-bold flex items-center gap-2 shadow-2xs"
-                >
-                  <span>{tag}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleSolicitarEliminarObservacion(tag)}
-                    className="p-0.5 text-orange-400 hover:text-rose-600 transition cursor-pointer"
-                    title="Eliminar etiqueta"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Formulario nueva observacion */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
+              <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-orange-500" />
+                Nueva Observación Rápida
+              </h2>
+              <p className="text-xs text-slate-500 mb-3">
+                Estas etiquetas aparecen como botones rápidos para que los padres las seleccionen al ordenar.
+              </p>
+              <form onSubmit={handleAgregarObservacion} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Etiqueta / Restricción *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Sin cebolla, Presa pecho..."
+                    value={nuevaObservacion}
+                    onChange={(e) => setNuevaObservacion(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    required
+                  />
                 </div>
-              ))}
+                <button
+                  type="submit"
+                  className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
+                >
+                  <Plus className="w-4 h-4" /> Agregar Etiqueta
+                </button>
+              </form>
+            </div>
+
+            {/* Lista de observaciones */}
+            <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
+              <h2 className="text-sm font-black text-slate-900 mb-2">
+                Etiquetas Configuradas ({observaciones.length}) — {colegioObjetivo || 'General'}
+              </h2>
+              <p className="text-xs text-slate-500 mb-3">
+                Los padres verán estas opciones al realizar su pedido para agregar notas en un toque:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {observaciones.map((tag) => (
+                  <div
+                    key={tag}
+                    className="px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-orange-900 text-xs font-bold flex items-center gap-2 shadow-2xs"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleSolicitarEliminarObservacion(tag)}
+                      className="p-0.5 text-orange-400 hover:text-rose-600 transition cursor-pointer"
+                      title="Eliminar etiqueta"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

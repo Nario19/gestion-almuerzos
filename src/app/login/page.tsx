@@ -217,8 +217,9 @@ export default function LoginPage() {
           }
         }
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Error de conexión.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrorMsg(msg || 'Error de conexión.');
     } finally {
       setCargando(false);
     }

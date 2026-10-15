@@ -114,7 +114,7 @@ export default function SuperAdminPage() {
     });
 
     try {
-      const data = await dataService.obtenerEstudiantesPorColegio(col.nombre);
+      const data = await dataService.obtenerEstudiantesPorColegio(col.id, col.nombre);
       setModalEstudiantes((prev) => ({
         ...prev,
         estudiantes: data,
@@ -173,11 +173,20 @@ export default function SuperAdminPage() {
 
   useEffect(() => {
     if (esSuperAdmin) {
-      cargarColegios();
+      let cancelado = false;
+      dataService.obtenerColegiosDetallados().then((data) => {
+        if (!cancelado) {
+          setColegios(data);
+          setCargandoDatos(false);
+        }
+      });
       const desuscribir = dataService.suscribirCambios(() => {
         cargarColegios();
       });
-      return () => desuscribir();
+      return () => {
+        cancelado = true;
+        desuscribir();
+      };
     }
   }, [esSuperAdmin]);
 
@@ -293,7 +302,7 @@ export default function SuperAdminPage() {
       setModalColegioAbierto(false);
       await cargarColegios();
       setTimeout(() => setMensajeExito(null), 4000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error guardando colegio:', err);
       alert('Ocurrió un error al procesar el colegio.');
     } finally {
@@ -330,8 +339,9 @@ export default function SuperAdminPage() {
       setModalAdminRapido({ abierto: false, colegio: null });
       await cargarColegios();
       setTimeout(() => setMensajeExito(null), 4000);
-    } catch (e: any) {
-      alert(e.message || 'Error actualizando administrador');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(msg || 'Error actualizando administrador');
     } finally {
       setGuardando(false);
     }

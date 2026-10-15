@@ -58,13 +58,29 @@ function PedidosContent() {
 
   useEffect(() => {
     if (usuario) {
-      cargarPedidos();
+      let cancelado = false;
+      dataService.obtenerPedidosPorPadre(usuario.id, usuario.telefono).then((data) => {
+        if (!cancelado) {
+          setPedidos(data);
+          setCargandoPedidos(false);
+        }
+      });
       const desuscribir = dataService.suscribirCambios(() => {
         cargarPedidos();
       });
-      return () => desuscribir();
+      return () => {
+        cancelado = true;
+        desuscribir();
+      };
     }
   }, [usuario]);
+
+  // Reiniciar a página 1 cuando cambia el filtro de fecha (declarado antes de retornos condicionales)
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [fechaFiltro]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Pantalla de carga mientras se verifica sesión
   if (cargandoAuth) {
@@ -286,6 +302,7 @@ function PedidosContent() {
   };
 
   const cambiarDia = (offset: number) => {
+    setPaginaActual(1);
     if (fechaFiltro === 'TODAS') {
       setFechaFiltro(fechaHoy);
       return;
@@ -293,10 +310,6 @@ function PedidosContent() {
     setFechaFiltro(calcularOffsetFechaPeru(fechaFiltro, offset));
   };
 
-  // Reiniciar a página 1 cuando cambia el filtro de fecha
-  useEffect(() => {
-    setPaginaActual(1);
-  }, [fechaFiltro]);
 
   const pedidosFiltrados = pedidos.filter((p) => {
     if (fechaFiltro === 'TODAS') return true;
@@ -369,7 +382,10 @@ function PedidosContent() {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => setFechaFiltro('TODAS')}
+                onClick={() => {
+                  setFechaFiltro('TODAS');
+                  setPaginaActual(1);
+                }}
                 className={`px-3 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
                   fechaFiltro === 'TODAS'
                     ? 'bg-slate-900 text-white shadow-xs'
@@ -380,7 +396,10 @@ function PedidosContent() {
               </button>
               <button
                 type="button"
-                onClick={() => setFechaFiltro(fechaHoy)}
+                onClick={() => {
+                  setFechaFiltro(fechaHoy);
+                  setPaginaActual(1);
+                }}
                 className={`px-3 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
                   fechaFiltro === fechaHoy
                     ? 'bg-orange-500 text-white shadow-xs'
@@ -407,7 +426,10 @@ function PedidosContent() {
               <input
                 type="date"
                 value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
-                onChange={(e) => setFechaFiltro(e.target.value || 'TODAS')}
+                onChange={(e) => {
+                  setFechaFiltro(e.target.value || 'TODAS');
+                  setPaginaActual(1);
+                }}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
               />
             </div>
@@ -424,7 +446,10 @@ function PedidosContent() {
             {fechaFiltro !== 'TODAS' && (
               <button
                 type="button"
-                onClick={() => setFechaFiltro('TODAS')}
+                onClick={() => {
+                  setFechaFiltro('TODAS');
+                  setPaginaActual(1);
+                }}
                 className="text-xs font-bold text-orange-600 hover:text-orange-700 px-2 py-1.5 transition shrink-0"
                 title="Quitar filtro de fecha"
               >
@@ -476,7 +501,10 @@ function PedidosContent() {
           <div className="pt-2">
             <button
               type="button"
-              onClick={() => setFechaFiltro('TODAS')}
+              onClick={() => {
+                setFechaFiltro('TODAS');
+                setPaginaActual(1);
+              }}
               className="inline-flex items-center gap-2 py-2.5 px-5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition shadow-xs cursor-pointer"
             >
               Ver todos mis pedidos ({pedidos.length})

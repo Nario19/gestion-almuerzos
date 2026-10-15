@@ -82,6 +82,23 @@ function HijosContent() {
     };
   }, []);
 
+  // Recargar grados específicos del colegio seleccionado
+  useEffect(() => {
+    if (colegio) {
+      let montado = true;
+      dataService.obtenerGrados(colegio).then((grds) => {
+        if (!montado) return;
+        if (grds) {
+          setListaGrados(grds);
+          setGrado((prev) => (prev && grds.includes(prev) ? prev : grds[0] || ''));
+        }
+      });
+      return () => {
+        montado = false;
+      };
+    }
+  }, [colegio]);
+
   if (cargandoAuth) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">

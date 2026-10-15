@@ -144,6 +144,40 @@ function PedidoContent() {
     };
   }, []);
 
+  // Recargar grados para el modal de agregar hijo según el colegio seleccionado
+  useEffect(() => {
+    if (colegioNuevoHijo) {
+      let montado = true;
+      dataService.obtenerGrados(colegioNuevoHijo).then((grds) => {
+        if (!montado) return;
+        if (grds && grds.length > 0) {
+          setListaGrados(grds);
+          setGradoNuevoHijo((prev) => (prev && grds.includes(prev) ? prev : grds[0] || ''));
+        }
+      });
+      return () => {
+        montado = false;
+      };
+    }
+  }, [colegioNuevoHijo]);
+
+  // Recargar observaciones rápidas según el colegio del estudiante seleccionado
+  useEffect(() => {
+    const colTarget = hijoSeleccionado?.colegioNombre || hijoSeleccionado?.colegioId || colegio;
+    if (colTarget) {
+      let montado = true;
+      dataService.obtenerObservaciones(colTarget).then((obs) => {
+        if (!montado) return;
+        if (obs && obs.length > 0) {
+          setObservacionesTags(obs);
+        }
+      });
+      return () => {
+        montado = false;
+      };
+    }
+  }, [hijoSeleccionado?.colegioNombre, hijoSeleccionado?.colegioId, colegio]);
+
   // Cargar resumen de pedidos si es administrador
   useEffect(() => {
     if (esAdmin) {
@@ -153,11 +187,27 @@ function PedidoContent() {
     }
   }, [esAdmin]);
 
+  const seleccionarHijo = (hijo: Hijo) => {
+    setCargandoPlatos(true);
+    setHijoSeleccionado(hijo);
+    setEstudiante(hijo.nombreCompleto);
+    setColegio(hijo.colegioNombre);
+    setGrado(hijo.gradoSeccion);
+    if (hijo.alergiasNotas) {
+      setObservacion(`Alergias: ${hijo.alergiasNotas}`);
+    } else {
+      setObservacion('');
+    }
+  };
+
   // Cargar platos cuando cambia el día o el colegio del hijo seleccionado
   useEffect(() => {
     if (esAdmin) return; // El admin no necesita cargar el formulario de compra
     let montado = true;
-    setCargandoPlatos(true);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setEntradaSeleccionada('');
+    setSegundoSeleccionado('');
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const colegioFiltro = hijoSeleccionado?.colegioNombre || hijoSeleccionado?.colegioId || colegio || undefined;
 
@@ -177,8 +227,8 @@ function PedidoContent() {
 
       const primeraEntrada = platos.find((p) => p.disponible && esEntradaTipo(p.tipo));
       const primerSegundo = platos.find((p) => p.disponible && esSegundoTipo(p.tipo));
-      if (primeraEntrada) setEntradaSeleccionada(primeraEntrada.nombre);
-      if (primerSegundo) setSegundoSeleccionado(primerSegundo.nombre);
+      setEntradaSeleccionada(primeraEntrada ? primeraEntrada.nombre : '');
+      setSegundoSeleccionado(primerSegundo ? primerSegundo.nombre : '');
     });
 
     return () => {
@@ -192,27 +242,15 @@ function PedidoContent() {
       if (hijoIdParam) {
         const encontrado = usuario.hijos.find((h) => h.id === hijoIdParam);
         if (encontrado) {
-          seleccionarHijo(encontrado);
+          queueMicrotask(() => seleccionarHijo(encontrado));
           return;
         }
       }
       if (!hijoSeleccionado) {
-        seleccionarHijo(usuario.hijos[0]);
+        queueMicrotask(() => seleccionarHijo(usuario.hijos[0]));
       }
     }
-  }, [usuario, hijoIdParam]);
-
-  const seleccionarHijo = (hijo: Hijo) => {
-    setHijoSeleccionado(hijo);
-    setEstudiante(hijo.nombreCompleto);
-    setColegio(hijo.colegioNombre);
-    setGrado(hijo.gradoSeccion);
-    if (hijo.alergiasNotas) {
-      setObservacion(`Alergias: ${hijo.alergiasNotas}`);
-    } else {
-      setObservacion('');
-    }
-  };
+  }, [usuario, hijoIdParam, hijoSeleccionado]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -237,11 +275,21 @@ function PedidoContent() {
       return;
     }
     if (!entradaSeleccionada) {
-      setErrorValidacion('Selecciona una entrada.');
+      setErrorValidacion('Selecciona una opción de sopa o postre.');
       return;
     }
     if (!segundoSeleccionado) {
-      setErrorValidacion('Selecciona un plato de fondo.');
+      setErrorValidacion('Selecciona un segundo plato.');
+      return;
+    }
+    if (cargandoPlatos) {
+      setErrorValidacion('Cargando la carta del colegio. Por favor espera un momento.');
+      return;
+    }
+    const entradaValida = platosDelDia.some((p) => p.nombre === entradaSeleccionada && p.disponible);
+    const segundoValido = platosDelDia.some((p) => p.nombre === segundoSeleccionado && p.disponible);
+    if (!entradaValida || !segundoValido) {
+      setErrorValidacion('Por favor selecciona platos disponibles en el menú de este colegio.');
       return;
     }
 
@@ -274,10 +322,14 @@ function PedidoContent() {
             spread: 60,
             origin: { y: 0.6 },
           });
-        } catch (_) {}
-      } catch (err) {
+        } catch {
+          // Omitir si falla confetti
+        }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         console.error('Error creando pedido:', err);
-        setErrorValidacion('Ocurrió un error al registrar el pedido.');
+        setMostrarModalConfirmacionPedido(false);
+        setErrorValidacion(err?.message || 'Ocurrió un error al registrar el pedido.');
       }
     });
   };
@@ -372,8 +424,9 @@ function PedidoContent() {
       setMostrarModalAgregarHijo(false);
       setHijoParaConfirmar(hijoCreado);
       setMostrarModalConfirmacionPedido(true);
-    } catch (err: any) {
-      setErrorModalHijo(err.message || 'Error al registrar estudiante.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrorModalHijo(msg || 'Error al registrar estudiante.');
     } finally {
       setGuardandoNuevoHijo(false);
     }

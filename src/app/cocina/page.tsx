@@ -52,7 +52,6 @@ export default function CocinaPage() {
   const obsPorPagina = 6;
 
   const cargarDatos = async () => {
-    setCargando(true);
     try {
       const [data, cols] = await Promise.all([
         dataService.obtenerPedidos(),
@@ -65,12 +64,6 @@ export default function CocinaPage() {
       setCargando(false);
     }
   };
-
-  useEffect(() => {
-    if (!esSuperAdmin && usuario?.colegioNombre) {
-      setColegioFiltro(usuario.colegioNombre);
-    }
-  }, [usuario, esSuperAdmin]);
 
   useEffect(() => {
     if (!esAdmin) return;
@@ -86,6 +79,7 @@ export default function CocinaPage() {
 
   // Navegar día anterior o siguiente (para ver ayer, mañana, etc.)
   const cambiarDia = (offset: number) => {
+    setPaginaObs(1);
     if (fechaFiltro === 'TODAS') {
       setFechaFiltro(fechaHoy);
       return;
@@ -99,27 +93,21 @@ export default function CocinaPage() {
     return fechaFiltro === 'TODAS' || f === fechaFiltro;
   });
 
-  // 2. En cocina solo se preparan pedidos aceptados (pago verificado o estado avanzado por administración)
-  const pedidosAceptados = pedidosFecha.filter(
-    (p) => p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'
-  );
+  // 2. Scoping por colegio: Super Admin puede ver 'TODOS' o elegir uno; Admin de colegio ve exclusivamente el suyo
+  const colegioActivo = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
 
-  // 3. Pedidos de esta fecha que aún no han sido aceptados/pagados en Despacho
-  const pedidosPendientesDespacho = pedidosFecha.filter(
-    (p) => p.estadoPago !== 'PAGADO' && p.estadoPedido === 'REGISTRADO'
-  );
+  // 3. En cocina se contabilizan y preparan TODOS los pedidos registrados (se hayan pagado o no,
+  // con método digital Yape/Plin, en efectivo o con p.metodoPago === 'Pagar luego')
+  const pedidosFiltrados = colegioActivo === 'TODOS'
+    ? pedidosFecha
+    : pedidosFecha.filter((p) => p.colegioNombre === colegioActivo);
 
-  // 4. Filtrar pedidos listos para cocina según el colegio seleccionado
-  const pedidosFiltrados = colegioFiltro === 'TODOS'
-    ? pedidosAceptados
-    : pedidosAceptados.filter((p) => p.colegioNombre === colegioFiltro);
+  // Pedidos con pago aún pendiente de validación o cobro
+  const pedidosPendientesPago = pedidosFiltrados.filter(
+    (p) => p.estadoPago !== 'PAGADO'
+  );
 
   const resumen: ResumenCocina = dataService.calcularResumenCocina(pedidosFiltrados);
-
-  // Reiniciar página de observaciones al cambiar filtros
-  useEffect(() => {
-    setPaginaObs(1);
-  }, [fechaFiltro, colegioFiltro]);
 
   // Extraer todas las observaciones críticas de los pedidos aceptados
   const pedidosConObs = pedidosFiltrados.filter(
@@ -145,6 +133,10 @@ export default function CocinaPage() {
 
   if (!esAdmin) {
     return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para el personal de cocina de Placeres Culinarios." />;
+  }
+
+  if (!esSuperAdmin && !usuario?.colegioNombre) {
+    return <AccesoRestringido mensaje="Tu cuenta de administrador no tiene un colegio activo asignado. Contacta al Super Administrador." />;
   }
 
   return (
@@ -210,7 +202,10 @@ export default function CocinaPage() {
             <input
               type="date"
               value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
-              onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
+              onChange={(e) => {
+                setFechaFiltro(e.target.value || fechaHoy);
+                setPaginaObs(1);
+              }}
               className="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer"
               title="Seleccionar fecha para consultar cocina"
             />
@@ -228,7 +223,10 @@ export default function CocinaPage() {
             {/* Botón rápido HOY */}
             <button
               type="button"
-              onClick={() => setFechaFiltro(fechaHoy)}
+              onClick={() => {
+                setFechaFiltro(fechaHoy);
+                setPaginaObs(1);
+              }}
               className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
                 fechaFiltro === fechaHoy
                   ? 'bg-orange-500 text-white shadow-xs'
@@ -241,7 +239,10 @@ export default function CocinaPage() {
             {/* Botón Ver Todas las Fechas */}
             <button
               type="button"
-              onClick={() => setFechaFiltro('TODAS')}
+              onClick={() => {
+                setFechaFiltro('TODAS');
+                setPaginaObs(1);
+              }}
               className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
                 fechaFiltro === 'TODAS'
                   ? 'bg-amber-500 text-slate-950 font-black'
@@ -266,9 +267,12 @@ export default function CocinaPage() {
             ['TODOS', ...colegios].map((c) => (
               <button
                 key={c}
-                onClick={() => setColegioFiltro(c)}
+                onClick={() => {
+                  setColegioFiltro(c);
+                  setPaginaObs(1);
+                }}
                 className={`px-3 py-1.5 rounded-xl font-bold transition ${
-                  colegioFiltro === c
+                  colegioActivo === c
                     ? 'bg-orange-500 text-white shadow-sm'
                     : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
                 }`}
@@ -280,13 +284,13 @@ export default function CocinaPage() {
         </div>
       </div>
 
-      {/* Aviso de pedidos pendientes de validación en Despacho */}
-      {pedidosPendientesDespacho.length > 0 && (
+      {/* Aviso de pedidos pendientes de pago o validación */}
+      {pedidosPendientesPago.length > 0 && (
         <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm text-amber-900 shadow-xs">
           <div className="flex items-center gap-2.5">
-            <span className="text-lg">⏳</span>
+            <span className="text-lg">ℹ️</span>
             <span>
-              Hay <strong>{pedidosPendientesDespacho.length} pedido(s) pendiente(s) de verificación en Despacho</strong>. Pasarán automáticamente a Cocina en cuanto el administrador valide el pago.
+              Hay <strong>{pedidosPendientesPago.length} pedido(s) con pago por cobrar o validar</strong>. Ya están incluidos en el consolidado de cocina para su preparación.
             </span>
           </div>
           <Link
@@ -322,16 +326,16 @@ export default function CocinaPage() {
             {resumen.pedidosPagados}
           </span>
           <span className="text-[11px] text-slate-400 mt-0.5 block">
-            {fechaFiltro === fechaHoy ? 'Aceptados para hoy' : `Para ${formatearFechaLegible(fechaFiltro)}`}
+            {fechaFiltro === fechaHoy ? 'Pagados para hoy' : `Para ${formatearFechaLegible(fechaFiltro)}`}
           </span>
         </div>
 
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider block">Pendientes en Despacho</span>
+          <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider block">Pendientes de Pago</span>
           <span className="text-3xl font-black text-rose-600 tracking-tight block mt-1">
-            {pedidosPendientesDespacho.length}
+            {resumen.pedidosPendientesPago}
           </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Esperando confirmación</span>
+          <span className="text-[11px] text-slate-400 mt-0.5 block">Por cobrar o validar</span>
         </div>
       </div>
 

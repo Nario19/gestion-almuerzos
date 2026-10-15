@@ -74,7 +74,6 @@ export default function FiadoPage() {
 
   // Cargar datos
   const cargarDatos = async () => {
-    setCargando(true);
     try {
       const col = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
       const [resFiados, resColegios] = await Promise.all([
@@ -91,18 +90,27 @@ export default function FiadoPage() {
   };
 
   useEffect(() => {
-    if (!esSuperAdmin && usuario?.colegioNombre) {
-      setColegioFiltro(usuario.colegioNombre);
-    }
-  }, [usuario, esSuperAdmin]);
-
-  useEffect(() => {
     if (!esAdmin) return;
-    cargarDatos();
+    let cancelado = false;
+    const col = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
+
+    dataService.obtenerFiados(col).then((resFiados) => {
+      if (!cancelado) {
+        setFiados(resFiados);
+        setCargando(false);
+      }
+    });
+    dataService.obtenerColegios().then((resColegios) => {
+      if (!cancelado && resColegios) setColegios(resColegios);
+    });
+
     const desuscribir = dataService.suscribirCambios(() => {
       cargarDatos();
     });
-    return () => desuscribir();
+    return () => {
+      cancelado = true;
+      desuscribir();
+    };
   }, [esAdmin, colegioFiltro, usuario?.colegioNombre, esSuperAdmin]);
 
   // Filtrado de padres según búsqueda y estado
@@ -333,7 +341,11 @@ export default function FiadoPage() {
         </div>
       ),
       onConfirmar: async () => {
-        await dataService.liquidarDeudaPadre(ident, padre.colegioNombre);
+        const idsPendientes = padre.pedidos
+          .filter((p) => p.estadoPago !== 'PAGADO')
+          .map((p) => p.id);
+        const colFiltro = colegioFiltro === 'TODOS' ? 'TODOS' : padre.colegioNombre;
+        await dataService.liquidarDeudaPadre(ident, colFiltro, idsPendientes);
         await cargarDatos();
       },
     });
@@ -368,6 +380,12 @@ export default function FiadoPage() {
   if (!esAdmin) {
     return (
       <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para el control administrativo de cuentas por cobrar y fiados de Placeres Culinarios." />
+    );
+  }
+
+  if (!esSuperAdmin && !usuario?.colegioNombre) {
+    return (
+      <AccesoRestringido mensaje="Tu cuenta de administrador no tiene un colegio activo asignado. Contacta al Super Administrador." />
     );
   }
 
@@ -742,7 +760,7 @@ export default function FiadoPage() {
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                         <Utensils className="w-3.5 h-3.5 text-orange-500" />
-                        Desglose de Almuerzos ("Pagar luego")
+                        Desglose de Almuerzos (&quot;Pagar luego&quot;)
                       </h4>
                       <span className="text-xs text-slate-500 font-medium">
                         {padre.pedidos.length} órdenes en total

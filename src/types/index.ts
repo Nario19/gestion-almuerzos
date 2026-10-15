@@ -48,6 +48,8 @@ export interface ColegioDetallado {
   sede?: string;
   activo: boolean;
   admin?: AdminColegioInfo | null;
+  grados?: string[];
+  observaciones?: string[];
   totalPedidos?: number;
   totalEstudiantes?: number;
   createdAt?: string;

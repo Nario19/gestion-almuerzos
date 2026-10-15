@@ -81,24 +81,26 @@ function calcularEstadoTimeline(pedido) {
  * (src/app/cocina/page.tsx)
  */
 function filtrarPedidosParaCocina(pedidos, colegioFiltro = 'TODOS') {
-  // En cocina solo se preparan pedidos aceptados (pago verificado o estado avanzado por administración)
-  const pedidosAceptados = pedidos.filter(
-    (p) => p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'
-  );
-
-  const pedidosPendientesDespacho = pedidos.filter(
-    (p) => p.estadoPago !== 'PAGADO' && p.estadoPedido === 'REGISTRADO'
-  );
-
+  // En cocina se cuentan y preparan TODOS los pedidos registrados (se hayan pagado o no)
   const pedidosFiltrados =
     colegioFiltro === 'TODOS'
-      ? pedidosAceptados
-      : pedidosAceptados.filter((p) => p.colegioNombre === colegioFiltro);
+      ? pedidos
+      : pedidos.filter((p) => p.colegioNombre === colegioFiltro);
+
+  const pedidosPendientesPago = pedidosFiltrados.filter(
+    (p) => p.estadoPago !== 'PAGADO'
+  );
+
+  const pedidosPagados = pedidosFiltrados.filter(
+    (p) => p.estadoPago === 'PAGADO'
+  );
 
   return {
-    pedidosAceptados,
-    pedidosPendientesDespacho,
+    totalCocina: pedidosFiltrados.length,
+    pedidosAceptados: pedidosFiltrados,
     pedidosFiltrados,
+    pedidosPendientesPago,
+    pedidosPagados,
   };
 }
 
@@ -133,10 +135,10 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Entrega
     assert.strictEqual(timeline.etapas[2].completado, false, 'Etapa 3 (Entregado) NO debe estar completada');
     assert.strictEqual(timeline.estadoVivo.titulo, 'Orden Recibida - Esperando Pago');
 
-    // Verificación en Cocina: NO debe aparecer en pedidos de cocina
-    const { pedidosAceptados, pedidosPendientesDespacho } = filtrarPedidosParaCocina([pedido]);
-    assert.strictEqual(pedidosAceptados.length, 0, 'Cocina NO debe cocinar pedidos no aceptados');
-    assert.strictEqual(pedidosPendientesDespacho.length, 1, 'Debe aparecer como pendiente en despacho');
+    // Verificación en Cocina: Se contabiliza para cocinar, y se identifica como pendiente de pago
+    const { totalCocina, pedidosPendientesPago } = filtrarPedidosParaCocina([pedido]);
+    assert.strictEqual(totalCocina, 1, 'Cocina debe contabilizar todos los pedidos a cocinar se hayan pagado o no');
+    assert.strictEqual(pedidosPendientesPago.length, 1, 'Debe aparecer como pendiente de pago');
   });
 
   test('2. Comprobante subido: Estado VERIFICANDO', () => {
@@ -148,10 +150,10 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Entrega
     assert.strictEqual(timeline.etapas[1].descripcion, 'Validando pago');
     assert.strictEqual(timeline.estadoVivo.titulo, 'Comprobante en Revisión por Administración');
 
-    // Aún no llega a cocina hasta que admin acepte el pago
-    const { pedidosAceptados, pedidosPendientesDespacho } = filtrarPedidosParaCocina([pedido]);
-    assert.strictEqual(pedidosAceptados.length, 0);
-    assert.strictEqual(pedidosPendientesDespacho.length, 1);
+    // En cocina ya está contabilizado para cocinar, y se marca como pendiente de pago
+    const { totalCocina, pedidosPendientesPago } = filtrarPedidosParaCocina([pedido]);
+    assert.strictEqual(totalCocina, 1);
+    assert.strictEqual(pedidosPendientesPago.length, 1);
   });
 
   test('3. Etapa 2: Pago aceptado por Admin en Despacho', () => {
@@ -163,10 +165,11 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Entrega
     assert.strictEqual(timeline.etapas[2].enCurso, true, 'Paso 3 (Entregado) en curso / programado');
     assert.strictEqual(timeline.estadoVivo.titulo, '¡Pago Aceptado! Programado para Entrega');
 
-    // Ahora SÍ pasa a cocina
-    const { pedidosAceptados, pedidosPendientesDespacho } = filtrarPedidosParaCocina([pedido]);
-    assert.strictEqual(pedidosAceptados.length, 1, 'Cocina debe contabilizar la orden con pago aceptado');
-    assert.strictEqual(pedidosPendientesDespacho.length, 0);
+    // Pago aceptado: se mantiene en cocina y pasa a pago verificado
+    const { totalCocina, pedidosPagados, pedidosPendientesPago } = filtrarPedidosParaCocina([pedido]);
+    assert.strictEqual(totalCocina, 1, 'Cocina contabiliza la orden');
+    assert.strictEqual(pedidosPagados.length, 1);
+    assert.strictEqual(pedidosPendientesPago.length, 0);
   });
 
   test('4. Transición directa: De Pago aceptado a Entregado con registro de hora', () => {
@@ -217,20 +220,19 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Entrega
     assert.strictEqual(pedido.horaEntrega, '12:45 p. m.');
   });
 
-  test('7. Filtro por Colegio en Cocina respeta órdenes aceptadas', () => {
+  test('7. Filtro por Colegio en Cocina contabiliza todas las órdenes (pagadas o no)', () => {
     const p1 = { ...basePedido, id: '1', colegioNombre: 'Colegio Claretiano', estadoPago: 'PAGADO' };
     const p2 = { ...basePedido, id: '2', colegioNombre: 'Colegio Zárate', estadoPago: 'PAGADO' };
     const p3 = { ...basePedido, id: '3', colegioNombre: 'Colegio Claretiano', estadoPago: 'PENDIENTE' }; // No pagado
 
     const todos = filtrarPedidosParaCocina([p1, p2, p3], 'TODOS');
-    assert.strictEqual(todos.pedidosFiltrados.length, 2, 'Solo p1 y p2 aceptados');
+    assert.strictEqual(todos.pedidosFiltrados.length, 3, 'TODOS debe contabilizar los 3 pedidos (pagados o no)');
 
     const soloClaretiano = filtrarPedidosParaCocina([p1, p2, p3], 'Colegio Claretiano');
-    assert.strictEqual(soloClaretiano.pedidosFiltrados.length, 1, 'Solo p1 debe aparecer para Claretiano');
-    assert.strictEqual(soloClaretiano.pedidosFiltrados[0].id, '1');
+    assert.strictEqual(soloClaretiano.pedidosFiltrados.length, 2, 'Claretiano debe contabilizar 2 pedidos (p1 y p3)');
 
     const soloZarate = filtrarPedidosParaCocina([p1, p2, p3], 'Colegio Zárate');
-    assert.strictEqual(soloZarate.pedidosFiltrados.length, 1, 'Solo p2 debe aparecer para Zárate');
+    assert.strictEqual(soloZarate.pedidosFiltrados.length, 1, 'Zárate debe contabilizar 1 pedido (p2)');
     assert.strictEqual(soloZarate.pedidosFiltrados[0].id, '2');
   });
 
@@ -238,16 +240,16 @@ describe('Flujo Operativo de Estados: Orden recibida -> Pago aceptado -> Entrega
     const hoyStr = '2026-10-14';
     const ayerStr = '2026-10-13';
 
-    const pHoy = { ...basePedido, id: 'h1', fecha: hoyStr, estadoPago: 'PAGADO' };
+    const pHoy = { ...basePedido, id: 'h1', fecha: hoyStr, estadoPago: 'PENDIENTE' };
     const pAyer = { ...basePedido, id: 'a1', fecha: ayerStr, estadoPago: 'PAGADO' };
 
-    // Filtrar cocina para hoy
-    const pedidosHoy = [pHoy, pAyer].filter((p) => p.fecha === hoyStr && (p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'));
+    // Filtrar cocina para hoy (contabiliza pedidos hechos, pagados o no)
+    const pedidosHoy = [pHoy, pAyer].filter((p) => p.fecha === hoyStr);
     assert.strictEqual(pedidosHoy.length, 1);
     assert.strictEqual(pedidosHoy[0].id, 'h1');
 
-    // Filtrar cocina para ayer
-    const pedidosAyer = [pHoy, pAyer].filter((p) => p.fecha === ayerStr && (p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'));
+    // Filtrar cocina para ayer (contabiliza pedidos hechos, pagados o no)
+    const pedidosAyer = [pHoy, pAyer].filter((p) => p.fecha === ayerStr);
     assert.strictEqual(pedidosAyer.length, 1);
     assert.strictEqual(pedidosAyer[0].id, 'a1');
   });

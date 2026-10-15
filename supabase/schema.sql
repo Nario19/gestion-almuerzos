@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS colegios (
     nombre VARCHAR(150) NOT NULL,
     sede VARCHAR(100),
     activo BOOLEAN DEFAULT true,
+    grados JSONB DEFAULT '[]'::jsonb,
+    observaciones JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -24,6 +26,7 @@ CREATE TABLE IF NOT EXISTS perfiles_padres (
     email VARCHAR(150),
     password_hash VARCHAR(255),
     rol VARCHAR(20) NOT NULL DEFAULT 'PADRE', -- 'PADRE' o 'ADMIN'
+    activo BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

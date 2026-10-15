@@ -5,6 +5,8 @@ import {
   ResumenCocina,
   EstadoPedido,
   EstadoPago,
+  MetodoPago,
+  RolUsuario,
   DiaSemana,
   ColegioDetallado,
   AdminColegioInfo,
@@ -12,6 +14,7 @@ import {
   ItemFiadoPedido,
   EstudianteColegioInfo,
 } from '@/types';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabase';
 
 export const COLEGIOS_DEFAULT: string[] = [];
@@ -59,15 +62,96 @@ export function obtenerDiaActualSemana(): DiaSemana {
   return obtenerDiaActualSemanaPeru();
 }
 
+interface PedidoRowSupabase {
+  id: string;
+  codigo?: string | null;
+  fecha?: string | null;
+  created_at?: string | null;
+  colegio_nombre?: string | null;
+  colegio_id?: string | null;
+  padre_id?: string | null;
+  padre_nombre?: string | null;
+  padre_telefono?: string | null;
+  estudiante_nombre?: string | null;
+  grado_seccion?: string | null;
+  entrada_nombre?: string | null;
+  segundo_nombre?: string | null;
+  precio_total?: number | string | null;
+  monto?: number | string | null;
+  metodo_pago?: MetodoPago | null;
+  estado_pago?: EstadoPago | null;
+  estado_pedido?: EstadoPedido | null;
+  comprobante_url?: string | null;
+  observacion?: string | null;
+  hora_entrega?: string | null;
+}
+
+interface PlatoRowSupabase {
+  id: string;
+  dia?: string | null;
+  dia_semana?: string | null;
+  tipo?: string | null;
+  nombre?: string | null;
+  descripcion?: string | null;
+  imagen_url?: string | null;
+  precio?: number | string | null;
+  disponible?: boolean | null;
+  colegio_nombre?: string | null;
+  colegio_id?: string | null;
+}
+
+interface PerfilAdminRow {
+  id: string;
+  nombre_completo: string;
+  dni: string;
+  email: string;
+  telefono: string;
+  rol: string;
+  password_hash?: string;
+}
+
+interface HijoRowSupabase {
+  id: string;
+  padre_id: string;
+  nombre_completo?: string | null;
+  colegio_nombre?: string | null;
+  colegio_id?: string | null;
+  grado_seccion?: string | null;
+  alergias_notas?: string | null;
+  created_at?: string | null;
+}
+
+interface ConfigMenusDiaObj {
+  grados?: string[];
+  observaciones?: string[];
+  adminsColegio?: Record<string, AdminColegioInfo>;
+  gradosPorColegio?: Record<string, string[]>;
+  observacionesPorColegio?: Record<string, string[]>;
+}
+
+interface ObservacionCocinaItem {
+  estudiante: string;
+  grado: string;
+  colegio: string;
+  observacion: string;
+}
+
+interface FiltroColegioParam {
+  colegioId?: string;
+  colegioNombre?: string;
+}
+
 // Catálogo inicial vacío: NO hay platos inventados; todo se gestiona desde la BD por colegio
 export const PLATOS_INICIALES: Plato[] = [];
 
 let platosMemoria: Plato[] = [];
-let pedidosMemoria: Pedido[] = [];
+const pedidosMemoria: Pedido[] = [];
 let colegiosMemoria: string[] = [];
 let colegiosDetalladosMemoria: ColegioDetallado[] = [];
 let gradosMemoria: string[] = [...GRADOS_DEFAULT];
 let observacionesMemoria: string[] = [...OBSERVACIONES_DEFAULT];
+const gradosPorColegioMemoria: Record<string, string[]> = {};
+const observacionesPorColegioMemoria: Record<string, string[]> = {};
 
 if (typeof window !== 'undefined') {
   try {
@@ -134,7 +218,7 @@ function eliminarHoraEntregaLocal(id: string) {
   } catch (_) {}
 }
 
-function mapearPedidoDesdeSupabase(d: any, mapLocal: Record<string, string>): Pedido {
+function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string, string>): Pedido {
   let horaEntrega = d.hora_entrega || mapLocal[d.id] || undefined;
   let obs = d.observacion;
   if (obs && obs.includes('[Entregado:')) {
@@ -170,34 +254,34 @@ function mapearPedidoDesdeSupabase(d: any, mapLocal: Record<string, string>): Pe
 
   return {
     id: d.id,
-    codigoPedido: d.codigo_pedido,
+    codigoPedido: d.codigo || (d as { codigo_pedido?: string }).codigo_pedido || '',
     fecha: fechaNormalizada,
-    diaSemana: d.dia_semana,
-    padreId: d.padre_id,
+    diaSemana: (d as { dia_semana?: DiaSemana }).dia_semana,
+    padreId: d.padre_id || '',
     padreNombre: padreNombre || undefined,
-    hijoId: d.hijo_id,
+    hijoId: (d as { hijo_id?: string }).hijo_id,
     colegioId,
-    colegioNombre: d.colegio_nombre,
-    gradoSeccion: d.grado_seccion,
-    estudianteNombre: d.estudiante_nombre,
-    telefonoContacto: d.telefono_contacto,
-    entradaNombre: d.entrada_nombre,
-    segundoNombre: d.segundo_nombre,
-    observacion: obs,
-    metodoPago: d.metodo_pago,
-    estadoPago: d.estado_pago,
-    estadoPedido: d.estado_pedido,
-    comprobanteUrl: d.comprobante_url,
-    monto: Number(d.monto) || 12.0,
-    createdAt: d.created_at,
+    colegioNombre: d.colegio_nombre || '',
+    gradoSeccion: d.grado_seccion || '',
+    estudianteNombre: d.estudiante_nombre || '',
+    telefonoContacto: d.padre_telefono || (d as { telefono_contacto?: string }).telefono_contacto || '',
+    entradaNombre: d.entrada_nombre || '',
+    segundoNombre: d.segundo_nombre || '',
+    observacion: obs || undefined,
+    metodoPago: d.metodo_pago || 'Pagar luego',
+    estadoPago: d.estado_pago || 'PENDIENTE',
+    estadoPedido: d.estado_pedido || 'REGISTRADO',
+    comprobanteUrl: d.comprobante_url || undefined,
+    monto: Number(d.monto) || Number(d.precio_total) || 12.0,
+    createdAt: d.created_at || new Date().toISOString(),
     horaEntrega,
   };
 }
 
-function mapearPlatoDesdeSupabase(d: any): Plato {
+function mapearPlatoDesdeSupabase(d: PlatoRowSupabase): Plato {
   let colegioNombre: string | undefined = d.colegio_nombre || undefined;
   let colegioId: string | undefined = d.colegio_id || undefined;
-  let tipoFinal: string = d.tipo;
+  let tipoFinal: string = d.tipo || 'Segundo';
   if (tipoFinal === 'ENTRADA') tipoFinal = 'Sopa o postre';
   else if (tipoFinal === 'SEGUNDO') tipoFinal = 'Segundo';
 
@@ -221,25 +305,25 @@ function mapearPlatoDesdeSupabase(d: any): Plato {
   }
   return {
     id: d.id,
-    menuId: d.menu_id,
+    menuId: (d as { menu_id?: string }).menu_id,
     colegioId,
     colegioNombre,
-    diaSemana: d.dia_semana,
+    diaSemana: (d.dia_semana || d.dia || 'LUNES') as DiaSemana,
     tipo: tipoFinal,
-    nombre: d.nombre,
+    nombre: d.nombre || '',
     descripcion: descLimpia || undefined,
     precio: Number(d.precio) || 12.0,
-    imagenUrl: d.imagen_url,
+    imagenUrl: d.imagen_url || undefined,
     disponible: d.disponible ?? true,
-    orden: d.orden || 1,
+    orden: (d as { orden?: number }).orden || 1,
   };
 }
 
 export const dataService = {
-  async obtenerPlatosPorDia(dia: DiaSemana, colegioNombre?: string): Promise<Plato[]> {
+  async obtenerPlatosPorDia(dia: DiaSemana, colegioNombre?: string | FiltroColegioParam): Promise<Plato[]> {
     const colegioIdONombre =
       typeof colegioNombre === 'object' && colegioNombre !== null
-        ? (colegioNombre as any).colegioNombre || (colegioNombre as any).colegioId
+        ? (colegioNombre.colegioNombre || colegioNombre.colegioId)
         : colegioNombre;
 
     let platos: Plato[] = [];
@@ -270,8 +354,8 @@ export const dataService = {
     let targetNombre = '';
 
     if (typeof colegioNombre === 'object' && colegioNombre !== null) {
-      targetId = ((colegioNombre as any).colegioId || '').toLowerCase().trim();
-      targetNombre = ((colegioNombre as any).colegioNombre || '').toLowerCase().trim();
+      targetId = (colegioNombre.colegioId || '').toLowerCase().trim();
+      targetNombre = (colegioNombre.colegioNombre || '').toLowerCase().trim();
     }
 
     if (typeof colegioIdONombre === 'string') {
@@ -357,7 +441,7 @@ export const dataService = {
         if (data) {
           nuevoPlato.id = data.id;
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('Error en agregarPlato:', e);
         throw e;
       }
@@ -448,7 +532,9 @@ export const dataService = {
       estadoPago?: EstadoPago;
     }
   ): Promise<Pedido> {
-    const randomCode = `ALM-${Math.floor(100 + Math.random() * 900)}`;
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const timePart = Date.now().toString().slice(-4);
+    const randomCode = `ALM-${timePart}-${randomNum}`;
     const nuevo: Pedido = {
       ...pedidoData,
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}`,
@@ -495,13 +581,16 @@ export const dataService = {
           .select()
           .single();
 
-        if (!error && data) {
-          nuevo.id = data.id;
-        } else if (error) {
+        if (error) {
           console.error('Error insertando pedido en Supabase:', error);
+          throw new Error(`Error al registrar pedido: ${error.message || 'No se pudo guardar la orden'}`);
         }
-      } catch (err) {
-        console.error('Fallo de red al crear pedido en Supabase:', err);
+        if (data) {
+          nuevo.id = data.id;
+        }
+      } catch (err: unknown) {
+        console.error('Fallo al crear pedido en Supabase:', err);
+        throw err;
       }
     }
 
@@ -516,15 +605,7 @@ export const dataService = {
       : undefined;
 
     const index = pedidosMemoria.findIndex((p) => p.id === id);
-    let observacionOriginal = '';
-    if (index !== -1) {
-      observacionOriginal = pedidosMemoria[index].observacion || '';
-      pedidosMemoria[index] = {
-        ...pedidosMemoria[index],
-        estadoPedido: nuevoEstado,
-        horaEntrega: hora,
-      };
-    }
+    let observacionExistente = index !== -1 ? (pedidosMemoria[index].observacion || '') : '';
 
     if (nuevoEstado === 'ENTREGADO' && hora) {
       guardarHoraEntregaLocal(id, hora);
@@ -534,21 +615,51 @@ export const dataService = {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        let nuevaObs = observacionOriginal.replace(/\s*•?\s*\[Entregado:\s*[^\]]+\]/, '').trim();
-        if (nuevoEstado === 'ENTREGADO' && hora) {
-          nuevaObs = nuevaObs ? `${nuevaObs} • [Entregado: ${hora}]` : `[Entregado: ${hora}]`;
+        // Si no tenemos la observación en memoria, consultarla de Supabase para no borrar notas/alergias
+        if (!observacionExistente) {
+          const { data: pBD } = await supabase
+            .from('pedidos')
+            .select('observacion')
+            .eq('id', id)
+            .maybeSingle();
+          if (pBD?.observacion) {
+            observacionExistente = pBD.observacion;
+          }
         }
+
+        // Limpiar únicamente marcas de entrega previas conservando todas las notas, alergias y etiquetas
+        const limpiaObs = observacionExistente.replace(/\s*•?\s*\[Entregado:\s*[^\]]+\]/g, '').trim();
+        let nuevaObs: string | null = limpiaObs || null;
+
+        if (nuevoEstado === 'ENTREGADO' && hora) {
+          nuevaObs = limpiaObs ? `${limpiaObs} • [Entregado: ${hora}]` : `[Entregado: ${hora}]`;
+        }
+
         await supabase
           .from('pedidos')
           .update({
             estado_pedido: nuevoEstado,
-            observacion: nuevaObs || null,
+            observacion: nuevaObs,
           })
           .eq('id', id);
+
+        // Actualizar la observación limpia en memoria para mantener consistencia
+        if (index !== -1) {
+          pedidosMemoria[index].observacion = nuevaObs || '';
+        }
       } catch (e) {
         console.error('Error actualizando pedido en Supabase:', e);
       }
     }
+
+    if (index !== -1) {
+      pedidosMemoria[index] = {
+        ...pedidosMemoria[index],
+        estadoPedido: nuevoEstado,
+        horaEntrega: hora,
+      };
+    }
+
     notifyListeners();
   },
 
@@ -601,7 +712,7 @@ export const dataService = {
       }
     }
 
-    let mapaPadres: Record<string, { nombre: string; telefono: string }> = {};
+    const mapaPadres: Record<string, { nombre: string; telefono: string }> = {};
     if (isSupabaseConfigured && supabase) {
       try {
         const { data: padresData } = await supabase
@@ -691,13 +802,21 @@ export const dataService = {
     return resultado.sort((a, b) => b.totalDeuda - a.totalDeuda);
   },
 
-  async liquidarDeudaPadre(padreIdOTelefono: string, colegioNombre?: string): Promise<{ ok: boolean; count: number }> {
+  async liquidarDeudaPadre(
+    padreIdOTelefono: string,
+    colegioNombre?: string,
+    pedidoIds?: string[]
+  ): Promise<{ ok: boolean; count: number; error?: string }> {
     let idsAActualizar: string[] = [];
+    const tieneIds = Array.isArray(pedidoIds) && pedidoIds.length > 0;
 
     pedidosMemoria.forEach((p) => {
-      const coincide = (p.padreId === padreIdOTelefono || p.telefonoContacto === padreIdOTelefono);
+      const matchId = tieneIds && pedidoIds.includes(p.id);
+      const coincidePadre = p.padreId === padreIdOTelefono || p.telefonoContacto === padreIdOTelefono;
       const coincideColegio = !colegioNombre || colegioNombre === 'TODOS' || p.colegioNombre === colegioNombre;
-      if (coincide && coincideColegio && (p.metodoPago === 'Pagar luego' || p.metodoPago === 'Efectivo') && p.estadoPago !== 'PAGADO') {
+      const debeLiquidar = tieneIds ? matchId : (coincidePadre && coincideColegio);
+
+      if (debeLiquidar && (p.metodoPago === 'Pagar luego' || p.metodoPago === 'Efectivo') && p.estadoPago !== 'PAGADO') {
         p.estadoPago = 'PAGADO';
         idsAActualizar.push(p.id);
       }
@@ -711,22 +830,32 @@ export const dataService = {
           .in('metodo_pago', ['Pagar luego', 'Efectivo'])
           .neq('estado_pago', 'PAGADO');
 
-        if (padreIdOTelefono.includes('-') || padreIdOTelefono.length > 20) {
-          query = query.eq('padre_id', padreIdOTelefono);
+        if (tieneIds) {
+          query = query.in('id', pedidoIds);
         } else {
-          query = query.or(`padre_id.eq.${padreIdOTelefono},telefono_contacto.eq.${padreIdOTelefono}`);
-        }
+          if (padreIdOTelefono.includes('-') || padreIdOTelefono.length > 20) {
+            query = query.eq('padre_id', padreIdOTelefono);
+          } else {
+            query = query.or(`padre_id.eq.${padreIdOTelefono},telefono_contacto.eq.${padreIdOTelefono}`);
+          }
 
-        if (colegioNombre && colegioNombre !== 'TODOS') {
-          query = query.eq('colegio_nombre', colegioNombre);
+          if (colegioNombre && colegioNombre !== 'TODOS') {
+            query = query.eq('colegio_nombre', colegioNombre);
+          }
         }
 
         const { data, error } = await query.select('id');
-        if (!error && data) {
+        if (error) {
+          console.error('Error liquidando deuda del padre en Supabase:', error);
+          return { ok: false, count: 0, error: error.message };
+        }
+        if (data) {
           idsAActualizar = data.map((d) => d.id);
         }
-      } catch (e) {
+      } catch (e: unknown) {
+        const errorMsg = e instanceof Error ? e.message : 'Error desconocido al liquidar deuda';
         console.error('Error liquidando deuda del padre en Supabase:', e);
+        return { ok: false, count: 0, error: errorMsg };
       }
     }
 
@@ -739,8 +868,8 @@ export const dataService = {
   },
 
   calcularResumenCocina(pedidos: Pedido[]): ResumenCocina {
-    const entradasMap = new Map<string, { count: number; obs: any[] }>();
-    const segundosMap = new Map<string, { count: number; obs: any[] }>();
+    const entradasMap = new Map<string, { count: number; obs: ObservacionCocinaItem[] }>();
+    const segundosMap = new Map<string, { count: number; obs: ObservacionCocinaItem[] }>();
 
     let pedidosConObservacion = 0;
     let pendientesPago = 0;
@@ -806,7 +935,7 @@ export const dataService = {
 
   suscribirCambios(callback: () => void): () => void {
     listeners.push(callback);
-    let channel: any = null;
+    let channel: RealtimeChannel | null = null;
 
     if (isSupabaseConfigured && supabase) {
       channel = supabase
@@ -878,9 +1007,8 @@ export const dataService = {
   },
 
   async obtenerColegiosDetallados(): Promise<ColegioDetallado[]> {
-    let colegiosBase: any[] = [];
+    let colegiosBase: Array<{ id: string; nombre: string; activo?: boolean; created_at?: string; sede?: string | null }> = [];
     let adminsMap: Record<string, AdminColegioInfo> = {};
-    let conteoPedidos: Record<string, number> = {};
 
     // 1. Cargar desde Supabase si está disponible
     if (isSupabaseConfigured && supabase) {
@@ -898,10 +1026,10 @@ export const dataService = {
         // B. Cargar admins registrados en perfiles_padres
         const { data: adminsData } = await supabase
           .from('perfiles_padres')
-          .select('id, nombre_completo, dni, email, telefono, rol')
+          .select('id, nombre_completo, dni, email, telefono, rol, password_hash')
           .in('rol', ['ADMIN', 'SUPER_ADMIN']);
 
-        const adminsPorDni: Record<string, any> = {};
+        const adminsPorDni: Record<string, PerfilAdminRow> = {};
         if (adminsData) {
           adminsData.forEach((a) => {
             if (a.dni) adminsPorDni[a.dni] = a;
@@ -922,31 +1050,51 @@ export const dataService = {
             if (parsed.adminsColegio) {
               adminsMap = parsed.adminsColegio;
             }
+            if (parsed.gradosPorColegio) {
+              Object.entries(parsed.gradosPorColegio).forEach(([k, v]) => {
+                if (Array.isArray(v) && gradosPorColegioMemoria[k] === undefined) {
+                  gradosPorColegioMemoria[k] = [...v];
+                }
+              });
+            }
+            if (parsed.observacionesPorColegio) {
+              Object.entries(parsed.observacionesPorColegio).forEach(([k, v]) => {
+                if (Array.isArray(v) && observacionesPorColegioMemoria[k] === undefined) {
+                  observacionesPorColegioMemoria[k] = [...v];
+                }
+              });
+            }
           } catch (_) {}
         }
 
-        // D. Cargar conteo de pedidos por colegio
-        const { data: pedData } = await supabase.from('pedidos').select('colegio_nombre');
+        // D. Cargar conteo de pedidos por colegio (asociación exacta sin duplicación)
+        const pedidosPorColegio: Record<string, number> = {};
+        const { data: pedData } = await supabase.from('pedidos').select('colegio_id, colegio_nombre');
         if (pedData) {
           pedData.forEach((p) => {
-            if (p.colegio_nombre) {
-              conteoPedidos[p.colegio_nombre] = (conteoPedidos[p.colegio_nombre] || 0) + 1;
+            const colMatch = colegiosBase.find(
+              (c) =>
+                (p.colegio_id && c.id === p.colegio_id) ||
+                (p.colegio_nombre && c.nombre.trim().toLowerCase() === p.colegio_nombre.trim().toLowerCase())
+            );
+            if (colMatch) {
+              pedidosPorColegio[colMatch.id] = (pedidosPorColegio[colMatch.id] || 0) + 1;
             }
           });
         }
 
-        // E. Cargar conteo de estudiantes (hijos) asociados a cada colegio
+        // E. Cargar conteo de estudiantes (hijos) asociados a cada colegio (sin doble incremento)
         const conteoEstudiantes: Record<string, number> = {};
-        const { data: hijosData } = await supabase.from('hijos').select('colegio_id, colegio_nombre');
+        const { data: hijosData } = await supabase.from('hijos').select('id, colegio_id, colegio_nombre');
         if (hijosData) {
           hijosData.forEach((h) => {
-            if (h.colegio_id) {
-              conteoEstudiantes[h.colegio_id] = (conteoEstudiantes[h.colegio_id] || 0) + 1;
-            }
-            if (h.colegio_nombre) {
-              conteoEstudiantes[h.colegio_nombre] = (conteoEstudiantes[h.colegio_nombre] || 0) + 1;
-              conteoEstudiantes[h.colegio_nombre.toLowerCase().trim()] =
-                (conteoEstudiantes[h.colegio_nombre.toLowerCase().trim()] || 0) + 1;
+            const colMatch = colegiosBase.find(
+              (c) =>
+                (h.colegio_id && c.id === h.colegio_id) ||
+                (h.colegio_nombre && c.nombre.trim().toLowerCase() === h.colegio_nombre.trim().toLowerCase())
+            );
+            if (colMatch) {
+              conteoEstudiantes[colMatch.id] = (conteoEstudiantes[colMatch.id] || 0) + 1;
             }
           });
         }
@@ -967,7 +1115,7 @@ export const dataService = {
           // Resolver admin asignado
           let adminAsignado: AdminColegioInfo | null = null;
           if (adminsMap[c.nombre]) {
-            adminAsignado = adminsMap[c.nombre];
+            adminAsignado = { ...adminsMap[c.nombre] };
           } else if (adminDniFromSede && adminsPorDni[adminDniFromSede]) {
             const a = adminsPorDni[adminDniFromSede];
             adminAsignado = {
@@ -976,14 +1124,32 @@ export const dataService = {
               dni: a.dni,
               email: a.email || '',
               telefono: a.telefono || '',
+              password: a.password_hash || '',
             };
           }
 
-          const totalEstudiantes =
-            (c.id && conteoEstudiantes[c.id]) ||
-            conteoEstudiantes[c.nombre] ||
-            conteoEstudiantes[c.nombre.toLowerCase().trim()] ||
-            0;
+          if (adminAsignado && !adminAsignado.password) {
+            const adminKey = adminAsignado.dni || adminAsignado.email;
+            const a = adminKey ? adminsPorDni[adminKey] : undefined;
+            if (a && a.password_hash) {
+              adminAsignado.password = a.password_hash;
+            }
+          }
+
+          const totalEstudiantes = conteoEstudiantes[c.id] || 0;
+          const totalPedidos = pedidosPorColegio[c.id] || 0;
+
+          const cRaw = c as { grados?: string[]; observaciones?: string[] };
+          const colGrados = Array.isArray(cRaw.grados) ? cRaw.grados : undefined;
+          const colObs = Array.isArray(cRaw.observaciones) ? cRaw.observaciones : undefined;
+          if (colGrados) {
+            gradosPorColegioMemoria[c.nombre] = [...colGrados];
+            gradosPorColegioMemoria[c.id] = [...colGrados];
+          }
+          if (colObs) {
+            observacionesPorColegioMemoria[c.nombre] = [...colObs];
+            observacionesPorColegioMemoria[c.id] = [...colObs];
+          }
 
           return {
             id: c.id,
@@ -991,8 +1157,10 @@ export const dataService = {
             sede: sedeLimpia,
             activo: c.activo !== false,
             admin: adminAsignado,
-            totalPedidos: conteoPedidos[c.nombre] || 0,
+            totalPedidos,
             totalEstudiantes,
+            grados: colGrados,
+            observaciones: colObs,
             createdAt: c.created_at,
           };
         });
@@ -1028,7 +1196,10 @@ export const dataService = {
     return [...colegiosDetalladosMemoria];
   },
 
-  async obtenerEstudiantesPorColegio(colegioNombreOId?: string): Promise<EstudianteColegioInfo[]> {
+  async obtenerEstudiantesPorColegio(
+    colegioNombreOId?: string,
+    colegioNombreFallback?: string
+  ): Promise<EstudianteColegioInfo[]> {
     let estudiantes: EstudianteColegioInfo[] = [];
 
     if (isSupabaseConfigured && supabase) {
@@ -1050,7 +1221,7 @@ export const dataService = {
             });
           }
 
-          estudiantes = hijos.map((h: any) => {
+          estudiantes = hijos.map((h: HijoRowSupabase) => {
             const p = padreMap[h.padre_id] || {};
             return {
               id: h.id,
@@ -1075,9 +1246,10 @@ export const dataService = {
     // Filtrar por colegio si se especificó
     if (colegioNombreOId && colegioNombreOId !== 'TODOS') {
       const target = colegioNombreOId.toLowerCase().trim();
+      const fallback = (colegioNombreFallback || '').toLowerCase().trim();
       estudiantes = estudiantes.filter((est) => {
-        const idMatch = est.colegioId && est.colegioId.toLowerCase().trim() === target;
-        const nombreMatch = est.colegioNombre && est.colegioNombre.toLowerCase().trim() === target;
+        const idMatch = est.colegioId && (est.colegioId.toLowerCase().trim() === target || (fallback && est.colegioId.toLowerCase().trim() === fallback));
+        const nombreMatch = est.colegioNombre && (est.colegioNombre.toLowerCase().trim() === target || (fallback && est.colegioNombre.toLowerCase().trim() === fallback));
         return idMatch || nombreMatch;
       });
     }
@@ -1141,6 +1313,8 @@ export const dataService = {
               nombre: nombreLimpio,
               sede: sedeConAdmin,
               activo: colegio.activo !== false,
+              grados: GRADOS_DEFAULT,
+              observaciones: OBSERVACIONES_DEFAULT,
             },
           ])
           .select()
@@ -1159,13 +1333,14 @@ export const dataService = {
           .eq('dia_semana', 'SABADO')
           .maybeSingle();
 
-        let cfgObj: any = { grados: GRADOS_DEFAULT, observaciones: OBSERVACIONES_DEFAULT, adminsColegio: {} };
+        let cfgObj: ConfigMenusDiaObj = { grados: GRADOS_DEFAULT, observaciones: OBSERVACIONES_DEFAULT, adminsColegio: {} };
         if (configRow && configRow.mensaje_aviso) {
           try {
             cfgObj = JSON.parse(configRow.mensaje_aviso);
             if (!cfgObj.adminsColegio) cfgObj.adminsColegio = {};
           } catch (_) {}
         }
+        if (!cfgObj.adminsColegio) cfgObj.adminsColegio = {};
         cfgObj.adminsColegio[nombreLimpio] = {
           id: adminId,
           nombreCompleto: admin.nombreCompleto.trim(),
@@ -1173,15 +1348,25 @@ export const dataService = {
           email: emailAdmin,
           telefono: telAdmin,
         };
+        if (!cfgObj.gradosPorColegio) cfgObj.gradosPorColegio = {};
+        cfgObj.gradosPorColegio[nombreLimpio] = [...GRADOS_DEFAULT];
+        if (!cfgObj.observacionesPorColegio) cfgObj.observacionesPorColegio = {};
+        cfgObj.observacionesPorColegio[nombreLimpio] = [...OBSERVACIONES_DEFAULT];
 
         await supabase
           .from('menus_dia')
           .update({ mensaje_aviso: JSON.stringify(cfgObj) })
           .eq('dia_semana', 'SABADO');
-      } catch (e: any) {
-        return { ok: false, error: e.message || 'Error general en base de datos' };
+      } catch (e: unknown) {
+        const errorMsg = e instanceof Error ? e.message : 'Error general en base de datos';
+        return { ok: false, error: errorMsg };
       }
     }
+
+    gradosPorColegioMemoria[nombreLimpio] = [...GRADOS_DEFAULT];
+    gradosPorColegioMemoria[nuevoId] = [...GRADOS_DEFAULT];
+    observacionesPorColegioMemoria[nombreLimpio] = [...OBSERVACIONES_DEFAULT];
+    observacionesPorColegioMemoria[nuevoId] = [...OBSERVACIONES_DEFAULT];
 
     const nuevoColegioDetallado: ColegioDetallado = {
       id: nuevoId,
@@ -1196,6 +1381,8 @@ export const dataService = {
         telefono: telAdmin,
       },
       totalPedidos: 0,
+      grados: [...GRADOS_DEFAULT],
+      observaciones: [...OBSERVACIONES_DEFAULT],
       createdAt: new Date().toISOString(),
     };
 
@@ -1221,6 +1408,10 @@ export const dataService = {
     const nombreLimpio = colegio.nombre.trim();
     if (!nombreLimpio) return { ok: false, error: 'El nombre es obligatorio.' };
 
+    const colegioOriginal = colegiosDetalladosMemoria.find((c) => c.id === colegioId);
+    const nombreAntiguo = colegioOriginal?.nombre || '';
+    const huboCambioNombre = Boolean(nombreAntiguo && nombreAntiguo.toLowerCase() !== nombreLimpio.toLowerCase());
+
     const sedeBase = (colegio.sede || '').trim().replace(/\|.*$/, '').trim();
     const dniAdmin = admin?.dni?.trim() || '';
     const sedeConAdmin = dniAdmin
@@ -1230,7 +1421,7 @@ export const dataService = {
     if (isSupabaseConfigured && supabase) {
       try {
         // 1. Actualizar datos del colegio
-        await supabase
+        const { error: errCol } = await supabase
           .from('colegios')
           .update({
             nombre: nombreLimpio,
@@ -1239,9 +1430,52 @@ export const dataService = {
           })
           .eq('id', colegioId);
 
-        // 2. Si se proporcionó información de admin, actualizar en perfiles_padres
+        if (errCol) throw errCol;
+
+        // 2. Si hubo cambio de nombre, actualizar en cascada referencias en hijos y pedidos
+        if (huboCambioNombre) {
+          await supabase
+            .from('hijos')
+            .update({ colegio_nombre: nombreLimpio })
+            .eq('colegio_nombre', nombreAntiguo);
+
+          await supabase
+            .from('pedidos')
+            .update({ colegio_nombre: nombreLimpio })
+            .eq('colegio_nombre', nombreAntiguo);
+        }
+
+        // 3. Actualizar o migrar en menus_dia (SABADO)
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: ConfigMenusDiaObj = { grados: GRADOS_DEFAULT, observaciones: OBSERVACIONES_DEFAULT, adminsColegio: {} };
+        if (configRow && configRow.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+            if (!cfgObj.adminsColegio) cfgObj.adminsColegio = {};
+          } catch (_) {}
+        }
+        if (!cfgObj.adminsColegio) cfgObj.adminsColegio = {};
+
+        // Si se renombró el colegio, trasladar la entrada en adminsColegio
+        if (huboCambioNombre && cfgObj.adminsColegio[nombreAntiguo]) {
+          cfgObj.adminsColegio[nombreLimpio] = cfgObj.adminsColegio[nombreAntiguo];
+          delete cfgObj.adminsColegio[nombreAntiguo];
+        }
+
+        // 4. Si se proporcionó información de admin, actualizar en perfiles_padres y en config
         if (admin && admin.dni) {
-          const updateData: any = {
+          const updateData: {
+            nombre_completo: string;
+            telefono: string;
+            rol: RolUsuario;
+            email?: string;
+            password_hash?: string;
+          } = {
             nombre_completo: admin.nombreCompleto.trim(),
             telefono: admin.telefono?.trim() || '999999999',
             rol: 'ADMIN',
@@ -1261,39 +1495,32 @@ export const dataService = {
               { onConflict: 'dni' }
             );
 
-          // Actualizar en diccionario de menus_dia (SABADO)
-          const { data: configRow } = await supabase
-            .from('menus_dia')
-            .select('mensaje_aviso')
-            .eq('dia_semana', 'SABADO')
-            .maybeSingle();
-
-          let cfgObj: any = { grados: GRADOS_DEFAULT, observaciones: OBSERVACIONES_DEFAULT, adminsColegio: {} };
-          if (configRow && configRow.mensaje_aviso) {
-            try {
-              cfgObj = JSON.parse(configRow.mensaje_aviso);
-              if (!cfgObj.adminsColegio) cfgObj.adminsColegio = {};
-            } catch (_) {}
-          }
           cfgObj.adminsColegio[nombreLimpio] = {
             nombreCompleto: admin.nombreCompleto.trim(),
             dni: admin.dni.trim(),
             email: admin.email?.trim() || '',
             telefono: admin.telefono?.trim() || '',
           };
-
-          await supabase
-            .from('menus_dia')
-            .update({ mensaje_aviso: JSON.stringify(cfgObj) })
-            .eq('dia_semana', 'SABADO');
         }
-      } catch (e: any) {
+
+        await supabase
+          .from('menus_dia')
+          .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+          .eq('dia_semana', 'SABADO');
+      } catch (e: unknown) {
+        const errorMsg = e instanceof Error ? e.message : 'Error desconocido al actualizar colegio';
         console.error('Error actualizando colegio con admin:', e);
-        return { ok: false, error: e.message };
+        return { ok: false, error: errorMsg };
       }
     }
 
     // Actualizar memoria
+    if (huboCambioNombre) {
+      pedidosMemoria.forEach((p) => {
+        if (p.colegioNombre === nombreAntiguo) p.colegioNombre = nombreLimpio;
+      });
+    }
+
     const idx = colegiosDetalladosMemoria.findIndex((c) => c.id === colegioId || c.nombre === nombreLimpio);
     if (idx !== -1) {
       colegiosDetalladosMemoria[idx] = {
@@ -1318,9 +1545,7 @@ export const dataService = {
   async eliminarColegioCompleto(colegioId: string, nombreColegio: string): Promise<{ ok: boolean; error?: string }> {
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from('colegios').delete().eq('id', colegioId);
-
-        // Remover de config en menus_dia
+        let adminDniAEliminar = '';
         const { data: configRow } = await supabase
           .from('menus_dia')
           .select('mensaje_aviso')
@@ -1331,6 +1556,7 @@ export const dataService = {
           try {
             const cfgObj = JSON.parse(configRow.mensaje_aviso);
             if (cfgObj.adminsColegio && cfgObj.adminsColegio[nombreColegio]) {
+              adminDniAEliminar = cfgObj.adminsColegio[nombreColegio].dni || '';
               delete cfgObj.adminsColegio[nombreColegio];
               await supabase
                 .from('menus_dia')
@@ -1339,9 +1565,25 @@ export const dataService = {
             }
           } catch (_) {}
         }
-      } catch (e: any) {
+
+        // Revocar el rol ADMIN a PADRE para que el admin del colegio eliminado no quede con acceso privilegiado
+        if (adminDniAEliminar) {
+          await supabase
+            .from('perfiles_padres')
+            .update({ rol: 'PADRE' })
+            .eq('dni', adminDniAEliminar)
+            .eq('rol', 'ADMIN');
+        }
+
+        const { error: errDel } = await supabase.from('colegios').delete().eq('id', colegioId);
+        if (errDel) {
+          console.error('Error eliminando colegio de Supabase:', errDel);
+          return { ok: false, error: errDel.message };
+        }
+      } catch (e: unknown) {
+        const errorMsg = e instanceof Error ? e.message : 'Error al eliminar colegio';
         console.error('Error eliminando colegio de Supabase:', e);
-        return { ok: false, error: e.message };
+        return { ok: false, error: errorMsg };
       }
     }
 
@@ -1425,46 +1667,296 @@ export const dataService = {
     return [...colegiosMemoria];
   },
 
-  // --- GESTIÓN DE GRADOS Y SECCIONES ---
-  async obtenerGrados(): Promise<string[]> {
+  // --- GESTIÓN DE GRADOS Y SECCIONES (INDEPENDIENTE POR COLEGIO) ---
+  async obtenerGrados(colegioNombreOId?: string): Promise<string[]> {
+    const colKey = (colegioNombreOId || '').trim();
+
+    if (!colKey || colKey === 'TODOS') {
+      return [...gradosMemoria];
+    }
+
+    if (gradosPorColegioMemoria[colKey] !== undefined) {
+      return [...gradosPorColegioMemoria[colKey]];
+    }
+
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        const esUuid = colKey.length === 36 && colKey.includes('-');
+        let query = supabase.from('colegios').select('id, nombre, grados');
+        if (esUuid) {
+          query = query.eq('id', colKey);
+        } else {
+          query = query.ilike('nombre', colKey);
+        }
+        const { data: colData } = await query.maybeSingle();
+        if (colData && Array.isArray(colData.grados)) {
+          gradosPorColegioMemoria[colKey] = colData.grados;
+          gradosPorColegioMemoria[colData.nombre] = colData.grados;
+          gradosPorColegioMemoria[colData.id] = colData.grados;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`config_grados_${colData.nombre}`, JSON.stringify(colData.grados));
+          }
+          return [...colData.grados];
+        }
+      } catch (_) {}
+
+      try {
+        const { data: configRow } = await supabase
           .from('menus_dia')
           .select('mensaje_aviso')
           .eq('dia_semana', 'SABADO')
           .maybeSingle();
 
-        if (!error && data && data.mensaje_aviso) {
-          try {
-            const parsed = JSON.parse(data.mensaje_aviso);
-            if (Array.isArray(parsed.grados) && parsed.grados.length > 0) {
-              gradosMemoria = parsed.grados;
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('config_grados', JSON.stringify(gradosMemoria));
-              }
-              return [...gradosMemoria];
+        if (configRow?.mensaje_aviso) {
+          const parsed = JSON.parse(configRow.mensaje_aviso);
+          if (parsed.gradosPorColegio && parsed.gradosPorColegio[colKey] !== undefined) {
+            const list = parsed.gradosPorColegio[colKey];
+            if (Array.isArray(list)) {
+              gradosPorColegioMemoria[colKey] = list;
+              return [...list];
             }
-          } catch (_) {}
-        }
-      } catch (e) {
-        console.warn('Error leyendo grados de Supabase:', e);
-      }
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        const g = localStorage.getItem('config_grados');
-        if (g) {
-          const parsed = JSON.parse(g);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            gradosMemoria = parsed;
-            return [...gradosMemoria];
           }
         }
       } catch (_) {}
     }
-    return [...gradosMemoria];
+
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(`config_grados_${colKey}`);
+        if (cached !== null) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            gradosPorColegioMemoria[colKey] = parsed;
+            return [...parsed];
+          }
+        }
+      } catch (_) {}
+    }
+
+    gradosPorColegioMemoria[colKey] = [...GRADOS_DEFAULT];
+    return [...GRADOS_DEFAULT];
+  },
+
+  async guardarGradosColegio(nuevosGrados: string[], colegioNombreOId?: string): Promise<void> {
+    const colKey = (colegioNombreOId || '').trim();
+    if (!colKey || colKey === 'TODOS') {
+      gradosMemoria = [...nuevosGrados];
+      await this.guardarConfiguracionSistema(nuevosGrados, undefined);
+      return;
+    }
+
+    gradosPorColegioMemoria[colKey] = [...nuevosGrados];
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`config_grados_${colKey}`, JSON.stringify(nuevosGrados));
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const esUuid = colKey.length === 36 && colKey.includes('-');
+        let query = supabase.from('colegios').update({ grados: nuevosGrados });
+        if (esUuid) {
+          query = query.eq('id', colKey);
+        } else {
+          query = query.ilike('nombre', colKey);
+        }
+        await query;
+      } catch (e) {
+        console.warn('Actualización de columna grados en colegios omitida:', e);
+      }
+
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: ConfigMenusDiaObj = { adminsColegio: {}, gradosPorColegio: {}, observacionesPorColegio: {} };
+        if (configRow?.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+          } catch (_) {}
+        }
+        if (!cfgObj.gradosPorColegio) cfgObj.gradosPorColegio = {};
+        cfgObj.gradosPorColegio[colKey] = nuevosGrados;
+
+        await supabase
+          .from('menus_dia')
+          .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+          .eq('dia_semana', 'SABADO');
+      } catch (e) {
+        console.error('Error guardando grados en menus_dia:', e);
+      }
+    }
+    notifyListeners();
+  },
+
+  async agregarGrado(nombre: string, colegioNombreOId?: string): Promise<string[]> {
+    const limpio = nombre.trim();
+    if (!limpio) return this.obtenerGrados(colegioNombreOId);
+
+    const actuales = await this.obtenerGrados(colegioNombreOId);
+    if (actuales.some((g) => g.toLowerCase() === limpio.toLowerCase())) {
+      return [...actuales];
+    }
+    const nuevos = [...actuales, limpio];
+    await this.guardarGradosColegio(nuevos, colegioNombreOId);
+    return nuevos;
+  },
+
+  async eliminarGrado(nombre: string, colegioNombreOId?: string): Promise<string[]> {
+    const target = nombre.trim();
+    const actuales = await this.obtenerGrados(colegioNombreOId);
+    const nuevos = actuales.filter((g) => g.toLowerCase() !== target.toLowerCase());
+    await this.guardarGradosColegio(nuevos, colegioNombreOId);
+    return nuevos;
+  },
+
+  // --- GESTIÓN DE OBSERVACIONES / RESTRICCIONES (INDEPENDIENTE POR COLEGIO) ---
+  async obtenerObservaciones(colegioNombreOId?: string): Promise<string[]> {
+    const colKey = (colegioNombreOId || '').trim();
+
+    if (!colKey || colKey === 'TODOS') {
+      return [...observacionesMemoria];
+    }
+
+    if (observacionesPorColegioMemoria[colKey] !== undefined) {
+      return [...observacionesPorColegioMemoria[colKey]];
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const esUuid = colKey.length === 36 && colKey.includes('-');
+        let query = supabase.from('colegios').select('id, nombre, observaciones');
+        if (esUuid) {
+          query = query.eq('id', colKey);
+        } else {
+          query = query.ilike('nombre', colKey);
+        }
+        const { data: colData } = await query.maybeSingle();
+        if (colData && Array.isArray(colData.observaciones)) {
+          observacionesPorColegioMemoria[colKey] = colData.observaciones;
+          observacionesPorColegioMemoria[colData.nombre] = colData.observaciones;
+          observacionesPorColegioMemoria[colData.id] = colData.observaciones;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`config_observaciones_${colData.nombre}`, JSON.stringify(colData.observaciones));
+          }
+          return [...colData.observaciones];
+        }
+      } catch (_) {}
+
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (configRow?.mensaje_aviso) {
+          const parsed = JSON.parse(configRow.mensaje_aviso);
+          if (parsed.observacionesPorColegio && parsed.observacionesPorColegio[colKey] !== undefined) {
+            const list = parsed.observacionesPorColegio[colKey];
+            if (Array.isArray(list)) {
+              observacionesPorColegioMemoria[colKey] = list;
+              return [...list];
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(`config_observaciones_${colKey}`);
+        if (cached !== null) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            observacionesPorColegioMemoria[colKey] = parsed;
+            return [...parsed];
+          }
+        }
+      } catch (_) {}
+    }
+
+    observacionesPorColegioMemoria[colKey] = [...OBSERVACIONES_DEFAULT];
+    return [...OBSERVACIONES_DEFAULT];
+  },
+
+  async guardarObservacionesColegio(nuevasObs: string[], colegioNombreOId?: string): Promise<void> {
+    const colKey = (colegioNombreOId || '').trim();
+    if (!colKey || colKey === 'TODOS') {
+      observacionesMemoria = [...nuevasObs];
+      await this.guardarConfiguracionSistema(undefined, nuevasObs);
+      return;
+    }
+
+    observacionesPorColegioMemoria[colKey] = [...nuevasObs];
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`config_observaciones_${colKey}`, JSON.stringify(nuevasObs));
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const esUuid = colKey.length === 36 && colKey.includes('-');
+        let query = supabase.from('colegios').update({ observaciones: nuevasObs });
+        if (esUuid) {
+          query = query.eq('id', colKey);
+        } else {
+          query = query.ilike('nombre', colKey);
+        }
+        await query;
+      } catch (e) {
+        console.warn('Actualización de observaciones en colegios omitida:', e);
+      }
+
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: ConfigMenusDiaObj = { adminsColegio: {}, gradosPorColegio: {}, observacionesPorColegio: {} };
+        if (configRow?.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+          } catch (_) {}
+        }
+        if (!cfgObj.observacionesPorColegio) cfgObj.observacionesPorColegio = {};
+        cfgObj.observacionesPorColegio[colKey] = nuevasObs;
+
+        await supabase
+          .from('menus_dia')
+          .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+          .eq('dia_semana', 'SABADO');
+      } catch (e) {
+        console.error('Error guardando observaciones en menus_dia:', e);
+      }
+    }
+    notifyListeners();
+  },
+
+  async agregarObservacion(tag: string, colegioNombreOId?: string): Promise<string[]> {
+    const limpio = tag.trim();
+    if (!limpio) return this.obtenerObservaciones(colegioNombreOId);
+
+    const actuales = await this.obtenerObservaciones(colegioNombreOId);
+    if (actuales.some((o) => o.toLowerCase() === limpio.toLowerCase())) {
+      return [...actuales];
+    }
+    const nuevas = [...actuales, limpio];
+    await this.guardarObservacionesColegio(nuevas, colegioNombreOId);
+    return nuevas;
+  },
+
+  async eliminarObservacion(tag: string, colegioNombreOId?: string): Promise<string[]> {
+    const target = tag.trim();
+    const actuales = await this.obtenerObservaciones(colegioNombreOId);
+    const nuevas = actuales.filter((o) => o.toLowerCase() !== target.toLowerCase());
+    await this.guardarObservacionesColegio(nuevas, colegioNombreOId);
+    return nuevas;
   },
 
   async guardarConfiguracionSistema(nuevosGrados?: string[], nuevasObs?: string[]): Promise<void> {
@@ -1479,6 +1971,8 @@ export const dataService = {
     if (isSupabaseConfigured && supabase) {
       try {
         let adminsColegio = {};
+        let gradosPorColegio = {};
+        let observacionesPorColegio = {};
         const { data: configRow } = await supabase
           .from('menus_dia')
           .select('mensaje_aviso')
@@ -1488,13 +1982,19 @@ export const dataService = {
         if (configRow && configRow.mensaje_aviso) {
           try {
             const parsed = JSON.parse(configRow.mensaje_aviso);
-            if (parsed.adminsColegio) {
-              adminsColegio = parsed.adminsColegio;
-            }
+            if (parsed.adminsColegio) adminsColegio = parsed.adminsColegio;
+            if (parsed.gradosPorColegio) gradosPorColegio = parsed.gradosPorColegio;
+            if (parsed.observacionesPorColegio) observacionesPorColegio = parsed.observacionesPorColegio;
           } catch (_) {}
         }
 
-        const jsonStr = JSON.stringify({ grados: g, observaciones: o, adminsColegio });
+        const jsonStr = JSON.stringify({
+          grados: g,
+          observaciones: o,
+          adminsColegio,
+          gradosPorColegio,
+          observacionesPorColegio,
+        });
 
         await supabase
           .from('menus_dia')
@@ -1505,81 +2005,5 @@ export const dataService = {
       }
     }
     notifyListeners();
-  },
-
-  async agregarGrado(nombre: string): Promise<string[]> {
-    const limpio = nombre.trim();
-    if (!limpio || gradosMemoria.some((g) => g.toLowerCase() === limpio.toLowerCase())) {
-      return [...gradosMemoria];
-    }
-    gradosMemoria.push(limpio);
-    await this.guardarConfiguracionSistema(gradosMemoria, undefined);
-    return [...gradosMemoria];
-  },
-
-  async eliminarGrado(nombre: string): Promise<string[]> {
-    const target = nombre.trim();
-    gradosMemoria = gradosMemoria.filter((g) => g.toLowerCase() !== target.toLowerCase());
-    await this.guardarConfiguracionSistema(gradosMemoria, undefined);
-    return [...gradosMemoria];
-  },
-
-  // --- GESTIÓN DE OBSERVACIONES / RESTRICCIONES ---
-  async obtenerObservaciones(): Promise<string[]> {
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('menus_dia')
-          .select('mensaje_aviso')
-          .eq('dia_semana', 'SABADO')
-          .maybeSingle();
-
-        if (!error && data && data.mensaje_aviso) {
-          try {
-            const parsed = JSON.parse(data.mensaje_aviso);
-            if (Array.isArray(parsed.observaciones) && parsed.observaciones.length > 0) {
-              observacionesMemoria = parsed.observaciones;
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('config_observaciones', JSON.stringify(observacionesMemoria));
-              }
-              return [...observacionesMemoria];
-            }
-          } catch (_) {}
-        }
-      } catch (e) {
-        console.warn('Error leyendo observaciones de Supabase:', e);
-      }
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        const o = localStorage.getItem('config_observaciones');
-        if (o) {
-          const parsed = JSON.parse(o);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            observacionesMemoria = parsed;
-            return [...observacionesMemoria];
-          }
-        }
-      } catch (_) {}
-    }
-    return [...observacionesMemoria];
-  },
-
-  async agregarObservacion(tag: string): Promise<string[]> {
-    const limpio = tag.trim();
-    if (!limpio || observacionesMemoria.some((o) => o.toLowerCase() === limpio.toLowerCase())) {
-      return [...observacionesMemoria];
-    }
-    observacionesMemoria.push(limpio);
-    await this.guardarConfiguracionSistema(undefined, observacionesMemoria);
-    return [...observacionesMemoria];
-  },
-
-  async eliminarObservacion(tag: string): Promise<string[]> {
-    const target = tag.trim();
-    observacionesMemoria = observacionesMemoria.filter((o) => o.toLowerCase() !== target.toLowerCase());
-    await this.guardarConfiguracionSistema(undefined, observacionesMemoria);
-    return [...observacionesMemoria];
   },
 };

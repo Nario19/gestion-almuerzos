@@ -33,28 +33,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioPadre | null>(null);
   const [cargando, setCargando] = useState(true);
 
-  // Cargar sesión guardada al iniciar
-  useEffect(() => {
-    const sesionGuardada = typeof window !== 'undefined' ? localStorage.getItem('sesion_padre_almuerzos') : null;
-    if (sesionGuardada) {
-      try {
-        const u: UsuarioPadre = JSON.parse(sesionGuardada);
-        setUsuario(u);
-        if (u.id && u.rol !== 'ADMIN' && u.rol !== 'SUPER_ADMIN') {
-          cargarHijosDeSupabase(u.id).then((hijosActualizados) => {
-            if (hijosActualizados) {
-              const actualizado = { ...u, hijos: hijosActualizados };
-              setUsuario(actualizado);
-              localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(actualizado));
-            }
-          });
+  const resolverColegioAsignadoAdmin = async (
+    adminId: string,
+    dni: string,
+    email?: string
+  ): Promise<string | undefined> => {
+    if (!isSupabaseConfigured || !supabase) return undefined;
+    try {
+      // 1. Buscar en tabla colegios por campo sede que contiene "| ADM-DNI"
+      const { data: cols } = await supabase
+        .from('colegios')
+        .select('nombre, sede')
+        .order('created_at', { ascending: false });
+
+      if (cols) {
+        const colMatch = cols.find(
+          (c) =>
+            c.sede &&
+            (c.sede.includes(`| ${dni}`) ||
+              c.sede.includes(dni) ||
+              (email && c.sede.includes(email)))
+        );
+        if (colMatch) {
+          return colMatch.nombre;
         }
-      } catch (e) {
-        console.error('Error restaurando sesión:', e);
+      }
+
+      // 2. Si no encontró en sede, revisar el registro central de admins en menus_dia SABADO
+      const { data: configRow } = await supabase
+        .from('menus_dia')
+        .select('mensaje_aviso')
+        .eq('dia_semana', 'SABADO')
+        .maybeSingle();
+      if (configRow && configRow.mensaje_aviso) {
+        try {
+          const cfg = JSON.parse(configRow.mensaje_aviso);
+          if (cfg.adminsColegio) {
+            for (const [colNombre, adminInfo] of Object.entries(cfg.adminsColegio as Record<string, { dni?: string; email?: string; adminId?: string }>)) {
+              if (
+                adminInfo.dni === dni ||
+                (email && adminInfo.email === email) ||
+                adminInfo.adminId === adminId
+              ) {
+                return colNombre;
+              }
+            }
+          }
+        } catch {
+          // Fallback silencioso si el JSON es inválido
+        }
+      }
+    } catch (e) {
+      console.warn('Error resolviendo colegio asignado para admin:', e);
+    }
+
+    // 3. Fallback a localStorage si offline o en caché
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('config_admins_colegio');
+        if (cached) {
+          const map = JSON.parse(cached);
+          for (const [colNombre, adminInfo] of Object.entries(map as Record<string, { dni?: string; email?: string; adminId?: string }>)) {
+            if (adminInfo.dni === dni || (email && adminInfo.email === email)) {
+              return colNombre;
+            }
+          }
+        }
+      } catch {
+        // Fallback silencioso
       }
     }
-    setCargando(false);
-  }, []);
+
+    return undefined;
+  };
 
   const cargarHijosDeSupabase = async (padreId: string): Promise<Hijo[] | null> => {
     if (!isSupabaseConfigured || !supabase) return null;
@@ -81,6 +132,180 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   };
+
+  // Cargar sesión guardada y re-verificar contra la base de datos
+  useEffect(() => {
+    let montado = true;
+
+    const inicializarSesion = async () => {
+      const sesionGuardada = typeof window !== 'undefined' ? localStorage.getItem('sesion_padre_almuerzos') : null;
+      if (!sesionGuardada) {
+        if (montado) setCargando(false);
+        return;
+      }
+
+      let u: UsuarioPadre | null = null;
+      try {
+        u = JSON.parse(sesionGuardada);
+      } catch (e) {
+        console.error('Error restaurando sesión:', e);
+        if (typeof window !== 'undefined') localStorage.removeItem('sesion_padre_almuerzos');
+        if (montado) {
+          setUsuario(null);
+          setCargando(false);
+        }
+        return;
+      }
+
+      if (!u || !u.id) {
+        if (typeof window !== 'undefined') localStorage.removeItem('sesion_padre_almuerzos');
+        if (montado) {
+          setUsuario(null);
+          setCargando(false);
+        }
+        return;
+      }
+
+      // Si Supabase está configurado, re-verificar identidad y privilegios legítimos en la base de datos
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const esUuid = Boolean(u.id && u.id.length === 36 && u.id.includes('-'));
+          const query = esUuid
+            ? supabase.from('perfiles_padres').select('id, nombre_completo, dni, telefono, email, rol, activo').eq('id', u.id)
+            : (u.dni
+                ? supabase.from('perfiles_padres').select('id, nombre_completo, dni, telefono, email, rol, activo').eq('dni', u.dni)
+                : supabase.from('perfiles_padres').select('id, nombre_completo, dni, telefono, email, rol, activo').eq('id', u.id));
+
+          const { data: perfilData, error: errInicial } = await query.maybeSingle();
+          let error = errInicial;
+          let perfil: {
+            id: string;
+            nombre_completo: string;
+            dni: string;
+            telefono: string;
+            email: string;
+            rol: RolUsuario;
+            activo?: boolean | null;
+          } | null = perfilData as {
+            id: string;
+            nombre_completo: string;
+            dni: string;
+            telefono: string;
+            email: string;
+            rol: RolUsuario;
+            activo?: boolean | null;
+          } | null;
+
+          // Si el error fue porque la columna 'activo' no existe aún en el esquema de Supabase, reintentar con columnas estándar
+          if (error && (error.code === '42703' || error.message?.includes('activo') || error.code === 'PGRST204')) {
+            const fallbackQuery = esUuid
+              ? supabase.from('perfiles_padres').select('id, nombre_completo, dni, telefono, email, rol').eq('id', u.id)
+              : (u.dni
+                  ? supabase.from('perfiles_padres').select('id, nombre_completo, dni, telefono, email, rol').eq('dni', u.dni)
+                  : supabase.from('perfiles_padres').select('id, nombre_completo, dni, telefono, email, rol').eq('id', u.id));
+            const resFallback = await fallbackQuery.maybeSingle();
+            if (!resFallback.error) {
+              perfil = resFallback.data as {
+                id: string;
+                nombre_completo: string;
+                dni: string;
+                telefono: string;
+                email: string;
+                rol: RolUsuario;
+                activo?: boolean | null;
+              } | null;
+              error = null;
+            }
+          }
+
+          // Si es cuenta bootstrap (superadmin o admin inicial) y aún no está en BD, no desloguear
+          if (!perfil) {
+            const esBootstrapSuperAdmin = (u.dni === '00000001' || u.id === 'superadmin-sistema-id') && u.rol === 'SUPER_ADMIN';
+            const esBootstrapAdmin = (u.dni === '00000000' || u.id === 'admin-sistema-id') && u.rol === 'ADMIN';
+            if (esBootstrapSuperAdmin || esBootstrapAdmin) {
+              if (montado) {
+                setUsuario(u);
+                setCargando(false);
+              }
+              return;
+            }
+          }
+
+          // Si hubo un fallo de red o conectividad temporal con Supabase, mantener la sesión local
+          if (error && (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed to fetch'))) {
+            console.warn('Aviso de conectividad al revalidar sesión con base de datos:', error.message);
+            if (montado) {
+              setUsuario(u);
+              setCargando(false);
+            }
+            return;
+          }
+
+          // Si el perfil fue borrado o desactivado en base de datos, invalidar sesión de inmediato
+          if (error || !perfil || perfil.activo === false) {
+            console.warn('Sesión no encontrada o cuenta inactiva en base de datos. Cerrando sesión.');
+            if (typeof window !== 'undefined') localStorage.removeItem('sesion_padre_almuerzos');
+            if (montado) {
+              setUsuario(null);
+              setCargando(false);
+            }
+            return;
+          }
+
+          // Imponer el rol real guardado en la base de datos (previene escalado de privilegios en localStorage)
+          const rolReal: RolUsuario =
+            perfil.rol === 'SUPER_ADMIN' || perfil.dni === '00000001'
+              ? 'SUPER_ADMIN'
+              : perfil.rol === 'ADMIN' || perfil.dni === '00000000'
+              ? 'ADMIN'
+              : 'PADRE';
+
+          let colegioAsignado: string | undefined = u.colegioNombre;
+          if (rolReal === 'ADMIN') {
+            const col = await resolverColegioAsignadoAdmin(perfil.id, perfil.dni, perfil.email);
+            if (col) colegioAsignado = col;
+          }
+
+          const hijosActualizados =
+            rolReal === 'PADRE' ? (await cargarHijosDeSupabase(perfil.id)) || u.hijos || [] : [];
+
+          const usuarioVerificado: UsuarioPadre = {
+            id: perfil.id,
+            nombreCompleto: perfil.nombre_completo,
+            dni: perfil.dni,
+            telefono: perfil.telefono,
+            email: perfil.email,
+            rol: rolReal,
+            colegioNombre: colegioAsignado,
+            hijos: hijosActualizados,
+          };
+
+          if (montado) {
+            setUsuario(usuarioVerificado);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(usuarioVerificado));
+            }
+            setCargando(false);
+          }
+          return;
+        } catch (err) {
+          console.error('Error re-verificando perfil con base de datos:', err);
+        }
+      }
+
+      // Modo local / offline
+      if (montado) {
+        setUsuario(u);
+        setCargando(false);
+      }
+    };
+
+    inicializarSesion();
+
+    return () => {
+      montado = false;
+    };
+  }, []);
 
   const registro = async (datos: {
     nombreCompleto: string;
@@ -133,10 +358,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         setUsuario(nuevoUsuario);
-        localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(nuevoUsuario));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(nuevoUsuario));
+        }
         return { ok: true };
-      } catch (err: any) {
-        return { ok: false, error: err.message || 'Error en el registro' };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { ok: false, error: msg || 'Error en el registro' };
       }
     } else {
       // Modo local/fallback
@@ -149,7 +377,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hijos: [],
       };
       setUsuario(nuevoUsuario);
-      localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(nuevoUsuario));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(nuevoUsuario));
+      }
       return { ok: true };
     }
   };
@@ -157,52 +387,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (identificador: string, password?: string) => {
     const idLimpio = identificador.trim();
 
-    // 1. Comprobación directa para Super Administrador inicial (fallback / seeder)
-    if (
-      (idLimpio === '00000001' ||
-        idLimpio.toLowerCase() === 'superadmin' ||
-        idLimpio.toLowerCase() === 'superadmin@almuerzos.com') &&
-      password === 'superadmin123'
-    ) {
-      const superAdminUser: UsuarioPadre = {
-        id: 'superadmin-sistema-id',
-        nombreCompleto: 'Super Administrador',
-        dni: '00000001',
-        telefono: '999999998',
-        email: 'superadmin@almuerzos.com',
-        rol: 'SUPER_ADMIN',
-        hijos: [],
-      };
-      setUsuario(superAdminUser);
-      localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(superAdminUser));
-      return { ok: true, esAdmin: true, esSuperAdmin: true };
-    }
-
-    // 2. Comprobación directa para Administrador General inicial (seeder/fallback)
-    if ((idLimpio === '00000000' || idLimpio.toLowerCase() === 'admin') && password === 'admin123') {
-      const adminUser: UsuarioPadre = {
-        id: 'admin-sistema-id',
-        nombreCompleto: 'Administrador General',
-        dni: '00000000',
-        telefono: '999999999',
-        email: 'admin@almuerzos.com',
-        rol: 'ADMIN',
-        hijos: [],
-      };
-      setUsuario(adminUser);
-      localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(adminUser));
-      return { ok: true, esAdmin: true, esSuperAdmin: false };
-    }
-
     if (isSupabaseConfigured && supabase) {
       try {
         // Buscar por DNI primero, luego por email si aplica
-        let query = supabase
+        const query = supabase
           .from('perfiles_padres')
           .select('*')
           .eq('dni', idLimpio);
 
-        let { data, error } = await query.maybeSingle();
+        const { data: dataDni } = await query.maybeSingle();
+        let data = dataDni;
 
         // Si no encontró por DNI, buscar por email
         if (!data) {
@@ -215,7 +409,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (!data) {
+          // Si no está en BD pero son credenciales de bootstrap de superadmin/admin inicial
+          if (
+            (idLimpio === '00000001' ||
+              idLimpio.toLowerCase() === 'superadmin' ||
+              idLimpio.toLowerCase() === 'superadmin@almuerzos.com') &&
+            password === 'superadmin123'
+          ) {
+            const superAdminUser: UsuarioPadre = {
+              id: 'superadmin-sistema-id',
+              nombreCompleto: 'Super Administrador',
+              dni: '00000001',
+              telefono: '999999998',
+              email: 'superadmin@almuerzos.com',
+              rol: 'SUPER_ADMIN',
+              hijos: [],
+            };
+            setUsuario(superAdminUser);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(superAdminUser));
+            }
+            return { ok: true, esAdmin: true, esSuperAdmin: true };
+          }
+
+          if ((idLimpio === '00000000' || idLimpio.toLowerCase() === 'admin') && password === 'admin123') {
+            const adminUser: UsuarioPadre = {
+              id: 'admin-sistema-id',
+              nombreCompleto: 'Administrador General',
+              dni: '00000000',
+              telefono: '999999999',
+              email: 'admin@almuerzos.com',
+              rol: 'ADMIN',
+              hijos: [],
+            };
+            setUsuario(adminUser);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(adminUser));
+            }
+            return { ok: true, esAdmin: true, esSuperAdmin: false };
+          }
+
           return { ok: false, error: 'No se encontró una cuenta con ese DNI o credencial.' };
+        }
+
+        if (data.activo === false) {
+          return { ok: false, error: 'Esta cuenta ha sido desactivada por el administrador.' };
         }
 
         if (password && data.password_hash && data.password_hash !== password) {
@@ -229,70 +467,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Si es administrador regular (no superadmin), detectar colegio asignado
         let colegioAsignado: string | undefined = undefined;
         if (esAdmin && !esSuperAdmin) {
-          try {
-            // 1. Buscar en tabla colegios por campo sede que contiene "| ADM-DNI"
-            const { data: cols } = await supabase
-              .from('colegios')
-              .select('nombre, sede')
-              .order('created_at', { ascending: false });
-
-            if (cols) {
-              const colMatch = cols.find(
-                (c) =>
-                  c.sede &&
-                  (c.sede.includes(`| ${data.dni}`) ||
-                    c.sede.includes(data.dni) ||
-                    (data.email && c.sede.includes(data.email)))
-              );
-              if (colMatch) {
-                colegioAsignado = colMatch.nombre;
-              }
-            }
-
-            // 2. Si no encontró en sede, revisar el registro central de admins en menus_dia SABADO
-            if (!colegioAsignado) {
-              const { data: configRow } = await supabase
-                .from('menus_dia')
-                .select('mensaje_aviso')
-                .eq('dia_semana', 'SABADO')
-                .maybeSingle();
-              if (configRow && configRow.mensaje_aviso) {
-                try {
-                  const cfg = JSON.parse(configRow.mensaje_aviso);
-                  if (cfg.adminsColegio) {
-                    for (const [colNombre, adminInfo] of Object.entries(cfg.adminsColegio) as any) {
-                      if (
-                        adminInfo.dni === data.dni ||
-                        adminInfo.email === data.email ||
-                        adminInfo.adminId === data.id
-                      ) {
-                        colegioAsignado = colNombre;
-                        break;
-                      }
-                    }
-                  }
-                } catch (_) {}
-              }
-            }
-          } catch (e) {
-            console.warn('Error resolviendo colegio asignado para admin:', e);
-          }
-
-          // Fallback a localStorage si offline o en caché
-          if (!colegioAsignado && typeof window !== 'undefined') {
-            try {
-              const cached = localStorage.getItem('config_admins_colegio');
-              if (cached) {
-                const map = JSON.parse(cached);
-                for (const [colNombre, adminInfo] of Object.entries(map) as any) {
-                  if (adminInfo.dni === data.dni || adminInfo.email === data.email) {
-                    colegioAsignado = colNombre;
-                    break;
-                  }
-                }
-              }
-            } catch (_) {}
-          }
+          colegioAsignado = await resolverColegioAsignadoAdmin(data.id, data.dni, data.email);
         }
 
         const rolFinal: RolUsuario = esSuperAdmin ? 'SUPER_ADMIN' : esAdmin ? 'ADMIN' : 'PADRE';
@@ -309,13 +484,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         setUsuario(u);
-        localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
+        }
         return { ok: true, esAdmin, esSuperAdmin };
-      } catch (err: any) {
-        return { ok: false, error: err.message || 'Error al iniciar sesión' };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { ok: false, error: msg || 'Error al iniciar sesión' };
       }
     } else {
-      // Fallback local
+      // Modo local/fallback cuando Supabase no está configurado (tests, demo)
+      if (
+        (idLimpio === '00000001' ||
+          idLimpio.toLowerCase() === 'superadmin' ||
+          idLimpio.toLowerCase() === 'superadmin@almuerzos.com') &&
+        password === 'superadmin123'
+      ) {
+        const superAdminUser: UsuarioPadre = {
+          id: 'superadmin-sistema-id',
+          nombreCompleto: 'Super Administrador',
+          dni: '00000001',
+          telefono: '999999998',
+          email: 'superadmin@almuerzos.com',
+          rol: 'SUPER_ADMIN',
+          hijos: [],
+        };
+        setUsuario(superAdminUser);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(superAdminUser));
+        }
+        return { ok: true, esAdmin, esSuperAdmin, };
+      }
+
+      if ((idLimpio === '00000000' || idLimpio.toLowerCase() === 'admin') && password === 'admin123') {
+        const adminUser: UsuarioPadre = {
+          id: 'admin-sistema-id',
+          nombreCompleto: 'Administrador General',
+          dni: '00000000',
+          telefono: '999999999',
+          email: 'admin@almuerzos.com',
+          rol: 'ADMIN',
+          hijos: [],
+        };
+        setUsuario(adminUser);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(adminUser));
+        }
+        return { ok: true, esAdmin, esSuperAdmin: false };
+      }
+
       const u: UsuarioPadre = {
         id: 'padre-demo',
         nombreCompleto: 'Padre de Familia',
@@ -325,7 +542,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hijos: [],
       };
       setUsuario(u);
-      localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
+      }
       return { ok: true, esAdmin: false, esSuperAdmin: false };
     }
   };
@@ -377,8 +596,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { ok: false, error: error.message };
         }
         nuevoHijo.id = data.id;
-      } catch (err: any) {
-        return { ok: false, error: err.message || 'Error guardando en Supabase' };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { ok: false, error: msg || 'Error guardando en Supabase' };
       }
     }
 
@@ -395,27 +615,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from('hijos').delete().eq('id', hijoId);
-      } catch (err: any) {
+        const { error } = await supabase.from('hijos').delete().eq('id', hijoId);
+        if (error) {
+          console.error('Error eliminando hijo en base de datos:', error);
+          return { ok: false, error: error.message || 'Error al eliminar el estudiante en base de datos' };
+        }
+      } catch (err: unknown) {
         console.error('Error eliminando hijo:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        return { ok: false, error: msg || 'Error de conexión al eliminar hijo' };
       }
     }
 
     const hijosActualizados = usuario.hijos.filter((h) => h.id !== hijoId);
     const usuarioActualizado = { ...usuario, hijos: hijosActualizados };
     setUsuario(usuarioActualizado);
-    localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(usuarioActualizado));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(usuarioActualizado));
+    }
 
     return { ok: true };
   };
 
   const actualizarHijos = async () => {
-    if (!usuario || usuario.rol === 'ADMIN') return;
+    if (!usuario || usuario.rol === 'ADMIN' || usuario.rol === 'SUPER_ADMIN') return;
     const hijos = await cargarHijosDeSupabase(usuario.id);
     if (hijos) {
       const u = { ...usuario, hijos };
       setUsuario(u);
-      localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
+      }
     }
   };
 

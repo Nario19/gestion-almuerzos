@@ -57,14 +57,15 @@ export default function DespachoPage() {
   };
 
   useEffect(() => {
-    if (!esSuperAdmin && usuario?.colegioNombre) {
-      setColegioFiltro(usuario.colegioNombre);
-    }
-  }, [usuario, esSuperAdmin]);
-
-  useEffect(() => {
     if (!esAdmin) return;
-    cargarDatos();
+    let cancelado = false;
+    dataService.obtenerPedidos().then((data) => {
+      if (!cancelado) setPedidos(data);
+    });
+    dataService.obtenerColegios().then((cols) => {
+      if (!cancelado && cols) setColegios(cols);
+    });
+
     // Auto-actualización periódica continua cada 4 segundos para reflejar nuevos pedidos al instante
     const intervalo = setInterval(() => {
       cargarDatos();
@@ -73,15 +74,11 @@ export default function DespachoPage() {
       cargarDatos();
     });
     return () => {
+      cancelado = true;
       clearInterval(intervalo);
       desuscribir();
     };
   }, [esAdmin]);
-
-  // Reiniciar a página 1 cuando cambia algún filtro
-  useEffect(() => {
-    setPaginaActual(1);
-  }, [fechaFiltro, colegioFiltro, busqueda, porPagina]);
 
   const handleCambiarEstado = async (id: string, nuevoEstado: EstadoPedido) => {
     const pedidoActual = pedidos.find((p) => p.id === id);
@@ -126,6 +123,7 @@ export default function DespachoPage() {
 
   // Navegar día anterior o siguiente
   const cambiarDia = (offset: number) => {
+    setPaginaActual(1);
     if (fechaFiltro === 'TODAS') {
       setFechaFiltro(fechaHoy);
       return;
@@ -133,11 +131,13 @@ export default function DespachoPage() {
     setFechaFiltro(calcularOffsetFechaPeru(fechaFiltro, offset));
   };
 
+  const colegioActivo = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
+
   // Filtrado de pedidos por Calendario (Fecha), Colegio y Búsqueda
   const pedidosFiltrados = pedidos.filter((p) => {
     const fechaPedido = (p.fecha || '').slice(0, 10);
     const matchFecha = fechaFiltro === 'TODAS' || fechaPedido === fechaFiltro;
-    const matchColegio = colegioFiltro === 'TODOS' || p.colegioNombre === colegioFiltro;
+    const matchColegio = colegioActivo === 'TODOS' || p.colegioNombre === colegioActivo;
     const matchBusqueda =
       p.estudianteNombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       p.gradoSeccion.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -314,6 +314,10 @@ export default function DespachoPage() {
     return <AccesoRestringido mensaje="Esta pantalla es de uso exclusivo para el personal de despacho y empaque de Placeres Culinarios." />;
   }
 
+  if (!esSuperAdmin && !usuario?.colegioNombre) {
+    return <AccesoRestringido mensaje="Tu cuenta de administrador no tiene un colegio activo asignado. Contacta al Super Administrador." />;
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-20">
       {/* Cabecera */}
@@ -384,7 +388,10 @@ export default function DespachoPage() {
             type="text"
             placeholder="Buscar por estudiante, grado o código (#ALM)..."
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) => {
+              setBusqueda(e.target.value);
+              setPaginaActual(1);
+            }}
             className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
           />
         </div>
@@ -426,7 +433,10 @@ export default function DespachoPage() {
               <input
                 type="date"
                 value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
-                onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
+                onChange={(e) => {
+                  setFechaFiltro(e.target.value || fechaHoy);
+                  setPaginaActual(1);
+                }}
                 className="bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer shadow-2xs"
                 title="Haz clic para seleccionar cualquier fecha en el calendario"
               />
@@ -445,7 +455,10 @@ export default function DespachoPage() {
             {/* Botón rápido HOY */}
             <button
               type="button"
-              onClick={() => setFechaFiltro(fechaHoy)}
+              onClick={() => {
+                setFechaFiltro(fechaHoy);
+                setPaginaActual(1);
+              }}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                 fechaFiltro === fechaHoy
                   ? 'bg-orange-500 text-white shadow-xs'
@@ -458,7 +471,10 @@ export default function DespachoPage() {
             {/* Botón Ver Todas las Fechas */}
             <button
               type="button"
-              onClick={() => setFechaFiltro('TODAS')}
+              onClick={() => {
+                setFechaFiltro('TODAS');
+                setPaginaActual(1);
+              }}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                 fechaFiltro === 'TODAS'
                   ? 'bg-slate-900 text-white shadow-xs'
@@ -483,9 +499,12 @@ export default function DespachoPage() {
             ['TODOS', ...colegios].map((c) => (
               <button
                 key={c}
-                onClick={() => setColegioFiltro(c)}
+                onClick={() => {
+                  setColegioFiltro(c);
+                  setPaginaActual(1);
+                }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer ${
-                  colegioFiltro === c
+                  colegioActivo === c
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
@@ -681,43 +700,47 @@ export default function DespachoPage() {
                                 )}
                               </div>
 
-                              {entregado ? (
-                                <div
-                                  className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default select-none shadow-2xs"
-                                  title="El pedido ya está entregado al estudiante; el pago está confirmado y no se puede modificar."
-                                >
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>✓ Pago Confirmado ({p.metodoPago || 'Pagado'})</span>
-                                </div>
+                              {pagado ? (
+                                entregado ? (
+                                  <div
+                                    className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default select-none shadow-2xs"
+                                    title="El pedido ya está entregado al estudiante y el pago ha sido confirmado."
+                                  >
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>✓ Pago Confirmado ({p.metodoPago || 'Pagado'})</span>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCambiarPago(p.id, 'PENDIENTE')}
+                                    className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 shadow-2xs"
+                                    title="Orden aceptada y pagada (Clic para revertir a pendiente si aún no se entregó)"
+                                  >
+                                    <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                    <span>✓ Pago Aceptado ({p.metodoPago || 'Pagado'})</span>
+                                  </button>
+                                )
                               ) : (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleCambiarPago(p.id, pagado ? 'PENDIENTE' : 'PAGADO')
-                                  }
-                                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
-                                    pagado
-                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
-                                      : 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs'
-                                  }`}
-                                  title={
-                                    pagado
-                                      ? 'Orden aceptada y pagada (Clic para revertir a pendiente)'
-                                      : 'Aceptar orden y pago'
-                                  }
-                                >
-                                  {pagado ? (
-                                    <>
-                                      <Check className="w-3.5 h-3.5 text-emerald-700" />
-                                      <span>✓ Pago Aceptado ({p.metodoPago || 'Pagado'})</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <CheckCircle className="w-3.5 h-3.5" />
-                                      <span>Aceptar Pago ({p.metodoPago || 'Por Cobrar'})</span>
-                                    </>
+                                <div className="flex flex-col gap-1 items-start">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCambiarPago(p.id, 'PAGADO')}
+                                    className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-xs"
+                                    title={
+                                      p.metodoPago === 'Pagar luego'
+                                        ? 'Pago pendiente (Pagar luego). Clic para confirmar el pago cuando se cobre.'
+                                        : 'Aceptar orden y pago'
+                                    }
+                                  >
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span>Aceptar Pago ({p.metodoPago || 'Por Cobrar'})</span>
+                                  </button>
+                                  {p.metodoPago === 'Pagar luego' && (
+                                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">
+                                      {entregado ? 'Entregado • Pendiente en Fiado' : 'Pendiente en Fiado'}
+                                    </span>
                                   )}
-                                </button>
+                                </div>
                               )}
 
                               {p.comprobanteUrl && (
@@ -809,7 +832,10 @@ export default function DespachoPage() {
                 <span>Por página:</span>
                 <select
                   value={porPagina}
-                  onChange={(e) => setPorPagina(Number(e.target.value))}
+                  onChange={(e) => {
+                    setPorPagina(Number(e.target.value));
+                    setPaginaActual(1);
+                  }}
                   className="bg-slate-50 border border-slate-200 text-slate-800 font-bold rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-orange-500 cursor-pointer"
                 >
                   <option value={10}>10</option>
