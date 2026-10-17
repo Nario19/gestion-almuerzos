@@ -170,6 +170,25 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   6. `src/app/pedidos/page.tsx`
   7. `tests/cancelar-pedido-despacho-integracion.test.mjs`
 
+### D-014 — 2026-10-16 — Filtros Operativos en Despacho por Rol: Colegios sólo para Superadmin y Estados para Todos
+- Decisión: A petición explícita del usuario ("para el superadmin esta perfecto que haya filtros por colegios en desapcho por ejemplo pero para los admins ya no debe haber esos filtros sino filtros como de cancelador entregados pagados o n opagados, etc y el superadmin si debe tener ambos"):
+  1. Filtro por Colegio: Condicionado estrictamente a `esSuperAdmin`. Los administradores de colegio no ven la fila de botones de selección de colegios (evitando ruido visual y redundancia).
+  2. Identificación de Sede para Administrador: En la cabecera se muestra un badge claro con su colegio asignado (`🏫 Sede: [Colegio]`).
+  3. Filtros por Estado Operativo: Disponibles para todos (Administradores de sede y Super Administrador):
+     - `Todos`: Visualiza el total consolidado.
+     - `Entregados`: Filtra pedidos con `estadoPedido === 'ENTREGADO'`.
+     - `Falta Entregar`: Filtra pedidos activos pendientes de entrega (`estadoPedido !== 'ENTREGADO' && estadoPedido !== 'CANCELADO'`).
+     - `Pagados`: Filtra pedidos activos con pago verificado (`estadoPago === 'PAGADO' && estadoPedido !== 'CANCELADO'`).
+     - `No Pagados`: Filtra pedidos activos pendientes de cobro (`estadoPago !== 'PAGADO' && estadoPedido !== 'CANCELADO'`).
+     - `Cancelados`: Filtra órdenes en estado `CANCELADO`.
+  4. Tarjetas KPI Interactivas: Las tarjetas de métricas en la parte superior actúan como atajos de filtrado rápido al hacer clic en ellas.
+  5. Paginación y Exportación a Excel: Sincronizadas dinámicamente con `totalFiltrados` y registran el estado operativo seleccionado en el nombre del archivo y reporte.
+  6. Suite automatizada en `tests/despacho-filtros-rol-estado.test.mjs` con 120 tests aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/app/despacho/page.tsx`
+  2. `tests/despacho-filtros-rol-estado.test.mjs`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -32,6 +32,14 @@ import {
 } from '@/lib/dateUtils';
 import { Pedido, EstadoPedido, EstadoPago } from '@/types';
 
+export type FiltroEstadoPedido =
+  | 'TODOS'
+  | 'ENTREGADOS'
+  | 'PENDIENTES_ENTREGA'
+  | 'PAGADOS'
+  | 'NO_PAGADOS'
+  | 'CANCELADOS';
+
 export default function DespachoPage() {
   const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
   const fechaHoy = obtenerFechaHoyPeru();
@@ -43,6 +51,7 @@ export default function DespachoPage() {
   );
   // Por defecto el filtro de fecha es el día de hoy
   const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
+  const [filtroEstado, setFiltroEstado] = useState<FiltroEstadoPedido>('TODOS');
   const [busqueda, setBusqueda] = useState('');
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
   const [alertaBloqueoEntrega, setAlertaBloqueoEntrega] = useState<string | null>(null);
@@ -164,8 +173,8 @@ export default function DespachoPage() {
 
   const colegioActivo = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
 
-  // Filtrado de pedidos por Calendario (Fecha), Colegio y Búsqueda
-  const pedidosFiltrados = pedidos.filter((p) => {
+  // Filtrado base de pedidos por Calendario (Fecha), Colegio y Búsqueda
+  const pedidosBase = pedidos.filter((p) => {
     const fechaPedido = (p.fecha || '').slice(0, 10);
     const matchFecha = fechaFiltro === 'TODAS' || fechaPedido === fechaFiltro;
     const matchColegio = colegioActivo === 'TODOS' || p.colegioNombre === colegioActivo;
@@ -176,10 +185,10 @@ export default function DespachoPage() {
     return matchFecha && matchColegio && matchBusqueda;
   });
 
-  // Métricas rápidas (sobre el consolidado total de la fecha y filtros)
-  const total = pedidosFiltrados.length;
-  const cancelados = pedidosFiltrados.filter((p) => p.estadoPedido === 'CANCELADO').length;
-  const pedidosActivos = pedidosFiltrados.filter((p) => p.estadoPedido !== 'CANCELADO');
+  // Métricas rápidas (sobre el consolidado total de la fecha y filtros base de colegio)
+  const total = pedidosBase.length;
+  const cancelados = pedidosBase.filter((p) => p.estadoPedido === 'CANCELADO').length;
+  const pedidosActivos = pedidosBase.filter((p) => p.estadoPedido !== 'CANCELADO');
   const entregados = pedidosActivos.filter((p) => p.estadoPedido === 'ENTREGADO').length;
   const faltaEntregar = pedidosActivos.filter(
     (p) =>
@@ -189,11 +198,31 @@ export default function DespachoPage() {
   const pagados = pedidosActivos.filter((p) => p.estadoPago === 'PAGADO').length;
   const pendientesPago = pedidosActivos.length - pagados;
 
+  // Filtrado final por Estado Operativo
+  const pedidosFiltrados = pedidosBase.filter((p) => {
+    if (filtroEstado === 'TODOS') return true;
+    if (filtroEstado === 'ENTREGADOS') return p.estadoPedido === 'ENTREGADO';
+    if (filtroEstado === 'PENDIENTES_ENTREGA') {
+      return p.estadoPedido !== 'ENTREGADO' && p.estadoPedido !== 'CANCELADO';
+    }
+    if (filtroEstado === 'PAGADOS') {
+      return p.estadoPago === 'PAGADO' && p.estadoPedido !== 'CANCELADO';
+    }
+    if (filtroEstado === 'NO_PAGADOS') {
+      return p.estadoPago !== 'PAGADO' && p.estadoPedido !== 'CANCELADO';
+    }
+    if (filtroEstado === 'CANCELADOS') {
+      return p.estadoPedido === 'CANCELADO';
+    }
+    return true;
+  });
+
   // Cálculo de Paginación para no sobrecargar el renderizado
-  const totalPaginas = Math.ceil(total / porPagina) || 1;
+  const totalFiltrados = pedidosFiltrados.length;
+  const totalPaginas = Math.ceil(totalFiltrados / porPagina) || 1;
   const paginaValida = Math.min(Math.max(1, paginaActual), totalPaginas);
   const indiceInicio = (paginaValida - 1) * porPagina;
-  const indiceFin = Math.min(indiceInicio + porPagina, total);
+  const indiceFin = Math.min(indiceInicio + porPagina, totalFiltrados);
   const pedidosPaginados = pedidosFiltrados.slice(indiceInicio, indiceFin);
 
   // Agrupar pedidos paginados por Colegio para la vista actual
@@ -218,8 +247,9 @@ export default function DespachoPage() {
       colegioFiltro === 'TODOS'
         ? 'Todos_los_Colegios'
         : colegioFiltro.replace(/\s+/g, '_');
+    const nombreEstado = filtroEstado !== 'TODOS' ? `_${filtroEstado}` : '';
     const fecha = obtenerFechaHoyPeru();
-    const filename = `Reporte_Despacho_${nombreColegio}_${nombreFecha}_${fecha}.xls`;
+    const filename = `Reporte_Despacho_${nombreColegio}${nombreEstado}_${nombreFecha}_${fecha}.xls`;
 
     const filasHtml = pedidosFiltrados
       .map((p, idx) => {
@@ -371,7 +401,13 @@ export default function DespachoPage() {
             Despacho y Empaque
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-            Gestión de pedidos por colegio y grado para armado de loncheras
+            {!esSuperAdmin && usuario?.colegioNombre ? (
+              <span className="inline-flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                🏫 Sede: {usuario.colegioNombre}
+              </span>
+            ) : (
+              'Gestión de pedidos por colegio y grado para armado de loncheras'
+            )}
           </p>
         </div>
 
@@ -398,9 +434,21 @@ export default function DespachoPage() {
         </div>
       </div>
 
-      {/* Métricas Resumen */}
+      {/* Métricas Resumen - Interactivas como filtros rápidos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 print:hidden">
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <button
+          type="button"
+          onClick={() => {
+            setFiltroEstado('TODOS');
+            setPaginaActual(1);
+          }}
+          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition cursor-pointer shadow-xs ${
+            filtroEstado === 'TODOS'
+              ? 'bg-slate-50 border-slate-900 ring-2 ring-slate-900/10'
+              : 'bg-white border-slate-200 hover:border-slate-300'
+          }`}
+          title="Clic para ver todos los pedidos"
+        >
           <span className="text-[11px] font-bold text-slate-400 uppercase">Total Pedidos</span>
           <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 flex items-baseline gap-1.5">
             <span>{pedidosActivos.length}</span>
@@ -410,23 +458,68 @@ export default function DespachoPage() {
               </span>
             )}
           </div>
-        </div>
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setFiltroEstado((prev) => (prev === 'ENTREGADOS' ? 'TODOS' : 'ENTREGADOS'));
+            setPaginaActual(1);
+          }}
+          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition cursor-pointer shadow-xs ${
+            filtroEstado === 'ENTREGADOS'
+              ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20'
+              : 'bg-white border-slate-200 hover:border-slate-300'
+          }`}
+          title="Clic para filtrar por pedidos entregados"
+        >
           <span className="text-[11px] font-bold text-emerald-600 uppercase">Entregados</span>
           <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-0.5">{entregados}</div>
-        </div>
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setFiltroEstado((prev) => (prev === 'PENDIENTES_ENTREGA' ? 'TODOS' : 'PENDIENTES_ENTREGA'));
+            setPaginaActual(1);
+          }}
+          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition cursor-pointer shadow-xs ${
+            filtroEstado === 'PENDIENTES_ENTREGA'
+              ? 'bg-amber-50 border-amber-600 ring-2 ring-amber-600/20'
+              : 'bg-white border-slate-200 hover:border-slate-300'
+          }`}
+          title="Clic para filtrar por pedidos que faltan entregar"
+        >
           <span className="text-[11px] font-bold text-amber-600 uppercase">Falta Entregar</span>
           <div className="text-xl sm:text-2xl font-black text-amber-600 mt-0.5">{faltaEntregar}</div>
-        </div>
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setFiltroEstado((prev) =>
+              prev === 'NO_PAGADOS' ? 'PAGADOS' : prev === 'PAGADOS' ? 'TODOS' : 'NO_PAGADOS'
+            );
+            setPaginaActual(1);
+          }}
+          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition cursor-pointer shadow-xs ${
+            filtroEstado === 'PAGADOS' || filtroEstado === 'NO_PAGADOS'
+              ? 'bg-purple-50/50 border-purple-600 ring-2 ring-purple-600/20'
+              : 'bg-white border-slate-200 hover:border-slate-300'
+          }`}
+          title="Clic para alternar filtro entre No Pagados, Pagados y Todos"
+        >
           <span className="text-[11px] font-bold text-slate-400 uppercase">Pagados / Por Cobrar</span>
           <div className="text-sm sm:text-base font-black text-slate-800 mt-1">
-            <span className="text-emerald-600">{pagados}</span>
+            <span className={filtroEstado === 'PAGADOS' ? 'underline decoration-2 text-emerald-600' : 'text-emerald-600'}>
+              {pagados}
+            </span>
             <span className="text-slate-400 mx-1">/</span>
-            <span className="text-rose-600">{pendientesPago}</span>
+            <span className={filtroEstado === 'NO_PAGADOS' ? 'underline decoration-2 text-rose-600' : 'text-rose-600'}>
+              {pendientesPago}
+            </span>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Barra de Filtros y Buscador */}
@@ -536,19 +629,16 @@ export default function DespachoPage() {
           </div>
         </div>
 
-        {/* Filtro Dinámico de Colegios */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
-          <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
-            <Filter className="w-3.5 h-3.5 text-emerald-600" /> Colegio:
-          </span>
-          {!esSuperAdmin && usuario?.colegioNombre ? (
-            <span className="px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-600 text-white shadow-xs flex items-center gap-1.5">
-              🏫 Colegio: {usuario.colegioNombre}
+        {/* Filtro Dinámico de Colegios: Exclusivo para Super Administrador */}
+        {esSuperAdmin && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+            <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
+              <Filter className="w-3.5 h-3.5 text-emerald-600" /> Colegio:
             </span>
-          ) : (
-            ['TODOS', ...colegios].map((c) => (
+            {['TODOS', ...colegios].map((c) => (
               <button
                 key={c}
+                type="button"
                 onClick={() => {
                   setColegioFiltro(c);
                   setPaginaActual(1);
@@ -561,8 +651,61 @@ export default function DespachoPage() {
               >
                 {c}
               </button>
-            ))
-          )}
+            ))}
+          </div>
+        )}
+
+        {/* Filtro Dinámico por Estado del Pedido (Para Administradores y Super Administrador) */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+          <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
+            <Filter className="w-3.5 h-3.5 text-orange-500" /> Estado:
+          </span>
+          {[
+            { id: 'TODOS', label: 'Todos', count: total },
+            { id: 'ENTREGADOS', label: 'Entregados', count: entregados },
+            { id: 'PENDIENTES_ENTREGA', label: 'Falta Entregar', count: faltaEntregar },
+            { id: 'PAGADOS', label: 'Pagados', count: pagados },
+            { id: 'NO_PAGADOS', label: 'No Pagados', count: pendientesPago },
+            { id: 'CANCELADOS', label: 'Cancelados', count: cancelados },
+          ].map((item) => {
+            const activo = filtroEstado === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setFiltroEstado(item.id as FiltroEstadoPedido);
+                  setPaginaActual(1);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
+                  activo
+                    ? item.id === 'CANCELADOS'
+                      ? 'bg-rose-600 text-white shadow-xs'
+                      : item.id === 'NO_PAGADOS'
+                      ? 'bg-rose-600 text-white shadow-xs'
+                      : item.id === 'PENDIENTES_ENTREGA'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : item.id === 'ENTREGADOS'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : item.id === 'PAGADOS'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <span>{item.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                    activo
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white text-slate-600 border border-slate-200'
+                  }`}
+                >
+                  {item.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -570,7 +713,7 @@ export default function DespachoPage() {
       <div className="hidden print:block mb-4">
         <h2 className="text-xl font-black text-slate-900">Reporte de Despacho y Empaque</h2>
         <p className="text-xs text-slate-600">
-          Fecha: <strong>{fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)}</strong> | Colegio: <strong>{colegioFiltro}</strong> | Fecha de Emisión: <strong>{formatearFechaEmisionPeru()}</strong> | Total: <strong>{total}</strong>
+          Fecha: <strong>{fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)}</strong> | Colegio: <strong>{colegioActivo}</strong> {filtroEstado !== 'TODOS' ? `| Estado: ${filtroEstado}` : ''} | Fecha de Emisión: <strong>{formatearFechaEmisionPeru()}</strong> | Total: <strong>{totalFiltrados}</strong>
         </p>
       </div>
 
@@ -579,18 +722,33 @@ export default function DespachoPage() {
         <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs">
           <PackageCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <p className="text-sm font-bold text-slate-800">
-            No se encontraron pedidos para el {formatearFechaLegible(fechaFiltro)}
+            No se encontraron pedidos {filtroEstado !== 'TODOS' ? `en estado "${filtroEstado.toLowerCase().replace('_', ' ')}"` : ''} para el {formatearFechaLegible(fechaFiltro)}
           </p>
           <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
             {fechaFiltro === fechaHoy
-              ? 'Aún no se han registrado almuerzos para el día de hoy con los filtros seleccionados.'
-              : 'No hay pedidos programados para esta fecha.'}
+              ? 'No hay almuerzos registrados con los filtros seleccionados actualmente.'
+              : 'No hay pedidos programados para esta fecha con los filtros seleccionados.'}
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {filtroEstado !== 'TODOS' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFiltroEstado('TODOS');
+                  setPaginaActual(1);
+                }}
+                className="px-3.5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition cursor-pointer shadow-xs"
+              >
+                Ver Todos los Estados
+              </button>
+            )}
             {fechaFiltro !== fechaHoy && (
               <button
                 type="button"
-                onClick={() => setFechaFiltro(fechaHoy)}
+                onClick={() => {
+                  setFechaFiltro(fechaHoy);
+                  setPaginaActual(1);
+                }}
                 className="px-3.5 py-2 text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition cursor-pointer shadow-xs"
               >
                 Ver Pedidos de Hoy
@@ -598,7 +756,10 @@ export default function DespachoPage() {
             )}
             <button
               type="button"
-              onClick={() => setFechaFiltro('TODAS')}
+              onClick={() => {
+                setFechaFiltro('TODAS');
+                setPaginaActual(1);
+              }}
               className="px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer"
             >
               Ver Todas las Fechas
@@ -933,9 +1094,10 @@ export default function DespachoPage() {
           <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 print:hidden">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium text-slate-500">
-                Mostrando <strong className="text-slate-800">{total > 0 ? indiceInicio + 1 : 0}</strong> a{' '}
+                Mostrando <strong className="text-slate-800">{totalFiltrados > 0 ? indiceInicio + 1 : 0}</strong> a{' '}
                 <strong className="text-slate-800">{indiceFin}</strong> de{' '}
-                <strong className="text-slate-900">{total}</strong> pedidos
+                <strong className="text-slate-900">{totalFiltrados}</strong> pedidos
+                {filtroEstado !== 'TODOS' && <span className="text-slate-400 font-semibold ml-1">(filtrados)</span>}
               </span>
               <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
               <label className="flex items-center gap-1.5 text-slate-500 font-medium">
