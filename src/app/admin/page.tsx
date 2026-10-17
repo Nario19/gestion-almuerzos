@@ -28,6 +28,9 @@ import {
   ChefHat,
   ArrowRight,
   PieChart,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
 } from 'lucide-react';
 import { dataService, DIAS_SEMANA, obtenerDiaActualSemana } from '@/lib/dataService';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -35,7 +38,7 @@ import { compressImage } from '@/lib/imageCompression';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
-import { obtenerFechaHoyPeru } from '@/lib/dateUtils';
+import { obtenerFechaHoyPeru, calcularOffsetFechaPeru, formatearFechaLegiblePeru } from '@/lib/dateUtils';
 import { Plato, DiaSemana, TipoPlato, Pedido } from '@/types';
 
 export default function AdminPage() {
@@ -73,9 +76,18 @@ export default function AdminPage() {
     }
   };
 
-  // Pedidos y Período para KPIs del Dashboard
+  // Pedidos y Filtrado por Fecha para KPIs del Dashboard
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [periodoKpi, setPeriodoKpi] = useState<'hoy' | 'semana' | 'todos'>('hoy');
+  const fechaHoy = obtenerFechaHoyPeru();
+  const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
+
+  const cambiarDia = (dias: number) => {
+    if (fechaFiltro === 'TODAS' || fechaFiltro === 'SEMANA') {
+      setFechaFiltro(calcularOffsetFechaPeru(fechaHoy, dias));
+    } else {
+      setFechaFiltro(calcularOffsetFechaPeru(fechaFiltro, dias));
+    }
+  };
 
   // Formulario de nuevo plato
   const [tiposDisponibles, setTiposDisponibles] = useState<string[]>([
@@ -333,25 +345,21 @@ export default function AdminPage() {
     return mapa;
   }, [platos]);
 
-  // Fecha de hoy en formato estándar Perú (YYYY-MM-DD)
-  const fechaHoyStr = obtenerFechaHoyPeru();
-
-  // Filtrado de pedidos según el colegio asignado (para administradores de sede) y el período seleccionado
+  // Filtrado de pedidos según el colegio asignado (para administradores de sede) y la fecha/período seleccionado
   const pedidosBase = (!esSuperAdmin && usuario?.colegioNombre)
     ? pedidos.filter((p) => p.colegioNombre === usuario.colegioNombre)
     : pedidos;
 
   const pedidosPeriodo = pedidosBase.filter((p) => {
-    if (periodoKpi === 'todos') return true;
-    const f = (p.fecha || '').slice(0, 10);
-    if (periodoKpi === 'hoy') return f === fechaHoyStr;
-    if (periodoKpi === 'semana') {
+    if (fechaFiltro === 'TODAS') return true;
+    if (fechaFiltro === 'SEMANA') {
       const fechaP = new Date(p.createdAt || p.fecha);
       const hace7Dias = new Date();
       hace7Dias.setDate(hace7Dias.getDate() - 7);
       return fechaP >= hace7Dias;
     }
-    return true;
+    const f = (p.fecha || '').slice(0, 10);
+    return f === fechaFiltro;
   });
 
   // Métricas financieras y volumen (excluyendo cancelados)
@@ -535,47 +543,83 @@ export default function AdminPage() {
       {/* PESTAÑA: DASHBOARD & KPIS */}
       {tabActiva === 'dashboard' && (
         <div className="space-y-6">
-          {/* Selector de Período y Enlaces Operativos */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0">
-                Período:
+          {/* Selector de Fecha / Período y Enlaces Operativos */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-orange-500" />
+                Fecha:
               </span>
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => setPeriodoKpi('hoy')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    periodoKpi === 'hoy'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Hoy
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPeriodoKpi('semana')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    periodoKpi === 'semana'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Últimos 7 días
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPeriodoKpi('todos')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    periodoKpi === 'todos'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Histórico Total
-                </button>
+
+              {/* Navegación Día Anterior */}
+              <button
+                type="button"
+                onClick={() => cambiarDia(-1)}
+                className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+                title="Día anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Input nativo de Calendario */}
+              <div className="relative flex items-center">
+                <input
+                  type="date"
+                  value={fechaFiltro === 'TODAS' || fechaFiltro === 'SEMANA' ? '' : fechaFiltro}
+                  onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
+                  className="bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                  title="Haz clic para seleccionar cualquier fecha en el calendario"
+                />
               </div>
+
+              {/* Navegación Día Siguiente */}
+              <button
+                type="button"
+                onClick={() => cambiarDia(1)}
+                className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+                title="Día siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Botón rápido HOY */}
+              <button
+                type="button"
+                onClick={() => setFechaFiltro(fechaHoy)}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  fechaFiltro === fechaHoy
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Hoy
+              </button>
+
+              {/* Botón Últimos 7 días */}
+              <button
+                type="button"
+                onClick={() => setFechaFiltro('SEMANA')}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  fechaFiltro === 'SEMANA'
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Últimos 7 días
+              </button>
+
+              {/* Botón Ver Todas las Fechas */}
+              <button
+                type="button"
+                onClick={() => setFechaFiltro('TODAS')}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  fechaFiltro === 'TODAS'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Todas las Fechas
+              </button>
             </div>
 
             {/* Accesos directos a Despacho y Cocina */}
@@ -631,7 +675,11 @@ export default function AdminPage() {
                 {totalAlmuerzos} <span className="text-xs text-slate-400 font-normal">raciones</span>
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
-                {rankingColegios.length} colegios atendidos
+                {esSuperAdmin
+                  ? `${rankingColegios.length} colegios atendidos`
+                  : usuario?.colegioNombre
+                  ? `Sede: ${usuario.colegioNombre}`
+                  : `${pedidosActivos.length} raciones activas`}
               </p>
             </div>
 
@@ -730,48 +778,50 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Dos Columnas: Demanda por Colegio y Platos Más Pedidos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Demanda por Colegio */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-orange-500" />
-                  Demanda por Colegio
-                </h3>
-                <span className="text-xs text-slate-400 font-bold">
-                  {rankingColegios.length} colegios
-                </span>
-              </div>
-
-              {rankingColegios.length === 0 ? (
-                <p className="text-xs text-slate-400 py-6 text-center">
-                  No hay pedidos registrados en este período.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {rankingColegios.map(([col, cant]) => {
-                    const pct = totalAlmuerzos > 0 ? Math.round((cant / totalAlmuerzos) * 100) : 0;
-                    return (
-                      <div key={col} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                          <span className="truncate pr-2">{col}</span>
-                          <span className="shrink-0 text-slate-900">
-                            {cant} ({pct}%)
-                          </span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                          <div
-                            className="bg-orange-500 h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+          {/* Sección de Preferencias y Demanda: Demanda por Colegio (SuperAdmin) y Platos Más Solicitados */}
+          <div className={`grid grid-cols-1 ${esSuperAdmin ? 'md:grid-cols-2' : ''} gap-4`}>
+            {/* Demanda por Colegio: Exclusivo Superadmin */}
+            {esSuperAdmin && (
+              <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-orange-500" />
+                    Demanda por Colegio
+                  </h3>
+                  <span className="text-xs text-slate-400 font-bold">
+                    {rankingColegios.length} colegios
+                  </span>
                 </div>
-              )}
-            </div>
+
+                {rankingColegios.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-6 text-center">
+                    No hay pedidos registrados en este período.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {rankingColegios.map(([col, cant]) => {
+                      const pct = totalAlmuerzos > 0 ? Math.round((cant / totalAlmuerzos) * 100) : 0;
+                      return (
+                        <div key={col} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                            <span className="truncate pr-2">{col}</span>
+                            <span className="shrink-0 text-slate-900">
+                              {cant} ({pct}%)
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div
+                              className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Platos Favoritos (Preferencias) */}
             <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
@@ -926,25 +976,21 @@ export default function AdminPage() {
 
       {tabActiva === 'menu' && (
         <>
-          {/* SELECTOR DE SEDE ESCOLAR PARA EL MENÚ */}
-          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-orange-500" />
-                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                  Colegio del Menú:
-                </span>
-              </div>
-              {!esSuperAdmin && usuario?.colegioNombre ? (
-                <span className="text-xs font-black bg-orange-500 text-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center gap-1.5">
-                  🏫 Colegio: {usuario.colegioNombre}
-                </span>
-              ) : (
+          {/* SELECTOR DE SEDE ESCOLAR PARA EL MENÚ (Exclusivo Superadmin) */}
+          {esSuperAdmin && (
+            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-orange-500" />
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                    Colegio del Menú:
+                  </span>
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setColegioMenuSeleccionado('TODOS')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                       colegioMenuSeleccionado === 'TODOS'
                         ? 'bg-orange-500 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -957,7 +1003,7 @@ export default function AdminPage() {
                       key={col}
                       type="button"
                       onClick={() => setColegioMenuSeleccionado(col)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                         colegioMenuSeleccionado === col
                           ? 'bg-orange-500 text-white shadow-xs'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -967,9 +1013,9 @@ export default function AdminPage() {
                     </button>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
           <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-6">
@@ -1229,19 +1275,15 @@ export default function AdminPage() {
       {/* PESTAÑA: GRADOS Y SECCIONES */}
       {tabActiva === 'grados' && (
         <div className="space-y-4">
-          {/* Header de colegio seleccionado */}
-          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-orange-500" />
-              <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                Colegio Activo:
-              </span>
-            </div>
-            {!esSuperAdmin && usuario?.colegioNombre ? (
-              <span className="text-xs font-black bg-orange-500 text-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center gap-1.5">
-                🏫 {usuario.colegioNombre}
-              </span>
-            ) : (
+          {/* Header de colegio seleccionado (Exclusivo Superadmin) */}
+          {esSuperAdmin && (
+            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-orange-500" />
+                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                  Colegio Activo:
+                </span>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 {colegios.map((col) => (
                   <button
@@ -1258,8 +1300,8 @@ export default function AdminPage() {
                   </button>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Formulario nuevo grado */}
@@ -1322,19 +1364,15 @@ export default function AdminPage() {
       {/* PESTAÑA: OBSERVACIONES / RESTRICCIONES */}
       {tabActiva === 'observaciones' && (
         <div className="space-y-4">
-          {/* Header de colegio seleccionado */}
-          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-orange-500" />
-              <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                Colegio Activo:
-              </span>
-            </div>
-            {!esSuperAdmin && usuario?.colegioNombre ? (
-              <span className="text-xs font-black bg-orange-500 text-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center gap-1.5">
-                🏫 {usuario.colegioNombre}
-              </span>
-            ) : (
+          {/* Header de colegio seleccionado (Exclusivo Superadmin) */}
+          {esSuperAdmin && (
+            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-orange-500" />
+                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                  Colegio Activo:
+                </span>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 {colegios.map((col) => (
                   <button
@@ -1351,8 +1389,8 @@ export default function AdminPage() {
                   </button>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Formulario nueva observacion */}

@@ -159,6 +159,13 @@ export default function CocinaPage() {
               <ChefHat className="w-8 h-8 text-orange-500" />
               Consolidado de Cocina
             </h1>
+            {!esSuperAdmin && usuario?.colegioNombre && (
+              <div className="mt-2">
+                <span className="inline-flex items-center gap-1.5 font-bold text-orange-300 bg-orange-950/60 px-2.5 py-1 rounded-xl border border-orange-500/30 text-xs">
+                  🏫 Sede: {usuario.colegioNombre}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -256,24 +263,21 @@ export default function CocinaPage() {
           </div>
         </div>
 
-        {/* Filtro por Institución Educativa */}
-        <div className="mt-4 pt-3 border-t border-slate-800/60 flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-slate-400 font-bold flex items-center gap-1">
-            <Filter className="w-3.5 h-3.5" /> Filtrar por:
-          </span>
-          {!esSuperAdmin && usuario?.colegioNombre ? (
-            <span className="px-3 py-1.5 rounded-xl font-black bg-orange-500 text-white shadow-sm flex items-center gap-1.5">
-              🏫 Colegio: {usuario.colegioNombre}
+        {/* Filtro por Institución Educativa: Exclusivo Superadmin */}
+        {esSuperAdmin && (
+          <div className="mt-4 pt-3 border-t border-slate-800/60 flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-slate-400 font-bold flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5" /> Filtrar por Sede:
             </span>
-          ) : (
-            ['TODOS', ...colegios].map((c) => (
+            {['TODOS', ...colegios].map((c) => (
               <button
                 key={c}
+                type="button"
                 onClick={() => {
                   setColegioFiltro(c);
                   setPaginaObs(1);
                 }}
-                className={`px-3 py-1.5 rounded-xl font-bold transition ${
+                className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
                   colegioActivo === c
                     ? 'bg-orange-500 text-white shadow-sm'
                     : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
@@ -281,9 +285,9 @@ export default function CocinaPage() {
               >
                 {c}
               </button>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Aviso de pedidos pendientes de pago o validación */}
@@ -414,8 +418,8 @@ export default function CocinaPage() {
         </div>
       </div>
 
-      {/* SECCIÓN 1.5: DESGLOSE INDEPENDIENTE DE ALMUERZOS POR CADA COLEGIO */}
-      {resumen.porColegio && resumen.porColegio.length > 0 && (
+      {/* SECCIÓN 1.5: DESGLOSE INDEPENDIENTE DE ALMUERZOS POR CADA COLEGIO (Exclusivo Superadmin) */}
+      {esSuperAdmin && resumen.porColegio && resumen.porColegio.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">

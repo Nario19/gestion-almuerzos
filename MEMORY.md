@@ -184,10 +184,27 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   4. Tarjetas KPI Interactivas: Las tarjetas de métricas en la parte superior actúan como atajos de filtrado rápido al hacer clic en ellas.
   5. Paginación y Exportación a Excel: Sincronizadas dinámicamente con `totalFiltrados` y registran el estado operativo seleccionado en el nombre del archivo y reporte.
   6. Suite automatizada en `tests/despacho-filtros-rol-estado.test.mjs` con 120 tests aprobados en verde (`0` fallos).
-- Fuente: instrucción explícita del usuario en esta conversación.
 - Impacto:
   1. `src/app/despacho/page.tsx`
   2. `tests/despacho-filtros-rol-estado.test.mjs`
+
+### D-015 — 2026-10-16 — Eliminación de Widgets y Filtros de Colegio para Administrador y Filtrado por Fecha en Admin
+- Decisión: A petición explícita del usuario ("sigue habiendo filtros por coelgios en los admin, como en dashbaord y kpis Demanda por Colegio 1 colegios Colegio San Agustín 2 (100%) 1 colegios atendidos ... https://gestion-almuerzos-six.vercel.app/cocina Filtrar por: 🏫 Colegio: Colegio San Agustín ... Almuerzos Independientes por Colegio 1 sedes con pedidos ... https://gestion-almuerzos-six.vercel.app/admin esto tmb debe tener su filtrado como los demas por fecha y hoy"):
+  1. Cocina (`/cocina`):
+     - Barra de filtro por sede condicionada estrictamente a `esSuperAdmin`. El administrador de colegio ya no ve la fila de botones ni etiquetas redundantes de filtrado por colegio.
+     - En el header se añade la insignia limpia `🏫 Sede: [Colegio]` para administradores de sede.
+     - Sección "Almuerzos Independientes por Colegio" condicionada exclusivamente a `esSuperAdmin`, evitando que el admin de colegio vea un desglose redundante de 1 sede.
+  2. Panel Administrativo (`/admin`):
+     - Selector completo de fechas: input nativo de calendario (`type="date"`), navegación de día anterior y siguiente (`<` / `>`), botón rápido "Hoy", "Últimos 7 días" e "Histórico / Todas las Fechas", sincronizado con `pedidosPeriodo`.
+     - KPI 2 ("Total Almuerzos"): muestra `[X] colegios atendidos` únicamente para SuperAdmin; para administrador de colegio muestra su sede (`Sede: [Colegio]`) o el total de raciones activas, eliminando "1 colegios atendidos".
+     - Tarjeta "Demanda por Colegio": condicionada exclusivamente a `esSuperAdmin`. Cuando no es SuperAdmin, se oculta y la tarjeta de "Platos Más Solicitados" ocupa el ancho completo sin espacios vacíos.
+     - Selectores de sede en pestañas "Menú Semanal", "Grados y Secciones" y "Observaciones": condicionados exclusivamente a `esSuperAdmin`.
+  3. Suite automatizada en `tests/admin-cocina-filtros-rol-fechas.test.mjs` con 130 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/app/cocina/page.tsx`
+  2. `src/app/admin/page.tsx`
+  3. `tests/admin-cocina-filtros-rol-fechas.test.mjs`
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
