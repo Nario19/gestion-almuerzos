@@ -271,7 +271,7 @@ function PedidoContent() {
   const ejecutarCreacionPedido = (hijoTarget: Hijo | null) => {
     const nombreFinal = hijoTarget ? hijoTarget.nombreCompleto : estudiante.trim();
     if (!nombreFinal) {
-      setErrorValidacion('Ingresa el nombre del estudiante.');
+      setErrorValidacion('Ingresa el nombre de tu hijo.');
       return;
     }
     if (!entradaSeleccionada) {
@@ -382,7 +382,7 @@ function PedidoContent() {
 
     const nombre = nombreNuevoHijo.trim();
     if (!nombre) {
-      setErrorModalHijo('Ingresa el nombre y apellidos del estudiante.');
+      setErrorModalHijo('Ingresa el nombre y apellidos de tu hijo.');
       return;
     }
     const col = colegioNuevoHijo || listaColegios[0] || '';
@@ -406,7 +406,7 @@ function PedidoContent() {
       });
 
       if (!res.ok) {
-        setErrorModalHijo(res.error || 'Error al guardar el estudiante.');
+        setErrorModalHijo(res.error || 'Error al guardar a tu hijo.');
         return;
       }
 
@@ -426,7 +426,7 @@ function PedidoContent() {
       setMostrarModalConfirmacionPedido(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setErrorModalHijo(msg || 'Error al registrar estudiante.');
+      setErrorModalHijo(msg || 'Error al registrar a tu hijo.');
     } finally {
       setGuardandoNuevoHijo(false);
     }
@@ -438,7 +438,7 @@ function PedidoContent() {
     const texto =
       `Confirmación de pedido *#${pedidoCompletado.codigoPedido}*:\n` +
       `• Día: ${pedidoCompletado.diaSemana || 'Hoy'}\n` +
-      `• Estudiante: ${pedidoCompletado.estudianteNombre}\n` +
+      `• Hijo: ${pedidoCompletado.estudianteNombre}\n` +
       `• Colegio: ${pedidoCompletado.colegioNombre} (${pedidoCompletado.gradoSeccion})\n` +
       `• Menú: ${pedidoCompletado.entradaNombre} + ${pedidoCompletado.segundoNombre}\n` +
       (pedidoCompletado.observacion ? `• Obs: ${pedidoCompletado.observacion}\n` : '') +
@@ -609,7 +609,7 @@ function PedidoContent() {
               <span className="font-bold text-slate-900">{pedidoCompletado.diaSemana || 'Hoy'}</span>
             </div>
             <div className="flex justify-between pb-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Estudiante:</span>
+              <span className="text-slate-500">Hijo:</span>
               <span className="font-bold text-slate-900">{pedidoCompletado.estudianteNombre}</span>
             </div>
             <div className="flex justify-between pb-1.5 border-b border-slate-200">
@@ -832,7 +832,7 @@ function PedidoContent() {
             <Sparkles className="w-8 h-8 mx-auto mb-2 text-amber-200" />
             <h3 className="text-lg font-black tracking-tight">¿Deseas pedir el almuerzo para tu hijo?</h3>
             <p className="text-xs text-orange-100 mt-1.5 max-w-sm mx-auto leading-relaxed">
-              Inicia sesión o regístrate en la plataforma para asociar a tu estudiante y programar sus almuerzos escolares con entrega directa.
+              Inicia sesión o regístrate en la plataforma para asociar a tus hijos y programar sus almuerzos escolares con entrega directa.
             </p>
             <div className="mt-5 flex flex-col sm:flex-row gap-2 justify-center">
               <Link
@@ -895,13 +895,13 @@ function PedidoContent() {
         <div className="mb-5 bg-white rounded-3xl p-4 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <GraduationCap className="w-4 h-4 text-orange-500" /> Estudiante:
+              <GraduationCap className="w-4 h-4 text-orange-500" /> Hijo:
             </span>
             <Link
               href="/hijos"
               className="text-[11px] font-bold text-orange-600 hover:underline flex items-center gap-1"
             >
-              <Plus className="w-3 h-3" /> Agregar estudiante
+              <Plus className="w-3 h-3" /> Agregar hijo
             </Link>
           </div>
 
@@ -1145,7 +1145,7 @@ function PedidoContent() {
                 <Clock className="w-4 h-4 text-amber-600" /> Paga al recibir el almuerzo o en fiado
               </p>
               <p className="text-[11px] text-amber-800 mt-1">
-                El estudiante recibirá su almuerzo sin necesidad de comprobante previo. Se registrará en la cuenta de fiados para cancelar luego.
+                Tu hijo recibirá su almuerzo sin necesidad de comprobante previo. Se registrará en la cuenta de fiados para cancelar luego.
               </p>
             </div>
           )}
@@ -1205,7 +1205,7 @@ function PedidoContent() {
                   <GraduationCap className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Agrega a tu Estudiante</h3>
+                  <h3 className="text-base font-black text-slate-900">Agrega a tu Hijo</h3>
                   <p className="text-xs text-slate-500">Requerido para confirmar el pedido</p>
                 </div>
               </div>
@@ -1221,15 +1221,15 @@ function PedidoContent() {
             <form onSubmit={handleGuardarHijoYConfirmar} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nombre y Apellidos del Estudiante *
+                  Nombre y Apellidos del Hijo *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ej. Dhana Quispe Cristobal"
+                  placeholder="Ej. DHANA QUISPE CRISTOBAL"
                   value={nombreNuevoHijo}
-                  onChange={(e) => setNombreNuevoHijo(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  onChange={(e) => setNombreNuevoHijo(e.target.value.toUpperCase())}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm uppercase font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                 />
               </div>
 
@@ -1310,7 +1310,7 @@ function PedidoContent() {
                   className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-orange-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {guardandoNuevoHijo ? (
-                    <span className="animate-pulse">Guardando estudiante...</span>
+                    <span className="animate-pulse">Guardando hijo...</span>
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
@@ -1383,12 +1383,12 @@ function PedidoContent() {
               {/* Estudiante y Colegio */}
               <div className="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Estudiante y Destino
+                  Hijo y Destino
                 </span>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-slate-500">Estudiante:</span>
+                  <span className="font-medium text-slate-500">Hijo:</span>
                   <span className="font-black text-slate-900 text-sm text-right">
-                    {hijoParaConfirmar?.nombreCompleto || estudiante || 'Estudiante'}
+                    {hijoParaConfirmar?.nombreCompleto || estudiante || 'Hijo'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">

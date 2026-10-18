@@ -94,7 +94,7 @@ export default function HeaderNav() {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 {/* Si es Padre, muestra accesos a "Mis Pedidos" y "Mis Hijos" */}
                 {!esAdmin && (
-                  <div className="flex items-center gap-1 sm:gap-1.5">
+                  <div className="hidden sm:flex items-center gap-1 sm:gap-1.5">
                     <Link
                       href="/pedidos"
                       className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${

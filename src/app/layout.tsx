@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import HeaderNav from "@/components/HeaderNav";
+import BottomNav from "@/components/BottomNav";
 import { AuthProvider } from "@/lib/authContext";
 
 export const metadata: Metadata = {
@@ -18,7 +19,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900">
         <AuthProvider>
           <HeaderNav />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pb-24 md:pb-20">{children}</main>
+          <BottomNav />
         </AuthProvider>
       </body>
     </html>

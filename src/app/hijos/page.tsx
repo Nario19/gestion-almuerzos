@@ -189,7 +189,7 @@ function HijosContent() {
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <GraduationCap className="w-6 h-6 text-orange-500" />
-            Estudiantes Registrados
+            Mis Hijos
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             Padre: {usuario.nombreCompleto} (DNI: {usuario.dni})
@@ -227,7 +227,7 @@ function HijosContent() {
               <Plus className="w-4 h-4" />
             </div>
             <h2 className="text-base font-black text-slate-900">
-              Registrar Nuevo Estudiante
+              Registrar Nuevo Hijo
             </h2>
           </div>
 
@@ -238,10 +238,10 @@ function HijosContent() {
               </label>
               <input
                 type="text"
-                placeholder="Ej. Dhana Quispe Cristobal"
+                placeholder="Ej. DHANA QUISPE CRISTOBAL"
                 value={nombreHijo}
-                onChange={(e) => setNombreHijo(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                onChange={(e) => setNombreHijo(e.target.value.toUpperCase())}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden uppercase font-medium"
                 required
               />
             </div>
@@ -305,7 +305,7 @@ function HijosContent() {
               disabled={guardando || cargandoConfig || listaColegios.length === 0}
               className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-orange-500/20 transition disabled:opacity-50"
             >
-              {guardando ? 'Guardando...' : '+ Guardar Hijo'}
+              {guardando ? 'Guardando...' : '+ Agregar Hijo'}
             </button>
           </form>
         </div>
@@ -314,7 +314,7 @@ function HijosContent() {
         <div className="space-y-3">
           <div className="flex items-center justify-between pb-1">
             <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider">
-              Estudiantes Registrados ({usuario.hijos.length})
+              Hijos Registrados ({usuario.hijos.length})
             </h2>
           </div>
 
@@ -348,7 +348,7 @@ function HijosContent() {
                   <button
                     onClick={() => setHijoAEliminar({ id: hijo.id, nombre: hijo.nombreCompleto })}
                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
-                    title="Eliminar estudiante"
+                    title="Eliminar hijo"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -373,13 +373,13 @@ function HijosContent() {
         onCerrar={() => setHijoAEliminar(null)}
         onConfirmar={confirmarEliminarHijo}
         cargando={eliminandoHijo}
-        titulo={`¿Eliminar a ${hijoAEliminar?.nombre || 'estudiante'}?`}
+        titulo={`¿Eliminar a ${hijoAEliminar?.nombre || 'hijo'}?`}
         mensaje={
           <span>
             ¿Estás seguro de que deseas retirar a <strong>{hijoAEliminar?.nombre}</strong> del registro de tus hijos? No se afectarán los pedidos de almuerzos que ya hayas solicitado previamente.
           </span>
         }
-        textoBotonConfirmar="Sí, eliminar estudiante"
+        textoBotonConfirmar="Sí, eliminar hijo"
         tipo="peligro"
       />
     </div>

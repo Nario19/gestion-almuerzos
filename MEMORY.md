@@ -206,6 +206,35 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   2. `src/app/admin/page.tsx`
   3. `tests/admin-cocina-filtros-rol-fechas.test.mjs`
 
+### D-016 — 2026-10-17 — Experiencia de App Móvil para Padres (BottomNav, /perfil) y Estandarización de "Hijos" con Mayúsculas
+- Decisión: A petición explícita del usuario ("NO DEBE APARECER ESTUDIANTES DEBE APARECER HIJOS. Y CUANDO ESCRIBAN EL NOMBRE DE LOS HIJOS QUE APAREZCA DE MAYUSCULAS, ENVES Q DIGA AGREGAR ESTUFIANTE DEBE DECIR AGREGAR HIJO.Y DEBE TENER EL DE LOS PADRES DEBE TENER UN NAVBAR DEBAJO COMO DE UNA APP MOVIL CON PEDIDOS, HIJOS, PERFIL Y EL DEL MEDIO DE PEDIR MENU, LA INTERFAZ DE LOS PADRES DEBE SER COMO UNA APP MOVIL."):
+  1. Estandarización de Nomenclatura Familiar:
+     - En todas las pantallas de padres (`/hijos`, `/`, modales de agregar y corroboración), se eliminó la denominación "Estudiante(s)" reemplazándola estrictamente por "Hijo(s)" (ej. "Mis Hijos", "Registrar Nuevo Hijo", "Hijos Registrados", "+ Agregar Hijo", "Hijo y Destino").
+     - En el botón de registro de `/hijos` se fijó textualmente "+ Agregar Hijo" en lugar de "Agregar estudiante".
+  2. Forzado Automático de Nombres en Mayúsculas:
+     - En los inputs de nombres de hijos (tanto en `/hijos` como en el modal rápido de `/`), se implementó la conversión reactiva inmediata con `.toUpperCase()` en `onChange` y la clase CSS `uppercase font-medium`.
+  3. Navbar Inferior Móvil Tipo App (`BottomNav.tsx`):
+     - Barra de navegación fija inferior (`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t`) exclusiva para la experiencia de los padres y usuarios generales (`if (esAdmin || esSuperAdmin) return null;`).
+     - 4 accesos principales con botón central prominente:
+       - `Pedidos`: acceso a `/pedidos` con icono `ShoppingBag`.
+       - `Hijos`: acceso a `/hijos` con icono `GraduationCap` y badge con conteo dinámico de hijos registrados.
+       - `Pedir Menú`: botón central sobreelevado/flotante circular tipo FAB (`-mt-6 w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600`) que conduce al menú principal `/`.
+       - `Perfil`: acceso a `/perfil` con icono `User`.
+     - En `src/app/layout.tsx` se integró `<BottomNav />` y se aplicó padding inferior defensivo `pb-24 md:pb-20` al `<main>` para evitar cualquier solapamiento.
+     - En `HeaderNav.tsx` se ocultaron los accesos redundantes de padres en móviles (`hidden sm:flex`), dejando la barra superior limpia.
+  4. Nueva Pantalla de Perfil de Padres (`/perfil`):
+     - Diseñada con formato de aplicación móvil: tarjeta de apoderado con iniciales/avatar, DNI, teléfono, lista detallada de hijos inscritos con accesos rápidos a gestión y botón de cierre de sesión.
+  5. Suite automatizada en `tests/mobile-parent-navbar-hijos.test.mjs` con 136 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/components/BottomNav.tsx` (nuevo)
+  2. `src/app/perfil/page.tsx` (nuevo)
+  3. `src/app/layout.tsx`
+  4. `src/components/HeaderNav.tsx`
+  5. `src/app/hijos/page.tsx`
+  6. `src/app/page.tsx`
+  7. `tests/mobile-parent-navbar-hijos.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
