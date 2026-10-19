@@ -40,7 +40,7 @@ function PedidosContent() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [cargandoPedidos, setCargandoPedidos] = useState(true);
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
-  const [fechaFiltro, setFechaFiltro] = useState<string>('TODAS');
+  const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [paginaActual, setPaginaActual] = useState(1);
   const porPagina = 5;
 

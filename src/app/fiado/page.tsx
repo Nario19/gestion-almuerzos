@@ -26,7 +26,7 @@ import {
   Calendar,
   FileSpreadsheet,
 } from 'lucide-react';
-import { dataService } from '@/lib/dataService';
+import { dataService, CONFIG_PAGOS_DEFAULT } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
@@ -37,7 +37,7 @@ import {
   formatearFechaEmisionPeru,
   calcularOffsetFechaPeru,
 } from '@/lib/dateUtils';
-import { PadreFiadoResumen, ItemFiadoPedido } from '@/types';
+import { PadreFiadoResumen, ItemFiadoPedido, ConfiguracionPagos } from '@/types';
 
 export default function FiadoPage() {
   const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
@@ -75,6 +75,7 @@ export default function FiadoPage() {
   const [tarjetasExpandidas, setTarjetasExpandidas] = useState<Record<string, boolean>>({});
   const [padreReporteModal, setPadreReporteModal] = useState<PadreFiadoResumen | null>(null);
   const [mostrarReporteGlobal, setMostrarReporteGlobal] = useState(false);
+  const [configPagos, setConfigPagos] = useState<ConfiguracionPagos>(CONFIG_PAGOS_DEFAULT);
 
   // Confirmación de pago / liquidación
   const [confirmacion, setConfirmacion] = useState<{
@@ -94,12 +95,14 @@ export default function FiadoPage() {
   const cargarDatos = async () => {
     try {
       const col = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
-      const [resFiados, resColegios] = await Promise.all([
+      const [resFiados, resColegios, resConfigPagos] = await Promise.all([
         dataService.obtenerFiados(col),
         dataService.obtenerColegios(),
+        dataService.obtenerConfiguracionPagos(),
       ]);
       setFiados(resFiados);
       if (resColegios) setColegios(resColegios);
+      if (resConfigPagos) setConfigPagos(resConfigPagos);
     } catch (err) {
       console.error('Error cargando lista de fiados:', err);
     } finally {
@@ -120,6 +123,9 @@ export default function FiadoPage() {
     });
     dataService.obtenerColegios().then((resColegios) => {
       if (!cancelado && resColegios) setColegios(resColegios);
+    });
+    dataService.obtenerConfiguracionPagos().then((resConfigPagos) => {
+      if (!cancelado && resConfigPagos) setConfigPagos(resConfigPagos);
     });
 
     const desuscribir = dataService.suscribirCambios(() => {
@@ -245,8 +251,99 @@ export default function FiadoPage() {
     }));
   };
 
+  // Generar y descargar comprobante digital del apoderado
+  const descargarComprobantePadre = (padre: PadreFiadoResumen, config: ConfiguracionPagos) => {
+    if (typeof window === 'undefined') return;
+    const pedidosAMostrar = padre.pedidos;
+    const filasHtml = pedidosAMostrar
+      .map((p) => {
+        const estadoTag = p.estadoPago === 'PAGADO' ? 'PAGADO' : 'PENDIENTE';
+        const entregaTag = p.estadoPedido === 'ENTREGADO' ? '✓ Entregado' : '⏳ Pendiente';
+        return `
+          <tr>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px;">${p.fecha}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px;"><strong>${p.estudianteNombre}</strong> ${p.gradoSeccion ? `(${p.gradoSeccion})` : ''}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px;">${p.entradaNombre ? `${p.entradaNombre} + ` : ''}${p.segundoNombre}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px; text-align: center;">${entregaTag}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px; text-align: right; font-weight: bold;">S/ ${(p.monto || 12).toFixed(2)}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px; text-align: center;"><span style="display: inline-block; padding: 2px 6px; border-radius: 6px; font-weight: bold; background: ${p.estadoPago === 'PAGADO' ? '#dcfce7; color: #166534;' : '#fef3c7; color: #92400e;'}">${estadoTag}</span></td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Comprobante de Consumos - ${padre.nombrePadre}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 28px; color: #0f172a; max-width: 800px; margin: 0 auto; background: #ffffff; }
+    h1 { font-size: 22px; margin: 0 0 4px 0; color: #0f172a; letter-spacing: -0.5px; }
+    .header { border-bottom: 2px solid #f97316; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .datos { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; font-size: 12px; line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+    th { background: #f1f5f9; padding: 9px 10px; text-align: left; font-weight: 700; font-size: 11px; color: #475569; border-bottom: 2px solid #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; }
+    .total-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 18px; }
+    .total-monto { font-size: 22px; font-weight: 900; color: #b45309; }
+    .medios-pago { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 14px 18px; font-size: 12px; line-height: 1.6; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>PLACERES CULINARIOS</h1>
+      <div style="font-size: 12px; color: #64748b; font-weight: 600;">Comprobante Oficial de Consumos Escolares • Pagar luego</div>
+      <div style="font-size: 12px; color: #64748b;">Institución: <strong>${padre.colegioNombre}</strong> • Emisión: ${formatearFechaEmisionPeru()}</div>
+    </div>
+  </div>
+  <div class="datos">
+    <div><strong>Padre / Apoderado:</strong> ${padre.nombrePadre}</div>
+    ${padre.telefono ? `<div><strong>Teléfono WhatsApp:</strong> ${padre.telefono}</div>` : ''}
+    <div><strong>Hijos Matriculados:</strong> ${padre.hijosNombres.join(', ')}</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Estudiante</th>
+        <th>Platos</th>
+        <th style="text-align: center;">Entrega</th>
+        <th style="text-align: right;">Monto</th>
+        <th style="text-align: center;">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${filasHtml}
+    </tbody>
+  </table>
+  <div class="total-box">
+    <strong>Total Pendiente de Pago:</strong>
+    <span class="total-monto">S/ ${padre.totalDeuda.toFixed(2)}</span>
+  </div>
+  <div class="medios-pago">
+    <strong style="color: #166534; font-size: 13px;">💳 Medios de Pago Oficiales (Superadmin):</strong><br>
+    • <strong>Yape:</strong> ${config.numeroYape} (${config.titularYape})<br>
+    • <strong>Plin:</strong> ${config.numeroPlin} (${config.titularPlin})<br>
+    <span style="font-size: 11px; color: #15803d;">También puede cancelar directamente en el módulo escolar. Agradecemos enviar su comprobante por WhatsApp.</span>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Comprobante_${padre.nombrePadre.replace(/\s+/g, '_')}_${fechaHoy}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // Generar y enviar mensaje de cobro o estado de cuenta por WhatsApp al número registrado
-  const enviarCobroWhatsApp = (padre: PadreFiadoResumen) => {
+  const enviarCobroWhatsApp = async (padre: PadreFiadoResumen) => {
     if (!padre.telefono) {
       alert('Este apoderado no tiene un número de teléfono celular registrado para WhatsApp.');
       return;
@@ -259,6 +356,20 @@ export default function FiadoPage() {
     const telefonoFinal = telefonoLimpio.startsWith('51')
       ? telefonoLimpio
       : `51${telefonoLimpio}`;
+
+    // Obtener la configuración vigente de pagos de Superadmin
+    let config = configPagos;
+    try {
+      config = await dataService.obtenerConfiguracionPagos();
+      setConfigPagos(config);
+    } catch (_) {}
+
+    // Descargar copia del comprobante para que el usuario pueda adjuntarlo directamente
+    try {
+      descargarComprobantePadre(padre, config);
+    } catch (e) {
+      console.error('Error generando comprobante descargable:', e);
+    }
 
     const pedidosPendientes = padre.pedidos.filter((p) => p.estadoPago !== 'PAGADO');
 
@@ -290,18 +401,20 @@ export default function FiadoPage() {
     if (pedidosPendientes.length > 0) {
       mensaje =
         `Hola *${padre.nombrePadre}*, le saludamos de *Placeres Culinarios* (${padre.colegioNombre}).\n\n` +
-        `Le compartimos el estado de cuenta detallado de sus almuerzos bajo la modalidad *"Pagar luego / Fiado"*:\n\n` +
-        `📋 *Detalle por Estudiante (${pedidosPendientes.length} almuerzos pendientes):*\n\n` +
+        `Le informamos que *la deuda que tiene es de S/ ${padre.totalDeuda.toFixed(2)}* por concepto de almuerzos escolares bajo la modalidad *"Pagar luego / Fiado"*.\n\n` +
+        `📄 *Adjunto el comprobante y detalle de consumos:*\n\n` +
         `${bloquesHijos}\n\n` +
         `💰 *Total pendiente de pago: S/ ${padre.totalDeuda.toFixed(2)}*\n\n` +
-        `Puede realizar su abono a través de:\n` +
-        `• *Yape / Plin:* 999-999-999 (Placeres Culinarios)\n` +
-        `• O cancelarlo directamente en el módulo de atención escolar.\n\n` +
+        `💳 *Medios de pago establecidos:*\n` +
+        `• *Yape:* ${config.numeroYape} (${config.titularYape})\n` +
+        `• *Plin:* ${config.numeroPlin} (${config.titularPlin})\n` +
+        `• O puede cancelar directamente en el módulo de atención escolar.\n\n` +
         `Agradecemos enviar su comprobante por este medio para registrar su abono. ¡Muchas gracias!`;
     } else {
       mensaje =
         `Hola *${padre.nombrePadre}*, le saludamos de *Placeres Culinarios* (${padre.colegioNombre}).\n\n` +
-        `Le compartimos su reporte de cuenta de almuerzos escolares:\n\n` +
+        `Le informamos que la deuda que tiene es de S/ 0.00.\n\n` +
+        `📄 *Adjunto el comprobante y detalle de consumos:*\n\n` +
         `${bloquesHijos}\n\n` +
         `✅ *Su cuenta familiar se encuentra AL DÍA (S/ 0.00 pendientes).*\n\n` +
         `¡Muchas gracias por su puntualidad y preferencia!`;
@@ -1496,9 +1609,10 @@ export default function FiadoPage() {
                 type="button"
                 onClick={() => window.print()}
                 className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                title="Imprimir o guardar como PDF este comprobante de consumos"
               >
                 <Printer className="w-4 h-4 text-slate-500" />
-                <span>Imprimir Reporte</span>
+                <span>Imprimir / Guardar PDF</span>
               </button>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">

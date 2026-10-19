@@ -390,6 +390,30 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   5. `src/app/hijos/page.tsx`
   6. `tests/perfil-edicion-titulos-limpios.test.mjs` (nuevo)
 
+### D-025 — 2026-10-19 — Pedidos Filtrados por Defecto en HOY y Cobranza WhatsApp en Fiado con Medios de Pago de Superadmin y Comprobante Digital
+- Decisión: A petición explícita del usuario ("cuando le de adl botonde enviar a whatsapp cuando se abra el chat del padre ya debe cargarse el pdf con un mensaje ya hecho como la deuda que tiene es de ... adjunto el comprobante ... y los medios de pago ya establecidos segun lo que hayamos puesto en el superadmin. y una observacion mas cuando entre a la pantalla de pedidos de los padres debe aparecer por defecto el de hoy."):
+  1. Pantalla de Mis Pedidos de los Padres ([`src/app/pedidos/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/pedidos/page.tsx)):
+     - Se inicializó `fechaFiltro` por defecto con `fechaHoy` (`obtenerFechaHoyPeru()`). Al ingresar a la pantalla, se despliegan de inmediato los pedidos de la fecha actual de Perú.
+     - Se preserva el chip "Todos" para restablecer a `'TODAS'` y consultar el historial completo en cualquier momento.
+  2. Cobranza WhatsApp en Fiados con Medios de Pago de Superadmin ([`src/app/fiado/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/fiado/page.tsx)):
+     - Se integró la carga dinámica de `dataService.obtenerConfiguracionPagos()` tanto en el montaje inicial como en `enviarCobroWhatsApp`.
+     - El mensaje predefinido en el chat de WhatsApp incorpora la redacción solicitada:
+       `"Le informamos que la deuda que tiene es de S/ {padre.totalDeuda.toFixed(2)} por concepto de almuerzos escolares bajo la modalidad 'Pagar luego / Fiado'."`
+       `"📄 Adjunto el comprobante y detalle de consumos: ..."`
+       y los medios de pago reales configurados en el Superadmin:
+       `• Yape: {config.numeroYape} ({config.titularYape})`
+       `• Plin: {config.numeroPlin} ({config.titularPlin})`
+       eliminando números fijos o quemados.
+  3. Generación y Descarga de Comprobante Digital:
+     - Se implementó `descargarComprobantePadre(padre, config)` para generar y descargar al vuelo un archivo de comprobante oficial formateado con membrete, institución, apoderado, desglose cronológico de estudiantes, total adeudado y medios de pago.
+     - En el modal de reporte se actualizó el botón a "Imprimir / Guardar PDF".
+  4. Suite automatizada en `tests/pedidos-hoy-fiado-whatsapp-superadmin.test.mjs` con 171 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/app/pedidos/page.tsx`
+  2. `src/app/fiado/page.tsx`
+  3. `tests/pedidos-hoy-fiado-whatsapp-superadmin.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
