@@ -19,6 +19,7 @@ import {
   Receipt,
   UserPlus,
   User,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { obtenerInfoPantalla } from '@/lib/navUtils';
@@ -35,6 +36,7 @@ const ICONOS_PANTALLA: Record<string, React.ComponentType<{ className?: string }
   ChefHat,
   Receipt,
   PackageCheck,
+  ShieldCheck,
 };
 
 export default function HeaderNav() {
@@ -65,6 +67,7 @@ export default function HeaderNav() {
     ...(esSuperAdmin
       ? [{ href: '/superadmin/pedido-manual', label: 'Pedido Manual', icon: UtensilsCrossed }]
       : [{ href: '/admin/pedido-manual', label: 'Pedido Manual', icon: UtensilsCrossed }]),
+    ...(esSuperAdmin ? [{ href: '/superadmin/analytics', label: 'Analítica', icon: TrendingUp }] : []),
   ];
 
   return (

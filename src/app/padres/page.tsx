@@ -730,7 +730,40 @@ function PedidoContent() {
   // ----------------------------------------------------
   if (!usuario) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
+      <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28">
+        {/* HERO BANNER CON CTA ABOVE THE FOLD (VISITANTES) */}
+        <div className="mb-5 bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 rounded-3xl p-5 sm:p-6 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-xs rounded-full text-[11px] font-bold text-white mb-2.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              Almuerzos Escolares Nutritivos
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
+              Pide el menú escolar de hoy para tus hijos
+            </h2>
+            <p className="text-xs sm:text-sm text-orange-50/90 mt-1 leading-relaxed max-w-lg">
+              Comida fresca, balanceada y preparada con altos estándares de higiene para cada día escolar.
+            </p>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              <Link
+                href="/login"
+                className="px-5 py-2.5 bg-white hover:bg-orange-50 active:scale-[0.98] text-orange-600 font-black rounded-xl text-xs sm:text-sm shadow-md transition flex items-center gap-2"
+              >
+                <LogIn className="w-4 h-4 text-orange-600" />
+                Iniciar Sesión para Pedir
+              </Link>
+              <Link
+                href="/login?modo=registro"
+                className="px-4 py-2.5 bg-orange-700/60 hover:bg-orange-700/80 active:scale-[0.98] text-white font-bold rounded-xl text-xs sm:text-sm border border-white/20 transition flex items-center gap-1.5"
+              >
+                Crear Cuenta
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Encabezado de la Carta */}
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
           <div>
@@ -920,6 +953,17 @@ function PedidoContent() {
               </Link>
             </div>
           </div>
+
+          {/* ENLACE A POLÍTICA DE PRIVACIDAD */}
+          <div className="mt-6 text-center pb-4">
+            <Link
+              href="/padres/privacidad"
+              className="text-[11px] text-slate-400 hover:text-slate-600 font-medium inline-flex items-center gap-1.5 transition"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Política de Privacidad y Protección de Datos (Ley N° 29733)
+            </Link>
+          </div>
         </div>
 
         {/* BARRA FLOTANTE FIJA INFERIOR */}
@@ -963,6 +1007,27 @@ function PedidoContent() {
           <span>Mis Pedidos</span>
         </Link>
       </div>
+
+      {/* CTA ABOVE THE FOLD SI EL PADRE NO TIENE HIJOS AÚN */}
+      {usuario && usuario.rol !== 'ADMIN' && (!usuario.hijos || usuario.hijos.length === 0) && (
+        <div className="mb-5 bg-gradient-to-r from-orange-50 to-amber-50 rounded-3xl p-5 border border-orange-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/20">
+              <GraduationCap className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-900">Registra a tu primer hijo</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Asocia el colegio y grado escolar para comenzar a pedir sus almuerzos.</p>
+            </div>
+          </div>
+          <Link
+            href="/padres/hijos"
+            className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 shrink-0"
+          >
+            <Plus className="w-4 h-4" /> Agregar Hijo
+          </Link>
+        </div>
+      )}
 
       {/* SELECTOR DE HIJOS VINCULADOS (SI TIENE HIJOS REGISTRADOS) */}
       {usuario && usuario.rol !== 'ADMIN' && usuario.hijos && usuario.hijos.length > 0 && (

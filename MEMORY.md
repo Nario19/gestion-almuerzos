@@ -637,6 +637,37 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   2. `src/app/superadmin/page.tsx`
   3. `src/lib/authContext.tsx`
 
+### D-035 — 2026-10-19 — Implementación del Checklist Empresarial de 11 Puntos (Aislamiento, Optimización, 404, CTA, Metadata, Favicon, Analítica y Privacidad)
+- Decisión: A solicitud explícita del usuario cumpliendo integralmente los 11 puntos requeridos:
+  1. **Independencia de Colegios:** Catálogos, platos, grados, observaciones y pedidos aislados por colegio sin contaminación cruzada.
+  2. **Vista Correcta de Padres:** El menú escolar y notas médicas se derivan reactivamente del colegio del hijo seleccionado; al cambiar de hijo se actualiza la carta de forma inmediata.
+  3. **Ausencia Total de Errores y Bugs:** Tipado estricto en TypeScript sin `any` y 213 pruebas locales del sistema ejecutadas (**207 pass, 0 fail, 6 skipped**).
+  4. **Consultas Optimizadas:** `obtenerPlatosPorDia` y `obtenerPedidos` filtran directamente en la base de datos PostgreSQL por colegio (`colegio_nombre` / `colegio_id`), reduciendo latencia y transferencia de datos innecesaria.
+  5. **Página Personalizada de Error 404 ([`src/app/not-found.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/not-found.tsx)):** Diseño cálido en español ("Esta página no está en el menú de hoy") con enlaces a la carta principal, mis pedidos y panel de administración.
+  6. **CTA Above the Fold:** En [`src/app/padres/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/padres/page.tsx), Hero Banner visible en la parte superior para visitantes con llamados a la acción claros ("Iniciar Sesión para Pedir", "Crear Cuenta") y tarjeta de bienvenida para padres sin hijos ("Registra a tu primer hijo").
+  7 y 8. **Meta Title y Meta Description por Página:** Mapeo canónico en [`src/lib/metadataUtils.ts`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/lib/metadataUtils.ts), layouts segmentados en todas las rutas de `admin`, `superadmin` y `padres`, más el componente [`ClientMetadataManager`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/components/ClientMetadataManager.tsx) en `RootLayout` para sincronización reactiva en transiciones del cliente.
+  9. **Favicon Set Configurable en Superadmin:** Panel dedicado en `/superadmin` con selector de presets temáticos, input para URL personalizada, vista previa en tiempo real en pestaña simulada y componente [`FaviconUpdater`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/components/FaviconUpdater.tsx) que inyecta dinámicamente `<link rel="icon">`.
+  10. **Analítica de Negocio en Superadmin ([`src/app/superadmin/analytics/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/superadmin/analytics/page.tsx)):** Módulo de Business Intelligence con filtros por período y colegio, KPIs económicos (ventas totales, raciones, tasa de cobranza, ticket promedio), ranking de platos estrella vs menor salida, métodos de pago, distribución de demanda semanal (lunes a viernes) para compras mayoristas y exportación en CSV. Enlace integrado en `HeaderNav`.
+  11. **Página de Política de Privacidad ([`src/app/padres/privacidad/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/padres/privacidad/page.tsx)):** Documento legal completo y riguroso alineado con la Ley N° 29733 de Protección de Datos Personales del Perú y la directiva de seguridad de menores, con enlace visible en `src/app/padres/perfil/page.tsx` y en el pie de página de la carta escolar.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/lib/dataService.ts`
+  - `src/lib/metadataUtils.ts` (nuevo)
+  - `src/lib/navUtils.ts`
+  - `src/components/FaviconUpdater.tsx` (nuevo)
+  - `src/components/ClientMetadataManager.tsx` (nuevo)
+  - `src/components/HeaderNav.tsx`
+  - `src/app/layout.tsx`
+  - `src/app/not-found.tsx` (nuevo)
+  - `src/app/padres/page.tsx`
+  - `src/app/padres/perfil/page.tsx`
+  - `src/app/padres/privacidad/page.tsx` (nuevo)
+  - `src/app/superadmin/page.tsx`
+  - `src/app/superadmin/analytics/page.tsx` (nuevo)
+  - Layouts de metadata para cada segmento de ruta.
+  - `next.config.ts`
+  - `tests/enterprise-checklist-11-puntos.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

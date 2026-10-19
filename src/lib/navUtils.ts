@@ -16,7 +16,8 @@ export interface InfoPantalla {
     | 'BarChart3'
     | 'ChefHat'
     | 'Receipt'
-    | 'PackageCheck';
+    | 'PackageCheck'
+    | 'ShieldCheck';
 }
 
 /**
@@ -58,6 +59,15 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
       titulo: 'Mi Perfil',
       subtitulo: 'Datos de la Cuenta',
       iconoNombre: 'User',
+    };
+  }
+
+  // Política de Privacidad
+  if (ruta.startsWith('/padres/privacidad') || ruta.startsWith('/privacidad')) {
+    return {
+      titulo: 'Privacidad',
+      subtitulo: 'Protección de Datos',
+      iconoNombre: 'ShieldCheck',
     };
   }
 

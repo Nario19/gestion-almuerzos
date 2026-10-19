@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
       { source: '/pedidos', destination: '/padres/pedidos', permanent: false },
       { source: '/hijos', destination: '/padres/hijos', permanent: false },
       { source: '/perfil', destination: '/padres/perfil', permanent: false },
+      { source: '/privacidad', destination: '/padres/privacidad', permanent: false },
     ];
   },
 };

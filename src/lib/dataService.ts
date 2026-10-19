@@ -164,10 +164,14 @@ interface ConfigMenusDiaObj {
   configuracionPagos?: ConfiguracionPagos;
   filtrosGradosPorColegio?: Record<string, FiltroGrados[]>;
   horaLimitePedidos?: string;
+  faviconUrl?: string;
 }
 
 export const HORA_LIMITE_DEFAULT = '09:30';
 let horaLimiteMemoria = HORA_LIMITE_DEFAULT;
+
+export const FAVICON_DEFAULT = '/favicon.ico';
+let faviconMemoria = FAVICON_DEFAULT;
 
 export const CONFIG_PAGOS_DEFAULT: ConfiguracionPagos = {
   numeroYape: '999-999-999',
@@ -231,6 +235,10 @@ if (typeof window !== 'undefined') {
     const hl = localStorage.getItem('config_hora_limite');
     if (hl && hl.includes(':')) {
       horaLimiteMemoria = hl;
+    }
+    const fav = localStorage.getItem('config_favicon_url');
+    if (fav && fav.trim()) {
+      faviconMemoria = fav.trim();
     }
   } catch (_) {}
 }
@@ -383,11 +391,18 @@ export const dataService = {
     let platos: Plato[] = [];
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('platos')
           .select('*')
           .eq('dia_semana', dia)
           .order('orden', { ascending: true });
+
+        const valFiltro = (colegioIdONombre || '').trim();
+        if (valFiltro && valFiltro.toLowerCase() !== 'todos') {
+          query = query.or(`colegio_nombre.eq.${valFiltro},colegio_id.eq.${valFiltro}`);
+        }
+
+        const { data, error } = await query;
 
         if (!error && data && data.length > 0) {
           platos = data.map(mapearPlatoDesdeSupabase);
@@ -504,13 +519,18 @@ export const dataService = {
     notifyListeners();
   },
 
-  async obtenerPedidos(opciones?: { limit?: number; offset?: number }): Promise<Pedido[]> {
+  async obtenerPedidos(opciones?: { limit?: number; offset?: number; colegioNombre?: string }): Promise<Pedido[]> {
     if (isSupabaseConfigured && supabase) {
       try {
         let query = supabase
           .from('pedidos')
           .select('*')
           .order('created_at', { ascending: false });
+
+        if (opciones?.colegioNombre && opciones.colegioNombre.trim().toLowerCase() !== 'todos') {
+          const colLimpio = opciones.colegioNombre.trim();
+          query = query.or(`colegio_nombre.eq.${colLimpio},colegio_id.eq.${colLimpio}`);
+        }
 
         if (typeof opciones?.limit === 'number' && opciones.limit > 0) {
           const from = opciones.offset || 0;
@@ -528,7 +548,15 @@ export const dataService = {
         console.warn('Error leyendo pedidos de Supabase:', err);
       }
     }
-    const mem = [...pedidosMemoria];
+    let mem = [...pedidosMemoria];
+    if (opciones?.colegioNombre && opciones.colegioNombre.trim().toLowerCase() !== 'todos') {
+      const col = opciones.colegioNombre.trim().toLowerCase();
+      mem = mem.filter(
+        (p) =>
+          (p.colegioNombre && p.colegioNombre.trim().toLowerCase() === col) ||
+          (p.colegioId && p.colegioId.trim().toLowerCase() === col)
+      );
+    }
     if (typeof opciones?.limit === 'number' && opciones.limit > 0) {
       const from = opciones.offset || 0;
       return mem.slice(from, from + opciones.limit);
@@ -2693,5 +2721,265 @@ export const dataService = {
     }
 
     notifyListeners();
+  },
+
+  // --- CONFIGURACIÓN DE FAVICON DEL SISTEMA ---
+  async obtenerFaviconUrl(): Promise<string> {
+    if (typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem('config_favicon_url');
+        if (local && local.trim()) {
+          faviconMemoria = local.trim();
+        }
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (configRow?.mensaje_aviso) {
+          try {
+            const parsed = JSON.parse(configRow.mensaje_aviso);
+            if (parsed.faviconUrl && typeof parsed.faviconUrl === 'string') {
+              faviconMemoria = parsed.faviconUrl.trim();
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('config_favicon_url', faviconMemoria);
+              }
+              return faviconMemoria;
+            }
+          } catch (_) {}
+        }
+      } catch (e) {
+        console.error('Error obteniendo favicon en Supabase:', e);
+      }
+    }
+
+    return faviconMemoria || FAVICON_DEFAULT;
+  },
+
+  async guardarFaviconUrl(url: string): Promise<{ ok: boolean; error?: string }> {
+    const urlLimpia = (url || '').trim() || FAVICON_DEFAULT;
+    faviconMemoria = urlLimpia;
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('config_favicon_url', urlLimpia);
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: ConfigMenusDiaObj = {};
+        if (configRow?.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+          } catch (_) {}
+        }
+
+        cfgObj.faviconUrl = urlLimpia;
+
+        if (configRow) {
+          await supabase
+            .from('menus_dia')
+            .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+            .eq('dia_semana', 'SABADO');
+        } else {
+          await supabase
+            .from('menus_dia')
+            .insert({
+              dia_semana: 'SABADO',
+              mensaje_aviso: JSON.stringify(cfgObj),
+            });
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Error al guardar favicon';
+        return { ok: false, error: msg };
+      }
+    }
+
+    notifyListeners();
+    return { ok: true };
+  },
+
+  // --- ANALÍTICA DE NEGOCIO PARA TOMA DE DECISIONES (SUPERADMIN) ---
+  async obtenerMetricasAnalytics(filtro?: {
+    periodo?: 'HOY' | 'SEMANA' | 'MES' | 'HISTORICO';
+    colegioNombre?: string;
+  }): Promise<{
+    ventasTotales: number;
+    totalPedidos: number;
+    pedidosEntregados: number;
+    pedidosCancelados: number;
+    pedidosPagados: number;
+    pedidosPendientesPago: number;
+    tasaCobranzaPorcentaje: number;
+    ticketPromedio: number;
+    platosTop: Array<{ nombre: string; pedidos: number; porcentaje: number; tipo: string }>;
+    platosMenorDemanda: Array<{ nombre: string; pedidos: number }>;
+    metodosPago: Record<string, { cantidad: number; porcentaje: number; totalMonto: number }>;
+    demandaPorDiaSemana: Record<string, number>;
+    metricasPorColegio: Array<{
+      colegioNombre: string;
+      totalPedidos: number;
+      totalVentas: number;
+      entregados: number;
+      pagados: number;
+    }>;
+  }> {
+    const pedidosTodos = await this.obtenerPedidos();
+    const colegios = await this.obtenerColegios();
+    const hoyStr = obtenerFechaHoyPeru();
+
+    // Filtrar por período
+    const periodo = filtro?.periodo || 'HISTORICO';
+    let pedidosFiltrados = pedidosTodos;
+
+    if (periodo === 'HOY') {
+      pedidosFiltrados = pedidosFiltrados.filter((p) => p.fecha === hoyStr);
+    } else if (periodo === 'SEMANA') {
+      const hace7Dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      pedidosFiltrados = pedidosFiltrados.filter((p) => p.fecha >= hace7Dias);
+    } else if (periodo === 'MES') {
+      const hace30Dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      pedidosFiltrados = pedidosFiltrados.filter((p) => p.fecha >= hace30Dias);
+    }
+
+    // Filtrar por colegio si se especificó
+    if (filtro?.colegioNombre && filtro.colegioNombre.trim().toLowerCase() !== 'todos') {
+      const col = filtro.colegioNombre.trim().toLowerCase();
+      pedidosFiltrados = pedidosFiltrados.filter(
+        (p) =>
+          (p.colegioNombre && p.colegioNombre.trim().toLowerCase() === col) ||
+          (p.colegioId && p.colegioId.trim().toLowerCase() === col)
+      );
+    }
+
+    // Excluir cancelados de las métricas económicas
+    const pedidosActivos = pedidosFiltrados.filter((p) => p.estadoPedido !== 'CANCELADO');
+    const cancelados = pedidosFiltrados.filter((p) => p.estadoPedido === 'CANCELADO').length;
+    const entregados = pedidosActivos.filter((p) => p.estadoPedido === 'ENTREGADO').length;
+    const pagados = pedidosActivos.filter((p) => p.estadoPago === 'PAGADO').length;
+    const pendientesPago = pedidosActivos.filter((p) => p.estadoPago !== 'PAGADO').length;
+
+    const ventasTotales = pedidosActivos.reduce((acc, p) => acc + (Number(p.monto) || 12), 0);
+    const totalPedidos = pedidosActivos.length;
+    const ticketPromedio = totalPedidos > 0 ? ventasTotales / totalPedidos : 0;
+    const tasaCobranzaPorcentaje = totalPedidos > 0 ? Math.round((pagados / totalPedidos) * 100) : 100;
+
+    // Conteo de platos
+    const conteoPlatos: Record<string, { pedidos: number; tipo: string }> = {};
+    pedidosActivos.forEach((p) => {
+      if (p.segundoNombre) {
+        const n = p.segundoNombre.trim();
+        if (!conteoPlatos[n]) conteoPlatos[n] = { pedidos: 0, tipo: 'Segundo' };
+        conteoPlatos[n].pedidos++;
+      }
+      if (p.entradaNombre) {
+        const n = p.entradaNombre.trim();
+        if (!conteoPlatos[n]) conteoPlatos[n] = { pedidos: 0, tipo: 'Sopa/Entrada' };
+        conteoPlatos[n].pedidos++;
+      }
+    });
+
+    const platosArray = Object.entries(conteoPlatos).map(([nombre, info]) => ({
+      nombre,
+      pedidos: info.pedidos,
+      porcentaje: totalPedidos > 0 ? Math.round((info.pedidos / totalPedidos) * 100) : 0,
+      tipo: info.tipo,
+    }));
+
+    platosArray.sort((a, b) => b.pedidos - a.pedidos);
+    const platosTop = platosArray.slice(0, 5);
+    const platosMenorDemanda = [...platosArray].reverse().slice(0, 5);
+
+    // Métodos de pago
+    const metodosConteo: Record<string, { cantidad: number; totalMonto: number }> = {
+      Yape: { cantidad: 0, totalMonto: 0 },
+      Plin: { cantidad: 0, totalMonto: 0 },
+      'Pagar luego': { cantidad: 0, totalMonto: 0 },
+      Efectivo: { cantidad: 0, totalMonto: 0 },
+    };
+
+    pedidosActivos.forEach((p) => {
+      const m = p.metodoPago || 'Pagar luego';
+      if (!metodosConteo[m]) metodosConteo[m] = { cantidad: 0, totalMonto: 0 };
+      metodosConteo[m].cantidad++;
+      metodosConteo[m].totalMonto += Number(p.monto) || 12;
+    });
+
+    const metodosPago: Record<string, { cantidad: number; porcentaje: number; totalMonto: number }> = {};
+    Object.entries(metodosConteo).forEach(([m, data]) => {
+      metodosPago[m] = {
+        cantidad: data.cantidad,
+        porcentaje: totalPedidos > 0 ? Math.round((data.cantidad / totalPedidos) * 100) : 0,
+        totalMonto: data.totalMonto,
+      };
+    });
+
+    // Demanda por día de la semana
+    const demandaPorDiaSemana: Record<string, number> = {
+      Lunes: 0,
+      Martes: 0,
+      Miércoles: 0,
+      Jueves: 0,
+      Viernes: 0,
+    };
+
+    pedidosActivos.forEach((p) => {
+      const d = (p.diaSemana || '').toUpperCase();
+      if (d.includes('LUN')) demandaPorDiaSemana.Lunes++;
+      else if (d.includes('MAR')) demandaPorDiaSemana.Martes++;
+      else if (d.includes('MIE') || d.includes('MIÉ')) demandaPorDiaSemana.Miércoles++;
+      else if (d.includes('JUE')) demandaPorDiaSemana.Jueves++;
+      else if (d.includes('VIE')) demandaPorDiaSemana.Viernes++;
+    });
+
+    // Métricas por colegio
+    const metricasPorColegio = colegios.map((col) => {
+      const pCol = pedidosActivos.filter(
+        (p) =>
+          (p.colegioNombre && p.colegioNombre.trim().toLowerCase() === col.trim().toLowerCase()) ||
+          (p.colegioId && p.colegioId.trim().toLowerCase() === col.trim().toLowerCase())
+      );
+      const totalCol = pCol.length;
+      const ventasCol = pCol.reduce((acc, p) => acc + (Number(p.monto) || 12), 0);
+      const entregadosCol = pCol.filter((p) => p.estadoPedido === 'ENTREGADO').length;
+      const pagadosCol = pCol.filter((p) => p.estadoPago === 'PAGADO').length;
+
+      return {
+        colegioNombre: col,
+        totalPedidos: totalCol,
+        totalVentas: ventasCol,
+        entregados: entregadosCol,
+        pagados: pagadosCol,
+      };
+    });
+
+    return {
+      ventasTotales,
+      totalPedidos,
+      pedidosEntregados: entregados,
+      pedidosCancelados: cancelados,
+      pedidosPagados: pagados,
+      pedidosPendientesPago: pendientesPago,
+      tasaCobranzaPorcentaje,
+      ticketPromedio,
+      platosTop,
+      platosMenorDemanda,
+      metodosPago,
+      demandaPorDiaSemana,
+      metricasPorColegio,
+    };
   },
 };

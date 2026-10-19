@@ -37,7 +37,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { dataService, CONFIG_PAGOS_DEFAULT, HORA_LIMITE_DEFAULT, obtenerIdentificadorColegio } from '@/lib/dataService';
+import { dataService, CONFIG_PAGOS_DEFAULT, HORA_LIMITE_DEFAULT, FAVICON_DEFAULT, obtenerIdentificadorColegio } from '@/lib/dataService';
 import { formatearHoraLimiteLegible } from '@/lib/dateUtils';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
@@ -86,6 +86,12 @@ export default function SuperAdminPage() {
   const [modalHoraLimiteAbierto, setModalHoraLimiteAbierto] = useState(false);
   const [nuevaHoraLimite, setNuevaHoraLimite] = useState('09:30');
   const [guardandoHoraLimite, setGuardandoHoraLimite] = useState(false);
+
+  // Configuración de Favicon / Identidad Visual
+  const [faviconUrl, setFaviconUrl] = useState<string>(FAVICON_DEFAULT);
+  const [modalFaviconAbierto, setModalFaviconAbierto] = useState(false);
+  const [faviconInput, setFaviconInput] = useState('');
+  const [guardandoFavicon, setGuardandoFavicon] = useState(false);
 
   // Modal rápido para editar credenciales de Admin
   const [modalAdminRapido, setModalAdminRapido] = useState<{
@@ -211,6 +217,11 @@ export default function SuperAdminPage() {
           setHoraLimite(hl);
         }
       });
+      dataService.obtenerFaviconUrl().then((fav) => {
+        if (!cancelado && fav) {
+          setFaviconUrl(fav);
+        }
+      });
       const desuscribir = dataService.suscribirCambios(() => {
         cargarColegios();
         dataService.obtenerConfiguracionPagos().then((pagos) => {
@@ -221,6 +232,11 @@ export default function SuperAdminPage() {
         dataService.obtenerHoraLimite().then((hl) => {
           if (!cancelado && hl) {
             setHoraLimite(hl);
+          }
+        });
+        dataService.obtenerFaviconUrl().then((fav) => {
+          if (!cancelado && fav) {
+            setFaviconUrl(fav);
           }
         });
       });
@@ -234,6 +250,29 @@ export default function SuperAdminPage() {
   const abrirEditarHoraLimite = () => {
     setNuevaHoraLimite(horaLimite || '09:30');
     setModalHoraLimiteAbierto(true);
+  };
+
+  const abrirEditarFavicon = () => {
+    setFaviconInput(faviconUrl || FAVICON_DEFAULT);
+    setModalFaviconAbierto(true);
+  };
+
+  const handleGuardarFavicon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuardandoFavicon(true);
+    try {
+      const res = await dataService.guardarFaviconUrl(faviconInput.trim());
+      if (!res.ok) {
+        alert(res.error || 'Error al guardar el favicon.');
+      } else {
+        setFaviconUrl(faviconInput.trim() || FAVICON_DEFAULT);
+        setModalFaviconAbierto(false);
+      }
+    } catch (_) {
+      alert('Error inesperado al guardar favicon.');
+    } finally {
+      setGuardandoFavicon(false);
+    }
   };
 
   const handleGuardarHoraLimite = async (e: React.FormEvent) => {
@@ -753,6 +792,68 @@ export default function SuperAdminPage() {
             </div>
             <span className="text-xs font-semibold text-amber-900/90 bg-white px-3 py-1.5 rounded-xl border border-amber-200 self-start sm:self-auto">
               Visible en carta: &quot;Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}&quot;
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* CONFIGURACIÓN GLOBAL: IDENTIDAD VISUAL Y FAVICON */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                  Favicon e Identidad Visual del Sistema
+                </h2>
+                <span className="text-[10px] font-black uppercase text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full border border-indigo-200">
+                  Global
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Icono que se muestra en la pestaña del navegador de los apoderados, administradores y personal de cocina.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={abrirEditarFavicon}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto cursor-pointer active:scale-95"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Editar Favicon</span>
+          </button>
+        </div>
+
+        <div className="pt-3">
+          <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-white border border-indigo-200 flex items-center justify-center shadow-xs overflow-hidden shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={faviconUrl || FAVICON_DEFAULT}
+                  alt="Favicon Actual"
+                  className="w-6 h-6 object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = FAVICON_DEFAULT;
+                  }}
+                />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-800 block">
+                  Vista Previa en Pestaña
+                </span>
+                <div className="text-xs sm:text-sm font-bold text-indigo-950 truncate max-w-md">
+                  {faviconUrl || FAVICON_DEFAULT}
+                </div>
+              </div>
+            </div>
+            <span className="text-xs font-semibold text-indigo-900/90 bg-white px-3 py-1.5 rounded-xl border border-indigo-200 self-start sm:self-auto">
+              Actualizado dinámicamente en tiempo real
             </span>
           </div>
         </div>
@@ -1813,6 +1914,141 @@ export default function SuperAdminPage() {
                   className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
                 >
                   Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CONFIGURACIÓN FAVICON */}
+      {modalFaviconAbierto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-black text-slate-900">
+                  Editar Favicon del Sistema
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalFaviconAbierto(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarFavicon} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  URL del Favicon / Icono (PNG, ICO, SVG o Cloudinary) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="https://.../favicon.png o /favicon.ico"
+                  value={faviconInput}
+                  onChange={(e) => setFaviconInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Recomendado: Imagen cuadrada de 32x32 px o 64x64 px.
+                </p>
+              </div>
+
+              {/* Presets rápidos */}
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                  Iconos Predefinidos Recomendados:
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFaviconInput('/favicon.ico')}
+                    className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 text-left text-xs font-semibold text-slate-700 flex items-center gap-2"
+                  >
+                    <span>🍽️</span>
+                    <span>Por Defecto</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFaviconInput(
+                        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=64&h=64&fit=crop&crop=faces'
+                      )
+                    }
+                    className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 text-left text-xs font-semibold text-slate-700 flex items-center gap-2"
+                  >
+                    <span>🥗</span>
+                    <span>Almuerzo Saludable</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFaviconInput(
+                        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=64&h=64&fit=crop&crop=faces'
+                      )
+                    }
+                    className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 text-left text-xs font-semibold text-slate-700 flex items-center gap-2"
+                  >
+                    <span>🎒</span>
+                    <span>Lonchera Escolar</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFaviconInput(
+                        'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=64&h=64&fit=crop&crop=faces'
+                      )
+                    }
+                    className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 text-left text-xs font-semibold text-slate-700 flex items-center gap-2"
+                  >
+                    <span>🍎</span>
+                    <span>Manzana Escolar</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Vista previa en miniatura */}
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={faviconInput || FAVICON_DEFAULT}
+                    alt="Preview"
+                    className="w-5 h-5 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = FAVICON_DEFAULT;
+                    }}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] text-slate-400 block font-bold">Simulación pestaña de navegador:</span>
+                  <span className="text-xs font-bold text-slate-800 truncate block">
+                    Placeres Culinarios | Gestión de Almuerzos
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setModalFaviconAbierto(false)}
+                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardandoFavicon}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {guardandoFavicon ? 'Guardando...' : 'Guardar Favicon'}
                 </button>
               </div>
             </form>
