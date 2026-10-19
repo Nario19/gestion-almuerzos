@@ -39,6 +39,7 @@ import { useAuth } from '@/lib/authContext';
 import { dataService, CONFIG_PAGOS_DEFAULT } from '@/lib/dataService';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
+import { SkeletonDashboardPage } from '@/components/Skeleton';
 import { ColegioDetallado, AdminColegioInfo, EstudianteColegioInfo, ConfiguracionPagos } from '@/types';
 
 export default function SuperAdminPage() {
@@ -465,12 +466,7 @@ export default function SuperAdminPage() {
   };
 
   if (cargandoAuth) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-semibold text-slate-600">Verificando nivel de privilegios...</p>
-      </div>
-    );
+    return <SkeletonDashboardPage />;
   }
 
   if (!esSuperAdmin) {

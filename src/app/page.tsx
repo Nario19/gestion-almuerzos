@@ -32,6 +32,7 @@ import {
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
 import { subirImagenACloudinary } from '@/lib/cloudinaryService';
+import { SkeletonHomePage } from '@/components/Skeleton';
 import {
   dataService,
   OBSERVACIONES_DEFAULT,
@@ -478,15 +479,10 @@ function PedidoContent() {
   };
 
   // ----------------------------------------------------
-  // ESTADO DE CARGA DE SESIÓN
+  // ESTADO DE CARGA DE SESIÓN (SKELETON)
   // ----------------------------------------------------
   if (cargandoAuth) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-semibold text-slate-600">Cargando...</p>
-      </div>
-    );
+    return <SkeletonHomePage />;
   }
 
   // ----------------------------------------------------
@@ -663,19 +659,11 @@ function PedidoContent() {
           </div>
 
           <div className="mt-6 space-y-2.5">
-            <button
-              onClick={abrirWhatsApp}
-              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold rounded-2xl shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition text-xs sm:text-sm"
-            >
-              <Send className="w-4 h-4" />
-              Enviar comprobante por WhatsApp
-            </button>
-
             <Link
               href="/pedidos"
-              className="w-full py-2.5 px-4 bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs transition"
+              className="w-full py-3.5 px-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl shadow-md shadow-orange-500/25 flex items-center justify-center gap-2 text-xs sm:text-sm transition cursor-pointer"
             >
-              <ShoppingBag className="w-3.5 h-3.5 text-orange-600" />
+              <ShoppingBag className="w-4 h-4 text-white" />
               Ver en Mis Pedidos
             </Link>
 
@@ -684,7 +672,7 @@ function PedidoContent() {
                 setPedidoCompletado(null);
                 setComprimidoInfo(null);
               }}
-              className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl flex items-center justify-center gap-2 text-xs transition"
+              className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs transition cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Hacer otro pedido
@@ -1616,7 +1604,7 @@ function PedidoContent() {
 
 export default function PedidoPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Cargando...</div>}>
+    <Suspense fallback={<SkeletonHomePage />}>
       <PedidoContent />
     </Suspense>
   );

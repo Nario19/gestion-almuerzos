@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/lib/authContext';
 import { dataService } from '@/lib/dataService';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
+import { SkeletonHijosPage } from '@/components/Skeleton';
 
 function HijosContent() {
   const router = useRouter();
@@ -100,12 +101,7 @@ function HijosContent() {
   }, [colegio]);
 
   if (cargandoAuth) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-semibold text-slate-600">Cargando...</p>
-      </div>
-    );
+    return <SkeletonHijosPage />;
   }
 
   if (!usuario) {
@@ -388,7 +384,7 @@ function HijosContent() {
 
 export default function HijosPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Cargando...</div>}>
+    <Suspense fallback={<SkeletonHijosPage />}>
       <HijosContent />
     </Suspense>
   );

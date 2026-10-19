@@ -21,8 +21,10 @@ import {
   ChefHat,
   PackageCheck,
   Check,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
+import { SkeletonPedidosPage, Skeleton } from '@/components/Skeleton';
 import { dataService } from '@/lib/dataService';
 import {
   obtenerFechaHoyPeru,
@@ -82,14 +84,9 @@ function PedidosContent() {
   }, [fechaFiltro]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Pantalla de carga mientras se verifica sesión
+  // Pantalla de carga mientras se verifica sesión (Skeleton)
   if (cargandoAuth) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-semibold text-slate-600">Cargando tus pedidos...</p>
-      </div>
-    );
+    return <SkeletonPedidosPage />;
   }
 
   // Si no está autenticado
@@ -450,37 +447,41 @@ function PedidosContent() {
             </div>
           </div>
 
-          {/* Selector con Flechas y Calendario nativo */}
-          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => cambiarDia(-1)}
-              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition cursor-pointer"
-              title="Día anterior"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+          {/* Selector con Flechas y Calendario nativo optimizado */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2.5 border-t border-slate-100">
+            <div className="flex items-center gap-1.5 flex-1">
+              <button
+                type="button"
+                onClick={() => cambiarDia(-1)}
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center transition cursor-pointer shrink-0"
+                title="Día anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
 
-            <div className="relative flex-1">
-              <input
-                type="date"
-                value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
-                onChange={(e) => {
-                  setFechaFiltro(e.target.value || 'TODAS');
-                  setPaginaActual(1);
-                }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
-              />
+              <div className="relative flex-1">
+                <Calendar className="w-4 h-4 text-orange-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="date"
+                  value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
+                  onChange={(e) => {
+                    setFechaFiltro(e.target.value || 'TODAS');
+                    setPaginaActual(1);
+                  }}
+                  className="w-full bg-slate-50 hover:bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
+                  title="Seleccionar fecha en el calendario"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => cambiarDia(1)}
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center transition cursor-pointer shrink-0"
+                title="Día siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => cambiarDia(1)}
-              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition cursor-pointer"
-              title="Día siguiente"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
 
             {fechaFiltro !== 'TODAS' && (
               <button
@@ -489,10 +490,11 @@ function PedidosContent() {
                   setFechaFiltro('TODAS');
                   setPaginaActual(1);
                 }}
-                className="text-xs font-bold text-orange-600 hover:text-orange-700 px-2 py-1.5 transition shrink-0"
-                title="Quitar filtro de fecha"
+                className="w-full sm:w-auto px-3 py-2 text-xs font-bold text-orange-600 hover:text-orange-700 hover:bg-orange-50 border border-orange-200/80 rounded-xl transition flex items-center justify-center gap-1.5 shrink-0"
+                title="Quitar filtro de fecha y ver todos los pedidos"
               >
-                Ver todos
+                <X className="w-3.5 h-3.5" />
+                <span>Ver todos</span>
               </button>
             )}
           </div>
@@ -501,9 +503,24 @@ function PedidosContent() {
 
       {/* Lista de Pedidos */}
       {cargandoPedidos ? (
-        <div className="py-16 text-center">
-          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs font-semibold text-slate-500">Actualizando tus pedidos...</p>
+        <div className="space-y-3.5 animate-pulse" aria-busy="true" aria-label="Cargando pedidos...">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white p-4 rounded-3xl border border-slate-200 space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-5 w-16" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : pedidos.length === 0 ? (
         <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center shadow-xs space-y-4">
@@ -832,7 +849,7 @@ function PedidosContent() {
 
 export default function PedidosPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Cargando...</div>}>
+    <Suspense fallback={<SkeletonPedidosPage />}>
       <PedidosContent />
     </Suspense>
   );

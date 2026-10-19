@@ -23,6 +23,7 @@ import {
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
+import { SkeletonDashboardPage } from '@/components/Skeleton';
 import {
   obtenerFechaHoyPeru,
   formatearFechaLegiblePeru,
@@ -375,12 +376,7 @@ export default function DespachoPage() {
   };
 
   if (cargandoAuth) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-semibold text-slate-600">Verificando credenciales de despacho...</p>
-      </div>
-    );
+    return <SkeletonDashboardPage />;
   }
 
   if (!esAdmin) {

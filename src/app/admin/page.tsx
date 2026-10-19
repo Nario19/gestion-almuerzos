@@ -39,6 +39,7 @@ import { subirImagenACloudinary } from '@/lib/cloudinaryService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
+import { SkeletonDashboardPage } from '@/components/Skeleton';
 import { obtenerFechaHoyPeru, calcularOffsetFechaPeru, formatearFechaLegiblePeru } from '@/lib/dateUtils';
 import { Plato, DiaSemana, TipoPlato, Pedido } from '@/types';
 
@@ -419,12 +420,7 @@ export default function AdminPage() {
     .slice(0, 5);
 
   if (cargandoAuth) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-semibold text-slate-600">Verificando credenciales...</p>
-      </div>
-    );
+    return <SkeletonDashboardPage />;
   }
 
   if (!esAdmin) {

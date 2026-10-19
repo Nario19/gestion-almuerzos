@@ -311,6 +311,33 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   1. `src/app/page.tsx`
   2. `tests/cloudinary-comprobantes-upload.test.mjs`
 
+### D-021 — 2026-10-19 — Remoción de Botón WhatsApp en Éxito, Optimización de Calendario en Pedidos y Adopción Universal de Skeleton Loaders
+- Decisión: A petición explícita del usuario ("en la pantalla de pedido registrado con exito ya no debe tener el boton de enviar comprobante por whatsapp , y en la pantalla de historial de pedidos el calendario n ose esta mostrando bien, y la pantalla de carga de todo el sistema debe ser de skeleton."):
+  1. Pantalla de Éxito Limpia:
+     - En `src/app/page.tsx`, se removió el botón redundante de "Enviar comprobante por WhatsApp". Dado que el comprobante se sincroniza automáticamente con Cloudinary y el sistema de despacho, el botón principal pasa a ser "Ver en Mis Pedidos" y el secundario "Hacer otro pedido".
+  2. Corrección del Calendario en Historial de Pedidos:
+     - En `src/app/pedidos/page.tsx`, se rediseñó el selector de fecha: contenedor responsivo con icono `Calendar` visible, navegación con flechas táctiles (`<` / `>`), input nativo `type="date"` sin desbordes en móviles y botón de reset "Ver todos".
+  3. Adopción de Skeleton Loaders en todo el sistema:
+     - Se creó la biblioteca modular `src/components/Skeleton.tsx` con componentes especializados: `SkeletonHomePage`, `SkeletonPedidosPage`, `SkeletonHijosPage`, `SkeletonPerfilPage`, `SkeletonDashboardPage`, `SkeletonLoginPage` y `Skeleton`.
+     - Se implementó `src/app/loading.tsx` para transiciones globales de Next.js App Router.
+     - Se sustituyeron todos los spinners planos y textos de "Cargando..." por estados Skeleton con efecto shimmer en `/`, `/pedidos`, `/hijos`, `/perfil`, `/login`, `/admin`, `/despacho`, `/cocina`, `/fiado` y `/superadmin`.
+  4. Suite automatizada en `tests/pedidos-success-whatsapp-calendar-skeleton.test.mjs` con 155 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/components/Skeleton.tsx` (nuevo)
+  2. `src/app/loading.tsx` (nuevo)
+  3. `src/app/page.tsx`
+  4. `src/app/pedidos/page.tsx`
+  5. `src/app/hijos/page.tsx`
+  6. `src/app/perfil/page.tsx`
+  7. `src/app/login/page.tsx`
+  8. `src/app/admin/page.tsx`
+  9. `src/app/despacho/page.tsx`
+  10. `src/app/cocina/page.tsx`
+  11. `src/app/fiado/page.tsx`
+  12. `src/app/superadmin/page.tsx`
+  13. `tests/pedidos-success-whatsapp-calendar-skeleton.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
