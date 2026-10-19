@@ -414,6 +414,25 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   2. `src/app/fiado/page.tsx`
   3. `tests/pedidos-hoy-fiado-whatsapp-superadmin.test.mjs` (nuevo)
 
+### D-026 — 2026-10-19 — Registro de Pedidos Manuales en Navbar Superior para Superadmin y Admins de Sede
+- Decisión: A petición explícita del usuario ("AGREGARÁS UNA OPCIÓN EN EL NAVABR SUPERIOR DEL SUPERADMIN Y DE LOS ADMIN PARA QUE? PARA PEDIR PEDIDOS MANUEALMENTE YA QUE HAY PERSONAS MAYORES QUE TIENE NIETOS OHIJOS Y NO SABEN USAR EL SISTEMA. OBVIAMENTE EN EL SUPERADMIN COMO ES EL SUPERADMIN PODRÁ ELEGIR EL COLEGIO Y AHI ESCRIBIRA A LA ALUMNA Y SEGUN EL COLEGIO LE LISTARA EL GRADO Y EL ALMUERZO Y SI LO AHCE UN ADMIN DE UN COLEGIO OBVIAMENTE SOLO LE MOSTRARA DE ESE COLEGIO SU ALMUERZO Y SU GRADO."):
+  1. Botón en Navbar Superior (`HeaderNav.tsx`):
+     - Para usuarios con rol administrativo (`esAdmin`), se agregó el botón destacado `+ Pedido Manual` (`bg-emerald-600 hover:bg-emerald-700 text-white font-black`) accesible desde cualquier pantalla del sistema sin perder la vista de trabajo actual.
+  2. Modal de Registro de Pedido Manual (`src/components/ModalPedidoManual.tsx`):
+     - **Super Administrador:** Puede seleccionar libremente cualquier colegio activo. Al cambiar de colegio, se actualizan de forma reactiva los grados y los platos escolares de ese colegio.
+     - **Administrador de Colegio:** Su colegio queda fijo a su sede asignada (`usuario.colegioNombre`) y solo se listan los grados y platos pertenecientes a su institución, garantizando el aislamiento multitenant.
+     - **Campos del Formulario:** Nombre de la alumna/o (con mayúsculas automáticas), selector de grado/sección oficial, plato principal (segundo) del día escolar con opción manual, entrada/sopa/postre opcional, observaciones de alergias, datos del solicitante (tutor/abuelito) y métodos de pago (`Efectivo`, `Yape`, `Plin`, `Pagar luego`).
+     - **Persistencia e Impacto Transversal:** Guarda mediante `dataService.crearPedido` asignando correlativo por colegio (`CLA-xxx`), impactando en tiempo real en Cocina, Despacho, Admin y Fiado (si es pagar luego) mediante `notifyListeners()`.
+  3. Soporte de Fecha en `dataService.crearPedido`:
+     - Se añadió soporte para `fecha?: string` en `crearPedido` manteniendo por defecto la fecha actual de Perú.
+  4. Suite automatizada en `tests/pedido-manual-navbar-admin-superadmin.test.mjs` con 177 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/components/ModalPedidoManual.tsx` (nuevo)
+  2. `src/components/HeaderNav.tsx`
+  3. `src/lib/dataService.ts`
+  4. `tests/pedido-manual-navbar-admin-superadmin.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

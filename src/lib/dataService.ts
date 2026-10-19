@@ -606,6 +606,7 @@ export const dataService = {
   async crearPedido(
     pedidoData: Omit<Pedido, 'id' | 'codigoPedido' | 'createdAt' | 'fecha' | 'estadoPedido' | 'estadoPago'> & {
       estadoPago?: EstadoPago;
+      fecha?: string;
     }
   ): Promise<Pedido> {
     const colegioNom = pedidoData.colegioNombre || 'General';
@@ -617,7 +618,7 @@ export const dataService = {
       ...pedidoData,
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}`,
       codigoPedido: codigoInicial,
-      fecha: obtenerFechaHoyPeru(),
+      fecha: pedidoData.fecha || obtenerFechaHoyPeru(),
       estadoPedido: 'REGISTRADO',
       estadoPago: pedidoData.estadoPago || 'PENDIENTE',
       createdAt: new Date().toISOString(),
