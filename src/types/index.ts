@@ -188,4 +188,12 @@ export interface ConfiguracionPagos {
   titularPlin: string;
 }
 
+export interface FiltroGrados {
+  id: string;
+  colegioNombre: string;
+  nombre: string;
+  grados: string[];
+  createdAt?: string;
+}
+
 

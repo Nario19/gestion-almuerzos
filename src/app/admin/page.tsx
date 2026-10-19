@@ -31,6 +31,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Pencil,
 } from 'lucide-react';
 import { dataService, DIAS_SEMANA, obtenerDiaActualSemana } from '@/lib/dataService';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -41,7 +42,7 @@ import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
 import { SkeletonDashboardPage } from '@/components/Skeleton';
 import { obtenerFechaHoyPeru, calcularOffsetFechaPeru, formatearFechaLegiblePeru } from '@/lib/dateUtils';
-import { Plato, DiaSemana, TipoPlato, Pedido } from '@/types';
+import { Plato, DiaSemana, TipoPlato, Pedido, FiltroGrados } from '@/types';
 
 export default function AdminPage() {
   const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
@@ -113,9 +114,16 @@ export default function AdminPage() {
   // Colegios
   const [colegios, setColegios] = useState<string[]>([]);
 
-  // Grados
+  // Grados y Filtros de Grados
   const [grados, setGrados] = useState<string[]>([]);
   const [nuevoGrado, setNuevoGrado] = useState('');
+  const [filtrosGrados, setFiltrosGrados] = useState<FiltroGrados[]>([]);
+  const [filtroEditandoId, setFiltroEditandoId] = useState<string | null>(null);
+  const [nombreFiltroGrados, setNombreFiltroGrados] = useState('');
+  const [gradosSeleccionadosFiltro, setGradosSeleccionadosFiltro] = useState<string[]>([]);
+  const [guardandoFiltro, setGuardandoFiltro] = useState(false);
+  const [errorFiltro, setErrorFiltro] = useState<string | null>(null);
+  const [exitoFiltro, setExitoFiltro] = useState(false);
 
   // Observaciones
   const [observaciones, setObservaciones] = useState<string[]>([]);
@@ -156,6 +164,7 @@ export default function AdminPage() {
       });
       dataService.obtenerColegios().then((cols) => { if (!cancelado) setColegios(cols); });
       dataService.obtenerGrados(colegioObjetivo).then((g) => { if (!cancelado) setGrados(g); });
+      dataService.obtenerFiltrosGrados(colegioObjetivo).then((fg) => { if (!cancelado) setFiltrosGrados(fg); });
       dataService.obtenerObservaciones(colegioObjetivo).then((obs) => { if (!cancelado) setObservaciones(obs); });
       dataService.obtenerPedidos().then((peds) => { if (!cancelado) setPedidos(peds); });
 
@@ -163,6 +172,7 @@ export default function AdminPage() {
         dataService.obtenerPedidos().then(setPedidos);
         dataService.obtenerColegios().then(setColegios);
         dataService.obtenerGrados(colegioObjetivo).then(setGrados);
+        dataService.obtenerFiltrosGrados(colegioObjetivo).then(setFiltrosGrados);
         dataService.obtenerObservaciones(colegioObjetivo).then(setObservaciones);
       });
       return () => {
@@ -208,6 +218,88 @@ export default function AdminPage() {
       onConfirmar: async () => {
         const res = await dataService.eliminarGrado(nombre, colegioObjetivo);
         setGrados(res);
+      },
+    });
+  };
+
+  const toggleGradoEnFiltro = (g: string) => {
+    setGradosSeleccionadosFiltro((prev) =>
+      prev.includes(g) ? prev.filter((item) => item !== g) : [...prev, g]
+    );
+  };
+
+  const handleSeleccionarTodosGrados = () => {
+    setGradosSeleccionadosFiltro([...grados]);
+  };
+
+  const handleDeseleccionarTodosGrados = () => {
+    setGradosSeleccionadosFiltro([]);
+  };
+
+  const handleGuardarFiltroGrados = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorFiltro(null);
+    if (!nombreFiltroGrados.trim()) {
+      setErrorFiltro('Ingresa un nombre para el filtro (ej. Primaria, Secundaria, 1.° a 3.°).');
+      return;
+    }
+    if (gradosSeleccionadosFiltro.length === 0) {
+      setErrorFiltro('Selecciona al menos un grado para este filtro.');
+      return;
+    }
+
+    setGuardandoFiltro(true);
+    try {
+      await dataService.guardarFiltroGrados({
+        id: filtroEditandoId || undefined,
+        colegioNombre: colegioObjetivo,
+        nombre: nombreFiltroGrados.trim(),
+        grados: gradosSeleccionadosFiltro,
+      });
+      const actualizados = await dataService.obtenerFiltrosGrados(colegioObjetivo);
+      setFiltrosGrados(actualizados);
+      setFiltroEditandoId(null);
+      setNombreFiltroGrados('');
+      setGradosSeleccionadosFiltro([]);
+      setExitoFiltro(true);
+      setTimeout(() => setExitoFiltro(false), 2500);
+    } catch (err) {
+      console.error('Error guardando filtro de grados:', err);
+      setErrorFiltro('No se pudo guardar el filtro de grados.');
+    } finally {
+      setGuardandoFiltro(false);
+    }
+  };
+
+  const handleIniciarEditarFiltro = (filtro: FiltroGrados) => {
+    setFiltroEditandoId(filtro.id);
+    setNombreFiltroGrados(filtro.nombre);
+    setGradosSeleccionadosFiltro([...filtro.grados]);
+    setErrorFiltro(null);
+  };
+
+  const handleCancelarEditarFiltro = () => {
+    setFiltroEditandoId(null);
+    setNombreFiltroGrados('');
+    setGradosSeleccionadosFiltro([]);
+    setErrorFiltro(null);
+  };
+
+  const handleSolicitarEliminarFiltro = (filtro: FiltroGrados) => {
+    setConfirmacion({
+      abierto: true,
+      titulo: `¿Eliminar filtro "${filtro.nombre}"?`,
+      mensaje: (
+        <span>
+          ¿Estás seguro de que deseas eliminar el filtro de grados <strong>{filtro.nombre}</strong> del colegio{' '}
+          <strong>{colegioObjetivo || 'actual'}</strong>? Dejará de aparecer como acceso rápido en Despacho.
+        </span>
+      ),
+      textoBotonConfirmar: 'Sí, eliminar filtro',
+      onConfirmar: async () => {
+        await dataService.eliminarFiltroGrados(filtro.id, colegioObjetivo);
+        const actualizados = await dataService.obtenerFiltrosGrados(colegioObjetivo);
+        setFiltrosGrados(actualizados);
       },
     });
   };
@@ -1354,6 +1446,217 @@ export default function AdminPage() {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* SECCIÓN: FILTROS DE GRADOS PARA DESPACHO */}
+            <div className="md:col-span-3 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                    <Filter className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 tracking-tight">
+                      Filtros de Grados para Despacho ({filtrosGrados.length}) — {colegioObjetivo || 'General'}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Crea grupos personalizados de grados (ej. "Primaria", "Secundaria", "1.° a 3.°"). Estos filtros aparecerán en Despacho para entregas rápidas.
+                    </p>
+                  </div>
+                </div>
+
+                {filtroEditandoId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelarEditarFiltro}
+                    className="text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition cursor-pointer self-start sm:self-auto"
+                  >
+                    Cancelar Edición
+                  </button>
+                )}
+              </div>
+
+              {/* Formulario de Creación / Edición de Filtro */}
+              <form onSubmit={handleGuardarFiltroGrados} className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase text-slate-800 tracking-wider">
+                    {filtroEditandoId ? '✏️ Editando Filtro de Grados' : '+ Crear Nuevo Filtro de Grados'}
+                  </span>
+                  {exitoFiltro && (
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 animate-in fade-in">
+                      ✓ ¡Filtro guardado con éxito!
+                    </span>
+                  )}
+                </div>
+
+                {errorFiltro && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{errorFiltro}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                  <div className="md:col-span-2">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Nombre del Filtro *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. Primaria, Secundaria, 1.° a 3.° Primaria, Pabellón A..."
+                      value={nombreFiltroGrados}
+                      onChange={(e) => setNombreFiltroGrados(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition"
+                    />
+                  </div>
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={guardandoFiltro}
+                      className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      {guardandoFiltro ? (
+                        <span>Guardando...</span>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>{filtroEditandoId ? 'Actualizar Filtro' : 'Guardar Filtro'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Selección de Grados para el Filtro */}
+                <div className="space-y-2 pt-1 border-t border-slate-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-700">
+                      Selecciona los grados que incluirá este filtro ({gradosSeleccionadosFiltro.length} seleccionados):
+                    </label>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={handleSeleccionarTodosGrados}
+                        className="font-bold text-orange-600 hover:underline cursor-pointer"
+                      >
+                        Marcar todos
+                      </button>
+                      <span className="text-slate-300">•</span>
+                      <button
+                        type="button"
+                        onClick={handleDeseleccionarTodosGrados}
+                        className="font-bold text-slate-500 hover:underline cursor-pointer"
+                      >
+                        Desmarcar todos
+                      </button>
+                    </div>
+                  </div>
+
+                  {grados.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">
+                      No hay grados activos en este colegio. Registra grados arriba primero.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
+                      {grados.map((g) => {
+                        const seleccionado = gradosSeleccionadosFiltro.includes(g);
+                        return (
+                          <label
+                            key={g}
+                            className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-2 cursor-pointer transition select-none ${
+                              seleccionado
+                                ? 'bg-orange-50 text-orange-950 border-orange-300 font-bold shadow-2xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={seleccionado}
+                              onChange={() => toggleGradoEnFiltro(g)}
+                              className="rounded text-orange-500 focus:ring-orange-500 w-3.5 h-3.5 cursor-pointer"
+                            />
+                            <span className="truncate">{g}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </form>
+
+              {/* Lista de Filtros de Grados Creados */}
+              <div className="space-y-3 pt-2">
+                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                  Filtros Disponibles para Despacho en {colegioObjetivo || 'este colegio'}:
+                </h4>
+
+                {filtrosGrados.length === 0 ? (
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300 text-center space-y-1.5">
+                    <Filter className="w-6 h-6 text-slate-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-700">Aún no hay filtros de grados creados</p>
+                    <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+                      Crea tu primer filtro arriba para agrupar los grados (ej. Primaria o Secundaria) y poder filtrar rápidamente los almuerzos en Despacho.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {filtrosGrados.map((f) => (
+                      <div
+                        key={f.id}
+                        className={`p-4 rounded-2xl border transition space-y-2.5 ${
+                          filtroEditandoId === f.id
+                            ? 'bg-orange-50/60 border-orange-300 ring-2 ring-orange-400/20'
+                            : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0" />
+                            <h5 className="text-sm font-black text-slate-900 tracking-tight">
+                              {f.nombre}
+                            </h5>
+                            <span className="text-[10px] font-black uppercase text-orange-800 bg-orange-100 px-2 py-0.5 rounded-md">
+                              {f.grados.length} {f.grados.length === 1 ? 'grado' : 'grados'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleIniciarEditarFiltro(f)}
+                              className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition cursor-pointer"
+                              title="Editar filtro"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSolicitarEliminarFiltro(f)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                              title="Eliminar filtro"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Chips de grados incluidos */}
+                        <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-100">
+                          {f.grados.map((g) => (
+                            <span
+                              key={g}
+                              className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold"
+                            >
+                              {g}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -433,6 +433,33 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   3. `src/lib/dataService.ts`
   4. `tests/pedido-manual-navbar-admin-superadmin.test.mjs` (nuevo)
 
+### D-027 — 2026-10-19 — Filtros Personalizados de Grados para Despacho en Configuración de Grados y Secciones
+- Decisión: A petición explícita del usuario ("AHORA, YO QUIERO EDITAR MIS FILTROS, ES DECIR QUE ACA Dashboard & KPIs Menú Semanal Grados y Secciones (13) Observaciones (5) Nuevo Grado / Sección ... ME APAREZCA DEBAJO DE GRADO Y SECCION FILTROS ENTONCES, YO CREO MI FILTRO Y SELECCIONO LOS GRADOS QUE QUIERO QUE APAREZCAN. Y ESE FILTRO SE MOSTRARÁ EN DESPACHO. LO MISMO PARA TODOS LOS ADMINS."):
+  1. Interfaz y Modelo de Datos (`src/types/index.ts`):
+     - Creación de la interfaz `FiltroGrados` (`id`, `colegioNombre`, `nombre`, `grados: string[]`, `createdAt?`).
+  2. Servicio de Datos con Aislamiento Multitenant (`src/lib/dataService.ts`):
+     - Implementación de `obtenerFiltrosGrados(colegioNombreOId)`, `guardarFiltroGrados(filtroData)` y `eliminarFiltroGrados(id, colegioNombreOId)`.
+     - Persistencia redundante en memoria, en `localStorage` (`config_filtros_grados_${colegio}`) y en Supabase (`menus_dia.mensaje_aviso.filtrosGradosPorColegio`) con sincronización reactiva en tiempo real mediante `notifyListeners()`.
+  3. Panel de Administración de Filtros (`src/app/admin/page.tsx`):
+     - Ubicado en la pestaña "Grados y Secciones" (`/admin`), debajo de "Grados y Secciones Activas".
+     - Formulario interactivo para crear y editar filtros con nombre (ej. "Primaria", "Secundaria", "1° a 3° Primaria"), checkboxes para seleccionar/deseleccionar individualmente o masivamente los grados oficiales del colegio activo.
+     - Listado de tarjetas de filtros con detalle de grados incluidos y acciones para editar y eliminar de manera segura.
+     - Aislamiento estricto por colegio: el Superadmin puede gestionar y seleccionar cualquier colegio; los administradores de sede únicamente los filtros de su colegio institucional.
+  4. Integración Operativa en Despacho (`src/app/despacho/page.tsx`):
+     - Carga reactiva de los filtros de grados del colegio activo.
+     - Barra de chips interactiva con `GraduationCap`: botón "Todos los Grados" más los chips de cada filtro personalizado con su conteo en vivo de pedidos de la fecha.
+     - Filtrado dimensional en `pedidosBase` que actualiza dinámicamente los KPIs operativos (Total, Entregados, Falta Entregar, Pagados, Por Cobrar).
+     - Inclusión del grupo de grados en el nombre del archivo exportado a Excel (`Reporte_Despacho_{Colegio}_{Grupo}_{Estado}_{Fecha}.xls`) y en la cabecera de la orden para impresión física.
+  5. Suite de Pruebas Automatizadas:
+     - `tests/filtros-grados-despacho-admin.test.mjs` aprobada al 100% con 182 tests totales del sistema en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/types/index.ts`
+  2. `src/lib/dataService.ts`
+  3. `src/app/admin/page.tsx`
+  4. `src/app/despacho/page.tsx`
+  5. `tests/filtros-grados-despacho-admin.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
@@ -445,3 +472,4 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
 
 - Validar con el cliente si el precio de S/ 12 es universal o si se habilitarán formalmente platos con precios variables en la interfaz de compra pública.
 - Establecer si el cierre a las 09:30 AM debe rechazar pedidos automáticamente en el backend vía trigger/función SQL o mantenerse como aviso visual en frontend.
+

@@ -14,6 +14,7 @@ import {
   ItemFiadoPedido,
   EstudianteColegioInfo,
   ConfiguracionPagos,
+  FiltroGrados,
 } from '@/types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabase';
@@ -165,6 +166,7 @@ interface ConfigMenusDiaObj {
   gradosPorColegio?: Record<string, string[]>;
   observacionesPorColegio?: Record<string, string[]>;
   configuracionPagos?: ConfiguracionPagos;
+  filtrosGradosPorColegio?: Record<string, FiltroGrados[]>;
 }
 
 export const CONFIG_PAGOS_DEFAULT: ConfiguracionPagos = {
@@ -194,6 +196,7 @@ let gradosMemoria: string[] = [...GRADOS_DEFAULT];
 let observacionesMemoria: string[] = [...OBSERVACIONES_DEFAULT];
 const gradosPorColegioMemoria: Record<string, string[]> = {};
 const observacionesPorColegioMemoria: Record<string, string[]> = {};
+const filtrosGradosPorColegioMemoria: Record<string, FiltroGrados[]> = {};
 
 if (typeof window !== 'undefined') {
   try {
@@ -2334,5 +2337,176 @@ export const dataService = {
 
     notifyListeners();
     return { ok: true };
+  },
+
+  // --- GESTIÓN DE FILTROS PERSONALIZADOS DE GRADOS PARA DESPACHO ---
+  async obtenerFiltrosGrados(colegioNombreOId?: string): Promise<FiltroGrados[]> {
+    const colKey = (colegioNombreOId || '').trim();
+    if (!colKey || colKey === 'TODOS') return [];
+
+    if (filtrosGradosPorColegioMemoria[colKey] !== undefined) {
+      return [...filtrosGradosPorColegioMemoria[colKey]];
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(`config_filtros_grados_${colKey}`);
+        if (cached !== null) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            filtrosGradosPorColegioMemoria[colKey] = parsed;
+            return [...parsed];
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (configRow?.mensaje_aviso) {
+          const parsed = JSON.parse(configRow.mensaje_aviso);
+          if (parsed.filtrosGradosPorColegio && parsed.filtrosGradosPorColegio[colKey] !== undefined) {
+            const list = parsed.filtrosGradosPorColegio[colKey];
+            if (Array.isArray(list)) {
+              filtrosGradosPorColegioMemoria[colKey] = list;
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(`config_filtros_grados_${colKey}`, JSON.stringify(list));
+              }
+              return [...list];
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    filtrosGradosPorColegioMemoria[colKey] = [];
+    return [];
+  },
+
+  async guardarFiltroGrados(
+    filtroData: Omit<FiltroGrados, 'id' | 'createdAt'> & { id?: string }
+  ): Promise<FiltroGrados> {
+    const colKey = (filtroData.colegioNombre || '').trim();
+    const id = filtroData.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `filtro-${Date.now()}`);
+
+    const filtroFinal: FiltroGrados = {
+      id,
+      colegioNombre: colKey,
+      nombre: filtroData.nombre.trim(),
+      grados: Array.isArray(filtroData.grados) ? filtroData.grados : [],
+      createdAt: new Date().toISOString(),
+    };
+
+    const actuales = await this.obtenerFiltrosGrados(colKey);
+    const index = actuales.findIndex((f) => f.id === id);
+    let nuevosFiltros: FiltroGrados[];
+    if (index >= 0) {
+      nuevosFiltros = [...actuales];
+      nuevosFiltros[index] = filtroFinal;
+    } else {
+      nuevosFiltros = [...actuales, filtroFinal];
+    }
+
+    filtrosGradosPorColegioMemoria[colKey] = nuevosFiltros;
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`config_filtros_grados_${colKey}`, JSON.stringify(nuevosFiltros));
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: ConfigMenusDiaObj = {};
+        if (configRow?.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+          } catch (_) {}
+        }
+
+        if (!cfgObj.filtrosGradosPorColegio) {
+          cfgObj.filtrosGradosPorColegio = {};
+        }
+        cfgObj.filtrosGradosPorColegio[colKey] = nuevosFiltros;
+
+        if (configRow) {
+          await supabase
+            .from('menus_dia')
+            .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+            .eq('dia_semana', 'SABADO');
+        } else {
+          await supabase
+            .from('menus_dia')
+            .insert({
+              dia_semana: 'SABADO',
+              mensaje_aviso: JSON.stringify(cfgObj),
+            });
+        }
+      } catch (e) {
+        console.warn('Error guardando filtros de grados en Supabase:', e);
+      }
+    }
+
+    notifyListeners();
+    return filtroFinal;
+  },
+
+  async eliminarFiltroGrados(id: string, colegioNombre: string): Promise<void> {
+    const colKey = (colegioNombre || '').trim();
+    const actuales = await this.obtenerFiltrosGrados(colKey);
+    const nuevosFiltros = actuales.filter((f) => f.id !== id);
+
+    filtrosGradosPorColegioMemoria[colKey] = nuevosFiltros;
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`config_filtros_grados_${colKey}`, JSON.stringify(nuevosFiltros));
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: ConfigMenusDiaObj = {};
+        if (configRow?.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+          } catch (_) {}
+        }
+
+        if (!cfgObj.filtrosGradosPorColegio) {
+          cfgObj.filtrosGradosPorColegio = {};
+        }
+        cfgObj.filtrosGradosPorColegio[colKey] = nuevosFiltros;
+
+        if (configRow) {
+          await supabase
+            .from('menus_dia')
+            .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+            .eq('dia_semana', 'SABADO');
+        }
+      } catch (e) {
+        console.warn('Error eliminando filtro de grados en Supabase:', e);
+      }
+    }
+
+    notifyListeners();
   },
 };

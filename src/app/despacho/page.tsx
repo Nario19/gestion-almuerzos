@@ -19,6 +19,7 @@ import {
   Lock,
   XCircle,
   RotateCcw,
+  GraduationCap,
 } from 'lucide-react';
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
@@ -31,7 +32,7 @@ import {
   calcularOffsetFechaPeru,
   formatearFechaEmisionPeru,
 } from '@/lib/dateUtils';
-import { Pedido, EstadoPedido, EstadoPago } from '@/types';
+import { Pedido, EstadoPedido, EstadoPago, FiltroGrados } from '@/types';
 
 export type FiltroEstadoPedido =
   | 'TODOS'
@@ -53,6 +54,8 @@ export default function DespachoPage() {
   // Por defecto el filtro de fecha es el día de hoy
   const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstadoPedido>('TODOS');
+  const [filtrosGrados, setFiltrosGrados] = useState<FiltroGrados[]>([]);
+  const [filtroGradosSeleccionado, setFiltroGradosSeleccionado] = useState<string>('TODOS');
   const [busqueda, setBusqueda] = useState('');
   const [comprobanteModal, setComprobanteModal] = useState<string | null>(null);
   const [alertaBloqueoEntrega, setAlertaBloqueoEntrega] = useState<string | null>(null);
@@ -69,6 +72,14 @@ export default function DespachoPage() {
     setPedidos(data);
     const cols = await dataService.obtenerColegios();
     if (cols) setColegios(cols);
+
+    const colActual = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
+    if (colActual && colActual !== 'TODOS') {
+      const fg = await dataService.obtenerFiltrosGrados(colActual);
+      setFiltrosGrados(fg);
+    } else {
+      setFiltrosGrados([]);
+    }
   };
 
   useEffect(() => {
@@ -80,6 +91,19 @@ export default function DespachoPage() {
     dataService.obtenerColegios().then((cols) => {
       if (!cancelado && cols) setColegios(cols);
     });
+
+    const colActual = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
+    if (colActual && colActual !== 'TODOS') {
+      dataService.obtenerFiltrosGrados(colActual).then((fg) => {
+        if (!cancelado) {
+          setFiltrosGrados(fg);
+          setFiltroGradosSeleccionado((prev) => (fg.some((f) => f.id === prev) ? prev : 'TODOS'));
+        }
+      });
+    } else {
+      setFiltrosGrados([]);
+      setFiltroGradosSeleccionado('TODOS');
+    }
 
     // Auto-actualización periódica continua cada 4 segundos para reflejar nuevos pedidos al instante
     const intervalo = setInterval(() => {
@@ -93,7 +117,7 @@ export default function DespachoPage() {
       clearInterval(intervalo);
       desuscribir();
     };
-  }, [esAdmin]);
+  }, [esAdmin, esSuperAdmin, usuario?.colegioNombre, colegioFiltro]);
 
   const handleCambiarEstado = async (id: string, nuevoEstado: EstadoPedido) => {
     const pedidoActual = pedidos.find((p) => p.id === id);
@@ -174,7 +198,14 @@ export default function DespachoPage() {
 
   const colegioActivo = !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : colegioFiltro;
 
-  // Filtrado base de pedidos por Calendario (Fecha), Colegio y Búsqueda
+  // Filtro de grupo de grados activo
+  const filtroGradoActivo = filtrosGrados.find((f) => f.id === filtroGradosSeleccionado);
+  const gradosSet =
+    filtroGradoActivo && filtroGradoActivo.grados.length > 0
+      ? new Set(filtroGradoActivo.grados.map((g) => g.trim().toLowerCase()))
+      : null;
+
+  // Filtrado base de pedidos por Calendario (Fecha), Colegio, Filtro de Grados y Búsqueda
   const pedidosBase = pedidos.filter((p) => {
     const fechaPedido = (p.fecha || '').slice(0, 10);
     const matchFecha = fechaFiltro === 'TODAS' || fechaPedido === fechaFiltro;
@@ -183,8 +214,30 @@ export default function DespachoPage() {
       p.estudianteNombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       p.gradoSeccion.toLowerCase().includes(busqueda.toLowerCase()) ||
       p.codigoPedido.toLowerCase().includes(busqueda.toLowerCase());
-    return matchFecha && matchColegio && matchBusqueda;
+
+    if (!matchFecha || !matchColegio || !matchBusqueda) return false;
+
+    if (gradosSet && gradosSet.size > 0) {
+      const gPed = (p.gradoSeccion || '').trim().toLowerCase();
+      if (!gradosSet.has(gPed)) return false;
+    }
+
+    return true;
   });
+
+  // Conteo de pedidos activos para cada chip de filtro de grados (según fecha y colegio)
+  const conteoPorFiltroGrado = filtrosGrados.reduce((acc, fg) => {
+    const setG = new Set(fg.grados.map((g) => g.trim().toLowerCase()));
+    const conteo = pedidos.filter((p) => {
+      const fechaPedido = (p.fecha || '').slice(0, 10);
+      const matchFecha = fechaFiltro === 'TODAS' || fechaPedido === fechaFiltro;
+      const matchColegio = colegioActivo === 'TODOS' || p.colegioNombre === colegioActivo;
+      const matchGrado = setG.has((p.gradoSeccion || '').trim().toLowerCase());
+      return matchFecha && matchColegio && matchGrado && p.estadoPedido !== 'CANCELADO';
+    }).length;
+    acc[fg.id] = conteo;
+    return acc;
+  }, {} as Record<string, number>);
 
   // Métricas rápidas (sobre el consolidado total de la fecha y filtros base de colegio)
   const total = pedidosBase.length;
@@ -248,9 +301,10 @@ export default function DespachoPage() {
       colegioFiltro === 'TODOS'
         ? 'Todos_los_Colegios'
         : colegioFiltro.replace(/\s+/g, '_');
+    const nombreGradoFiltro = filtroGradoActivo ? `_${filtroGradoActivo.nombre.replace(/\s+/g, '_')}` : '';
     const nombreEstado = filtroEstado !== 'TODOS' ? `_${filtroEstado}` : '';
     const fecha = obtenerFechaHoyPeru();
-    const filename = `Reporte_Despacho_${nombreColegio}${nombreEstado}_${nombreFecha}_${fecha}.xls`;
+    const filename = `Reporte_Despacho_${nombreColegio}${nombreGradoFiltro}${nombreEstado}_${nombreFecha}_${fecha}.xls`;
 
     const filasHtml = pedidosFiltrados
       .map((p, idx) => {
@@ -651,6 +705,60 @@ export default function DespachoPage() {
           </div>
         )}
 
+        {/* Filtro Dinámico de Grupos de Grados (Personalizados por Colegio) */}
+        {filtrosGrados.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+            <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
+              <GraduationCap className="w-3.5 h-3.5 text-indigo-600" /> Filtro de Grados:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setFiltroGradosSeleccionado('TODOS');
+                setPaginaActual(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
+                filtroGradosSeleccionado === 'TODOS'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <span>Todos los Grados</span>
+            </button>
+            {filtrosGrados.map((fg) => {
+              const activo = filtroGradosSeleccionado === fg.id;
+              const conteo = conteoPorFiltroGrado[fg.id] ?? 0;
+              return (
+                <button
+                  key={fg.id}
+                  type="button"
+                  onClick={() => {
+                    setFiltroGradosSeleccionado((prev) => (prev === fg.id ? 'TODOS' : fg.id));
+                    setPaginaActual(1);
+                  }}
+                  title={`Grados incluidos: ${fg.grados.join(', ')}`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
+                    activo
+                      ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-600/30'
+                      : 'bg-indigo-50/80 text-indigo-800 hover:bg-indigo-100 border border-indigo-200/60'
+                  }`}
+                >
+                  <span>{fg.nombre}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                      activo
+                        ? 'bg-white/20 text-white'
+                        : 'bg-indigo-100 text-indigo-900 border border-indigo-200'
+                    }`}
+                  >
+                    {conteo}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Filtro Dinámico por Estado del Pedido (Para Administradores y Super Administrador) */}
         <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
           <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
@@ -709,7 +817,7 @@ export default function DespachoPage() {
       <div className="hidden print:block mb-4">
         <h2 className="text-xl font-black text-slate-900">Reporte de Despacho y Empaque</h2>
         <p className="text-xs text-slate-600">
-          Fecha: <strong>{fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)}</strong> | Colegio: <strong>{colegioActivo}</strong> {filtroEstado !== 'TODOS' ? `| Estado: ${filtroEstado}` : ''} | Fecha de Emisión: <strong>{formatearFechaEmisionPeru()}</strong> | Total: <strong>{totalFiltrados}</strong>
+          Fecha: <strong>{fechaFiltro === 'TODAS' ? 'Todas las Fechas' : formatearFechaLegible(fechaFiltro)}</strong> | Colegio: <strong>{colegioActivo}</strong> {filtroGradoActivo ? `| Grupo: ${filtroGradoActivo.nombre}` : ''} {filtroEstado !== 'TODOS' ? `| Estado: ${filtroEstado}` : ''} | Fecha de Emisión: <strong>{formatearFechaEmisionPeru()}</strong> | Total: <strong>{totalFiltrados}</strong>
         </p>
       </div>
 
