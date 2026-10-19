@@ -430,15 +430,17 @@ function LoginContent() {
             )}
           </button>
         </form>
+      </div>
 
-        {/* Nota informativa sobre Administrador */}
-        {!esRegistro && (
-          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
-            <p className="text-[11px] text-slate-400">
-              ¿Eres del personal de cocina o administración? Ingresa con tu cuenta de administrador.
-            </p>
-          </div>
-        )}
+      {/* Botón para ver el menú escolar públicamente */}
+      <div className="mt-5 text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200/90 shadow-xs hover:shadow-md font-bold text-xs sm:text-sm transition-all active:scale-95"
+        >
+          <UtensilsCrossed className="w-4 h-4 text-orange-500" />
+          <span>Ver Menú</span>
+        </Link>
       </div>
     </div>
   );

@@ -34,9 +34,11 @@ import {
   X,
   Smartphone,
   CreditCard,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { dataService, CONFIG_PAGOS_DEFAULT } from '@/lib/dataService';
+import { dataService, CONFIG_PAGOS_DEFAULT, HORA_LIMITE_DEFAULT } from '@/lib/dataService';
+import { formatearHoraLimiteLegible } from '@/lib/dateUtils';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
 import { SkeletonDashboardPage } from '@/components/Skeleton';
@@ -77,6 +79,12 @@ export default function SuperAdminPage() {
   const [numeroPlin, setNumeroPlin] = useState('');
   const [titularPlin, setTitularPlin] = useState('');
   const [guardandoPagos, setGuardandoPagos] = useState(false);
+
+  // Configuración de Hora Límite de Pedidos del Día
+  const [horaLimite, setHoraLimite] = useState<string>(HORA_LIMITE_DEFAULT);
+  const [modalHoraLimiteAbierto, setModalHoraLimiteAbierto] = useState(false);
+  const [nuevaHoraLimite, setNuevaHoraLimite] = useState('09:30');
+  const [guardandoHoraLimite, setGuardandoHoraLimite] = useState(false);
 
   // Modal rápido para editar credenciales de Admin
   const [modalAdminRapido, setModalAdminRapido] = useState<{
@@ -197,11 +205,21 @@ export default function SuperAdminPage() {
           setConfigPagos(pagos);
         }
       });
+      dataService.obtenerHoraLimite().then((hl) => {
+        if (!cancelado && hl) {
+          setHoraLimite(hl);
+        }
+      });
       const desuscribir = dataService.suscribirCambios(() => {
         cargarColegios();
         dataService.obtenerConfiguracionPagos().then((pagos) => {
           if (!cancelado && pagos) {
             setConfigPagos(pagos);
+          }
+        });
+        dataService.obtenerHoraLimite().then((hl) => {
+          if (!cancelado && hl) {
+            setHoraLimite(hl);
           }
         });
       });
@@ -211,6 +229,31 @@ export default function SuperAdminPage() {
       };
     }
   }, [esSuperAdmin]);
+
+  const abrirEditarHoraLimite = () => {
+    setNuevaHoraLimite(horaLimite || '09:30');
+    setModalHoraLimiteAbierto(true);
+  };
+
+  const handleGuardarHoraLimite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevaHoraLimite.trim() || !nuevaHoraLimite.includes(':')) {
+      alert('Por favor selecciona una hora válida (HH:MM).');
+      return;
+    }
+    setGuardandoHoraLimite(true);
+    try {
+      const res = await dataService.guardarHoraLimite(nuevaHoraLimite);
+      if (!res.ok) {
+        alert(res.error || 'Error al guardar hora límite.');
+      } else {
+        setHoraLimite(nuevaHoraLimite);
+        setModalHoraLimiteAbierto(false);
+      }
+    } finally {
+      setGuardandoHoraLimite(false);
+    }
+  };
 
   const abrirEditarPagos = () => {
     setNumeroYape(configPagos.numeroYape);
@@ -652,6 +695,60 @@ export default function SuperAdminPage() {
             <div className="w-10 h-10 rounded-2xl bg-sky-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
               Plin
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CONFIGURACIÓN GLOBAL: HORA LÍMITE DE PEDIDOS DEL DÍA */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                  Hora Límite para Pedidos del Día
+                </h2>
+                <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                  Todas las Sedes
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Horario de corte para pedir almuerzos escolares del mismo día. Después de esta hora los padres igual podrán pedir, pero recibirán una advertencia informativa.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={abrirEditarHoraLimite}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto cursor-pointer active:scale-95"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Configurar Hora Límite</span>
+          </button>
+        </div>
+
+        <div className="pt-3">
+          <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 block">
+                  Horario Oficial Configurado
+                </span>
+                <div className="text-lg sm:text-xl font-black text-amber-950 font-mono">
+                  {formatearHoraLimiteLegible(horaLimite)}
+                </div>
+              </div>
+            </div>
+            <span className="text-xs font-semibold text-amber-900/90 bg-white px-3 py-1.5 rounded-xl border border-amber-200 self-start sm:self-auto">
+              Visible en carta: &quot;Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}&quot;
+            </span>
           </div>
         </div>
       </div>
@@ -1610,6 +1707,76 @@ export default function SuperAdminPage() {
                 <button
                   type="button"
                   onClick={() => setModalPagosAbierto(false)}
+                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para configurar hora límite de pedidos del día */}
+      {modalHoraLimiteAbierto && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-black text-slate-900">Configurar Hora Límite</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalHoraLimiteAbierto(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarHoraLimite} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Hora de Corte de Pedidos *
+                </label>
+                <input
+                  type="time"
+                  value={nuevaHoraLimite}
+                  onChange={(e) => setNuevaHoraLimite(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-base font-bold font-mono text-slate-800 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                  required
+                />
+                <div className="mt-2 p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+                  <p>
+                    <strong>Vista previa en la carta:</strong> &quot;Pedidos hasta las {formatearHoraLimiteLegible(nuevaHoraLimite)}&quot;.
+                  </p>
+                  <p className="text-[11px] text-amber-800">
+                    Si un padre ingresa después de esta hora para el día de hoy, el sistema le advertirá que el horario regular ha culminado, pero le permitirá enviar el pedido.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                <button
+                  type="submit"
+                  disabled={guardandoHoraLimite}
+                  className="flex-1 py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-amber-600/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {guardandoHoraLimite ? (
+                    <span className="animate-pulse">Guardando...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Guardar Hora Límite</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalHoraLimiteAbierto(false)}
                   className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
                 >
                   Cancelar

@@ -167,7 +167,11 @@ interface ConfigMenusDiaObj {
   observacionesPorColegio?: Record<string, string[]>;
   configuracionPagos?: ConfiguracionPagos;
   filtrosGradosPorColegio?: Record<string, FiltroGrados[]>;
+  horaLimitePedidos?: string;
 }
+
+export const HORA_LIMITE_DEFAULT = '09:30';
+let horaLimiteMemoria = HORA_LIMITE_DEFAULT;
 
 export const CONFIG_PAGOS_DEFAULT: ConfiguracionPagos = {
   numeroYape: '999-999-999',
@@ -219,6 +223,10 @@ if (typeof window !== 'undefined') {
     if (o) {
       const parsed = JSON.parse(o);
       if (Array.isArray(parsed) && parsed.length > 0) observacionesMemoria = parsed;
+    }
+    const hl = localStorage.getItem('config_hora_limite');
+    if (hl && hl.includes(':')) {
+      horaLimiteMemoria = hl;
     }
   } catch (_) {}
 }
@@ -2331,6 +2339,107 @@ export const dataService = {
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Error al guardar configuración de pagos';
+        return { ok: false, error: msg };
+      }
+    }
+
+    notifyListeners();
+    return { ok: true };
+  },
+
+  // --- CONFIGURACIÓN DE HORA LÍMITE DE PEDIDOS ---
+  async obtenerHoraLimite(): Promise<string> {
+    if (typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem('config_hora_limite');
+        if (local && local.includes(':')) {
+          horaLimiteMemoria = local;
+        }
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (configRow?.mensaje_aviso) {
+          try {
+            const parsed = JSON.parse(configRow.mensaje_aviso);
+            if (parsed.horaLimitePedidos && typeof parsed.horaLimitePedidos === 'string') {
+              horaLimiteMemoria = parsed.horaLimitePedidos;
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('config_hora_limite', horaLimiteMemoria);
+              }
+              return horaLimiteMemoria;
+            }
+          } catch (_) {}
+        }
+      } catch (e) {
+        console.error('Error obteniendo hora límite en Supabase:', e);
+      }
+    }
+
+    return horaLimiteMemoria;
+  },
+
+  async guardarHoraLimite(nuevaHora: string): Promise<{ ok: boolean; error?: string }> {
+    const horaLimpia = (nuevaHora || '').trim();
+    if (!horaLimpia || !horaLimpia.includes(':')) {
+      return { ok: false, error: 'Formato de hora inválido. Debe ser HH:MM.' };
+    }
+
+    horaLimiteMemoria = horaLimpia;
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('config_hora_limite', horaLimpia);
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: ConfigMenusDiaObj = {};
+        if (configRow?.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+          } catch (_) {}
+        }
+
+        cfgObj.horaLimitePedidos = horaLimpia;
+
+        if (configRow) {
+          const { error } = await supabase
+            .from('menus_dia')
+            .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+            .eq('dia_semana', 'SABADO');
+          if (error) {
+            console.error('Error actualizando hora límite en menus_dia:', error);
+            return { ok: false, error: error.message };
+          }
+        } else {
+          const { error } = await supabase
+            .from('menus_dia')
+            .insert({
+              dia_semana: 'SABADO',
+              mensaje_aviso: JSON.stringify(cfgObj),
+            });
+          if (error) {
+            console.error('Error insertando hora límite en menus_dia:', error);
+            return { ok: false, error: error.message };
+          }
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Error al guardar hora límite';
         return { ok: false, error: msg };
       }
     }

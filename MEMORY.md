@@ -575,6 +575,31 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   7. `src/types/index.ts`
   8. Suites de pruebas en `tests/` actualizadas y aprobadas (188 pass, 0 fail).
 
+### D-032 — 2026-10-19 — Login sin Navbar con Botón Ver Menú, Cabecera Pública "Placeres Culinarios" y Hora Límite de Pedidos Configurable en Superadmin
+- Decisión: A solicitud explícita del usuario:
+  1. Pantalla de Login Limpia (`src/app/login/page.tsx`):
+     - Eliminación de la nota informativa para personal de cocina o administración ("¿Eres del personal de cocina o administración? Ingresa con tu cuenta de administrador.").
+     - Supresión total del Navbar (`HeaderNav` y `BottomNav`) en la ruta `/login`.
+     - Inclusión del botón visible "Ver Menú" debajo de la tarjeta de login para que visitantes puedan acceder directamente a la carta escolar sin iniciar sesión.
+  2. Pantalla Pública de la Carta Semanal (`src/app/padres/page.tsx` y `src/components/HeaderNav.tsx`):
+     - Para visitantes no autenticados (`!usuario`), el Navbar superior muestra únicamente el título "Placeres Culinarios" a la izquierda y los botones "Iniciar Sesión" y "Registrarme" a la derecha, sin tabs operativos ni menús secundarios.
+  3. Configuración Global de Hora Límite en Superadmin (`src/app/superadmin/page.tsx`):
+     - Panel de gestión para la hora límite de pedidos del día con selector interactivo (`input[type="time"]`), horario oficial por defecto `09:30` (formato 12h: `09:30 AM`).
+     - Persistencia en Supabase (`menus_dia` fila de control 'SABADO') y réplica en `localStorage`, con notificación reactiva en tiempo real a todos los módulos.
+  4. Visualización Dinámica y Avisos sin Bloqueo en la Carta (`src/app/padres/page.tsx`):
+     - En el encabezado de la carta (pública y autenticada) se muestra dinámicamente "Pedidos hasta las {horaLimiteFormateada}".
+     - Si un padre realiza un pedido después de la hora límite para el día de hoy, el sistema muestra un aviso informativo claro advirtiendo que el horario regular ha culminado, pero le permite continuar y registrar el pedido normalmente.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/app/login/page.tsx`
+  2. `src/components/HeaderNav.tsx`
+  3. `src/components/BottomNav.tsx`
+  4. `src/lib/dateUtils.ts` (`formatearHoraLimiteLegible`, `haPasadoHoraLimite`)
+  5. `src/lib/dataService.ts` (`obtenerHoraLimite`, `guardarHoraLimite`, `HORA_LIMITE_DEFAULT`)
+  6. `src/app/superadmin/page.tsx`
+  7. `src/app/padres/page.tsx`
+  8. Nueva suite de pruebas `tests/login-ver-menu-hora-limite-superadmin.test.mjs` (195 pruebas totales aprobadas en verde).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

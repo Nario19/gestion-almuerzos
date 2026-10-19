@@ -39,7 +39,9 @@ import {
   DIAS_SEMANA,
   obtenerDiaActualSemana,
   CONFIG_PAGOS_DEFAULT,
+  HORA_LIMITE_DEFAULT,
 } from '@/lib/dataService';
+import { formatearHoraLimiteLegible, haPasadoHoraLimite } from '@/lib/dateUtils';
 import { useAuth } from '@/lib/authContext';
 import { Plato, Pedido, MetodoPago, DiaSemana, Hijo, ResumenCocina, ConfiguracionPagos } from '@/types';
 
@@ -109,17 +111,19 @@ function PedidoContent() {
   const [observacionesTags, setObservacionesTags] = useState<string[]>(OBSERVACIONES_DEFAULT);
   const [cargandoColegios, setCargandoColegios] = useState(true);
   const [configPagos, setConfigPagos] = useState<ConfiguracionPagos>(CONFIG_PAGOS_DEFAULT);
+  const [horaLimite, setHoraLimite] = useState<string>(HORA_LIMITE_DEFAULT);
 
   // Cargar configuraciones dinámicas
   useEffect(() => {
     let montado = true;
     const cargarConfig = async () => {
       try {
-        const [cols, grads, obs, pagos] = await Promise.all([
+        const [cols, grads, obs, pagos, hl] = await Promise.all([
           dataService.obtenerColegios(),
           dataService.obtenerGrados(),
           dataService.obtenerObservaciones(),
           dataService.obtenerConfiguracionPagos(),
+          dataService.obtenerHoraLimite(),
         ]);
         if (!montado) return;
         if (cols && cols.length > 0) {
@@ -137,6 +141,9 @@ function PedidoContent() {
         }
         if (pagos) {
           setConfigPagos(pagos);
+        }
+        if (hl) {
+          setHoraLimite(hl);
         }
       } finally {
         if (montado) setCargandoColegios(false);
@@ -699,6 +706,7 @@ function PedidoContent() {
   const entradas = platosDelDia.filter((p) => esEntrada(p.tipo));
   const segundos = platosDelDia.filter((p) => esSegundo(p.tipo));
   const diaActual = obtenerDiaActualSemana();
+  const fueraDeHorarioHoy = diaSeleccionado === diaActual && haPasadoHoraLimite(horaLimite);
 
   // ----------------------------------------------------
   // VISTA PÚBLICA / CARTA SEMANAL (VISITANTES SIN CUENTA)
@@ -710,8 +718,9 @@ function PedidoContent() {
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
           <div>
             <h1 className="sr-only">Carta Semanal</h1>
+            {/* Pedidos hasta las 09:30 AM (Horario por defecto configurable en Superadmin) */}
             <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las 09:30 AM
+              <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}
             </span>
           </div>
         </div>
@@ -771,6 +780,19 @@ function PedidoContent() {
             })}
           </div>
         </div>
+
+        {/* Aviso de fuera de horario */}
+        {fueraDeHorarioHoy && (
+          <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold block">Aviso de Horario de Pedidos:</span>
+              <span className="text-[11px] text-amber-800 leading-relaxed block mt-0.5">
+                La hora límite de pedidos para hoy ({formatearHoraLimiteLegible(horaLimite)}) ha culminado. Si ingresas a tu cuenta aún puedes registrar tu pedido; la cocina hará lo posible por atenderlo según disponibilidad.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* CONTENIDO DE LA CARTA */}
         <div className="space-y-6">
@@ -912,7 +934,7 @@ function PedidoContent() {
         <div>
           <h1 className="sr-only">Menú Escolar</h1>
           <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las 09:30 AM
+            <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}
           </span>
         </div>
 
@@ -996,6 +1018,19 @@ function PedidoContent() {
           })}
         </div>
       </div>
+
+      {/* Aviso informativo si el pedido es para hoy y ha pasado la hora límite */}
+      {fueraDeHorarioHoy && (
+        <div className="mb-5 p-4 bg-amber-50 border border-amber-200/90 rounded-3xl text-xs text-amber-900 flex items-start gap-3 shadow-xs animate-in fade-in">
+          <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-bold text-amber-950 block">Aviso de Horario de Pedidos:</span>
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              La hora límite oficial para pedidos de hoy ({formatearHoraLimiteLegible(horaLimite)}) ya ha culminado. Aún puedes enviar tu pedido normalmente; la cocina lo preparará según disponibilidad.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* FORMULARIO */}
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -1500,6 +1535,19 @@ function PedidoContent() {
                 <div className="px-3.5 py-2.5 bg-slate-50 rounded-2xl border border-slate-200/60 text-xs text-slate-500 flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>Sin observaciones especiales (Menú regular).</span>
+                </div>
+              )}
+
+              {/* Aviso si es para hoy y ha pasado la hora límite */}
+              {fueraDeHorarioHoy && (
+                <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                  <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">Aviso de Horario:</span>
+                    <span className="text-[11px] text-amber-800 leading-tight block mt-0.5">
+                      Este pedido se registrará después de las {formatearHoraLimiteLegible(horaLimite)}. Será atendido según disponibilidad de cocina.
+                    </span>
+                  </div>
                 </div>
               )}
 

@@ -51,6 +51,10 @@ export default function HeaderNav() {
     router.push('/login');
   };
 
+  if (pathname === '/login') {
+    return null;
+  }
+
   const prefix = esSuperAdmin && pathname.startsWith('/superadmin') ? '/superadmin' : '/admin';
   const adminNavItems = [
     ...(esSuperAdmin ? [{ href: '/superadmin', label: 'Colegios', icon: Building2 }] : []),
@@ -68,24 +72,27 @@ export default function HeaderNav() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Lado Izquierdo del Navbar:
+              - En la pantalla pública (sin sesión): El título dice "Placeres Culinarios"
               - En la interfaz del padre: El título de la pantalla sube al navbar
-              - En la interfaz de admin y superadmin: YA NO VA EL TÍTULO, se muestra la marca Placeres Culinarios */}
+              - En la interfaz de admin y superadmin: YA NO VA EL TÍTULO, se muestra la marca */}
           <Link
             href={esRutaAdmin ? (esSuperAdmin ? '/superadmin' : '/admin') : '/'}
             className="flex items-center gap-2.5 font-bold text-slate-800 hover:opacity-90 transition min-w-0"
             title={esRutaAdmin ? 'Ir al Panel' : 'Ir al inicio'}
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-sm shadow-orange-500/20 shrink-0">
-              {esRutaAdmin ? <UtensilsCrossed className="w-5 h-5" /> : <IconoPantalla className="w-5 h-5" />}
+              {esRutaAdmin || !usuario ? <UtensilsCrossed className="w-5 h-5" /> : <IconoPantalla className="w-5 h-5" />}
             </div>
             {esRutaAdmin ? null : (
               <div className="min-w-0">
                 <span className="text-base sm:text-lg tracking-tight font-black text-slate-900 block leading-tight truncate">
-                  {infoPantalla.titulo}
+                  {!usuario ? 'Placeres Culinarios' : <span>{infoPantalla.titulo}</span>}
                 </span>
-                <span className="text-[10px] text-slate-400 font-semibold hidden xs:block sm:block leading-none truncate">
-                  {infoPantalla.subtitulo}
-                </span>
+                {usuario && (
+                  <span className="text-[10px] text-slate-400 font-semibold hidden xs:block sm:block leading-none truncate">
+                    {infoPantalla.subtitulo}
+                  </span>
+                )}
               </div>
             )}
           </Link>

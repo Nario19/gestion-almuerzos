@@ -163,3 +163,55 @@ export function formatearFechaEmisionPeru(date: Date = new Date()): string {
     year: 'numeric',
   }).format(date);
 }
+
+/**
+ * Convierte una hora en formato 'HH:MM' (24h) a formato legible de 12h con AM/PM (ej. '09:30' -> '09:30 AM').
+ */
+export function formatearHoraLimiteLegible(hora24?: string): string {
+  if (!hora24 || !hora24.includes(':')) return '09:30 AM';
+  try {
+    const [hRaw, mRaw] = hora24.split(':').map(Number);
+    if (isNaN(hRaw) || isNaN(mRaw)) return '09:30 AM';
+    const ampm = hRaw >= 12 ? 'PM' : 'AM';
+    const h12 = hRaw % 12 === 0 ? 12 : hRaw % 12;
+    const hStr = h12.toString().padStart(2, '0');
+    const mStr = mRaw.toString().padStart(2, '0');
+    return `${hStr}:${mStr} ${ampm}`;
+  } catch {
+    return '09:30 AM';
+  }
+}
+
+/**
+ * Determina si la hora actual en Perú (America/Lima) ha superado la hora límite especificada en formato 'HH:MM'.
+ */
+export function haPasadoHoraLimite(horaLimite24: string, date: Date = new Date()): boolean {
+  if (!horaLimite24 || !horaLimite24.includes(':')) return false;
+  try {
+    const [limiteH, limiteM] = horaLimite24.split(':').map(Number);
+    if (isNaN(limiteH) || isNaN(limiteM)) return false;
+
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: ZONA_HORARIA_PERU,
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(date);
+    let curH = 0;
+    let curM = 0;
+    for (const p of parts) {
+      if (p.type === 'hour') curH = Number(p.value);
+      if (p.type === 'minute') curM = Number(p.value);
+    }
+    // Caso especial medianoche 24h
+    if (curH === 24) curH = 0;
+
+    const curTotalMin = curH * 60 + curM;
+    const limiteTotalMin = limiteH * 60 + limiteM;
+    return curTotalMin > limiteTotalMin;
+  } catch {
+    return false;
+  }
+}
+
