@@ -678,6 +678,35 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
 - Impacto:
   - `src/lib/dataService.ts` (`obtenerMetricasAnalytics`)
 
+### D-037 — 2026-10-19 — Protección de Rutas con Middleware de Next.js, Redirección con Aviso y Erradicación de Crash "This page couldn’t load"
+- Decisión: A solicitud del usuario para corregir el error en pantalla y proteger rutas privadas:
+  1. **Diagnóstico y Corrección de Crash en Carga:**
+     - El error *"This page couldn’t load. Reload to try again, or go back"* se originaba por la creación de múltiples canales WebSocket duplicados (`supabase.channel('pedidos-realtime-global')`) en cada suscriptor de React durante el montaje inicial.
+     - Se refactorizó `dataService.suscribirCambios` con un patrón **Singleton de Canal Realtime**: se inicia un solo canal para el primer oyente y se destruye limpiamente cuando no quedan oyentes (`listeners.length === 0`), eliminando cualquier error de concurrencia.
+  2. **Error Boundary Personalizado (`src/app/error.tsx`):**
+     - Se creó el componente `error.tsx` en la raíz de App Router para atrapar cualquier excepción imprevista y presentar una interfaz profesional en español con botón de reintento y retorno a la carta principal, erradicando el banner genérico en inglés.
+  3. **Middleware de Protección de Rutas (`src/middleware.ts`):**
+     - Intercepta en el Edge peticiones a `/superadmin/*`, `/admin/*` y áreas privadas de padres (`/padres/pedidos`, `/padres/hijos`, `/padres/perfil`).
+     - Si el usuario no tiene sesión activa o no cuenta con el rol requerido, redirige automáticamente a `/login?error=no_acceso&redirigir=[ruta_original]`.
+  4. **Sincronización de Cookies de Sesión (`src/lib/authContext.tsx`):**
+     - Sincronización bidireccional inmediata de cookies `sesion_rol` y `sesion_activa` con `localStorage` en login, registro, logout e inicio de sesión.
+  5. **Banner Explicativo y Redirección Inteligente en Login (`src/app/login/page.tsx`):**
+     - Muestra un banner destacado de advertencia cuando se detecta `error=no_acceso` con opción de volver a la carta principal.
+     - Tras autenticarse exitosamente, redirige al usuario directamente a la ruta que intentaba consultar originalmente.
+  6. **Componente de Acceso Restringido (`src/components/AccesoRestringido.tsx`):**
+     - Actualizado con redacción accesible: *"No tienes acceso a esta página"*, botón directo *"Iniciar Sesión"* y *"Volver a la Carta Principal"*.
+  7. **Suite de Pruebas Automatizadas:**
+     - Creada suite en `tests/middleware-proteccion-rutas-error.test.mjs` con 7 pruebas aprobadas al 100% y 214 pruebas totales del sistema en verde.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/middleware.ts` (nuevo)
+  - `src/app/error.tsx` (nuevo)
+  - `src/lib/dataService.ts`
+  - `src/lib/authContext.tsx`
+  - `src/app/login/page.tsx`
+  - `src/components/AccesoRestringido.tsx`
+  - `tests/middleware-proteccion-rutas-error.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -244,6 +244,42 @@ if (typeof window !== 'undefined') {
 }
 
 const listeners: (() => void)[] = [];
+let globalRealtimeChannel: RealtimeChannel | null = null;
+
+function iniciarCanalRealtimeGlobal() {
+  if (globalRealtimeChannel || !isSupabaseConfigured || !supabase) return;
+  try {
+    globalRealtimeChannel = supabase
+      .channel('pedidos-realtime-global')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
+        notifyListeners();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'platos' }, () => {
+        notifyListeners();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'colegios' }, () => {
+        notifyListeners();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menus_dia' }, () => {
+        notifyListeners();
+      })
+      .subscribe((status, err) => {
+        if (err) {
+          console.warn('Advertencia en canal Realtime Supabase:', err);
+        }
+      });
+  } catch (err) {
+    console.warn('Error inicializando canal Realtime global:', err);
+  }
+}
+
+function detenerCanalRealtimeGlobal() {
+  if (!globalRealtimeChannel || !supabase) return;
+  try {
+    supabase.removeChannel(globalRealtimeChannel);
+  } catch (_) {}
+  globalRealtimeChannel = null;
+}
 
 function notifyListeners() {
   listeners.forEach((cb) => {
@@ -1186,31 +1222,15 @@ export const dataService = {
 
   suscribirCambios(callback: () => void): () => void {
     listeners.push(callback);
-    let channel: RealtimeChannel | null = null;
-
-    if (isSupabaseConfigured && supabase) {
-      channel = supabase
-        .channel('pedidos-realtime-global')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
-          callback();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'platos' }, () => {
-          callback();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'colegios' }, () => {
-          callback();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'menus_dia' }, () => {
-          callback();
-        })
-        .subscribe();
+    if (listeners.length === 1) {
+      iniciarCanalRealtimeGlobal();
     }
 
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx !== -1) listeners.splice(idx, 1);
-      if (channel && supabase) {
-        supabase.removeChannel(channel);
+      if (listeners.length === 0) {
+        detenerCanalRealtimeGlobal();
       }
     };
   },

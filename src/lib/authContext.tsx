@@ -34,9 +34,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function sincronizarCookieSesion(u: UsuarioPadre | null) {
+  if (typeof document === 'undefined') return;
+  if (u && u.rol) {
+    document.cookie = `sesion_rol=${encodeURIComponent(u.rol)}; path=/; max-age=604800; SameSite=Lax`;
+    document.cookie = `sesion_activa=1; path=/; max-age=604800; SameSite=Lax`;
+  } else {
+    document.cookie = 'sesion_rol=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = 'sesion_activa=; path=/; max-age=0; SameSite=Lax';
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioPadre | null>(null);
   const [cargando, setCargando] = useState(true);
+
+  // Sincronizar cookie de sesión cada vez que cambia el estado del usuario para proteger rutas con middleware
+  useEffect(() => {
+    sincronizarCookieSesion(usuario);
+  }, [usuario]);
 
   const resolverColegioAsignadoAdmin = async (
     adminId: string,
@@ -557,6 +573,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUsuario(null);
+    sincronizarCookieSesion(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('sesion_padre_almuerzos');
     }

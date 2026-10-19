@@ -212,7 +212,10 @@ function LoginContent() {
         if (!res.ok) {
           setErrorMsg(res.error || 'Credenciales no válidas.');
         } else {
-          if (res.esSuperAdmin) {
+          const redirigir = searchParams.get('redirigir');
+          if (redirigir && redirigir.startsWith('/') && !redirigir.startsWith('//')) {
+            router.push(redirigir);
+          } else if (res.esSuperAdmin) {
             router.push('/superadmin');
           } else if (res.esAdmin) {
             router.push('/admin');
@@ -231,6 +234,27 @@ function LoginContent() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-8 pb-20">
+      {/* Aviso de Acceso Restringido cuando middleware intercepta acceso sin sesión */}
+      {searchParams.get('error') === 'no_acceso' && (
+        <div className="mb-5 p-4 rounded-3xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm flex items-start gap-3 shadow-xs">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-bold text-amber-950">No tienes acceso a esa página</p>
+            <p className="text-amber-800 leading-relaxed text-xs">
+              Debes iniciar sesión con una cuenta autorizada para acceder a esta sección.
+            </p>
+            <div className="pt-1">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1 text-xs font-black text-amber-900 hover:text-orange-600 underline"
+              >
+                ← Volver a la Carta Principal
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="text-center mb-6">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center mx-auto shadow-md shadow-orange-500/20 mb-3">
           <UtensilsCrossed className="w-6 h-6" />
