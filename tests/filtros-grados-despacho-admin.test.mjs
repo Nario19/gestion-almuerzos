@@ -72,7 +72,8 @@ test('Verificación Integral de Filtros Personalizados de Grados en Admin y Desp
 
   await t.test('3. En admin/page.tsx: Panel interactivo de Filtros de Grados debajo de Grados y Secciones Activas', () => {
     const adminPath = path.join(projectRoot, 'src/app/admin/page.tsx');
-    const content = fs.readFileSync(adminPath, 'utf8');
+    const gradosTabPath = path.join(projectRoot, 'src/app/admin/components/AdminGradosTab.tsx');
+    const content = fs.readFileSync(adminPath, 'utf8') + (fs.existsSync(gradosTabPath) ? '\n' + fs.readFileSync(gradosTabPath, 'utf8') : '');
 
     // Debe importar FiltroGrados
     assert.match(

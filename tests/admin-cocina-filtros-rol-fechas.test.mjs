@@ -7,10 +7,13 @@ import {
   calcularOffsetFechaPeru,
 } from '../src/lib/dateUtils.ts';
 
-const adminPageContent = fs.readFileSync(
-  path.resolve(process.cwd(), 'src/app/admin/page.tsx'),
-  'utf-8'
-);
+const adminPageContent = [
+  fs.readFileSync(path.resolve(process.cwd(), 'src/app/admin/page.tsx'), 'utf-8'),
+  fs.readFileSync(path.resolve(process.cwd(), 'src/app/admin/components/AdminDashboardTab.tsx'), 'utf-8'),
+  fs.readFileSync(path.resolve(process.cwd(), 'src/app/admin/components/AdminMenuSemanalTab.tsx'), 'utf-8'),
+  fs.readFileSync(path.resolve(process.cwd(), 'src/app/admin/components/AdminGradosTab.tsx'), 'utf-8'),
+  fs.readFileSync(path.resolve(process.cwd(), 'src/app/admin/components/AdminObservacionesTab.tsx'), 'utf-8'),
+].join('\n');
 const cocinaPageContent = fs.readFileSync(
   path.resolve(process.cwd(), 'src/app/admin/cocina/page.tsx'),
   'utf-8'
@@ -130,19 +133,23 @@ test('Filtros por Colegio y Fechas según Rol en Admin y Cocina', async (t) => {
   });
 
   await t.test('8. Admin: Selectores de sede en Menú, Grados y Observaciones son exclusivos de SuperAdmin', () => {
+    const menuTab = fs.readFileSync(path.resolve(process.cwd(), 'src/app/admin/components/AdminMenuSemanalTab.tsx'), 'utf-8');
+    const gradosTab = fs.readFileSync(path.resolve(process.cwd(), 'src/app/admin/components/AdminGradosTab.tsx'), 'utf-8');
+    const obsTab = fs.readFileSync(path.resolve(process.cwd(), 'src/app/admin/components/AdminObservacionesTab.tsx'), 'utf-8');
+
     assert.match(
-      adminPageContent,
-      /\{tabActiva === 'menu' && \(\s*<>[\s\S]*?\{esSuperAdmin && \(/,
+      menuTab,
+      /\{esSuperAdmin\s*&&\s*\(/,
       'El selector de sede en el Menú Semanal debe estar condicionado a esSuperAdmin'
     );
     assert.match(
-      adminPageContent,
-      /\{tabActiva === 'grados' && \(\s*<div[^>]*>[\s\S]*?\{esSuperAdmin && \(/,
+      gradosTab,
+      /\{esSuperAdmin\s*&&\s*\(/,
       'El selector de sede en Grados y Secciones debe estar condicionado a esSuperAdmin'
     );
     assert.match(
-      adminPageContent,
-      /\{tabActiva === 'observaciones' && \(\s*<div[^>]*>[\s\S]*?\{esSuperAdmin && \(/,
+      obsTab,
+      /\{esSuperAdmin\s*&&\s*\(/,
       'El selector de sede en Observaciones debe estar condicionado a esSuperAdmin'
     );
   });

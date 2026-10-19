@@ -23,7 +23,6 @@ import {
 import { useAuth } from '@/lib/authContext';
 import { obtenerInfoPantalla } from '@/lib/navUtils';
 import { esRutaAdministrativa } from '@/lib/navUtils';
-import ModalPedidoManual from '@/components/ModalPedidoManual';
 
 const ICONOS_PANTALLA: Record<string, React.ComponentType<{ className?: string }>> = {
   UtensilsCrossed,
@@ -42,7 +41,6 @@ export default function HeaderNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { usuario, esAdmin, esSuperAdmin, logout } = useAuth();
-  const [modalPedidoManualAbierto, setModalPedidoManualAbierto] = useState(false);
 
   const esRutaAdmin = esRutaAdministrativa(pathname);
   const infoPantalla = obtenerInfoPantalla(pathname, !!usuario);
@@ -53,13 +51,16 @@ export default function HeaderNav() {
     router.push('/login');
   };
 
+  const prefix = esSuperAdmin && pathname.startsWith('/superadmin') ? '/superadmin' : '/admin';
   const adminNavItems = [
     ...(esSuperAdmin ? [{ href: '/superadmin', label: 'Colegios', icon: Building2 }] : []),
-    { href: '/admin', label: 'Admin', icon: BarChart3 },
-    { href: '/admin/cocina', label: 'Cocina', icon: ChefHat },
-    { href: '/admin/fiado', label: 'Fiado', icon: Receipt },
-    { href: '/admin/despacho', label: 'Despacho', icon: PackageCheck },
-    { href: '/admin/pedido-manual', label: 'Manual', icon: UtensilsCrossed },
+    { href: prefix === '/superadmin' ? '/superadmin' : '/admin', label: 'Admin', icon: BarChart3 },
+    { href: `${prefix}/cocina`, label: 'Cocina', icon: ChefHat },
+    { href: `${prefix}/fiado`, label: 'Fiado', icon: Receipt },
+    { href: `${prefix}/despacho`, label: 'Despacho', icon: PackageCheck },
+    ...(esSuperAdmin
+      ? [{ href: '/superadmin/pedido-manual', label: 'Pedido Manual', icon: UtensilsCrossed }]
+      : [{ href: '/admin/pedido-manual', label: 'Pedido Manual', icon: UtensilsCrossed }]),
   ];
 
   return (
@@ -113,16 +114,18 @@ export default function HeaderNav() {
                 )}
                 {adminNavItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href || (item.href === '/admin/pedido-manual' && pathname === '/pedido-manual');
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href.endsWith('/pedido-manual') && pathname.endsWith('/pedido-manual'));
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                         isActive
-                          ? item.href === '/superadmin'
+                          ? item.href.includes('/superadmin') && !item.href.includes('/pedido-manual')
                             ? 'bg-purple-600 text-white shadow-xs'
-                            : item.href === '/admin/pedido-manual'
+                            : item.href.includes('/pedido-manual')
                             ? 'bg-emerald-600 text-white shadow-xs'
                             : 'bg-orange-500 text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white'
@@ -134,18 +137,6 @@ export default function HeaderNav() {
                   );
                 })}
               </nav>
-
-              {/* Botón de Pedido Manual en Navbar Superior */}
-              <button
-                type="button"
-                onClick={() => setModalPedidoManualAbierto(true)}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl transition shadow-xs cursor-pointer"
-                title="Tomar pedido manualmente (para personas mayores, tutores o ventanilla)"
-              >
-                <UtensilsCrossed className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">+ Pedido Manual</span>
-                <span className="sm:hidden">+ Manual</span>
-              </button>
             </div>
           )}
 
@@ -233,14 +224,6 @@ export default function HeaderNav() {
           </div>
         </div>
       </div>
-
-      {/* MODAL DE REGISTRO MANUAL DE PEDIDOS (SUPERADMIN Y ADMINS) */}
-      {esAdmin && (
-        <ModalPedidoManual
-          abierto={modalPedidoManualAbierto}
-          onCerrar={() => setModalPedidoManualAbierto(false)}
-        />
-      )}
     </header>
   );
 }

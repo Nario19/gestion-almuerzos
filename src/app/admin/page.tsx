@@ -3,52 +3,35 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  Settings,
-  Plus,
-  Trash2,
-  Calendar,
-  Image as ImageIcon,
-  CheckCircle,
-  CheckCircle2,
-  AlertCircle,
-  Database,
-  Cloud,
-  Laptop,
-  Clock,
-  Sparkles,
+  BarChart3,
   Utensils,
-  DollarSign,
   Building2,
   GraduationCap,
   Tag,
-  X,
-  BarChart3,
-  TrendingUp,
-  PackageCheck,
-  ChefHat,
-  ArrowRight,
-  PieChart,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Pencil,
+  CheckCircle,
+  Cloud,
 } from 'lucide-react';
-import { dataService, DIAS_SEMANA, obtenerDiaActualSemana } from '@/lib/dataService';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { dataService, obtenerDiaActualSemana } from '@/lib/dataService';
 import { compressImage } from '@/lib/imageCompression';
 import { subirImagenACloudinary } from '@/lib/cloudinaryService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
 import { SkeletonDashboardPage } from '@/components/Skeleton';
-import { obtenerFechaHoyPeru, calcularOffsetFechaPeru, formatearFechaLegiblePeru } from '@/lib/dateUtils';
-import { Plato, DiaSemana, TipoPlato, Pedido, FiltroGrados } from '@/types';
+import { obtenerFechaHoyPeru, calcularOffsetFechaPeru } from '@/lib/dateUtils';
+import { Plato, DiaSemana, Pedido, FiltroGrados } from '@/types';
+
+// Componentes modulares de pestañas del Administrador
+import AdminDashboardTab from './components/AdminDashboardTab';
+import AdminMenuSemanalTab from './components/AdminMenuSemanalTab';
+import AdminGradosTab from './components/AdminGradosTab';
+import AdminObservacionesTab from './components/AdminObservacionesTab';
 
 export default function AdminPage() {
   const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
   const [diaActivo, setDiaActivo] = useState<DiaSemana>(obtenerDiaActualSemana());
   const [platos, setPlatos] = useState<Plato[]>([]);
-  const [cargando, setCargando] = useState(false);
+  const [, setCargando] = useState(false);
   const [guardadoExitoso, setGuardadoExitoso] = useState(false);
   const [guardandoPlato, setGuardandoPlato] = useState(false);
 
@@ -129,7 +112,7 @@ export default function AdminPage() {
   const [observaciones, setObservaciones] = useState<string[]>([]);
   const [nuevaObservacion, setNuevaObservacion] = useState('');
 
-  // Colegio activo para el menú
+  // Colegio activo para el menú y configuración
   const [colegioMenuSeleccionado, setColegioMenuSeleccionado] = useState<string>(
     !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : 'TODOS'
   );
@@ -137,17 +120,6 @@ export default function AdminPage() {
   const colegioObjetivo = (!esSuperAdmin && usuario?.colegioNombre)
     ? usuario.colegioNombre
     : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : (colegios[0] || ''));
-
-  const cargarPlatos = async (dia: DiaSemana, colOverride?: string) => {
-    setCargando(true);
-    const colActivo = colOverride !== undefined ? colOverride : colegioMenuSeleccionado;
-    const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
-      ? usuario.colegioNombre
-      : (colActivo !== 'TODOS' ? colActivo : undefined);
-    const data = await dataService.obtenerPlatosPorDia(dia, colFiltro);
-    setPlatos(data);
-    setCargando(false);
-  };
 
   useEffect(() => {
     if (esAdmin) {
@@ -332,7 +304,7 @@ export default function AdminPage() {
     });
   };
 
-  // Manejador para comprimir foto del plato antes de guardarla
+  // Manejador para comprimir foto del plato antes de guardarla en Cloudinary
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -340,7 +312,6 @@ export default function AdminPage() {
     setSubiendoFoto(true);
     try {
       const res = await compressImage(file, 800, 0.8);
-      // Subir a Cloudinary para no saturar la base de datos PostgreSQL con fotos de platos
       const urlNube = await subirImagenACloudinary(res.compressedDataUrl, 'platos');
       setImagenUrlNueva(urlNube);
     } catch (e) {
@@ -421,7 +392,6 @@ export default function AdminPage() {
       else if (t === 'SEGUNDO') t = 'Segundo';
       categoriasPresentes.add(t);
     });
-    // Unir base y adicionales
     const lista = [...ordenBase];
     categoriasPresentes.forEach((c) => {
       if (!lista.includes(c)) lista.push(c);
@@ -441,7 +411,7 @@ export default function AdminPage() {
     return mapa;
   }, [platos]);
 
-  // Filtrado de pedidos según el colegio asignado (para administradores de sede) y la fecha/período seleccionado
+  // Filtrado de pedidos según el colegio asignado y la fecha/período seleccionado
   const pedidosBase = (!esSuperAdmin && usuario?.colegioNombre)
     ? pedidos.filter((p) => p.colegioNombre === usuario.colegioNombre)
     : pedidos;
@@ -458,7 +428,7 @@ export default function AdminPage() {
     return f === fechaFiltro;
   });
 
-  // Métricas financieras y volumen (excluyendo cancelados)
+  // Métricas financieras y volumen
   const pedidosActivos = pedidosPeriodo.filter((p) => p.estadoPedido !== 'CANCELADO');
   const totalAlmuerzos = pedidosActivos.length;
   const ventasTotales = pedidosActivos.reduce((acc, p) => acc + (p.monto || 12), 0);
@@ -469,7 +439,7 @@ export default function AdminPage() {
   const porcentajeCobrado = totalAlmuerzos > 0 ? Math.round((pedidosPagados.length / totalAlmuerzos) * 100) : 0;
   const ticketPromedio = totalAlmuerzos > 0 ? (ventasTotales / totalAlmuerzos).toFixed(2) : '12.00';
 
-  // Métricas operativas: Entregados vs Falta Entregar (con pago aceptado y preparados)
+  // Métricas operativas
   const pedidosOperativos = pedidosActivos.filter(
     (p) => p.estadoPago === 'PAGADO' || p.estadoPedido !== 'REGISTRADO'
   );
@@ -487,7 +457,7 @@ export default function AdminPage() {
 
   const rankingColegios = Object.entries(pedidosPorColegio).sort((a, b) => b[1] - a[1]);
 
-  // Ranking de segundos más solicitados
+  // Rankings de frecuencia
   const segundosFrecuencia = pedidosActivos.reduce((acc, p) => {
     if (p.segundoNombre) {
       acc[p.segundoNombre] = (acc[p.segundoNombre] || 0) + 1;
@@ -499,7 +469,6 @@ export default function AdminPage() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  // Ranking de entradas más solicitadas
   const entradasFrecuencia = pedidosActivos.reduce((acc, p) => {
     if (p.entradaNombre) {
       acc[p.entradaNombre] = (acc[p.entradaNombre] || 0) + 1;
@@ -607,7 +576,7 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={() => setTabActiva('grados')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 cursor-pointer ${
             tabActiva === 'grados'
               ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -620,7 +589,7 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={() => setTabActiva('observaciones')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition shrink-0 cursor-pointer ${
             tabActiva === 'observaciones'
               ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -633,1129 +602,111 @@ export default function AdminPage() {
 
       {/* PESTAÑA: DASHBOARD & KPIS */}
       {tabActiva === 'dashboard' && (
-        <div className="space-y-6">
-          {/* Selector de Fecha / Período y Enlaces Operativos */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-orange-500" />
-                Fecha:
-              </span>
-
-              {/* Navegación Día Anterior */}
-              <button
-                type="button"
-                onClick={() => cambiarDia(-1)}
-                className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
-                title="Día anterior"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {/* Input nativo de Calendario */}
-              <div className="relative flex items-center">
-                <input
-                  type="date"
-                  value={fechaFiltro === 'TODAS' || fechaFiltro === 'SEMANA' ? '' : fechaFiltro}
-                  onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
-                  className="bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer shadow-2xs"
-                  title="Haz clic para seleccionar cualquier fecha en el calendario"
-                />
-              </div>
-
-              {/* Navegación Día Siguiente */}
-              <button
-                type="button"
-                onClick={() => cambiarDia(1)}
-                className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
-                title="Día siguiente"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-
-              {/* Botón rápido HOY */}
-              <button
-                type="button"
-                onClick={() => setFechaFiltro(fechaHoy)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  fechaFiltro === fechaHoy
-                    ? 'bg-orange-500 text-white shadow-xs'
-                    : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                Hoy
-              </button>
-
-              {/* Botón Últimos 7 días */}
-              <button
-                type="button"
-                onClick={() => setFechaFiltro('SEMANA')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  fechaFiltro === 'SEMANA'
-                    ? 'bg-orange-500 text-white shadow-xs'
-                    : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                Últimos 7 días
-              </button>
-
-              {/* Botón Ver Todas las Fechas */}
-              <button
-                type="button"
-                onClick={() => setFechaFiltro('TODAS')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  fechaFiltro === 'TODAS'
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                Todas las Fechas
-              </button>
-            </div>
-
-            {/* Accesos directos a Despacho y Cocina */}
-            <div className="flex items-center gap-2">
-              <Link
-                href="/admin/despacho"
-                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition"
-              >
-                <PackageCheck className="w-3.5 h-3.5" />
-                <span>Despacho & Excel</span>
-              </Link>
-              <Link
-                href="/admin/cocina"
-                className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold transition"
-              >
-                <ChefHat className="w-3.5 h-3.5" />
-                <span>Panel Cocina</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Tarjetas Principales de KPIs Financieros y Volumen */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {/* KPI 1: Ventas Generadas */}
-            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  Ventas Generadas
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
-                  <DollarSign className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900">
-                S/ {ventasTotales.toFixed(2)}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Ticket promedio: S/ {ticketPromedio}
-              </p>
-            </div>
-
-            {/* KPI 2: Total Almuerzos */}
-            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  Total Almuerzos
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <Utensils className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900">
-                {totalAlmuerzos} <span className="text-xs text-slate-400 font-normal">raciones</span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                {esSuperAdmin
-                  ? `${rankingColegios.length} colegios atendidos`
-                  : usuario?.colegioNombre
-                  ? `Sede: ${usuario.colegioNombre}`
-                  : `${pedidosActivos.length} raciones activas`}
-              </p>
-            </div>
-
-            {/* KPI 3: Pagos Recaudados */}
-            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
-                  Cobrado ({porcentajeCobrado}%)
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-emerald-700">
-                S/ {ingresosRecaudados.toFixed(2)}
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
-                <div
-                  className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
-                  style={{ width: `${porcentajeCobrado}%` }}
-                />
-              </div>
-            </div>
-
-            {/* KPI 4: Por Cobrar */}
-            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
-                  Por Cobrar
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                  <AlertCircle className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-rose-600">
-                S/ {montoPorCobrar.toFixed(2)}
-              </div>
-              <p className="text-[11px] text-rose-500 mt-1 font-semibold">
-                {pedidosPendientes.length} pedidos sin confirmar
-              </p>
-            </div>
-          </div>
-
-          {/* Sección Operativa: Embudo de Despacho del Período */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                  <PackageCheck className="w-4 h-4 text-orange-500" />
-                  Estado Operativo de Almuerzos
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Progreso de preparación y entrega de loncheras
-                </p>
-              </div>
-              <div className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl self-start sm:self-auto flex items-center gap-1.5">
-                <span className="font-black text-orange-600">{porcentajeEntrega}%</span>
-                <span>completado ({entregados} de {totalParaEntrega})</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block">
-                    Entregados
-                  </span>
-                  <span className="text-2xl sm:text-3xl font-black text-emerald-900 mt-1 block">
-                    {entregados}
-                  </span>
-                  <p className="text-[11px] text-emerald-600 mt-0.5">
-                    Almuerzos entregados en colegios
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                  <CheckCircle className="w-6 h-6" />
-                </div>
-              </div>
-
-              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-amber-700 uppercase tracking-wider block">
-                    Falta Entregar
-                  </span>
-                  <span className="text-2xl sm:text-3xl font-black text-amber-900 mt-1 block">
-                    {faltaEntregar}
-                  </span>
-                  <p className="text-[11px] text-amber-600 mt-0.5">
-                    Pago aceptado y preparados por entregar
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                  <Clock className="w-6 h-6" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sección de Preferencias y Demanda: Demanda por Colegio (SuperAdmin) y Platos Más Solicitados */}
-          <div className={`grid grid-cols-1 ${esSuperAdmin ? 'md:grid-cols-2' : ''} gap-4`}>
-            {/* Demanda por Colegio: Exclusivo Superadmin */}
-            {esSuperAdmin && (
-              <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-orange-500" />
-                    Demanda por Colegio
-                  </h3>
-                  <span className="text-xs text-slate-400 font-bold">
-                    {rankingColegios.length} colegios
-                  </span>
-                </div>
-
-                {rankingColegios.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-6 text-center">
-                    No hay pedidos registrados en este período.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {rankingColegios.map(([col, cant]) => {
-                      const pct = totalAlmuerzos > 0 ? Math.round((cant / totalAlmuerzos) * 100) : 0;
-                      return (
-                        <div key={col} className="space-y-1">
-                          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                            <span className="truncate pr-2">{col}</span>
-                            <span className="shrink-0 text-slate-900">
-                              {cant} ({pct}%)
-                            </span>
-                          </div>
-                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div
-                              className="bg-orange-500 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Platos Favoritos (Preferencias) */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                  <Utensils className="w-4 h-4 text-orange-500" />
-                  Platos Más Solicitados
-                </h3>
-                <span className="text-xs text-slate-400 font-bold">Top Preferencias</span>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">
-                    Platos de Fondo (Segundos)
-                  </span>
-                  {topSegundos.length === 0 ? (
-                    <p className="text-xs text-slate-400 py-2">Sin datos disponibles.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {topSegundos.map(([plato, cant], idx) => {
-                        const pct = totalAlmuerzos > 0 ? Math.round((cant / totalAlmuerzos) * 100) : 0;
-                        return (
-                          <div key={plato} className="flex items-center justify-between text-xs">
-                            <span className="font-semibold text-slate-700 truncate pr-2">
-                              {idx + 1}. {plato}
-                            </span>
-                            <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-lg shrink-0">
-                              {cant} pedidos ({pct}%)
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-2 border-t border-slate-100">
-                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">
-                    Entradas
-                  </span>
-                  {topEntradas.length === 0 ? (
-                    <p className="text-xs text-slate-400 py-2">Sin datos disponibles.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {topEntradas.map(([entrada, cant], idx) => (
-                        <div key={entrada} className="flex items-center justify-between text-xs">
-                          <span className="font-semibold text-slate-700 truncate pr-2">
-                            {idx + 1}. {entrada}
-                          </span>
-                          <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-lg shrink-0">
-                            {cant} pedidos
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Últimos Pedidos Recientes */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-orange-500" />
-                  Últimos Pedidos del Período
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Actividad reciente de los padres de familia
-                </p>
-              </div>
-              <Link
-                href="/admin/despacho"
-                className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 transition"
-              >
-                Ver todos en despacho <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {pedidosPeriodo.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">
-                No hay pedidos en este período seleccionado.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wider text-[10px]">
-                      <th className="pb-2">Código</th>
-                      <th className="pb-2">Estudiante</th>
-                      <th className="pb-2">Colegio / Grado</th>
-                      <th className="pb-2">Menú</th>
-                      <th className="pb-2 text-right">Monto</th>
-                      <th className="pb-2 text-center">Pago</th>
-                      <th className="pb-2 text-center">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {pedidosPeriodo.slice(0, 6).map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50/60 transition">
-                        <td className="py-2.5 font-mono font-black text-slate-800">
-                          #{p.codigoPedido}
-                        </td>
-                        <td className="py-2.5 font-bold text-slate-800">
-                          {p.estudianteNombre}
-                        </td>
-                        <td className="py-2.5 text-slate-500">
-                          {p.colegioNombre} <span className="font-semibold text-slate-700">({p.gradoSeccion})</span>
-                        </td>
-                        <td className="py-2.5 text-slate-700 truncate max-w-[160px]">
-                          {p.segundoNombre}
-                        </td>
-                        <td className="py-2.5 font-bold text-slate-900 text-right">
-                          S/ {(p.monto || 12).toFixed(2)}
-                        </td>
-                        <td className="py-2.5 text-center">
-                          <span
-                            className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${
-                              p.estadoPago === 'PAGADO'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-rose-100 text-rose-800'
-                            }`}
-                          >
-                            {p.estadoPago}
-                          </span>
-                        </td>
-                        <td className="py-2.5 text-center">
-                          <span
-                            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
-                              p.estadoPedido === 'CANCELADO'
-                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                                : p.estadoPedido === 'ENTREGADO'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-slate-100 text-slate-700'
-                            }`}
-                          >
-                            {p.estadoPedido}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+        <AdminDashboardTab
+          pedidosPeriodo={pedidosPeriodo}
+          pedidosActivos={pedidosActivos}
+          ventasTotales={ventasTotales}
+          ticketPromedio={ticketPromedio}
+          totalAlmuerzos={totalAlmuerzos}
+          porcentajeCobrado={porcentajeCobrado}
+          ingresosRecaudados={ingresosRecaudados}
+          montoPorCobrar={montoPorCobrar}
+          pedidosPendientes={pedidosPendientes}
+          entregados={entregados}
+          faltaEntregar={faltaEntregar}
+          totalParaEntrega={totalParaEntrega}
+          porcentajeEntrega={porcentajeEntrega}
+          rankingColegios={rankingColegios}
+          topSegundos={topSegundos}
+          topEntradas={topEntradas}
+          fechaFiltro={fechaFiltro}
+          setFechaFiltro={setFechaFiltro}
+          cambiarDia={cambiarDia}
+          fechaHoy={fechaHoy}
+          esSuperAdmin={esSuperAdmin}
+          colegioNombre={usuario?.colegioNombre}
+          usuario={usuario}
+        />
       )}
 
+      {/* PESTAÑA: MENÚ SEMANAL */}
       {tabActiva === 'menu' && (
-        <>
-          {/* SELECTOR DE SEDE ESCOLAR PARA EL MENÚ (Exclusivo Superadmin) */}
-          {esSuperAdmin && (
-            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-orange-500" />
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                    Colegio del Menú:
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setColegioMenuSeleccionado('TODOS')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                      colegioMenuSeleccionado === 'TODOS'
-                        ? 'bg-orange-500 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    General (Todos)
-                  </button>
-                  {colegios.map((col) => (
-                    <button
-                      key={col}
-                      type="button"
-                      onClick={() => setColegioMenuSeleccionado(col)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                        colegioMenuSeleccionado === col
-                          ? 'bg-orange-500 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {col}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+        <AdminMenuSemanalTab
+          diaActivo={diaActivo}
+          setDiaActivo={setDiaActivo}
+          esSuperAdmin={esSuperAdmin}
+          colegios={colegios}
+          colegioMenuSeleccionado={colegioMenuSeleccionado}
+          setColegioMenuSeleccionado={setColegioMenuSeleccionado}
+          tiposDisponibles={tiposDisponibles}
+          tipoNuevo={tipoNuevo}
+          setTipoNuevo={setTipoNuevo}
+          mostrandoInputOtroTipo={mostrandoInputOtroTipo}
+          setMostrandoInputOtroTipo={setMostrandoInputOtroTipo}
+          otroTipoInput={otroTipoInput}
+          setOtroTipoInput={setOtroTipoInput}
+          handleAgregarTipoPersonalizado={handleAgregarTipoPersonalizado}
+          nombreNuevo={nombreNuevo}
+          setNombreNuevo={setNombreNuevo}
+          descripcionNueva={descripcionNueva}
+          setDescripcionNueva={setDescripcionNueva}
+          precioNuevo={precioNuevo}
+          setPrecioNuevo={setPrecioNuevo}
+          imagenUrlNueva={imagenUrlNueva}
+          subiendoFoto={subiendoFoto}
+          handleFotoUpload={handleFotoUpload}
+          handleCrearPlato={handleCrearPlato}
+          guardandoPlato={guardandoPlato}
+          platos={platos}
+          categoriasOrdenadas={categoriasOrdenadas}
+          platosPorCategoria={platosPorCategoria}
+          handleSolicitarEliminarPlato={handleSolicitarEliminarPlato}
+        />
+      )}
 
-          {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
-          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-orange-500" /> Selecciona el Día a Configurar:
-              </h2>
-              <span className="text-xs text-slate-400">Configurando {diaActivo}</span>
-            </div>
-
-        <div className="grid grid-cols-5 gap-2">
-          {DIAS_SEMANA.map((dia) => (
-            <button
-              key={dia.key}
-              onClick={() => setDiaActivo(dia.key)}
-              className={`py-3 px-2 rounded-2xl text-center text-xs sm:text-sm font-bold transition-all ${
-                diaActivo === dia.key
-                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
-              }`}
-            >
-              {dia.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* COLUMNA 1: FORMULARIO PARA AGREGAR NUEVO PLATO CON FOTO */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-            <div className="w-7 h-7 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs">
-              <Plus className="w-4 h-4" />
-            </div>
-            <h2 className="text-sm font-black text-slate-900">
-              Agregar Plato para {diaActivo}
-            </h2>
-          </div>
-
-          <form onSubmit={handleCrearPlato} className="space-y-3.5">
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-700">Tipo de Plato</label>
-                {!mostrandoInputOtroTipo && (
-                  <button
-                    type="button"
-                    onClick={() => setMostrandoInputOtroTipo(true)}
-                    className="text-[11px] font-bold text-orange-600 hover:text-orange-700 cursor-pointer"
-                  >
-                    + Otro tipo...
-                  </button>
-                )}
-              </div>
-
-              {mostrandoInputOtroTipo && (
-                <div className="flex items-center gap-2 mb-2 p-2 bg-orange-50 rounded-xl border border-orange-200">
-                  <input
-                    type="text"
-                    placeholder="Ej. Refrigerio, Snack, Bebida..."
-                    value={otroTipoInput}
-                    onChange={(e) => setOtroTipoInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAgregarTipoPersonalizado();
-                      }
-                    }}
-                    className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500"
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAgregarTipoPersonalizado}
-                    className="px-2.5 py-1 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 cursor-pointer"
-                  >
-                    Guardar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMostrandoInputOtroTipo(false);
-                      setOtroTipoInput('');
-                    }}
-                    className="px-2 py-1 bg-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-300 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-1.5">
-                {tiposDisponibles.map((tipo) => {
-                  const seleccionado =
-                    tipoNuevo === tipo ||
-                    (tipo === 'Sopa o postre' && tipoNuevo === 'ENTRADA') ||
-                    (tipo === 'Segundo' && tipoNuevo === 'SEGUNDO');
-                  return (
-                    <button
-                      key={tipo}
-                      type="button"
-                      onClick={() => setTipoNuevo(tipo)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                        seleccionado
-                          ? 'border-orange-500 bg-orange-500 text-white shadow-xs'
-                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      {tipo}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Nombre del Plato *</label>
-              <input
-                type="text"
-                placeholder="Ej. Seco de pollo con frijoles"
-                value={nombreNuevo}
-                onChange={(e) => setNombreNuevo(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Descripción (Opcional)</label>
-              <textarea
-                rows={2}
-                placeholder="Ej. Con presa dorada, arroz graneado..."
-                value={descripcionNueva}
-                onChange={(e) => setDescripcionNueva(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-
-            {tipoNuevo !== 'Sopa o postre' && tipoNuevo !== 'ENTRADA' && (
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Precio (S/)</label>
-                <input
-                  type="number"
-                  step="0.50"
-                  value={precioNuevo}
-                  onChange={(e) => setPrecioNuevo(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-            )}
-
-            {/* Subir Fotografía del Plato */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía del Plato
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFotoUpload}
-                className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
-              />
-              {subiendoFoto && (
-                <p className="text-[11px] text-orange-600 mt-1 animate-pulse">Optimizando imagen...</p>
-              )}
-              {imagenUrlNueva && (
-                <div className="mt-2 h-24 rounded-xl overflow-hidden border border-slate-200 relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imagenUrlNueva} alt="Vista previa" className="w-full h-full object-cover" />
-                </div>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs shadow-md shadow-orange-500/20 transition mt-2 cursor-pointer"
-            >
-              + Publicar en el Menú de {diaActivo}
-            </button>
-          </form>
-        </div>
-
-        {/* COLUMNA 2 Y 3: LISTA DE PLATOS DEL DÍA CON FOTOS POR CATEGORÍA */}
-        <div className="lg:col-span-2 space-y-6">
-          {platos.length === 0 ? (
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center shadow-xs">
-              <Utensils className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm font-bold text-slate-700">No hay platos registrados para {diaActivo}</p>
-              <p className="text-xs text-slate-400 mt-1">Usa el formulario a la izquierda para publicar platos en esta fecha.</p>
-            </div>
-          ) : (
-            categoriasOrdenadas.map((cat: string) => {
-              const platosDeCat = platosPorCategoria[cat] || [];
-              if (platosDeCat.length === 0) return null;
-              return (
-                <div key={cat} className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
-                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                    <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                      <Utensils className="w-4 h-4 text-orange-500" />
-                      {cat} de {diaActivo} ({platosDeCat.length})
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {platosDeCat.map((plato: Plato) => (
-                      <div
-                        key={plato.id}
-                        className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-slate-50/50"
-                      >
-                        <div className="h-28 bg-slate-200 relative">
-                          {plato.imagenUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
-                              <ImageIcon className="w-6 h-6" />
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleSolicitarEliminarPlato(plato)}
-                            className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
-                            title="Eliminar plato"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                          {plato.precio > 0 && (
-                            <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg">
-                              S/ {plato.precio.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="p-3">
-                          <div className="flex items-center justify-between gap-1 mb-1">
-                            <h4 className="text-xs font-black text-slate-900">{plato.nombre}</h4>
-                            {plato.colegioNombre && (
-                              <span className="px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-800 text-[9px] font-bold shrink-0">
-                                {plato.colegioNombre}
-                              </span>
-                            )}
-                          </div>
-                          {plato.descripcion && (
-                            <p className="text-[11px] text-slate-500 line-clamp-2">{plato.descripcion}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    </>
-  )}
-
-      {/* PESTAÑA: GRADOS Y SECCIONES */}
+      {/* PESTAÑA: GRADOS Y SECCIONES (INCLUYE FILTROS DE GRADOS PARA DESPACHO) */}
       {tabActiva === 'grados' && (
-        <div className="space-y-4">
-          {/* Header de colegio seleccionado (Exclusivo Superadmin) */}
-          {esSuperAdmin && (
-            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-orange-500" />
-                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                  Colegio Activo:
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {colegios.map((col) => (
-                  <button
-                    key={col}
-                    type="button"
-                    onClick={() => setColegioMenuSeleccionado(col)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                      colegioObjetivo === col
-                        ? 'bg-orange-500 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {col}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Formulario nuevo grado */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
-              <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-orange-500" />
-                Nuevo Grado / Sección
-              </h2>
-              <form onSubmit={handleAgregarGrado} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Nombre del Grado / Sección *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. 1.° Primaria B"
-                    value={nuevoGrado}
-                    onChange={(e) => setNuevoGrado(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
-                >
-                  <Plus className="w-4 h-4" /> Agregar Grado / Sección
-                </button>
-              </form>
-            </div>
-
-            {/* Lista de grados */}
-            <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
-              <h2 className="text-sm font-black text-slate-900 mb-2">
-                Grados y Secciones Activas ({grados.length}) — {colegioObjetivo || 'General'}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {grados.map((g) => (
-                  <div key={g} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="w-4 h-4 text-orange-500 shrink-0" />
-                      <span className="text-xs font-bold text-slate-800">{g}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleSolicitarEliminarGrado(g)}
-                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                      title="Eliminar grado"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* SECCIÓN: FILTROS DE GRADOS PARA DESPACHO */}
-            <div className="md:col-span-3 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 gap-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                    <Filter className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-slate-900 tracking-tight">
-                      Filtros de Grados para Despacho ({filtrosGrados.length}) — {colegioObjetivo || 'General'}
-                    </h3>
-                    <p className="text-xs text-slate-500 font-medium">
-                      Crea grupos personalizados de grados (ej. "Primaria", "Secundaria", "1.° a 3.°"). Estos filtros aparecerán en Despacho para entregas rápidas.
-                    </p>
-                  </div>
-                </div>
-
-                {filtroEditandoId && (
-                  <button
-                    type="button"
-                    onClick={handleCancelarEditarFiltro}
-                    className="text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition cursor-pointer self-start sm:self-auto"
-                  >
-                    Cancelar Edición
-                  </button>
-                )}
-              </div>
-
-              {/* Formulario de Creación / Edición de Filtro */}
-              <form onSubmit={handleGuardarFiltroGrados} className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase text-slate-800 tracking-wider">
-                    {filtroEditandoId ? '✏️ Editando Filtro de Grados' : '+ Crear Nuevo Filtro de Grados'}
-                  </span>
-                  {exitoFiltro && (
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 animate-in fade-in">
-                      ✓ ¡Filtro guardado con éxito!
-                    </span>
-                  )}
-                </div>
-
-                {errorFiltro && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>{errorFiltro}</span>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-                  <div className="md:col-span-2">
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Nombre del Filtro *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej. Primaria, Secundaria, 1.° a 3.° Primaria, Pabellón A..."
-                      value={nombreFiltroGrados}
-                      onChange={(e) => setNombreFiltroGrados(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition"
-                    />
-                  </div>
-                  <div>
-                    <button
-                      type="submit"
-                      disabled={guardandoFiltro}
-                      className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-                    >
-                      {guardandoFiltro ? (
-                        <span>Guardando...</span>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>{filtroEditandoId ? 'Actualizar Filtro' : 'Guardar Filtro'}</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Selección de Grados para el Filtro */}
-                <div className="space-y-2 pt-1 border-t border-slate-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-700">
-                      Selecciona los grados que incluirá este filtro ({gradosSeleccionadosFiltro.length} seleccionados):
-                    </label>
-                    <div className="flex items-center gap-2 text-[11px]">
-                      <button
-                        type="button"
-                        onClick={handleSeleccionarTodosGrados}
-                        className="font-bold text-orange-600 hover:underline cursor-pointer"
-                      >
-                        Marcar todos
-                      </button>
-                      <span className="text-slate-300">•</span>
-                      <button
-                        type="button"
-                        onClick={handleDeseleccionarTodosGrados}
-                        className="font-bold text-slate-500 hover:underline cursor-pointer"
-                      >
-                        Desmarcar todos
-                      </button>
-                    </div>
-                  </div>
-
-                  {grados.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">
-                      No hay grados activos en este colegio. Registra grados arriba primero.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
-                      {grados.map((g) => {
-                        const seleccionado = gradosSeleccionadosFiltro.includes(g);
-                        return (
-                          <label
-                            key={g}
-                            className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-2 cursor-pointer transition select-none ${
-                              seleccionado
-                                ? 'bg-orange-50 text-orange-950 border-orange-300 font-bold shadow-2xs'
-                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={seleccionado}
-                              onChange={() => toggleGradoEnFiltro(g)}
-                              className="rounded text-orange-500 focus:ring-orange-500 w-3.5 h-3.5 cursor-pointer"
-                            />
-                            <span className="truncate">{g}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </form>
-
-              {/* Lista de Filtros de Grados Creados */}
-              <div className="space-y-3 pt-2">
-                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                  Filtros Disponibles para Despacho en {colegioObjetivo || 'este colegio'}:
-                </h4>
-
-                {filtrosGrados.length === 0 ? (
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300 text-center space-y-1.5">
-                    <Filter className="w-6 h-6 text-slate-400 mx-auto" />
-                    <p className="text-xs font-bold text-slate-700">Aún no hay filtros de grados creados</p>
-                    <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
-                      Crea tu primer filtro arriba para agrupar los grados (ej. Primaria o Secundaria) y poder filtrar rápidamente los almuerzos en Despacho.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {filtrosGrados.map((f) => (
-                      <div
-                        key={f.id}
-                        className={`p-4 rounded-2xl border transition space-y-2.5 ${
-                          filtroEditandoId === f.id
-                            ? 'bg-orange-50/60 border-orange-300 ring-2 ring-orange-400/20'
-                            : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0" />
-                            <h5 className="text-sm font-black text-slate-900 tracking-tight">
-                              {f.nombre}
-                            </h5>
-                            <span className="text-[10px] font-black uppercase text-orange-800 bg-orange-100 px-2 py-0.5 rounded-md">
-                              {f.grados.length} {f.grados.length === 1 ? 'grado' : 'grados'}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleIniciarEditarFiltro(f)}
-                              className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition cursor-pointer"
-                              title="Editar filtro"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleSolicitarEliminarFiltro(f)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                              title="Eliminar filtro"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Chips de grados incluidos */}
-                        <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-100">
-                          {f.grados.map((g) => (
-                            <span
-                              key={g}
-                              className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold"
-                            >
-                              {g}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <AdminGradosTab
+          esSuperAdmin={esSuperAdmin}
+          colegios={colegios}
+          colegioObjetivo={colegioObjetivo}
+          setColegioMenuSeleccionado={setColegioMenuSeleccionado}
+          nuevoGrado={nuevoGrado}
+          setNuevoGrado={setNuevoGrado}
+          handleAgregarGrado={handleAgregarGrado}
+          grados={grados}
+          handleSolicitarEliminarGrado={handleSolicitarEliminarGrado}
+          filtrosGrados={filtrosGrados}
+          filtroEditandoId={filtroEditandoId}
+          nombreFiltroGrados={nombreFiltroGrados}
+          setNombreFiltroGrados={setNombreFiltroGrados}
+          gradosSeleccionadosFiltro={gradosSeleccionadosFiltro}
+          guardandoFiltro={guardandoFiltro}
+          errorFiltro={errorFiltro}
+          exitoFiltro={exitoFiltro}
+          handleGuardarFiltroGrados={handleGuardarFiltroGrados}
+          handleCancelarEditarFiltro={handleCancelarEditarFiltro}
+          handleIniciarEditarFiltro={handleIniciarEditarFiltro}
+          handleSolicitarEliminarFiltro={handleSolicitarEliminarFiltro}
+          toggleGradoEnFiltro={toggleGradoEnFiltro}
+          handleSeleccionarTodosGrados={handleSeleccionarTodosGrados}
+          handleDeseleccionarTodosGrados={handleDeseleccionarTodosGrados}
+        />
       )}
 
       {/* PESTAÑA: OBSERVACIONES / RESTRICCIONES */}
       {tabActiva === 'observaciones' && (
-        <div className="space-y-4">
-          {/* Header de colegio seleccionado (Exclusivo Superadmin) */}
-          {esSuperAdmin && (
-            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-orange-500" />
-                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                  Colegio Activo:
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {colegios.map((col) => (
-                  <button
-                    key={col}
-                    type="button"
-                    onClick={() => setColegioMenuSeleccionado(col)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                      colegioObjetivo === col
-                        ? 'bg-orange-500 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {col}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Formulario nueva observacion */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
-              <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
-                <Tag className="w-4 h-4 text-orange-500" />
-                Nueva Observación Rápida
-              </h2>
-              <p className="text-xs text-slate-500 mb-3">
-                Estas etiquetas aparecen como botones rápidos para que los padres las seleccionen al ordenar.
-              </p>
-              <form onSubmit={handleAgregarObservacion} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Etiqueta / Restricción *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Sin cebolla, Presa pecho..."
-                    value={nuevaObservacion}
-                    onChange={(e) => setNuevaObservacion(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs"
-                >
-                  <Plus className="w-4 h-4" /> Agregar Etiqueta
-                </button>
-              </form>
-            </div>
-
-            {/* Lista de observaciones */}
-            <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
-              <h2 className="text-sm font-black text-slate-900 mb-2">
-                Etiquetas Configuradas ({observaciones.length}) — {colegioObjetivo || 'General'}
-              </h2>
-              <p className="text-xs text-slate-500 mb-3">
-                Los padres verán estas opciones al realizar su pedido para agregar notas en un toque:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {observaciones.map((tag) => (
-                  <div
-                    key={tag}
-                    className="px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-orange-900 text-xs font-bold flex items-center gap-2 shadow-2xs"
-                  >
-                    <span>{tag}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleSolicitarEliminarObservacion(tag)}
-                      className="p-0.5 text-orange-400 hover:text-rose-600 transition cursor-pointer"
-                      title="Eliminar etiqueta"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <AdminObservacionesTab
+          esSuperAdmin={esSuperAdmin}
+          colegios={colegios}
+          colegioObjetivo={colegioObjetivo}
+          setColegioMenuSeleccionado={setColegioMenuSeleccionado}
+          nuevaObservacion={nuevaObservacion}
+          setNuevaObservacion={setNuevaObservacion}
+          handleAgregarObservacion={handleAgregarObservacion}
+          observaciones={observaciones}
+          handleSolicitarEliminarObservacion={handleSolicitarEliminarObservacion}
+        />
       )}
 
       {/* Modal de Alerta de Confirmación de Eliminación */}

@@ -104,10 +104,10 @@ test('Scoping de Colegios, Reportes de Fiado, Despacho Auto-Refresh y Tipos de P
       'La pantalla de hijos debe usar el término Padre'
     );
   });
-
   await t.test('6. Menú semanal permite tipos de platos configurables y editables (+ Otro tipo)', () => {
     const adminPath = path.join(rootDir, 'src', 'app', 'admin', 'page.tsx');
-    const adminContent = fs.readFileSync(adminPath, 'utf-8');
+    const menuTabPath = path.join(rootDir, 'src', 'app', 'admin', 'components', 'AdminMenuSemanalTab.tsx');
+    const adminContent = fs.readFileSync(adminPath, 'utf-8') + (fs.existsSync(menuTabPath) ? '\n' + fs.readFileSync(menuTabPath, 'utf-8') : '');
 
     assert.ok(
       adminContent.includes('tiposDisponibles') && adminContent.includes('handleAgregarTipoPersonalizado'),

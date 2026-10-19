@@ -519,6 +519,32 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   5. `src/lib/navUtils.ts`
   6. Toda la suite en `tests/*.test.mjs` sincronizada con las nuevas rutas.
 
+### D-030 — 2026-10-19 — Modularización de `admin/page.tsx`, Eliminación de Botón Modal Duplicado, Carta Completa y Memoria Local de Estudiantes en Pedido Manual
+- Decisión: A solicitud explícita del usuario:
+  1. Eliminación de Botón Duplicado en HeaderNav:
+     - Se eliminó el botón modal redundante `+ Pedido Manual` en `HeaderNav.tsx` y su estado interno, dejando únicamente el enlace canónico en la barra de navegación administrativa que conduce a `/admin/pedido-manual` (o `/superadmin/pedido-manual`).
+  2. Carta Visual Completa en Pedido Manual:
+     - La pantalla de pedido manual muestra la carta idéntica al menú semanal: fotografías de platos, badges de tipo (*Sopa o postre*, *Segundo*), precios, descripciones y selección con anillos esmeralda.
+  3. Memoria Local de Estudiantes de Pedido Manual:
+     - Se implementó persistencia en `localStorage` (`alumnos_pedidos_manuales_v1`) exclusiva para los alumnos registrados manualmente en ventanilla, ofreciendo autocompletado en tiempo real y chips de acceso rápido de un clic para agilizar pedidos recurrentes.
+  4. Modularización Arquitectónica de `src/app/admin/page.tsx`:
+     - El componente monolítico de ~1800 líneas fue descompuesto y organizado en componentes especializados dentro de `src/app/admin/components/`:
+       - `AdminDashboardTab.tsx`: KPIs de ventas, raciones, recaudación, embudo operativo de entrega y desglose de pedidos.
+       - `AdminMenuSemanalTab.tsx`: Gestión de días, subida y compresión de fotos a Cloudinary, tipos dinámicos y catálogo de platos.
+       - `AdminGradosTab.tsx`: Configuración de grados y secciones escolares, más el panel completo de Filtros de Grados para Despacho.
+       - `AdminObservacionesTab.tsx`: Etiquetas de notas médicas y restricciones de alergias escolares.
+     - `src/app/admin/page.tsx` ahora actúa como orquestador limpio y desacoplado de ~430 líneas.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/components/HeaderNav.tsx`
+  2. `src/app/admin/pedido-manual/page.tsx`
+  3. `src/app/admin/page.tsx`
+  4. `src/app/admin/components/AdminDashboardTab.tsx` (nuevo)
+  5. `src/app/admin/components/AdminMenuSemanalTab.tsx` (nuevo)
+  6. `src/app/admin/components/AdminGradosTab.tsx` (nuevo)
+  7. `src/app/admin/components/AdminObservacionesTab.tsx` (nuevo)
+  8. Suites de pruebas en `tests/` actualizadas para verificar componentes modulares y el flujo canónico de pedido manual (188 pruebas aprobadas, 0 fallos).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
@@ -531,5 +557,6 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
 
 - Validar con el cliente si el precio de S/ 12 es universal o si se habilitarán formalmente platos con precios variables en la interfaz de compra pública.
 - Establecer si el cierre a las 09:30 AM debe rechazar pedidos automáticamente en el backend vía trigger/función SQL o mantenerse como aviso visual en frontend.
+
 
 

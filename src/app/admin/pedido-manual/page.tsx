@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   UtensilsCrossed,
@@ -22,9 +22,15 @@ import {
   ChefHat,
   Receipt,
   PlusCircle,
+  Utensils,
+  Search,
+  History,
+  X,
+  Bookmark,
+  ChevronRight,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { dataService } from '@/lib/dataService';
+import { dataService, DIAS_SEMANA } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import { SkeletonDashboardPage } from '@/components/Skeleton';
@@ -35,15 +41,32 @@ import {
 } from '@/lib/dateUtils';
 import { Plato, MetodoPago, EstadoPago, DiaSemana, Pedido } from '@/types';
 
+export interface AlumnoManualGuardado {
+  id: string;
+  nombreCompleto: string;
+  gradoSeccion: string;
+  colegioNombre: string;
+  padreNombre?: string;
+  telefonoContacto?: string;
+  fechaUltimoPedido: string;
+}
+
+const STORAGE_KEY_ALUMNOS_MANUALES = 'alumnos_pedidos_manuales_v1';
+
 export default function PedidoManualPage() {
   const { usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth } = useAuth();
   const fechaHoy = useMemo(() => obtenerFechaHoyPeru(), []);
 
-  // Listas de datos
+  // Listas maestras
   const [colegios, setColegios] = useState<string[]>([]);
   const [grados, setGrados] = useState<string[]>([]);
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [cargandoDatos, setCargandoDatos] = useState(false);
+
+  // Alumnos guardados SOLO de pedidos manuales de esta página
+  const [alumnosGuardados, setAlumnosGuardados] = useState<AlumnoManualGuardado[]>([]);
+  const [mostrarDropdownSugerencias, setMostrarDropdownSugerencias] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Formulario
   const [colegioSeleccionado, setColegioSeleccionado] = useState<string>('');
@@ -65,7 +88,33 @@ export default function PedidoManualPage() {
   const [error, setError] = useState<string | null>(null);
   const [pedidoCreado, setPedidoCreado] = useState<Pedido | null>(null);
 
-  // Calcular el día escolar (LUNES a VIERNES) según la fecha
+  // Cargar lista de alumnos guardados desde localStorage al montar
+  useEffect(() => {
+    try {
+      const guardadosStr = localStorage.getItem(STORAGE_KEY_ALUMNOS_MANUALES);
+      if (guardadosStr) {
+        const parsed: AlumnoManualGuardado[] = JSON.parse(guardadosStr);
+        if (Array.isArray(parsed)) {
+          setAlumnosGuardados(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn('Error al cargar alumnos manuales guardados:', e);
+    }
+  }, []);
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setMostrarDropdownSugerencias(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Calcular el día escolar (LUNES a VIERNES) según la fecha elegida
   const diaSemanaCalculado = useMemo<DiaSemana>(() => {
     try {
       const d = new Date(`${fecha}T12:00:00-05:00`);
@@ -112,21 +161,28 @@ export default function PedidoManualPage() {
       .then(([resGrados, resPlatos]) => {
         if (cancelado) return;
         setGrados(resGrados || []);
-        if (resGrados && resGrados.length > 0 && !resGrados.includes(gradoSeccion)) {
+        if (resGrados && resGrados.length > 0 && !resGrados.includes(gradoSeccion) && !gradoPersonalizado) {
           setGradoSeccion(resGrados[0]);
-          setGradoPersonalizado(false);
         }
 
-        setPlatos(resPlatos || []);
-        const segundos = (resPlatos || []).filter(
+        const platosLista = resPlatos || [];
+        setPlatos(platosLista);
+
+        const segundos = platosLista.filter(
           (p) => (p.tipo || '').toUpperCase() === 'SEGUNDO' || !(p.tipo || '').toUpperCase().includes('ENTRADA')
         );
-        if (segundos.length > 0) {
-          setSegundoNombre(segundos[0].nombre);
-          setMonto(segundos[0].precio || 12);
-          setPlatoPersonalizado(false);
-        } else {
-          setPlatoPersonalizado(true);
+
+        // Si no hay segundo seleccionado o el actual ya no está en este día, pre-seleccionar el primero
+        if (!platoPersonalizado) {
+          if (segundos.length > 0) {
+            const encontrado = segundos.find((s) => s.nombre === segundoNombre);
+            if (!encontrado) {
+              setSegundoNombre(segundos[0].nombre);
+              setMonto(segundos[0].precio || 12);
+            }
+          } else {
+            setSegundoNombre('');
+          }
         }
       })
       .catch((e) => {
@@ -151,16 +207,84 @@ export default function PedidoManualPage() {
     );
   }
 
-  // Filtrar platos por tipo
-  const platosSegundos = platos.filter(
-    (p) => (p.tipo || '').toUpperCase() === 'SEGUNDO' || !(p.tipo || '').toUpperCase().includes('ENTRADA')
+  // Filtrar platos por tipo (igual que en Menú Semanal)
+  const esEntrada = (tipo: string) => {
+    const s = (tipo || '').toLowerCase().trim();
+    return s === 'entrada' || s.includes('sopa') || s.includes('postre');
+  };
+  const esSegundo = (tipo: string) => {
+    const s = (tipo || '').toLowerCase().trim();
+    return s === 'segundo' || (!esEntrada(tipo) && s !== 'bebida');
+  };
+
+  const platosEntradas = platos.filter((p) => esEntrada(p.tipo));
+  const platosSegundos = platos.filter((p) => esSegundo(p.tipo));
+
+  // Alumnos manuales filtrados por el colegio actual
+  const alumnosDelColegio = alumnosGuardados.filter(
+    (a) => !colegioSeleccionado || a.colegioNombre.trim().toLowerCase() === colegioSeleccionado.trim().toLowerCase()
   );
-  const platosEntradas = platos.filter(
-    (p) =>
-      (p.tipo || '').toUpperCase().includes('ENTRADA') ||
-      (p.tipo || '').toUpperCase().includes('SOPA') ||
-      (p.tipo || '').toUpperCase().includes('POSTRE')
-  );
+
+  // Sugerencias interactivas según lo que tipea el admin
+  const sugerenciasAlumnos = estudianteNombre.trim()
+    ? alumnosDelColegio.filter((a) =>
+        a.nombreCompleto.toLowerCase().includes(estudianteNombre.trim().toLowerCase())
+      )
+    : alumnosDelColegio.slice(0, 5);
+
+  const seleccionarAlumnoGuardado = (alumno: AlumnoManualGuardado) => {
+    setEstudianteNombre(alumno.nombreCompleto);
+    if (alumno.gradoSeccion) {
+      setGradoSeccion(alumno.gradoSeccion);
+      if (grados.length > 0 && !grados.includes(alumno.gradoSeccion)) {
+        setGradoPersonalizado(true);
+      } else {
+        setGradoPersonalizado(false);
+      }
+    }
+    if (alumno.padreNombre) setPadreNombre(alumno.padreNombre);
+    if (alumno.telefonoContacto) setTelefonoContacto(alumno.telefonoContacto);
+    setMostrarDropdownSugerencias(false);
+  };
+
+  const eliminarAlumnoManual = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const filtrados = alumnosGuardados.filter((a) => a.id !== id);
+    setAlumnosGuardados(filtrados);
+    try {
+      localStorage.setItem(STORAGE_KEY_ALUMNOS_MANUALES, JSON.stringify(filtrados));
+    } catch (_) {}
+  };
+
+  const guardarAlumnoManual = (nuevo: Omit<AlumnoManualGuardado, 'id' | 'fechaUltimoPedido'>) => {
+    try {
+      const id = `${nuevo.colegioNombre.trim().toLowerCase()}__${nuevo.nombreCompleto.trim().toLowerCase()}`;
+      const copia = [...alumnosGuardados];
+      const index = copia.findIndex((a) => a.id === id);
+      const registro: AlumnoManualGuardado = {
+        id,
+        nombreCompleto: nuevo.nombreCompleto.trim().toUpperCase(),
+        gradoSeccion: nuevo.gradoSeccion.trim(),
+        colegioNombre: nuevo.colegioNombre.trim(),
+        padreNombre: nuevo.padreNombre?.trim(),
+        telefonoContacto: nuevo.telefonoContacto?.trim(),
+        fechaUltimoPedido: new Date().toISOString(),
+      };
+
+      if (index >= 0) {
+        copia[index] = registro;
+      } else {
+        copia.unshift(registro);
+      }
+
+      // Máximo 50 alumnos guardados para rendimiento óptimo
+      const finalAlumnos = copia.slice(0, 50);
+      setAlumnosGuardados(finalAlumnos);
+      localStorage.setItem(STORAGE_KEY_ALUMNOS_MANUALES, JSON.stringify(finalAlumnos));
+    } catch (e) {
+      console.warn('Error guardando alumno manual:', e);
+    }
+  };
 
   const reiniciarFormulario = () => {
     setEstudianteNombre('');
@@ -169,6 +293,7 @@ export default function PedidoManualPage() {
     setTelefonoContacto('');
     setPedidoCreado(null);
     setError(null);
+    setPlatoPersonalizado(false);
   };
 
   const formatearNombre = (texto: string) => {
@@ -201,7 +326,7 @@ export default function PedidoManualPage() {
       return;
     }
     if (!segundo) {
-      setError('Por favor selecciona o escribe el plato principal.');
+      setError('Por favor selecciona o escribe el plato principal (segundo).');
       return;
     }
 
@@ -223,6 +348,15 @@ export default function PedidoManualPage() {
         fecha: fecha,
         diaSemana: diaSemanaCalculado,
         padreNombre: padreNombre.trim() ? formatearNombre(padreNombre.trim()) : 'Atención en ventanilla / Tutor',
+      });
+
+      // GUARDAR EN STORAGE EXCLUSIVAMENTE PARA ESTA PÁGINA
+      guardarAlumnoManual({
+        nombreCompleto: estudiante.toUpperCase(),
+        gradoSeccion: grado,
+        colegioNombre: colegio,
+        padreNombre: padreNombre.trim() ? formatearNombre(padreNombre.trim()) : undefined,
+        telefonoContacto: telefonoContacto.trim() || undefined,
       });
 
       setPedidoCreado(nuevoPedido);
@@ -298,88 +432,72 @@ export default function PedidoManualPage() {
           <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 max-w-lg mx-auto text-left text-xs sm:text-sm space-y-2 border border-slate-200">
             <div className="flex justify-between py-1 border-b border-slate-200">
               <span className="text-slate-500 font-semibold">Alumna / Alumno:</span>
-              <span className="font-black text-slate-900">{pedidoCreado.estudianteNombre}</span>
+              <strong className="text-slate-900 font-black uppercase">
+                {pedidoCreado.estudianteNombre}
+              </strong>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-200">
-              <span className="text-slate-500 font-semibold">Colegio y Grado:</span>
-              <span className="font-bold text-slate-800">
+              <span className="text-slate-500 font-semibold">Colegio / Grado:</span>
+              <span className="text-slate-800 font-bold">
                 {pedidoCreado.colegioNombre} — {pedidoCreado.gradoSeccion}
               </span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-200">
               <span className="text-slate-500 font-semibold">Plato Principal:</span>
-              <span className="font-bold text-slate-900">{pedidoCreado.segundoNombre}</span>
+              <strong className="text-emerald-700 font-black">
+                {pedidoCreado.segundoNombre}
+              </strong>
             </div>
-            {pedidoCreado.entradaNombre && (
+            {pedidoCreado.entradaNombre && pedidoCreado.entradaNombre !== 'Sin entrada' && (
               <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="text-slate-500 font-semibold">Entrada o Postre:</span>
-                <span className="font-medium text-slate-700">{pedidoCreado.entradaNombre}</span>
-              </div>
-            )}
-            {pedidoCreado.observacion && (
-              <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="text-slate-500 font-semibold">Observación:</span>
-                <span className="font-bold text-amber-700">{pedidoCreado.observacion}</span>
+                <span className="text-slate-500 font-semibold">Sopa / Entrada:</span>
+                <span className="text-slate-800 font-bold">
+                  {pedidoCreado.entradaNombre}
+                </span>
               </div>
             )}
             <div className="flex justify-between py-1 border-b border-slate-200">
-              <span className="text-slate-500 font-semibold">Pago:</span>
-              <span
-                className={`font-black ${
-                  pedidoCreado.estadoPago === 'PAGADO' ? 'text-emerald-700' : 'text-rose-600'
-                }`}
-              >
-                {pedidoCreado.metodoPago} — {pedidoCreado.estadoPago === 'PAGADO' ? 'PAGADO' : 'POR COBRAR'}
+              <span className="text-slate-500 font-semibold">Método de Pago:</span>
+              <span className="inline-flex items-center gap-1 font-black text-slate-900">
+                {pedidoCreado.metodoPago} ({pedidoCreado.estadoPago === 'PAGADO' ? 'Pagado' : 'Pendiente / Fiado'})
               </span>
             </div>
-            <div className="flex justify-between pt-1">
-              <span className="text-slate-500 font-semibold">Monto:</span>
-              <span className="font-black text-slate-900 text-base">
-                S/ {pedidoCreado.monto.toFixed(2)}
-              </span>
+            <div className="flex justify-between py-1">
+              <span className="text-slate-500 font-semibold">Total Cobrado:</span>
+              <strong className="text-emerald-700 font-black text-base">
+                S/ {Number(pedidoCreado.monto || 12).toFixed(2)}
+              </strong>
             </div>
           </div>
 
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <button
               type="button"
               onClick={reiniciarFormulario}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition shadow-sm cursor-pointer flex items-center justify-center gap-2"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Registrar Siguiente Alumno</span>
+              <PlusCircle className="w-4 h-4" /> Tomar Otro Pedido Manual
             </button>
             <Link
               href="/admin/despacho"
-              className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition flex items-center justify-center gap-2"
             >
-              <PackageCheck className="w-4 h-4" />
-              <span>Ir a Despacho</span>
+              <PackageCheck className="w-4 h-4 text-blue-600" /> Ir a Despacho
             </Link>
             <Link
               href="/admin/cocina"
-              className="px-4 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition flex items-center justify-center gap-2"
             >
-              <ChefHat className="w-4 h-4" />
-              <span>Ir a Cocina</span>
+              <ChefHat className="w-4 h-4 text-amber-600" /> Ir a Cocina
             </Link>
-            {pedidoCreado.metodoPago === 'Pagar luego' && (
-              <Link
-                href="/admin/fiado"
-                className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer flex items-center gap-2"
-              >
-                <Receipt className="w-4 h-4" />
-                <span>Ver en Fiados</span>
-              </Link>
-            )}
           </div>
         </div>
       ) : (
         /* Formulario Principal de Pedido Manual */
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-7 shadow-xs space-y-6">
           {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-center gap-2 font-medium animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -389,17 +507,14 @@ export default function PedidoManualPage() {
             {/* Colegio */}
             <div>
               <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-emerald-600" /> Colegio *
+                <Building2 className="w-3.5 h-3.5 text-emerald-600" /> Colegio / Institución *
               </label>
               {esSuperAdmin ? (
                 <select
                   value={colegioSeleccionado}
-                  onChange={(e) => {
-                    setColegioSeleccionado(e.target.value);
-                    setGradoPersonalizado(false);
-                    setPlatoPersonalizado(false);
-                  }}
+                  onChange={(e) => setColegioSeleccionado(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
+                  required
                 >
                   {colegios.map((c) => (
                     <option key={c} value={c}>
@@ -408,208 +523,414 @@ export default function PedidoManualPage() {
                   ))}
                 </select>
               ) : (
-                <div className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-black text-slate-800">
+                <div className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800">
                   {colegioSeleccionado || usuario?.colegioNombre || 'Colegio Asignado'}
                 </div>
               )}
             </div>
 
-            {/* Fecha */}
+            {/* Fecha de Consumo */}
             <div>
               <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-emerald-600" /> Fecha del Almuerzo *
                 </span>
-                {fecha === fechaHoy && (
-                  <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                    Hoy
-                  </span>
-                )}
+                <span className="text-[11px] font-bold text-emerald-700 capitalize">
+                  {diaSemanaCalculado.toLowerCase()} ({formatearFechaLegiblePeru(fecha)})
+                </span>
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="date"
                   value={fecha}
-                  onChange={(e) => setFecha(e.target.value || fechaHoy)}
+                  onChange={(e) => setFecha(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
+                  required
                 />
                 <button
                   type="button"
                   onClick={() => setFecha(fechaHoy)}
-                  className="px-3 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold shrink-0 transition"
+                  className={`px-3 py-2.5 rounded-2xl text-xs font-bold transition border cursor-pointer ${
+                    fecha === fechaHoy
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                  title="Seleccionar fecha actual de hoy"
                 >
                   Hoy
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 capitalize">
-                Día escolar: <strong>{diaSemanaCalculado.toLowerCase()}</strong> ({formatearFechaLegiblePeru(fecha)})
-              </p>
             </div>
           </div>
 
-          {/* 2. DATOS DE LA ALUMNA/O */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-slate-100">
-            {/* Nombre del estudiante */}
-            <div>
-              <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-emerald-600" /> Nombre de la Alumna / Alumno *
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. Sofía Valenzuela Mendoza"
-                value={estudianteNombre}
-                onChange={(e) => setEstudianteNombre(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
-                required
-              />
-            </div>
-
-            {/* Grado y Sección */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600" /> Grado y Sección *
+          {/* 2. DATOS DE LA ALUMNA/O CON SUGERENCIAS DE PEDIDOS MANUALES PREVIOS */}
+          <div className="space-y-3 pb-4 border-b border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Input de Estudiante con Dropdown Inteligente de Guardados */}
+              <div className="relative" ref={dropdownRef}>
+                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-emerald-600" /> Nombre de la Alumna / Alumno *
+                  </span>
+                  {alumnosDelColegio.length > 0 && (
+                    <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                      <Bookmark className="w-3 h-3" /> {alumnosDelColegio.length} guardado(s)
+                    </span>
+                  )}
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setGradoPersonalizado(!gradoPersonalizado)}
-                  className="text-[11px] text-emerald-700 hover:underline font-bold"
-                >
-                  {gradoPersonalizado ? 'Elegir de lista' : '+ Otro Grado'}
-                </button>
-              </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Ej. Sofía Valenzuela Mendoza"
+                    value={estudianteNombre}
+                    onChange={(e) => {
+                      setEstudianteNombre(e.target.value.toUpperCase());
+                      setMostrarDropdownSugerencias(true);
+                    }}
+                    onFocus={() => setMostrarDropdownSugerencias(true)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 uppercase placeholder:normal-case placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
+                    required
+                  />
+                  {estudianteNombre && (
+                    <button
+                      type="button"
+                      onClick={() => setEstudianteNombre('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
 
-              {gradoPersonalizado ? (
-                <input
-                  type="text"
-                  placeholder="Ej. 3.° Primaria B"
-                  value={gradoSeccion}
-                  onChange={(e) => setGradoSeccion(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
-                  required
-                />
-              ) : (
-                <select
-                  value={gradoSeccion}
-                  onChange={(e) => setGradoSeccion(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
-                >
-                  {grados.length === 0 && <option value="">Sin grados registrados</option>}
-                  {grados.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-
-          {/* 3. SELECCIÓN DE ALMUERZO */}
-          <div className="space-y-4 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <UtensilsCrossed className="w-3.5 h-3.5 text-emerald-600" /> Plato Principal (Segundo) *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setPlatoPersonalizado(!platoPersonalizado)}
-                  className="text-[11px] text-emerald-700 hover:underline font-bold"
-                >
-                  {platoPersonalizado ? 'Elegir del Menú' : '+ Plato Especial'}
-                </button>
-              </div>
-
-              {platoPersonalizado ? (
-                <input
-                  type="text"
-                  placeholder="Ej. Tallarines Verdes con Bistec"
-                  value={segundoNombre}
-                  onChange={(e) => setSegundoNombre(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
-                  required
-                />
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {platosSegundos.length === 0 ? (
-                    <div className="col-span-full p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
-                      No hay segundos configurados para el {diaSemanaCalculado.toLowerCase()} en {colegioSeleccionado}. Puedes escribir uno personalizado con el botón superior.
+                {/* Dropdown de Sugerencias de Alumnos Manuales Guardados */}
+                {mostrarDropdownSugerencias && sugerenciasAlumnos.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-white rounded-2xl border border-slate-200 shadow-lg p-2 max-h-56 overflow-y-auto animate-in fade-in">
+                    <div className="text-[10px] font-black uppercase text-slate-400 px-2.5 py-1 flex items-center justify-between">
+                      <span>Alumnos Registrados en Pedidos Manuales</span>
+                      <span>Clic para autocompletar</span>
                     </div>
-                  ) : (
-                    platosSegundos.map((p) => {
-                      const seleccionado = segundoNombre === p.nombre;
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            setSegundoNombre(p.nombre);
-                            setMonto(p.precio || 12);
-                          }}
-                          className={`text-left p-3.5 rounded-2xl border transition cursor-pointer flex items-start justify-between gap-2 ${
-                            seleccionado
-                              ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20'
-                              : 'bg-slate-50/70 border-slate-200 hover:border-slate-300'
-                          }`}
-                        >
-                          <div>
-                            <div className="font-black text-xs sm:text-sm text-slate-900">{p.nombre}</div>
-                            {p.descripcion && (
-                              <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                                {p.descripcion}
-                              </div>
-                            )}
-                            <div className="text-xs font-bold text-emerald-700 mt-1">
-                              S/ {(p.precio || 12).toFixed(2)}
-                            </div>
+                    {sugerenciasAlumnos.map((alum) => (
+                      <div
+                        key={alum.id}
+                        onClick={() => seleccionarAlumnoGuardado(alum)}
+                        className="p-2 hover:bg-emerald-50 rounded-xl cursor-pointer transition flex items-center justify-between gap-2 border border-transparent hover:border-emerald-200"
+                      >
+                        <div>
+                          <div className="text-xs font-black text-slate-900 uppercase">
+                            {alum.nombreCompleto}
                           </div>
-                          {seleccionado && (
-                            <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="text-[11px] text-slate-500 flex items-center gap-2">
+                            <span>Grado: <strong>{alum.gradoSeccion}</strong></span>
+                            {alum.padreNombre && <span>• Tutor: {alum.padreNombre}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => eliminarAlumnoManual(alum.id, e)}
+                            className="p-1 text-slate-300 hover:text-rose-600 transition"
+                            title="Quitar de la lista de alumnos manuales guardados"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                          <ChevronRight className="w-4 h-4 text-emerald-600" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Grado y Sección */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <GraduationCap className="w-3.5 h-3.5 text-emerald-600" /> Grado y Sección *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setGradoPersonalizado(!gradoPersonalizado)}
+                    className="text-[11px] text-emerald-700 hover:underline font-bold"
+                  >
+                    {gradoPersonalizado ? 'Elegir de lista' : '+ Otro Grado'}
+                  </button>
+                </div>
+
+                {gradoPersonalizado ? (
+                  <input
+                    type="text"
+                    placeholder="Ej. 3.° Primaria B"
+                    value={gradoSeccion}
+                    onChange={(e) => setGradoSeccion(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
+                    required
+                  />
+                ) : (
+                  <select
+                    value={gradoSeccion}
+                    onChange={(e) => setGradoSeccion(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
+                  >
+                    {grados.length === 0 && <option value="">Sin grados registrados</option>}
+                    {grados.map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            {/* Fila de Chips Rápidos con Alumnos de Pedidos Manuales Anteriores */}
+            {alumnosDelColegio.length > 0 && (
+              <div className="pt-1">
+                <span className="text-[11px] font-bold text-slate-500 block mb-1.5 flex items-center gap-1">
+                  <History className="w-3.5 h-3.5 text-emerald-600" /> Alumnos frecuentes en ventanilla (haz clic para rellenar datos):
+                </span>
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-slate-50 rounded-2xl border border-slate-200/80">
+                  {alumnosDelColegio.map((alum) => (
+                    <button
+                      key={alum.id}
+                      type="button"
+                      onClick={() => seleccionarAlumnoGuardado(alum)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                        estudianteNombre.toUpperCase() === alum.nombreCompleto.toUpperCase()
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                      }`}
+                    >
+                      <span>{alum.nombreCompleto}</span>
+                      <span className="text-[10px] opacity-75">({alum.gradoSeccion})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. SELECCIÓN DE ALMUERZO: CARTA IDÉNTICA AL MENÚ SEMANAL */}
+          <div className="space-y-6 pb-4 border-b border-slate-100">
+            {/* Encabezado de la Carta del Día */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                  <Utensils className="w-4 h-4 text-emerald-600" /> Carta del Menú Escolar ({diaSemanaCalculado})
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Platos programados para el colegio {colegioSeleccionado} en el día {diaSemanaCalculado.toLowerCase()}.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPlatoPersonalizado(!platoPersonalizado)}
+                className="text-xs text-emerald-700 hover:underline font-bold"
+              >
+                {platoPersonalizado ? 'Elegir del Menú' : '+ Plato Especial'}
+              </button>
+            </div>
+
+            {/* SECCIÓN 1: SOPA O POSTRE (ENTRADA) */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Utensils className="w-3.5 h-3.5 text-emerald-600" /> 1. Sopa o Postre (Entrada)
+                </label>
+                <span className="text-[11px] font-bold text-slate-500">Incluida en el menú</span>
+              </div>
+
+              {cargandoDatos ? (
+                <div className="text-xs text-slate-400 py-4 text-center">Cargando opciones de entrada...</div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {/* Opción Sin Entrada */}
+                  <button
+                    type="button"
+                    onClick={() => setEntradaNombre('Sin entrada')}
+                    className={`text-left p-3 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
+                      entradaNombre === 'Sin entrada'
+                        ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20'
+                        : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Opción</span>
+                        {entradaNombre === 'Sin entrada' && (
+                          <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="font-black text-xs sm:text-sm text-slate-800 mt-1">Sin entrada / sopa</div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Solo plato de fondo</p>
+                    </div>
+                  </button>
+
+                  {/* Entradas del Día */}
+                  {platosEntradas.map((ent) => {
+                    const seleccionada = entradaNombre === ent.nombre;
+                    return (
+                      <button
+                        key={ent.id}
+                        type="button"
+                        onClick={() => setEntradaNombre(ent.nombre)}
+                        className={`text-left rounded-2xl border overflow-hidden transition cursor-pointer flex flex-col justify-between ${
+                          seleccionada
+                            ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20'
+                            : 'bg-white border-slate-200 hover:border-emerald-300'
+                        }`}
+                      >
+                        <div className="h-24 w-full bg-slate-100 relative">
+                          {ent.imagenUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                              <Utensils className="w-6 h-6" />
+                            </div>
+                          )}
+                          <span className="absolute top-1.5 left-1.5 bg-slate-900/80 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                            Sopa o postre
+                          </span>
+                          {seleccionada && (
+                            <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs">
                               <Check className="w-3 h-3 stroke-[3]" />
                             </div>
                           )}
-                        </button>
-                      );
-                    })
-                  )}
+                        </div>
+                        <div className="p-2.5 flex-1 flex flex-col justify-between">
+                          <div>
+                            <div className="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1">{ent.nombre}</div>
+                            {ent.descripcion && (
+                              <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{ent.descripcion}</p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Entrada o Sopa Opcional */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
-                  Entrada, Sopa o Postre (Opcional)
+            {/* SECCIÓN 2: PLATO DE FONDO (SEGUNDO) */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <UtensilsCrossed className="w-3.5 h-3.5 text-emerald-600" /> 2. Plato de Fondo (Segundo) *
                 </label>
-                <select
-                  value={entradaNombre}
-                  onChange={(e) => setEntradaNombre(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
-                >
-                  <option value="Sin entrada">Sin entrada / sopa</option>
-                  {platosEntradas.map((p) => (
-                    <option key={p.id} value={p.nombre}>
-                      {p.nombre} ({p.tipo || 'Entrada'})
-                    </option>
-                  ))}
-                </select>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                  S/ {monto.toFixed(2)}
+                </span>
               </div>
 
-              {/* Observaciones de alergias */}
-              <div>
-                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> Observaciones / Alergias
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Alérgica al maní, poco arroz, sin ensalada..."
-                  value={observacion}
-                  onChange={(e) => setObservacion(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
-                />
-              </div>
+              {platoPersonalizado ? (
+                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-3">
+                  <div className="text-xs font-bold text-amber-900">
+                    Escribir Plato Especial / Personalizado:
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Ej. Tallarines Verdes con Bistec"
+                    value={segundoNombre}
+                    onChange={(e) => setSegundoNombre(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
+                    required
+                  />
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-slate-600">Precio (S/):</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      value={monto}
+                      onChange={(e) => setMonto(parseFloat(e.target.value) || 0)}
+                      className="w-24 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                </div>
+              ) : cargandoDatos ? (
+                <div className="text-xs text-slate-400 py-6 text-center">Cargando platos de fondo...</div>
+              ) : platosSegundos.length === 0 ? (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                  No hay platos de fondo configurados para el {diaSemanaCalculado.toLowerCase()} en {colegioSeleccionado}. Puedes escribir uno personalizado con el botón superior.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {platosSegundos.map((seg) => {
+                    const seleccionado = segundoNombre === seg.nombre;
+                    return (
+                      <button
+                        key={seg.id}
+                        type="button"
+                        onClick={() => {
+                          setSegundoNombre(seg.nombre);
+                          setMonto(seg.precio || 12);
+                        }}
+                        className={`text-left rounded-2xl border overflow-hidden transition cursor-pointer flex flex-col justify-between ${
+                          seleccionado
+                            ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20 shadow-xs'
+                            : 'bg-white border-slate-200 hover:border-emerald-300'
+                        }`}
+                      >
+                        <div className="h-28 w-full bg-slate-100 relative">
+                          {seg.imagenUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={seg.imagenUrl} alt={seg.nombre} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                              <UtensilsCrossed className="w-8 h-8" />
+                            </div>
+                          )}
+                          <span className="absolute top-1.5 left-1.5 bg-orange-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">
+                            Segundo
+                          </span>
+                          {seleccionado && (
+                            <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md">
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-3 flex-1 flex flex-col justify-between">
+                          <div>
+                            <div className="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1">{seg.nombre}</div>
+                            {seg.descripcion && (
+                              <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                {seg.descripcion}
+                              </p>
+                            )}
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                            <span className="text-xs font-black text-emerald-700">
+                              S/ {(seg.precio || 12).toFixed(2)}
+                            </span>
+                            {seleccionado && (
+                              <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                                Seleccionado
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Observaciones y Alergias */}
+            <div>
+              <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> Observaciones / Alergias del Alumno
+              </label>
+              <input
+                type="text"
+                placeholder="Ej. Alérgica al maní, poco arroz, sin ensalada..."
+                value={observacion}
+                onChange={(e) => setObservacion(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
+              />
             </div>
           </div>
 
@@ -648,39 +969,28 @@ export default function PedidoManualPage() {
               <span className="flex items-center gap-1.5">
                 <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> Método de Pago *
               </span>
-              <span className="text-sm font-black text-slate-900">
+              <span className="text-emerald-700 font-bold text-xs">
                 Total: S/ {monto.toFixed(2)}
               </span>
             </label>
-
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { id: 'Efectivo', label: 'Efectivo', desc: 'Cobrado en caja', color: 'border-emerald-500 bg-emerald-50/50' },
-                { id: 'Yape', label: 'Yape', desc: 'Pago confirmado', color: 'border-purple-500 bg-purple-50/50' },
-                { id: 'Plin', label: 'Plin', desc: 'Pago confirmado', color: 'border-blue-500 bg-blue-50/50' },
-                { id: 'Pagar luego', label: 'Pagar luego', desc: 'Fiado en cuenta', color: 'border-amber-500 bg-amber-50/50' },
-              ].map((m) => {
-                const activo = metodoPago === m.id;
+              {(['Efectivo', 'Yape', 'Plin', 'Pagar luego'] as MetodoPago[]).map((metodo) => {
+                const activo = metodoPago === metodo;
                 return (
                   <button
-                    key={m.id}
+                    key={metodo}
                     type="button"
-                    onClick={() => setMetodoPago(m.id as MetodoPago)}
-                    className={`p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                    onClick={() => setMetodoPago(metodo)}
+                    className={`p-3 rounded-2xl border text-center transition cursor-pointer ${
                       activo
-                        ? `${m.color} ring-2 ring-emerald-600/30 font-black`
-                        : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-black'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 font-bold text-xs'
                     }`}
                   >
-                    <div>
-                      <div className="text-xs sm:text-sm font-bold text-slate-900">{m.label}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">{m.desc}</div>
+                    <div className="text-xs sm:text-sm">{metodo}</div>
+                    <div className={`text-[10px] mt-0.5 ${activo ? 'text-emerald-100' : 'text-slate-400'}`}>
+                      {metodo === 'Pagar luego' ? 'Fiado' : 'Cobro inmediato'}
                     </div>
-                    {activo && (
-                      <div className="self-end mt-1">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
-                      </div>
-                    )}
                   </button>
                 );
               })}
@@ -691,18 +1001,18 @@ export default function PedidoManualPage() {
           <div className="pt-2">
             <button
               type="submit"
-              disabled={guardando || cargandoDatos}
-              className="w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-sm sm:text-base transition shadow-sm hover:shadow-md cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={guardando}
+              className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-black text-sm sm:text-base transition shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {guardando ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Registrando Pedido...</span>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Registrando Pedido Manual...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5" />
-                  <span>Registrar Almuerzo Escolar (S/ {monto.toFixed(2)})</span>
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span>Confirmar y Guardar Pedido Manual (S/ {monto.toFixed(2)})</span>
                 </>
               )}
             </button>

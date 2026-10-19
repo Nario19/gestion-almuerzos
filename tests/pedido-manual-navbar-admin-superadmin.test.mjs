@@ -9,43 +9,29 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 
 test('Verificación de Opción de Pedido Manual en Navbar Superior para Superadmin y Admins', async (t) => {
-  await t.test('1. En HeaderNav: Existe el botón + Pedido Manual y renderiza ModalPedidoManual', () => {
+  await t.test('1. En HeaderNav: Existe el enlace canónico a Pedido Manual y no existe botón duplicado de modal', () => {
     const headerPath = path.join(projectRoot, 'src/components/HeaderNav.tsx');
     const content = fs.readFileSync(headerPath, 'utf8');
 
-    // Debe importar ModalPedidoManual
+    // Debe contener el item canónico de Pedido Manual en la barra de navegación de administración
     assert.match(
       content,
-      /import\s+ModalPedidoManual\s+from\s+['"]@\/components\/ModalPedidoManual['"]/,
-      'HeaderNav debe importar ModalPedidoManual'
+      /label:\s*['"]Pedido Manual['"]/,
+      'HeaderNav debe contener el enlace canónico a "Pedido Manual"'
     );
 
-    // Debe declarar el estado modalPedidoManualAbierto
+    // Debe apuntar a la pantalla dedicada de pedido-manual
     assert.match(
       content,
-      /modalPedidoManualAbierto/,
-      'HeaderNav debe manejar el estado modalPedidoManualAbierto'
+      /pedido-manual/,
+      'HeaderNav debe dirigir a la ruta de pedido manual'
     );
 
-    // Debe contener el botón visible de + Pedido Manual
-    assert.match(
+    // No debe existir el botón duplicado ni el modal según la orden explícita del usuario
+    assert.doesNotMatch(
       content,
       /\+ Pedido Manual/,
-      'HeaderNav debe contener el botón "+ Pedido Manual"'
-    );
-
-    // El botón debe activar setModalPedidoManualAbierto(true)
-    assert.match(
-      content,
-      /onClick=\{\(\) => setModalPedidoManualAbierto\(true\)\}/,
-      'El botón debe activar setModalPedidoManualAbierto(true)'
-    );
-
-    // Debe renderizar ModalPedidoManual condicionado a esAdmin
-    assert.match(
-      content,
-      /<ModalPedidoManual\s+abierto=\{modalPedidoManualAbierto\}/,
-      'HeaderNav debe renderizar ModalPedidoManual'
+      'HeaderNav no debe tener el botón duplicado "+ Pedido Manual"'
     );
   });
 
