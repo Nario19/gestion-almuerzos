@@ -2837,33 +2837,85 @@ export const dataService = {
       pagados: number;
     }>;
   }> {
-    const pedidosTodos = await this.obtenerPedidos();
     const colegios = await this.obtenerColegios();
     const hoyStr = obtenerFechaHoyPeru();
-
-    // Filtrar por período
     const periodo = filtro?.periodo || 'HISTORICO';
-    let pedidosFiltrados = pedidosTodos;
+    const hace7Dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const hace30Dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-    if (periodo === 'HOY') {
-      pedidosFiltrados = pedidosFiltrados.filter((p) => p.fecha === hoyStr);
-    } else if (periodo === 'SEMANA') {
-      const hace7Dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      pedidosFiltrados = pedidosFiltrados.filter((p) => p.fecha >= hace7Dias);
-    } else if (periodo === 'MES') {
-      const hace30Dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      pedidosFiltrados = pedidosFiltrados.filter((p) => p.fecha >= hace30Dias);
+    let pedidosBase: Array<{
+      id?: string;
+      fecha: string;
+      diaSemana?: string;
+      colegioNombre?: string;
+      colegioId?: string;
+      monto: number;
+      metodoPago?: string;
+      estadoPago?: string;
+      estadoPedido?: string;
+      entradaNombre?: string;
+      segundoNombre?: string;
+    }> = [];
+
+    // Consulta con proyección selectiva de columnas mínimas para no agotar cuota ni egress del plan Free
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let query = supabase
+          .from('pedidos')
+          .select('id, fecha, dia_semana, colegio_nombre, colegio_id, monto, metodo_pago, estado_pago, estado_pedido, entrada_nombre, segundo_nombre');
+
+        if (periodo === 'HOY') {
+          query = query.eq('fecha', hoyStr);
+        } else if (periodo === 'SEMANA') {
+          query = query.gte('fecha', hace7Dias);
+        } else if (periodo === 'MES') {
+          query = query.gte('fecha', hace30Dias);
+        }
+
+        if (filtro?.colegioNombre && filtro.colegioNombre.trim().toLowerCase() !== 'todos') {
+          const colLimpio = filtro.colegioNombre.trim();
+          query = query.or(`colegio_nombre.eq.${colLimpio},colegio_id.eq.${colLimpio}`);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) {
+          pedidosBase = data.map((d) => ({
+            id: d.id,
+            fecha: d.fecha || '',
+            diaSemana: d.dia_semana || '',
+            colegioNombre: d.colegio_nombre || '',
+            colegioId: d.colegio_id || '',
+            monto: Number(d.monto) || 12,
+            metodoPago: d.metodo_pago || '',
+            estadoPago: d.estado_pago || '',
+            estadoPedido: d.estado_pedido || '',
+            entradaNombre: d.entrada_nombre || '',
+            segundoNombre: d.segundo_nombre || '',
+          }));
+        }
+      } catch (err) {
+        console.warn('Error leyendo analítica de Supabase con proyección optimizada:', err);
+      }
     }
 
-    // Filtrar por colegio si se especificó
-    if (filtro?.colegioNombre && filtro.colegioNombre.trim().toLowerCase() !== 'todos') {
-      const col = filtro.colegioNombre.trim().toLowerCase();
-      pedidosFiltrados = pedidosFiltrados.filter(
-        (p) =>
-          (p.colegioNombre && p.colegioNombre.trim().toLowerCase() === col) ||
-          (p.colegioId && p.colegioId.trim().toLowerCase() === col)
-      );
-    }
+    // Fusionar con pedidos en memoria para soporte offline, testing y reactividad instantánea
+    const idsCargados = new Set(pedidosBase.map((p) => p.id).filter(Boolean));
+    const pedidosMemFiltrados = pedidosMemoria.filter((p) => {
+      if (idsCargados.has(p.id)) return false;
+      if (periodo === 'HOY' && p.fecha !== hoyStr) return false;
+      if (periodo === 'SEMANA' && p.fecha < hace7Dias) return false;
+      if (periodo === 'MES' && p.fecha < hace30Dias) return false;
+      if (filtro?.colegioNombre && filtro.colegioNombre.trim().toLowerCase() !== 'todos') {
+        const col = filtro.colegioNombre.trim().toLowerCase();
+        const coincideCol =
+          (p.colegioNombre && p.colegioNombre.toLowerCase() === col) ||
+          (p.colegioId && p.colegioId.toLowerCase() === col);
+        if (!coincideCol) return false;
+      }
+      return true;
+    });
+
+    const pedidosFiltrados = [...pedidosBase, ...pedidosMemFiltrados];
 
     // Excluir cancelados de las métricas económicas
     const pedidosActivos = pedidosFiltrados.filter((p) => p.estadoPedido !== 'CANCELADO');
