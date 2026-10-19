@@ -350,14 +350,14 @@ export default function PedidoManualPage() {
               <span>Registrar Siguiente Alumno</span>
             </button>
             <Link
-              href="/despacho"
+              href="/admin/despacho"
               className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer flex items-center gap-2"
             >
               <PackageCheck className="w-4 h-4" />
               <span>Ir a Despacho</span>
             </Link>
             <Link
-              href="/cocina"
+              href="/admin/cocina"
               className="px-4 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer flex items-center gap-2"
             >
               <ChefHat className="w-4 h-4" />
@@ -365,7 +365,7 @@ export default function PedidoManualPage() {
             </Link>
             {pedidoCreado.metodoPago === 'Pagar luego' && (
               <Link
-                href="/fiado"
+                href="/admin/fiado"
                 className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer flex items-center gap-2"
               >
                 <Receipt className="w-4 h-4" />

@@ -63,7 +63,7 @@ test('Regresiones Críticas de la Revisión de Seguridad e Integridad (2026-10-1
     );
 
     // 4. Verificar manejo en page.tsx
-    const homeContent = fs.readFileSync(path.resolve('src/app/page.tsx'), 'utf-8');
+    const homeContent = fs.readFileSync(path.resolve('src/app/padres/page.tsx'), 'utf-8');
     assert.ok(
       homeContent.includes("setErrorValidacion(err?.message || 'Ocurrió un error al registrar el pedido.')"),
       'El Home notifica al usuario en caso de error y no muestra modal de éxito falso'
@@ -75,7 +75,7 @@ test('Regresiones Críticas de la Revisión de Seguridad e Integridad (2026-10-1
   });
 
   await t.test('3. Historial de pedidos: Todos los React Hooks antes de retornos condicionales', () => {
-    const pedidosPageContent = fs.readFileSync(path.resolve('src/app/pedidos/page.tsx'), 'utf-8');
+    const pedidosPageContent = fs.readFileSync(path.resolve('src/app/padres/pedidos/page.tsx'), 'utf-8');
 
     // Localizar useEffect de reseteo de página y los returns condicionales
     const indexUseEffectPagina = pedidosPageContent.indexOf('useEffect(() => {\n    setPaginaActual(1);\n  }, [fechaFiltro]);');
@@ -122,19 +122,19 @@ test('Regresiones Críticas de la Revisión de Seguridad e Integridad (2026-10-1
     );
 
     // 3. Páginas administrativas bloquean admin sin colegio asignado
-    const despachoContent = fs.readFileSync(path.resolve('src/app/despacho/page.tsx'), 'utf-8');
+    const despachoContent = fs.readFileSync(path.resolve('src/app/admin/despacho/page.tsx'), 'utf-8');
     assert.ok(
       despachoContent.includes('!esSuperAdmin && !usuario?.colegioNombre'),
       'Despacho debe bloquear acceso si un admin no tiene colegio asignado'
     );
 
-    const cocinaContent = fs.readFileSync(path.resolve('src/app/cocina/page.tsx'), 'utf-8');
+    const cocinaContent = fs.readFileSync(path.resolve('src/app/admin/cocina/page.tsx'), 'utf-8');
     assert.ok(
       cocinaContent.includes('!esSuperAdmin && !usuario?.colegioNombre'),
       'Cocina debe bloquear acceso si un admin no tiene colegio asignado'
     );
 
-    const fiadoContent = fs.readFileSync(path.resolve('src/app/fiado/page.tsx'), 'utf-8');
+    const fiadoContent = fs.readFileSync(path.resolve('src/app/admin/fiado/page.tsx'), 'utf-8');
     assert.ok(
       fiadoContent.includes('!esSuperAdmin && !usuario?.colegioNombre'),
       'Fiado debe bloquear acceso si un admin no tiene colegio asignado'
@@ -149,7 +149,7 @@ test('Regresiones Críticas de la Revisión de Seguridad e Integridad (2026-10-1
 
   await t.test('5. Fiados: Liquidación total exacta sin deuda residual multi-colegio', () => {
     const dataServiceContent = fs.readFileSync(path.resolve('src/lib/dataService.ts'), 'utf-8');
-    const fiadoContent = fs.readFileSync(path.resolve('src/app/fiado/page.tsx'), 'utf-8');
+    const fiadoContent = fs.readFileSync(path.resolve('src/app/admin/fiado/page.tsx'), 'utf-8');
 
     // liquidarDeudaPadre soporta lista de IDs específicos
     assert.ok(
@@ -206,8 +206,8 @@ test('Regresiones Críticas de la Revisión de Seguridad e Integridad (2026-10-1
 
   await t.test('7. Conteo exacto de estudiantes sin duplicación y catálogo activo por colegio', () => {
     const dataServiceContent = fs.readFileSync(path.resolve('src/lib/dataService.ts'), 'utf-8');
-    const homeContent = fs.readFileSync(path.resolve('src/app/page.tsx'), 'utf-8');
-    const cocinaContent = fs.readFileSync(path.resolve('src/app/cocina/page.tsx'), 'utf-8');
+    const homeContent = fs.readFileSync(path.resolve('src/app/padres/page.tsx'), 'utf-8');
+    const cocinaContent = fs.readFileSync(path.resolve('src/app/admin/cocina/page.tsx'), 'utf-8');
 
     // 1. dataService no duplica el incremento de estudiantes
     assert.ok(
@@ -258,8 +258,8 @@ test('Regresiones Críticas de la Revisión de Seguridad e Integridad (2026-10-1
     const dataServiceContent = fs.readFileSync(path.resolve('src/lib/dataService.ts'), 'utf-8');
     const schemaContent = fs.readFileSync(path.resolve('supabase/schema.sql'), 'utf-8');
     const adminContent = fs.readFileSync(path.resolve('src/app/admin/page.tsx'), 'utf-8');
-    const hijosContent = fs.readFileSync(path.resolve('src/app/hijos/page.tsx'), 'utf-8');
-    const homeContent = fs.readFileSync(path.resolve('src/app/page.tsx'), 'utf-8');
+    const hijosContent = fs.readFileSync(path.resolve('src/app/padres/hijos/page.tsx'), 'utf-8');
+    const homeContent = fs.readFileSync(path.resolve('src/app/padres/page.tsx'), 'utf-8');
     const migrationContent = fs.readFileSync(
       path.resolve('supabase/migrations/202610140002_colegios_atributos_independientes.sql'),
       'utf-8'

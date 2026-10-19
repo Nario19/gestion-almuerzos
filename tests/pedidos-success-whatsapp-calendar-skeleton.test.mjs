@@ -7,7 +7,7 @@ const projectRoot = process.cwd();
 
 test('Verificación de Pantalla de Éxito, Calendario de Pedidos y Skeleton Loaders', async (t) => {
   await t.test('1. Pantalla de éxito en Home (/): Ya NO tiene botón de enviar comprobante por WhatsApp', () => {
-    const pagePath = path.join(projectRoot, 'src/app/page.tsx');
+    const pagePath = path.join(projectRoot, 'src/app/padres/page.tsx');
     const content = fs.readFileSync(pagePath, 'utf8');
 
     // No debe contener el texto del botón de WhatsApp
@@ -23,7 +23,7 @@ test('Verificación de Pantalla de Éxito, Calendario de Pedidos y Skeleton Load
   });
 
   await t.test('2. Pantalla de historial de pedidos (/pedidos): Calendario y selector de fecha responsivo y optimizado', () => {
-    const pedidosPath = path.join(projectRoot, 'src/app/pedidos/page.tsx');
+    const pedidosPath = path.join(projectRoot, 'src/app/padres/pedidos/page.tsx');
     const content = fs.readFileSync(pedidosPath, 'utf8');
 
     // Input nativo de fecha con icono Calendar posicionado
@@ -58,15 +58,15 @@ test('Verificación de Pantalla de Éxito, Calendario de Pedidos y Skeleton Load
       assert.match(fileContent, new RegExp(skeletonName), `${filePath} debe utilizar ${skeletonName}`);
     };
 
-    checkFileForSkeleton('src/app/page.tsx', 'SkeletonHomePage');
-    checkFileForSkeleton('src/app/pedidos/page.tsx', 'SkeletonPedidosPage');
-    checkFileForSkeleton('src/app/hijos/page.tsx', 'SkeletonHijosPage');
-    checkFileForSkeleton('src/app/perfil/page.tsx', 'SkeletonPerfilPage');
+    checkFileForSkeleton('src/app/padres/page.tsx', 'SkeletonHomePage');
+    checkFileForSkeleton('src/app/padres/pedidos/page.tsx', 'SkeletonPedidosPage');
+    checkFileForSkeleton('src/app/padres/hijos/page.tsx', 'SkeletonHijosPage');
+    checkFileForSkeleton('src/app/padres/perfil/page.tsx', 'SkeletonPerfilPage');
     checkFileForSkeleton('src/app/login/page.tsx', 'SkeletonLoginPage');
     checkFileForSkeleton('src/app/admin/page.tsx', 'SkeletonDashboardPage');
-    checkFileForSkeleton('src/app/despacho/page.tsx', 'SkeletonDashboardPage');
-    checkFileForSkeleton('src/app/cocina/page.tsx', 'SkeletonDashboardPage');
-    checkFileForSkeleton('src/app/fiado/page.tsx', 'SkeletonDashboardPage');
+    checkFileForSkeleton('src/app/admin/despacho/page.tsx', 'SkeletonDashboardPage');
+    checkFileForSkeleton('src/app/admin/cocina/page.tsx', 'SkeletonDashboardPage');
+    checkFileForSkeleton('src/app/admin/fiado/page.tsx', 'SkeletonDashboardPage');
     checkFileForSkeleton('src/app/superadmin/page.tsx', 'SkeletonDashboardPage');
   });
 });

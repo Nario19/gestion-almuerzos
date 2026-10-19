@@ -7,8 +7,8 @@ const projectRoot = process.cwd();
 
 test('Verificación de Remoción de WhatsApp en Tarjeta de Pedidos y Ajustes en Fiado', async (t) => {
   await t.test('1. En /pedidos: La tarjeta de pedido ya NO tiene botón de WhatsApp', () => {
-    const pedidosPath = path.join(projectRoot, 'src/app/pedidos/page.tsx');
-    assert.ok(fs.existsSync(pedidosPath), 'src/app/pedidos/page.tsx debe existir');
+    const pedidosPath = path.join(projectRoot, 'src/app/padres/pedidos/page.tsx');
+    assert.ok(fs.existsSync(pedidosPath), 'src/app/padres/pedidos/page.tsx debe existir');
     const content = fs.readFileSync(pedidosPath, 'utf8');
 
     // No debe existir el botón de WhatsApp en la tarjeta
@@ -25,8 +25,8 @@ test('Verificación de Remoción de WhatsApp en Tarjeta de Pedidos y Ajustes en 
   });
 
   await t.test('2. En /fiado: Tarjeta familiar ya NO tiene botón de WhatsApp ni insignia de colegio', () => {
-    const fiadoPath = path.join(projectRoot, 'src/app/fiado/page.tsx');
-    assert.ok(fs.existsSync(fiadoPath), 'src/app/fiado/page.tsx debe existir');
+    const fiadoPath = path.join(projectRoot, 'src/app/admin/fiado/page.tsx');
+    assert.ok(fs.existsSync(fiadoPath), 'src/app/admin/fiado/page.tsx debe existir');
     const content = fs.readFileSync(fiadoPath, 'utf8');
 
     // En la cabecera de la tarjeta familiar no debe mostrarse el badge de padre.colegioNombre
@@ -45,7 +45,7 @@ test('Verificación de Remoción de WhatsApp en Tarjeta de Pedidos y Ajustes en 
   });
 
   await t.test('3. En /fiado: El modal de Reporte incluye el botón Enviar a WhatsApp al número registrado', () => {
-    const fiadoPath = path.join(projectRoot, 'src/app/fiado/page.tsx');
+    const fiadoPath = path.join(projectRoot, 'src/app/admin/fiado/page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf8');
 
     // El modal de reporte debe contener el botón "Enviar a WhatsApp"

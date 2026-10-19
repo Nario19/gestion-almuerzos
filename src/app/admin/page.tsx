@@ -716,14 +716,14 @@ export default function AdminPage() {
             {/* Accesos directos a Despacho y Cocina */}
             <div className="flex items-center gap-2">
               <Link
-                href="/despacho"
+                href="/admin/despacho"
                 className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition"
               >
                 <PackageCheck className="w-3.5 h-3.5" />
                 <span>Despacho & Excel</span>
               </Link>
               <Link
-                href="/cocina"
+                href="/admin/cocina"
                 className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold transition"
               >
                 <ChefHat className="w-3.5 h-3.5" />
@@ -988,7 +988,7 @@ export default function AdminPage() {
                 </p>
               </div>
               <Link
-                href="/despacho"
+                href="/admin/despacho"
                 className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 transition"
               >
                 Ver todos en despacho <ArrowRight className="w-3.5 h-3.5" />

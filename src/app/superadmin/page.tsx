@@ -539,7 +539,7 @@ export default function SuperAdminPage() {
               <span>Panel Operativo</span>
             </Link>
             <Link
-              href="/despacho"
+              href="/admin/despacho"
               className="px-3.5 py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5"
               title="Ir al panel de despacho y empaque"
             >

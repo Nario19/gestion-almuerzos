@@ -42,7 +42,7 @@ test('Almacenamiento de Comprobantes en Cloudinary (Blindaje de Supabase Postgre
   });
 
   await t.test('3. En / (Home / Checkout): Integración de Cloudinary al adjuntar comprobante', () => {
-    const pagePath = path.join(projectRoot, 'src/app/page.tsx');
+    const pagePath = path.join(projectRoot, 'src/app/padres/page.tsx');
     const content = fs.readFileSync(pagePath, 'utf8');
 
     // Debe importar el servicio
@@ -76,7 +76,7 @@ test('Almacenamiento de Comprobantes en Cloudinary (Blindaje de Supabase Postgre
   });
 
   await t.test('6. Modal de Confirmación: Carga y muestra la imagen del comprobante para verificar que sea el correcto', () => {
-    const pagePath = path.join(projectRoot, 'src/app/page.tsx');
+    const pagePath = path.join(projectRoot, 'src/app/padres/page.tsx');
     const content = fs.readFileSync(pagePath, 'utf8');
 
     // Debe existir la sección de previsualización en el modal de corroboración

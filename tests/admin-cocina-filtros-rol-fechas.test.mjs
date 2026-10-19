@@ -12,7 +12,7 @@ const adminPageContent = fs.readFileSync(
   'utf-8'
 );
 const cocinaPageContent = fs.readFileSync(
-  path.resolve(process.cwd(), 'src/app/cocina/page.tsx'),
+  path.resolve(process.cwd(), 'src/app/admin/cocina/page.tsx'),
   'utf-8'
 );
 

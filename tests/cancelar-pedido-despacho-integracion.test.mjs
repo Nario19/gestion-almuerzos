@@ -10,10 +10,10 @@ const rootDir = path.resolve(__dirname, '..');
 
 describe('Opción de Cancelar Pedido en Despacho e Impacto Transversal en el Sistema', () => {
   const dataServicePath = path.join(rootDir, 'src/lib/dataService.ts');
-  const despachoPath = path.join(rootDir, 'src/app/despacho/page.tsx');
-  const cocinaPath = path.join(rootDir, 'src/app/cocina/page.tsx');
+  const despachoPath = path.join(rootDir, 'src/app/admin/despacho/page.tsx');
+  const cocinaPath = path.join(rootDir, 'src/app/admin/cocina/page.tsx');
   const adminPath = path.join(rootDir, 'src/app/admin/page.tsx');
-  const pedidosPath = path.join(rootDir, 'src/app/pedidos/page.tsx');
+  const pedidosPath = path.join(rootDir, 'src/app/padres/pedidos/page.tsx');
   const typesPath = path.join(rootDir, 'src/types/index.ts');
 
   test('1. Type EstadoPedido incluye CANCELADO', () => {

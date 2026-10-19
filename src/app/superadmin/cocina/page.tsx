@@ -1,3 +1,3 @@
-import CocinaPage from '@/app/cocina/page';
+import CocinaPage from '@/app/admin/cocina/page';
 
 export default CocinaPage;

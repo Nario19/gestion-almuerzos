@@ -31,9 +31,9 @@ export default function BottomNav() {
       <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-between relative">
         {/* Pestaña: Pedidos */}
         <Link
-          href="/pedidos"
+          href="/padres/pedidos"
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
-            pathname === '/pedidos'
+            pathname === '/padres/pedidos' || pathname === '/pedidos'
               ? 'text-orange-600 font-bold scale-105'
               : 'text-slate-500 hover:text-slate-800 font-medium'
           }`}
@@ -46,9 +46,9 @@ export default function BottomNav() {
 
         {/* Pestaña: Hijos */}
         <Link
-          href="/hijos"
+          href="/padres/hijos"
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
-            pathname === '/hijos'
+            pathname === '/padres/hijos' || pathname === '/hijos'
               ? 'text-orange-600 font-bold scale-105'
               : 'text-slate-500 hover:text-slate-800 font-medium'
           }`}
@@ -70,14 +70,14 @@ export default function BottomNav() {
             href="/"
             aria-label="Pedir Menú"
             className={`-mt-6 w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-orange-600 text-white flex flex-col items-center justify-center shadow-lg shadow-orange-500/40 border-4 border-white active:scale-95 hover:scale-105 transition-all ${
-              pathname === '/' ? 'ring-2 ring-orange-400 ring-offset-2' : ''
+              pathname === '/' || pathname === '/padres' ? 'ring-2 ring-orange-400 ring-offset-2' : ''
             }`}
           >
             <UtensilsCrossed className="w-6 h-6 drop-shadow-xs" />
           </Link>
           <span
             className={`text-[10px] mt-1 tracking-tight font-black ${
-              pathname === '/' ? 'text-orange-600' : 'text-slate-600'
+              pathname === '/' || pathname === '/padres' ? 'text-orange-600' : 'text-slate-600'
             }`}
           >
             Pedir Menú
@@ -86,9 +86,9 @@ export default function BottomNav() {
 
         {/* Pestaña: Perfil */}
         <Link
-          href="/perfil"
+          href="/padres/perfil"
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
-            pathname === '/perfil'
+            pathname === '/padres/perfil' || pathname === '/perfil'
               ? 'text-orange-600 font-bold scale-105'
               : 'text-slate-500 hover:text-slate-800 font-medium'
           }`}

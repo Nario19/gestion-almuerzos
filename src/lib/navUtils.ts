@@ -26,7 +26,7 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
   const ruta = (pathname || '').toLowerCase();
 
   // Inicio: Pedir Menú (padre autenticado) o Carta Semanal (visitante)
-  if (ruta === '/' || ruta === '') {
+  if (ruta === '/' || ruta === '' || ruta === '/padres' || ruta === '/padres/') {
     return {
       titulo: estaAutenticado ? 'Pedir Menú' : 'Carta Semanal',
       subtitulo: estaAutenticado ? 'Almuerzos Escolares' : 'Menú Escolar',
@@ -35,7 +35,7 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
   }
 
   // Historial de pedidos del padre
-  if (ruta.startsWith('/pedidos')) {
+  if (ruta.startsWith('/padres/pedidos') || ruta.startsWith('/pedidos')) {
     return {
       titulo: 'Mis Pedidos',
       subtitulo: 'Historial de Almuerzos',
@@ -44,7 +44,7 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
   }
 
   // Gestión de hijos
-  if (ruta.startsWith('/hijos')) {
+  if (ruta.startsWith('/padres/hijos') || ruta.startsWith('/hijos')) {
     return {
       titulo: 'Mis Hijos',
       subtitulo: 'Estudiantes Registrados',
@@ -53,7 +53,7 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
   }
 
   // Perfil del apoderado
-  if (ruta.startsWith('/perfil')) {
+  if (ruta.startsWith('/padres/perfil') || ruta.startsWith('/perfil')) {
     return {
       titulo: 'Mi Perfil',
       subtitulo: 'Datos de la Cuenta',
@@ -92,15 +92,7 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
     };
   }
 
-  if (ruta.startsWith('/admin')) {
-    return {
-      titulo: 'Panel Admin',
-      subtitulo: 'Demanda y Menú',
-      iconoNombre: 'BarChart3',
-    };
-  }
-
-  if (ruta.startsWith('/cocina')) {
+  if (ruta.startsWith('/admin/cocina') || ruta.startsWith('/cocina')) {
     return {
       titulo: 'Cocina',
       subtitulo: 'Consolidado de Menús',
@@ -108,7 +100,7 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
     };
   }
 
-  if (ruta.startsWith('/fiado')) {
+  if (ruta.startsWith('/admin/fiado') || ruta.startsWith('/fiado')) {
     return {
       titulo: 'Control de Fiados',
       subtitulo: 'Créditos y Deudas',
@@ -116,11 +108,19 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
     };
   }
 
-  if (ruta.startsWith('/despacho')) {
+  if (ruta.startsWith('/admin/despacho') || ruta.startsWith('/despacho')) {
     return {
       titulo: 'Despacho',
       subtitulo: 'Entregas y Pagos',
       iconoNombre: 'PackageCheck',
+    };
+  }
+
+  if (ruta.startsWith('/admin')) {
+    return {
+      titulo: 'Panel Admin',
+      subtitulo: 'Demanda y Menú',
+      iconoNombre: 'BarChart3',
     };
   }
 
@@ -148,4 +148,5 @@ export function esRutaAdministrativa(pathname: string): boolean {
     ruta.startsWith('/pedido-manual')
   );
 }
+
 

@@ -11,7 +11,7 @@ const rootDir = path.resolve(__dirname, '..');
 test('Filtro por Fecha, Resaltado de Consumos de Hoy y Fechas en Listado de Fiados', async (t) => {
 
   await t.test('1. Pantalla /fiado incluye selector de fecha, navegación día y botón HOY', () => {
-    const fiadoPath = path.join(rootDir, 'src', 'app', 'fiado', 'page.tsx');
+    const fiadoPath = path.join(rootDir, 'src', 'app', 'admin', 'fiado', 'page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf-8');
 
     assert.ok(
@@ -37,7 +37,7 @@ test('Filtro por Fecha, Resaltado de Consumos de Hoy y Fechas en Listado de Fiad
   });
 
   await t.test('2. En la lista de fiados, cada tarjeta de familia muestra sus fechas y resalta HOY', () => {
-    const fiadoPath = path.join(rootDir, 'src', 'app', 'fiado', 'page.tsx');
+    const fiadoPath = path.join(rootDir, 'src', 'app', 'admin', 'fiado', 'page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf-8');
 
     assert.ok(
@@ -59,7 +59,7 @@ test('Filtro por Fecha, Resaltado de Consumos de Hoy y Fechas en Listado de Fiad
   });
 
   await t.test('3. Reporte Global y Exportación Excel incorporan la columna Fechas de Consumo', () => {
-    const fiadoPath = path.join(rootDir, 'src', 'app', 'fiado', 'page.tsx');
+    const fiadoPath = path.join(rootDir, 'src', 'app', 'admin', 'fiado', 'page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf-8');
 
     assert.ok(
@@ -114,7 +114,7 @@ test('Filtro por Fecha, Resaltado de Consumos de Hoy y Fechas en Listado de Fiad
   });
 
   await t.test('6. Pantalla /fiado implementa paginación completa y diseño sin etiquetas redundantes', () => {
-    const fiadoPath = path.join(rootDir, 'src', 'app', 'fiado', 'page.tsx');
+    const fiadoPath = path.join(rootDir, 'src', 'app', 'admin', 'fiado', 'page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf-8');
 
     assert.ok(

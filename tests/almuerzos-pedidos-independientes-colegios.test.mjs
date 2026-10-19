@@ -238,7 +238,7 @@ test('Independencia de Almuerzos y Pedidos por Colegio con Identificador y Corre
   });
 
   await t.test('4. En /despacho se visualiza Almuerzo # y código con identificador escolar', () => {
-    const despachoPath = path.join(rootDir, 'src', 'app', 'despacho', 'page.tsx');
+    const despachoPath = path.join(rootDir, 'src', 'app', 'admin', 'despacho', 'page.tsx');
     const content = fs.readFileSync(despachoPath, 'utf-8');
 
     assert.ok(
@@ -260,7 +260,7 @@ test('Independencia de Almuerzos y Pedidos por Colegio con Identificador y Corre
   });
 
   await t.test('5. En /cocina se visualiza Almuerzos Independientes por Colegio y códigos de pedido', () => {
-    const cocinaPath = path.join(rootDir, 'src', 'app', 'cocina', 'page.tsx');
+    const cocinaPath = path.join(rootDir, 'src', 'app', 'admin', 'cocina', 'page.tsx');
     const content = fs.readFileSync(cocinaPath, 'utf-8');
 
     assert.ok(

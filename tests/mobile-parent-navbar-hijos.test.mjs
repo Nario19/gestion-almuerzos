@@ -7,7 +7,7 @@ const projectRoot = process.cwd();
 
 test('Verificación de Navbar Móvil y Nomenclatura de Hijos para Padres', async (t) => {
   await t.test('1. En /hijos: Formulario dice "Registrar Nuevo Hijo", input en mayúsculas y botón "+ Agregar Hijo"', () => {
-    const hijosPagePath = path.join(projectRoot, 'src/app/hijos/page.tsx');
+    const hijosPagePath = path.join(projectRoot, 'src/app/padres/hijos/page.tsx');
     const content = fs.readFileSync(hijosPagePath, 'utf8');
 
     // Verificar que dice "Mis Hijos"
@@ -27,7 +27,7 @@ test('Verificación de Navbar Móvil y Nomenclatura de Hijos para Padres', async
   });
 
   await t.test('2. En / (Home): Modal rápido de hijo usa "Agrega a tu Hijo", input en mayúsculas y corroboración "Hijo:"', () => {
-    const homePagePath = path.join(projectRoot, 'src/app/page.tsx');
+    const homePagePath = path.join(projectRoot, 'src/app/padres/page.tsx');
     const content = fs.readFileSync(homePagePath, 'utf8');
 
     // Modal rápido para padres
@@ -50,16 +50,16 @@ test('Verificación de Navbar Móvil y Nomenclatura de Hijos para Padres', async
     assert.match(content, /if\s*\(\s*!usuario\s*\|\|\s*esAdmin\s*\|\|\s*esSuperAdmin\s*\|\|\s*usuario\.rol\s*!==\s*['"]PADRE['"]\s*\)\s*\{?\s*return\s*null;?\s*\}?/, 'Debe ocultarse para visitantes no logueados, administradores y no-padres');
 
     // Destinos solicitados
-    assert.match(content, /href="\/pedidos"/, 'Debe incluir enlace a /pedidos');
+    assert.match(content, /href="\/(?:padres\/)?pedidos"/, 'Debe incluir enlace a /pedidos o /padres/pedidos');
     assert.match(content, />Pedidos<\/span>/, 'Debe tener label Pedidos');
 
-    assert.match(content, /href="\/hijos"/, 'Debe incluir enlace a /hijos');
+    assert.match(content, /href="\/(?:padres\/)?hijos"/, 'Debe incluir enlace a /hijos o /padres/hijos');
     assert.match(content, />Hijos<\/span>/, 'Debe tener label Hijos');
 
-    assert.match(content, /href="\/"/, 'Debe incluir enlace a /');
+    assert.match(content, /href="\/(?:padres)?"/, 'Debe incluir enlace a / o /padres');
     assert.match(content, /Pedir Menú/, 'Debe tener botón central Pedir Menú');
 
-    assert.match(content, /href="\/perfil"/, 'Debe incluir enlace a /perfil');
+    assert.match(content, /href="\/(?:padres\/)?perfil"/, 'Debe incluir enlace a /perfil o /padres/perfil');
     assert.match(content, />Perfil<\/span>/, 'Debe tener label Perfil');
 
     // Botón central flotante
@@ -67,8 +67,8 @@ test('Verificación de Navbar Móvil y Nomenclatura de Hijos para Padres', async
   });
 
   await t.test('4. Perfil: Página /perfil implementada para apoderados y gestión de cuenta', () => {
-    const perfilPath = path.join(projectRoot, 'src/app/perfil/page.tsx');
-    assert.ok(fs.existsSync(perfilPath), 'src/app/perfil/page.tsx debe existir');
+    const perfilPath = path.join(projectRoot, 'src/app/padres/perfil/page.tsx');
+    assert.ok(fs.existsSync(perfilPath), 'src/app/padres/perfil/page.tsx debe existir');
     const content = fs.readFileSync(perfilPath, 'utf8');
 
     // Verificación de datos de apoderado
@@ -105,7 +105,7 @@ test('Verificación de Navbar Móvil y Nomenclatura de Hijos para Padres', async
     assert.match(loginContent, /<Suspense/, 'LoginPage debe envolver el contenido en Suspense para Next.js App Router');
 
     // 3. Carta Semanal para no logueados en Home
-    const homePagePath = path.join(projectRoot, 'src/app/page.tsx');
+    const homePagePath = path.join(projectRoot, 'src/app/padres/page.tsx');
     const homeContent = fs.readFileSync(homePagePath, 'utf8');
     assert.match(homeContent, /FILTRO POR COLEGIO PARA VISITANTES/, 'Home debe contener sección de filtro por colegio para visitantes');
     assert.match(homeContent, /value=\{colegio\}\s*onChange=\{\(e\)\s*=>\s*setColegio\(e\.target\.value\)\}/, 'Debe permitir cambiar el colegio seleccionado en la carta semanal');

@@ -55,7 +55,7 @@ test('Configuración de Métodos de Pago Globales (Yape & Plin) para Superadmin'
   });
 
   await t.test('4. En / (Home / Checkout): Los recuadros de Yape y Plin muestran dinámicamente los números configurados', () => {
-    const homePath = path.join(rootDir, 'src/app/page.tsx');
+    const homePath = path.join(rootDir, 'src/app/padres/page.tsx');
     const content = fs.readFileSync(homePath, 'utf8');
 
     // Carga de configuración dinámica

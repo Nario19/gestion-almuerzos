@@ -44,7 +44,7 @@ test('Scoping de Colegios, Reportes de Fiado, Despacho Auto-Refresh y Tipos de P
   });
 
   await t.test('3. Fiado cuenta con Reporte Global y Reporte por Padre detallado por cada hijo', () => {
-    const fiadoPath = path.join(rootDir, 'src', 'app', 'fiado', 'page.tsx');
+    const fiadoPath = path.join(rootDir, 'src', 'app', 'admin', 'fiado', 'page.tsx');
     const fiadoContent = fs.readFileSync(fiadoPath, 'utf-8');
 
     // Botón de Reporte Global y Excel
@@ -75,7 +75,7 @@ test('Scoping de Colegios, Reportes de Fiado, Despacho Auto-Refresh y Tipos de P
   });
 
   await t.test('4. Despacho cuenta con auto-actualización continua y nomenclatura Padre', () => {
-    const despachoPath = path.join(rootDir, 'src', 'app', 'despacho', 'page.tsx');
+    const despachoPath = path.join(rootDir, 'src', 'app', 'admin', 'despacho', 'page.tsx');
     const despachoContent = fs.readFileSync(despachoPath, 'utf-8');
 
     // Auto-actualización periódica
@@ -92,7 +92,7 @@ test('Scoping de Colegios, Reportes de Fiado, Despacho Auto-Refresh y Tipos de P
   });
 
   await t.test('5. En hijos y en el flujo, se erradica el término Tutor por Padre', () => {
-    const hijosPath = path.join(rootDir, 'src', 'app', 'hijos', 'page.tsx');
+    const hijosPath = path.join(rootDir, 'src', 'app', 'padres', 'hijos', 'page.tsx');
     const hijosContent = fs.readFileSync(hijosPath, 'utf-8');
 
     assert.ok(

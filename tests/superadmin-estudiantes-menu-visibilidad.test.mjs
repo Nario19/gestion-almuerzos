@@ -15,7 +15,7 @@ test('Superadmin Inspección de Estudiantes por Colegio y Visibilidad de Menú p
   const superadminPath = path.join(rootDir, 'src', 'app', 'superadmin', 'page.tsx');
   const superadminContent = fs.readFileSync(superadminPath, 'utf-8');
 
-  const homePath = path.join(rootDir, 'src', 'app', 'page.tsx');
+  const homePath = path.join(rootDir, 'src', 'app', 'padres', 'page.tsx');
   const homeContent = fs.readFileSync(homePath, 'utf-8');
 
   const adminPath = path.join(rootDir, 'src', 'app', 'admin', 'page.tsx');

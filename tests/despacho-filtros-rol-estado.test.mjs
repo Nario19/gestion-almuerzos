@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
 describe('Filtros Operativos por Rol y Estado en Despacho', () => {
-  const despachoPath = path.join(rootDir, 'src/app/despacho/page.tsx');
+  const despachoPath = path.join(rootDir, 'src/app/admin/despacho/page.tsx');
   const despachoContent = fs.readFileSync(despachoPath, 'utf8');
 
   test('1. Despacho define FiltroEstadoPedido con estados operativos completos', () => {

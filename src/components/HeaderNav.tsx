@@ -56,9 +56,9 @@ export default function HeaderNav() {
   const adminNavItems = [
     ...(esSuperAdmin ? [{ href: '/superadmin', label: 'Colegios', icon: Building2 }] : []),
     { href: '/admin', label: 'Admin', icon: BarChart3 },
-    { href: '/cocina', label: 'Cocina', icon: ChefHat },
-    { href: '/fiado', label: 'Fiado', icon: Receipt },
-    { href: '/despacho', label: 'Despacho', icon: PackageCheck },
+    { href: '/admin/cocina', label: 'Cocina', icon: ChefHat },
+    { href: '/admin/fiado', label: 'Fiado', icon: Receipt },
+    { href: '/admin/despacho', label: 'Despacho', icon: PackageCheck },
     { href: '/admin/pedido-manual', label: 'Manual', icon: UtensilsCrossed },
   ];
 
@@ -157,9 +157,9 @@ export default function HeaderNav() {
                 {!esAdmin && (
                   <div className="hidden sm:flex items-center gap-1 sm:gap-1.5">
                     <Link
-                      href="/pedidos"
+                      href="/padres/pedidos"
                       className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                        pathname === '/pedidos'
+                        pathname === '/padres/pedidos' || pathname === '/pedidos'
                           ? 'bg-orange-100 text-orange-800 border border-orange-200'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
@@ -170,9 +170,9 @@ export default function HeaderNav() {
                     </Link>
 
                     <Link
-                      href="/hijos"
+                      href="/padres/hijos"
                       className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                        pathname === '/hijos'
+                        pathname === '/padres/hijos' || pathname === '/hijos'
                           ? 'bg-orange-100 text-orange-800 border border-orange-200'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}

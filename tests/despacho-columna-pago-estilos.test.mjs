@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
 test('Columna de Pago en Despacho: Colores de Métodos de Pago y Botón Simplificado', async (t) => {
-  const despachoPath = path.join(rootDir, 'src', 'app', 'despacho', 'page.tsx');
+  const despachoPath = path.join(rootDir, 'src', 'app', 'admin', 'despacho', 'page.tsx');
   const despachoContent = fs.readFileSync(despachoPath, 'utf-8');
 
   await t.test('1. Yape aparece con color morado (bg-purple-600)', () => {

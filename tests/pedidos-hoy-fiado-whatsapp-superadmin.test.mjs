@@ -10,7 +10,7 @@ const projectRoot = path.resolve(__dirname, '..');
 
 test('Verificación de Pedidos por Defecto en HOY y Cobranza WhatsApp en Fiado con Superadmin', async (t) => {
   await t.test('1. En /pedidos: fechaFiltro se inicializa por defecto en fechaHoy (Día actual de Perú)', () => {
-    const pedidosPath = path.join(projectRoot, 'src/app/pedidos/page.tsx');
+    const pedidosPath = path.join(projectRoot, 'src/app/padres/pedidos/page.tsx');
     const content = fs.readFileSync(pedidosPath, 'utf8');
 
     // Debe inicializar fechaFiltro con fechaHoy y no 'TODAS'
@@ -36,7 +36,7 @@ test('Verificación de Pedidos por Defecto en HOY y Cobranza WhatsApp en Fiado c
   });
 
   await t.test('2. En /fiado: Carga dinámica de métodos de pago configurados en Superadmin', () => {
-    const fiadoPath = path.join(projectRoot, 'src/app/fiado/page.tsx');
+    const fiadoPath = path.join(projectRoot, 'src/app/admin/fiado/page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf8');
 
     // Debe importar CONFIG_PAGOS_DEFAULT y ConfiguracionPagos
@@ -67,7 +67,7 @@ test('Verificación de Pedidos por Defecto en HOY y Cobranza WhatsApp en Fiado c
   });
 
   await t.test('3. En /fiado: enviarCobroWhatsApp estructura el mensaje con deuda, comprobante y medios de pago de Superadmin', () => {
-    const fiadoPath = path.join(projectRoot, 'src/app/fiado/page.tsx');
+    const fiadoPath = path.join(projectRoot, 'src/app/admin/fiado/page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf8');
 
     // Mensaje de WhatsApp debe contener la frase exacta de la deuda
@@ -112,7 +112,7 @@ test('Verificación de Pedidos por Defecto en HOY y Cobranza WhatsApp en Fiado c
   });
 
   await t.test('4. En /fiado: El botón de impresión permite Imprimir / Guardar PDF', () => {
-    const fiadoPath = path.join(projectRoot, 'src/app/fiado/page.tsx');
+    const fiadoPath = path.join(projectRoot, 'src/app/admin/fiado/page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf8');
 
     // Botón de imprimir / guardar PDF

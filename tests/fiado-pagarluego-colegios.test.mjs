@@ -18,7 +18,7 @@ test('Sustitución de Efectivo por Pagar luego, Pantalla de Fiado, Reglas de Ent
       "MetodoPago debe incluir 'Pagar luego'"
     );
 
-    const pagePath = path.join(rootDir, 'src', 'app', 'page.tsx');
+    const pagePath = path.join(rootDir, 'src', 'app', 'padres', 'page.tsx');
     const pageContent = fs.readFileSync(pagePath, 'utf-8');
     assert.ok(
       pageContent.includes("['Yape', 'Plin', 'Pagar luego']"),
@@ -64,7 +64,7 @@ test('Sustitución de Efectivo por Pagar luego, Pantalla de Fiado, Reglas de Ent
   });
 
   await t.test('3. En Despacho: Se implementa el bloqueo de entrega en UI y botón de alerta', () => {
-    const despachoPath = path.join(rootDir, 'src', 'app', 'despacho', 'page.tsx');
+    const despachoPath = path.join(rootDir, 'src', 'app', 'admin', 'despacho', 'page.tsx');
     const despachoContent = fs.readFileSync(despachoPath, 'utf-8');
 
     assert.ok(
@@ -245,22 +245,22 @@ test('Sustitución de Efectivo por Pagar luego, Pantalla de Fiado, Reglas de Ent
   });
 
   await t.test('7. Sustitución de "Entrada" por "Sopa o postre" en menú, cocina y despacho', () => {
-    const pageContent = fs.readFileSync(path.join(rootDir, 'src', 'app', 'page.tsx'), 'utf-8');
+    const pageContent = fs.readFileSync(path.join(rootDir, 'src', 'app', 'padres', 'page.tsx'), 'utf-8');
     assert.ok(
       pageContent.includes('1. Sopa o postre'),
-      "src/app/page.tsx debe titular '1. Sopa o postre'"
+      "src/app/padres/page.tsx debe titular '1. Sopa o postre'"
     );
 
-    const despachoContent = fs.readFileSync(path.join(rootDir, 'src', 'app', 'despacho', 'page.tsx'), 'utf-8');
+    const despachoContent = fs.readFileSync(path.join(rootDir, 'src', 'app', 'admin', 'despacho', 'page.tsx'), 'utf-8');
     assert.ok(
       despachoContent.includes('Sopa o postre:'),
-      "src/app/despacho/page.tsx debe rotular 'Sopa o postre:'"
+      "src/app/admin/despacho/page.tsx debe rotular 'Sopa o postre:'"
     );
 
-    const cocinaContent = fs.readFileSync(path.join(rootDir, 'src', 'app', 'cocina', 'page.tsx'), 'utf-8');
+    const cocinaContent = fs.readFileSync(path.join(rootDir, 'src', 'app', 'admin', 'cocina', 'page.tsx'), 'utf-8');
     assert.ok(
       cocinaContent.includes('Consolidado de Sopas o Postres'),
-      "src/app/cocina/page.tsx debe rotular 'Consolidado de Sopas o Postres'"
+      "src/app/admin/cocina/page.tsx debe rotular 'Consolidado de Sopas o Postres'"
     );
 
     const navContent = fs.readFileSync(path.join(rootDir, 'src', 'components', 'HeaderNav.tsx'), 'utf-8');

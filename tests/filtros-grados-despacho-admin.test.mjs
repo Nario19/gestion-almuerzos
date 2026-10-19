@@ -133,7 +133,7 @@ test('Verificación Integral de Filtros Personalizados de Grados en Admin y Desp
   });
 
   await t.test('4. En despacho/page.tsx: Integración de filtros de grupos de grados, conteo y exportación', () => {
-    const despachoPath = path.join(projectRoot, 'src/app/despacho/page.tsx');
+    const despachoPath = path.join(projectRoot, 'src/app/admin/despacho/page.tsx');
     const content = fs.readFileSync(despachoPath, 'utf8');
 
     // Debe importar FiltroGrados y GraduationCap

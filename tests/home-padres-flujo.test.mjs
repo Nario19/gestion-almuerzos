@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 describe('Flujo de Inicio y Experiencia de Padres sin Estudiantes', () => {
-  const pageFile = fs.readFileSync(path.resolve('src/app/page.tsx'), 'utf-8');
+  const pageFile = fs.readFileSync(path.resolve('src/app/padres/page.tsx'), 'utf-8');
   const headerNavFile = fs.readFileSync(path.resolve('src/components/HeaderNav.tsx'), 'utf-8');
 
   test('1. En el home (vista pública sin login), NO debe existir un botón duplicado de Iniciar Sesión en la cabecera de Carta Semanal', () => {

@@ -498,6 +498,27 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   16. `tests/header-titulos-dinamicos.test.mjs`
   17. `tests/pedido-manual-pantalla-rutas-anidadas.test.mjs` (nuevo)
 
+### D-029 — 2026-10-19 — Estructura Limpia y Exclusiva en `src/app/` (padres, admin, superadmin, login) con Redirecciones Canónicas en Next.js
+- Decisión: A solicitud explícita del usuario ("hay algunos sueltos como hijos, fiado, el login si es publico pero los demás que vayan dentro de las carpetas correspondientes de tal manera q solo quede padres, admin, superadmin"):
+  1. Eliminación y Reubicación de Carpetas Sueltas en Raíz de `src/app/`:
+     - Se eliminaron las carpetas `src/app/cocina`, `src/app/despacho`, `src/app/fiado`, `src/app/hijos`, `src/app/pedidos`, `src/app/perfil` y `src/app/pedido-manual`.
+     - Estructura resultante en `src/app/`: Única y exclusivamente `padres/`, `admin/`, `superadmin/`, `login/` y los archivos indispensables de raíz de Next.js App Router (`page.tsx`, `layout.tsx`, `loading.tsx`, `globals.css`, `favicon.ico`).
+  2. Redirecciones Canónicas en `next.config.ts`:
+     - Se configuraron reglas de redirección permanente HTTP 308 (`redirects()`) en `next.config.ts` para que todas las peticiones a URLs legacy (`/despacho`, `/fiado`, `/cocina`, `/pedido-manual`, `/pedidos`, `/hijos`, `/perfil`) se redirijan automáticamente y sin pérdida a sus correspondientes módulos (`/admin/*` o `/padres/*`).
+  3. Enlaces Internos y Navegación Modular:
+     - `HeaderNav.tsx`, `BottomNav.tsx`, `admin/page.tsx`, `superadmin/page.tsx`, `padres/page.tsx`, `padres/perfil/page.tsx`, `admin/pedido-manual/page.tsx` actualizados para usar los links directos a `/admin/...` y `/padres/...`.
+  4. Suite de Pruebas y Compilación:
+     - 188 pruebas ejecutadas en total (182 aprobadas, 0 fallos, 0 regresiones).
+     - Compilación estática de producción de Next.js (`npm run build`) generando las 19 páginas de la arquitectura modular con 0 advertencias y 0 errores.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `next.config.ts`
+  2. `src/app/page.tsx`
+  3. `src/components/BottomNav.tsx`
+  4. `src/components/HeaderNav.tsx`
+  5. `src/lib/navUtils.ts`
+  6. Toda la suite en `tests/*.test.mjs` sincronizada con las nuevas rutas.
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
