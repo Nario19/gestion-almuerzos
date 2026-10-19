@@ -35,9 +35,10 @@ import {
   OBSERVACIONES_DEFAULT,
   DIAS_SEMANA,
   obtenerDiaActualSemana,
+  CONFIG_PAGOS_DEFAULT,
 } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
-import { Plato, Pedido, MetodoPago, DiaSemana, Hijo, ResumenCocina } from '@/types';
+import { Plato, Pedido, MetodoPago, DiaSemana, Hijo, ResumenCocina, ConfiguracionPagos } from '@/types';
 
 function PedidoContent() {
   const router = useRouter();
@@ -103,16 +104,18 @@ function PedidoContent() {
   const [listaGrados, setListaGrados] = useState<string[]>([]);
   const [observacionesTags, setObservacionesTags] = useState<string[]>(OBSERVACIONES_DEFAULT);
   const [cargandoColegios, setCargandoColegios] = useState(true);
+  const [configPagos, setConfigPagos] = useState<ConfiguracionPagos>(CONFIG_PAGOS_DEFAULT);
 
   // Cargar configuraciones dinámicas
   useEffect(() => {
     let montado = true;
     const cargarConfig = async () => {
       try {
-        const [cols, grads, obs] = await Promise.all([
+        const [cols, grads, obs, pagos] = await Promise.all([
           dataService.obtenerColegios(),
           dataService.obtenerGrados(),
           dataService.obtenerObservaciones(),
+          dataService.obtenerConfiguracionPagos(),
         ]);
         if (!montado) return;
         if (cols && cols.length > 0) {
@@ -127,6 +130,9 @@ function PedidoContent() {
         }
         if (obs && obs.length > 0) {
           setObservacionesTags(obs);
+        }
+        if (pagos) {
+          setConfigPagos(pagos);
         }
       } finally {
         if (montado) setCargandoColegios(false);
@@ -1127,15 +1133,15 @@ function PedidoContent() {
 
           {metodoPago === 'Yape' && (
             <div className="bg-purple-50/60 border border-purple-100 rounded-xl p-3 mb-3 text-xs text-purple-950">
-              <p className="font-bold">Número de Yape: 999-999-999</p>
-              <p className="text-[11px] text-purple-700">Placeres Culinarios</p>
+              <p className="font-bold">Número de Yape: {configPagos.numeroYape}</p>
+              <p className="text-[11px] text-purple-700">{configPagos.titularYape}</p>
             </div>
           )}
 
           {metodoPago === 'Plin' && (
             <div className="bg-sky-50/60 border border-sky-100 rounded-xl p-3 mb-3 text-xs text-sky-950">
-              <p className="font-bold">Número de Plin: 999-999-999</p>
-              <p className="text-[11px] text-sky-700">Placeres Culinarios</p>
+              <p className="font-bold">Número de Plin: {configPagos.numeroPlin}</p>
+              <p className="text-[11px] text-sky-700">{configPagos.titularPlin}</p>
             </div>
           )}
 

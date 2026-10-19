@@ -235,6 +235,27 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   6. `src/app/page.tsx`
   7. `tests/mobile-parent-navbar-hijos.test.mjs` (nuevo)
 
+### D-017 — 2026-10-18 — Configuración Centralizada de Métodos de Pago (Yape y Plin) para Superadmin con Alcance Global
+- Decisión: A petición explícita del usuario ("en la interfaz del SUPERADMIN DEBES PONER PARA PODER EDITAR EL NRO DE YAPE, PLIN PARA QUE ESTE APAREZCA EN EL METODO DE PAGO. ESTO SI SERA CONFIGURABLE PERO DEL SUPERADMIN PORQUE PARA TODOS LOS COLEGIOS SERÁ IGUAL."):
+  1. Centralización Global en Superadmin (`/superadmin`):
+     - Tarjeta destacada "Métodos de Pago Globales (Yape & Plin)" con badge "Para Todos los Colegios", mostrando en tiempo real los números y titulares actuales.
+     - Botón "Editar Yape / Plin" tanto en la tarjeta como en la barra superior de acciones de Superadmin.
+     - Modal de configuración (`modalPagosAbierto`) con inputs para: Número de Yape, Titular de Yape, Número de Plin, Titular de Plin, y vista previa interactiva en tiempo real del checkout.
+  2. Persistencia Robusta en Supabase y Memoria:
+     - Definición del contrato público `ConfiguracionPagos` en `src/types/index.ts`.
+     - Funciones `dataService.obtenerConfiguracionPagos()` y `dataService.guardarConfiguracionPagos()` con persistencia en `menus_dia` (`dia_semana = 'SABADO'`) dentro de `mensaje_aviso` en formato JSON, con sincronización en `localStorage` y notificación en tiempo real a suscriptores (`notifyListeners()`).
+  3. Visualización Dinámica en el Proceso de Pago de Padres (`/`):
+     - Eliminación de números hardcodeados en los recuadros de Yape y Plin en `src/app/page.tsx`.
+     - Carga reactiva de `configPagos` mediante `dataService.obtenerConfiguracionPagos()`, actualizando en vivo los números y titulares visibles para cualquier colegio.
+  4. Suite automatizada en `tests/superadmin-configuracion-pagos-yape-plin.test.mjs` con 142 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/types/index.ts`
+  2. `src/lib/dataService.ts`
+  3. `src/app/superadmin/page.tsx`
+  4. `src/app/page.tsx`
+  5. `tests/superadmin-configuracion-pagos-yape-plin.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

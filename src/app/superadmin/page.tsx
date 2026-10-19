@@ -32,12 +32,14 @@ import {
   Download,
   Printer,
   X,
+  Smartphone,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { dataService } from '@/lib/dataService';
+import { dataService, CONFIG_PAGOS_DEFAULT } from '@/lib/dataService';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
-import { ColegioDetallado, AdminColegioInfo, EstudianteColegioInfo } from '@/types';
+import { ColegioDetallado, AdminColegioInfo, EstudianteColegioInfo, ConfiguracionPagos } from '@/types';
 
 export default function SuperAdminPage() {
   const { usuario, esSuperAdmin, cargando: cargandoAuth } = useAuth();
@@ -65,6 +67,15 @@ export default function SuperAdminPage() {
   const [adminTelefono, setAdminTelefono] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [verPassword, setVerPassword] = useState(false);
+
+  // Configuración de Métodos de Pago Globales (Yape & Plin)
+  const [configPagos, setConfigPagos] = useState<ConfiguracionPagos>(CONFIG_PAGOS_DEFAULT);
+  const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
+  const [numeroYape, setNumeroYape] = useState('');
+  const [titularYape, setTitularYape] = useState('');
+  const [numeroPlin, setNumeroPlin] = useState('');
+  const [titularPlin, setTitularPlin] = useState('');
+  const [guardandoPagos, setGuardandoPagos] = useState(false);
 
   // Modal rápido para editar credenciales de Admin
   const [modalAdminRapido, setModalAdminRapido] = useState<{
@@ -180,8 +191,18 @@ export default function SuperAdminPage() {
           setCargandoDatos(false);
         }
       });
+      dataService.obtenerConfiguracionPagos().then((pagos) => {
+        if (!cancelado && pagos) {
+          setConfigPagos(pagos);
+        }
+      });
       const desuscribir = dataService.suscribirCambios(() => {
         cargarColegios();
+        dataService.obtenerConfiguracionPagos().then((pagos) => {
+          if (!cancelado && pagos) {
+            setConfigPagos(pagos);
+          }
+        });
       });
       return () => {
         cancelado = true;
@@ -189,6 +210,47 @@ export default function SuperAdminPage() {
       };
     }
   }, [esSuperAdmin]);
+
+  const abrirEditarPagos = () => {
+    setNumeroYape(configPagos.numeroYape);
+    setTitularYape(configPagos.titularYape);
+    setNumeroPlin(configPagos.numeroPlin);
+    setTitularPlin(configPagos.titularPlin);
+    setModalPagosAbierto(true);
+  };
+
+  const handleGuardarPagos = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!numeroYape.trim() && !numeroPlin.trim()) {
+      alert('Por favor ingresa al menos un número para Yape o Plin.');
+      return;
+    }
+
+    setGuardandoPagos(true);
+    try {
+      const nuevaConfig: ConfiguracionPagos = {
+        numeroYape: numeroYape.trim() || CONFIG_PAGOS_DEFAULT.numeroYape,
+        titularYape: titularYape.trim() || CONFIG_PAGOS_DEFAULT.titularYape,
+        numeroPlin: numeroPlin.trim() || CONFIG_PAGOS_DEFAULT.numeroPlin,
+        titularPlin: titularPlin.trim() || CONFIG_PAGOS_DEFAULT.titularPlin,
+      };
+
+      const res = await dataService.guardarConfiguracionPagos(nuevaConfig);
+      if (!res.ok) {
+        alert(res.error || 'Error al guardar la configuración de pagos.');
+        return;
+      }
+
+      setConfigPagos(nuevaConfig);
+      setModalPagosAbierto(false);
+      setMensajeExito('¡Números de Yape y Plin actualizados correctamente para todos los colegios!');
+      setTimeout(() => setMensajeExito(null), 4000);
+    } catch (_) {
+      alert('Error inesperado al guardar la configuración de pagos.');
+    } finally {
+      setGuardandoPagos(false);
+    }
+  };
 
   const abrirCrearColegio = () => {
     setColegioEnEdicion(null);
@@ -527,6 +589,77 @@ export default function SuperAdminPage() {
         </div>
       </div>
 
+      {/* CONFIGURACIÓN CENTRAL DE MÉTODOS DE PAGO (YAPE & PLIN) */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs mb-6 relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                  Métodos de Pago Globales (Yape & Plin)
+                </h2>
+                <span className="text-[10px] font-black uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
+                  Para Todos los Colegios
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Estos números y nombres de titular se mostrarán en la pantalla de pedidos de los padres en todas las sedes.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={abrirEditarPagos}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto cursor-pointer active:scale-95"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Editar Números de Pago</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
+          {/* Tarjeta Yape */}
+          <div className="p-3.5 rounded-2xl bg-purple-50/80 border border-purple-200 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 block">
+                Cuenta Yape
+              </span>
+              <div className="text-base sm:text-lg font-black text-purple-950 mt-0.5 font-mono">
+                {configPagos.numeroYape}
+              </div>
+              <p className="text-xs font-medium text-purple-700">
+                Titular: {configPagos.titularYape}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+              Yape
+            </div>
+          </div>
+
+          {/* Tarjeta Plin */}
+          <div className="p-3.5 rounded-2xl bg-sky-50/80 border border-sky-200 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-sky-700 block">
+                Cuenta Plin
+              </span>
+              <div className="text-base sm:text-lg font-black text-sky-950 mt-0.5 font-mono">
+                {configPagos.numeroPlin}
+              </div>
+              <p className="text-xs font-medium text-sky-700">
+                Titular: {configPagos.titularPlin}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-2xl bg-sky-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
+              Plin
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* BARRA DE ACCIÓN Y BÚSQUEDA */}
       <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -570,6 +703,17 @@ export default function SuperAdminPage() {
               title="Refrescar lista"
             >
               <RefreshCw className={`w-4 h-4 ${cargandoDatos ? 'animate-spin' : ''}`} />
+            </button>
+
+            {/* Botón Configurar Yape / Plin */}
+            <button
+              type="button"
+              onClick={abrirEditarPagos}
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs sm:text-sm font-bold rounded-2xl border border-purple-200 transition cursor-pointer active:scale-95"
+              title="Configurar números de Yape y Plin para todos los colegios"
+            >
+              <Smartphone className="w-4 h-4 text-purple-600" />
+              <span>Editar Yape / Plin</span>
             </button>
 
             {/* BOTÓN PRINCIPAL: NUEVO COLEGIO & ADMINISTRADOR */}
@@ -1333,6 +1477,149 @@ export default function SuperAdminPage() {
                 Cerrar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CONFIGURAR YAPE Y PLIN */}
+      {modalPagosAbierto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    Configurar Números de Yape y Plin
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Configuración centralizada para el método de pago de todos los colegios
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalPagosAbierto(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarPagos} className="space-y-4">
+              {/* Sección Yape */}
+              <div className="p-3.5 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-2.5">
+                <span className="text-xs font-black text-purple-900 flex items-center gap-1.5 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-purple-600 inline-block" />
+                  Datos de Cuenta Yape
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Número de Yape *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. 999-999-999"
+                      value={numeroYape}
+                      onChange={(e) => setNumeroYape(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Titular / Nombre
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Placeres Culinarios"
+                      value={titularYape}
+                      onChange={(e) => setTitularYape(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sección Plin */}
+              <div className="p-3.5 bg-sky-50/50 rounded-2xl border border-sky-100 space-y-2.5">
+                <span className="text-xs font-black text-sky-900 flex items-center gap-1.5 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-sky-500 inline-block" />
+                  Datos de Cuenta Plin
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Número de Plin *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. 999-999-999"
+                      value={numeroPlin}
+                      onChange={(e) => setNumeroPlin(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Titular / Nombre
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Placeres Culinarios"
+                      value={titularPlin}
+                      onChange={(e) => setTitularPlin(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Vista previa en tiempo real */}
+              <div className="pt-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                  Vista Previa en el Checkout de Padres
+                </span>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-purple-50/60 border border-purple-100 rounded-xl p-2.5 text-purple-950">
+                    <p className="font-bold text-[11px]">Número de Yape: {numeroYape || '999-999-999'}</p>
+                    <p className="text-[10px] text-purple-700 truncate">{titularYape || 'Placeres Culinarios'}</p>
+                  </div>
+                  <div className="bg-sky-50/60 border border-sky-100 rounded-xl p-2.5 text-sky-950">
+                    <p className="font-bold text-[11px]">Número de Plin: {numeroPlin || '999-999-999'}</p>
+                    <p className="text-[10px] text-sky-700 truncate">{titularPlin || 'Placeres Culinarios'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                <button
+                  type="submit"
+                  disabled={guardandoPagos}
+                  className="flex-1 py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-purple-600/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {guardandoPagos ? (
+                    <span className="animate-pulse">Guardando configuración...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Guardar Números de Pago</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalPagosAbierto(false)}
+                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

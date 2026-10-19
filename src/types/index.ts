@@ -181,4 +181,11 @@ export interface EstudianteColegioInfo {
   padreDni?: string;
 }
 
+export interface ConfiguracionPagos {
+  numeroYape: string;
+  titularYape: string;
+  numeroPlin: string;
+  titularPlin: string;
+}
+
 

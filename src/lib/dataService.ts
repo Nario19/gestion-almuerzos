@@ -13,6 +13,7 @@ import {
   PadreFiadoResumen,
   ItemFiadoPedido,
   EstudianteColegioInfo,
+  ConfiguracionPagos,
 } from '@/types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabase';
@@ -163,7 +164,17 @@ interface ConfigMenusDiaObj {
   adminsColegio?: Record<string, AdminColegioInfo>;
   gradosPorColegio?: Record<string, string[]>;
   observacionesPorColegio?: Record<string, string[]>;
+  configuracionPagos?: ConfiguracionPagos;
 }
+
+export const CONFIG_PAGOS_DEFAULT: ConfiguracionPagos = {
+  numeroYape: '999-999-999',
+  titularYape: 'Placeres Culinarios',
+  numeroPlin: '999-999-999',
+  titularPlin: 'Placeres Culinarios',
+};
+
+let configPagosMemoria: ConfiguracionPagos = { ...CONFIG_PAGOS_DEFAULT };
 
 interface ObservacionCocinaItem {
   estudiante: string;
@@ -2172,6 +2183,7 @@ export const dataService = {
         let adminsColegio = {};
         let gradosPorColegio = {};
         let observacionesPorColegio = {};
+        let configuracionPagos = configPagosMemoria;
         const { data: configRow } = await supabase
           .from('menus_dia')
           .select('mensaje_aviso')
@@ -2184,6 +2196,7 @@ export const dataService = {
             if (parsed.adminsColegio) adminsColegio = parsed.adminsColegio;
             if (parsed.gradosPorColegio) gradosPorColegio = parsed.gradosPorColegio;
             if (parsed.observacionesPorColegio) observacionesPorColegio = parsed.observacionesPorColegio;
+            if (parsed.configuracionPagos) configuracionPagos = parsed.configuracionPagos;
           } catch (_) {}
         }
 
@@ -2193,6 +2206,7 @@ export const dataService = {
           adminsColegio,
           gradosPorColegio,
           observacionesPorColegio,
+          configuracionPagos,
         });
 
         await supabase
@@ -2204,5 +2218,120 @@ export const dataService = {
       }
     }
     notifyListeners();
+  },
+
+  async obtenerConfiguracionPagos(): Promise<ConfiguracionPagos> {
+    if (typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem('config_pagos');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed && typeof parsed === 'object') {
+            configPagosMemoria = {
+              numeroYape: parsed.numeroYape || CONFIG_PAGOS_DEFAULT.numeroYape,
+              titularYape: parsed.titularYape || CONFIG_PAGOS_DEFAULT.titularYape,
+              numeroPlin: parsed.numeroPlin || CONFIG_PAGOS_DEFAULT.numeroPlin,
+              titularPlin: parsed.titularPlin || CONFIG_PAGOS_DEFAULT.titularPlin,
+            };
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        if (configRow?.mensaje_aviso) {
+          try {
+            const parsed = JSON.parse(configRow.mensaje_aviso);
+            if (parsed.configuracionPagos) {
+              configPagosMemoria = {
+                numeroYape: parsed.configuracionPagos.numeroYape || CONFIG_PAGOS_DEFAULT.numeroYape,
+                titularYape: parsed.configuracionPagos.titularYape || CONFIG_PAGOS_DEFAULT.titularYape,
+                numeroPlin: parsed.configuracionPagos.numeroPlin || CONFIG_PAGOS_DEFAULT.numeroPlin,
+                titularPlin: parsed.configuracionPagos.titularPlin || CONFIG_PAGOS_DEFAULT.titularPlin,
+              };
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('config_pagos', JSON.stringify(configPagosMemoria));
+              }
+              return { ...configPagosMemoria };
+            }
+          } catch (_) {}
+        }
+      } catch (e) {
+        console.error('Error obteniendo configuración de pagos en Supabase:', e);
+      }
+    }
+
+    return { ...configPagosMemoria };
+  },
+
+  async guardarConfiguracionPagos(nuevaConfig: ConfiguracionPagos): Promise<{ ok: boolean; error?: string }> {
+    const configLimpia: ConfiguracionPagos = {
+      numeroYape: nuevaConfig.numeroYape.trim() || CONFIG_PAGOS_DEFAULT.numeroYape,
+      titularYape: nuevaConfig.titularYape.trim() || CONFIG_PAGOS_DEFAULT.titularYape,
+      numeroPlin: nuevaConfig.numeroPlin.trim() || CONFIG_PAGOS_DEFAULT.numeroPlin,
+      titularPlin: nuevaConfig.titularPlin.trim() || CONFIG_PAGOS_DEFAULT.titularPlin,
+    };
+
+    configPagosMemoria = { ...configLimpia };
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('config_pagos', JSON.stringify(configLimpia));
+      } catch (_) {}
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: configRow } = await supabase
+          .from('menus_dia')
+          .select('mensaje_aviso')
+          .eq('dia_semana', 'SABADO')
+          .maybeSingle();
+
+        let cfgObj: ConfigMenusDiaObj = {};
+        if (configRow?.mensaje_aviso) {
+          try {
+            cfgObj = JSON.parse(configRow.mensaje_aviso);
+          } catch (_) {}
+        }
+
+        cfgObj.configuracionPagos = configLimpia;
+
+        if (configRow) {
+          const { error } = await supabase
+            .from('menus_dia')
+            .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+            .eq('dia_semana', 'SABADO');
+          if (error) {
+            console.error('Error actualizando config pagos en menus_dia:', error);
+            return { ok: false, error: error.message };
+          }
+        } else {
+          const { error } = await supabase
+            .from('menus_dia')
+            .insert({
+              dia_semana: 'SABADO',
+              mensaje_aviso: JSON.stringify(cfgObj),
+            });
+          if (error) {
+            console.error('Error insertando config pagos en menus_dia:', error);
+            return { ok: false, error: error.message };
+          }
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Error al guardar configuración de pagos';
+        return { ok: false, error: msg };
+      }
+    }
+
+    notifyListeners();
+    return { ok: true };
   },
 };
