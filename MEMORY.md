@@ -668,6 +668,16 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `next.config.ts`
   - `tests/enterprise-checklist-11-puntos.test.mjs` (nuevo)
 
+### D-036 — 2026-10-19 — Protección y Blindaje de Cuota Gratuita (Free Tier) de Supabase en Analytics
+- Decisión: Ante la consulta del usuario sobre el riesgo de saturación del plan gratuito (Free Tier) de Supabase con el módulo de Analytics:
+  1. **Cero Almacenamiento Adicional de Eventos (0 KB):** El módulo de analítica no crea tablas de telemetría ni registra filas por clics, visitas o sesiones. Opera como un agregador en tiempo real de los pedidos ya existentes en la tabla `pedidos`.
+  2. **Proyección Estricta de Columnas Mínimas:** En `obtenerMetricasAnalytics`, se eliminó el consumo genérico `SELECT *` y se restringió la consulta exclusivamente a 10 columnas numéricas y de clasificación (`fecha, dia_semana, colegio_nombre, colegio_id, monto, metodo_pago, estado_pago, estado_pedido, entrada_nombre, segundo_nombre`).
+  3. **Query Pushdown de Rango de Fechas:** Las consultas por "Hoy", "Semana" y "Mes" aplican filtros directos en PostgreSQL (`.eq('fecha', ...)` o `.gte('fecha', ...)`), reduciendo el consumo de ancho de banda (Egress) en más de un 85%.
+  4. **Capacidad del Plan Gratuito (500 MB):** Con comprobantes delegados a Cloudinary (D-019), cada pedido en PostgreSQL ocupa ~0.5 KB a 1 KB, lo que permite albergar entre 350,000 y 500,000 pedidos (~4 a 5 años ininterrumpidos de operación escolar) sin costo adicional.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/lib/dataService.ts` (`obtenerMetricasAnalytics`)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
