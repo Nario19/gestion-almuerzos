@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
+import { subirImagenACloudinary } from '@/lib/cloudinaryService';
 import {
   dataService,
   OBSERVACIONES_DEFAULT,
@@ -79,6 +80,7 @@ function PedidoContent() {
   // Pago
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('Yape');
   const [comprimidoInfo, setComprimidoInfo] = useState<CompressionResult | null>(null);
+  const [cloudinaryUrl, setCloudinaryUrl] = useState<string | null>(null);
   const [subiendoComprobante, setSubiendoComprobante] = useState(false);
 
   // Envío y éxito
@@ -264,11 +266,16 @@ function PedidoContent() {
 
     setSubiendoComprobante(true);
     try {
+      // 1. Optimizar en el navegador para ahorrar datos al padre
       const result = await compressImage(file, 800, 0.75);
       setComprimidoInfo(result);
+
+      // 2. Subir directamente a Cloudinary para no almacenar base64 en Supabase PostgreSQL
+      const urlNube = await subirImagenACloudinary(result.compressedDataUrl, 'comprobantes');
+      setCloudinaryUrl(urlNube);
     } catch (err) {
-      console.error('Error al comprimir:', err);
-      alert('Hubo un problema al procesar la imagen.');
+      console.error('Error al procesar/subir comprobante:', err);
+      alert('Hubo un problema al procesar el comprobante.');
     } finally {
       setSubiendoComprobante(false);
     }
@@ -301,6 +308,16 @@ function PedidoContent() {
 
     startTransition(async () => {
       try {
+        // Obtener la URL de Cloudinary o subirla si aún no se había subido
+        let urlComprobanteFinal = cloudinaryUrl || comprimidoInfo?.compressedDataUrl;
+        if (comprimidoInfo?.compressedDataUrl && (!urlComprobanteFinal || urlComprobanteFinal.startsWith('data:image'))) {
+          try {
+            urlComprobanteFinal = await subirImagenACloudinary(comprimidoInfo.compressedDataUrl, 'comprobantes');
+          } catch {
+            // Mantener fallback
+          }
+        }
+
         const nuevo = await dataService.crearPedido({
           diaSemana: diaSeleccionado,
           padreId: usuario?.id,
@@ -315,9 +332,9 @@ function PedidoContent() {
           segundoNombre: segundoSeleccionado,
           observacion: observacion.trim() || (hijoTarget?.alergiasNotas ? `Alergias: ${hijoTarget.alergiasNotas}` : undefined),
           metodoPago,
-          comprobanteUrl: comprimidoInfo?.compressedDataUrl,
+          comprobanteUrl: urlComprobanteFinal,
           monto: 12.0,
-          estadoPago: comprimidoInfo ? 'VERIFICANDO' : 'PENDIENTE',
+          estadoPago: (comprimidoInfo || urlComprobanteFinal) ? 'VERIFICANDO' : 'PENDIENTE',
         });
 
         setPedidoCompletado(nuevo);
@@ -1195,11 +1212,23 @@ function PedidoContent() {
                 className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
               />
               {subiendoComprobante && (
-                <p className="text-xs text-orange-600 mt-1 animate-pulse">Optimizando imagen...</p>
+                <p className="text-xs text-orange-600 mt-1 animate-pulse">
+                  Optimizando y guardando comprobante en la nube...
+                </p>
               )}
-              {comprimidoInfo && (
-                <p className="text-[11px] text-emerald-700 mt-1 font-bold">
-                  ✓ Comprimido a {comprimidoInfo.compressedSizeKb} KB
+              {!subiendoComprobante && (cloudinaryUrl || comprimidoInfo) && (
+                <p className="text-[11px] text-emerald-700 mt-1 font-bold flex items-center gap-1.5">
+                  <span>✓ Comprobante listo</span>
+                  {cloudinaryUrl && cloudinaryUrl.includes('cloudinary') && (
+                    <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-md font-semibold">
+                      En Cloudinary
+                    </span>
+                  )}
+                  {comprimidoInfo && (
+                    <span className="text-slate-500 font-normal">
+                      ({comprimidoInfo.compressedSizeKb} KB)
+                    </span>
+                  )}
                 </p>
               )}
             </div>

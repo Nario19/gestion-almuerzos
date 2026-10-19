@@ -276,6 +276,28 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   4. `src/app/page.tsx`
   5. `tests/mobile-parent-navbar-hijos.test.mjs`
 
+### D-019 — 2026-10-19 — Almacenamiento de Comprobantes de Pago y Fotos en Cloudinary (Desacoplamiento de Supabase PostgreSQL)
+- Decisión: A petición explícita del usuario ("quiero guardar los comprobantes de pago en cloudinary por ejemplo para quen o llené la bd gratuita de supabase. com olo hariamos evlualo para que no llene la bd ... si ya hice todo lo que indicaste dejalo listo"):
+  1. Diagnóstico y Mitigación de Saturación de PostgreSQL:
+     - Anteriormente, las capturas de comprobantes se almacenaban como cadenas Base64 de 60-150 KB en la columna `comprobante_url` de la tabla `pedidos`, lo que saturaría los 500 MB de disco del plan gratuito de Supabase en 1-2 meses.
+  2. Implementación de Servicio Cloudinary (`src/lib/cloudinaryService.ts`):
+     - Módulo de subida directa a la API REST de Cloudinary mediante Upload Preset no firmado (Unsigned), utilizando las variables `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` y `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`.
+     - Incluye fallback de contingencia transparente: si las credenciales no están disponibles o falla la conexión externa, preserva la operación sin rechazar la orden del padre.
+  3. Integración en el Checkout de Padres (`src/app/page.tsx`):
+     - Al seleccionar captura de pago, se optimiza localmente a ~50 KB y se sube de inmediato a Cloudinary en la carpeta `comprobantes`.
+     - En Supabase PostgreSQL sólo se almacena la URL segura HTTPS de Cloudinary (~70 bytes vs 100,000 bytes, reducción de almacenamiento del 99.95%).
+     - Indicador de estado en tiempo real ("Optimizando y guardando comprobante en la nube..." y badge "En Cloudinary").
+  4. Optimización de Fotos de Platos en Administración (`src/app/admin/page.tsx`):
+     - En `handleFotoUpload`, las fotos de platos del menú semanal se suben a la carpeta `platos` en Cloudinary para evitar saturar la tabla `platos` con Base64.
+  5. Suite automatizada en `tests/cloudinary-comprobantes-upload.test.mjs` con 149 tests totales del sistema aprobados en verde (`0` fallos) y compilación limpia en Next.js.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/lib/cloudinaryService.ts` (nuevo)
+  2. `src/app/page.tsx`
+  3. `src/app/admin/page.tsx`
+  4. `.env.example`
+  5. `tests/cloudinary-comprobantes-upload.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

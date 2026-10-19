@@ -35,6 +35,7 @@ import {
 import { dataService, DIAS_SEMANA, obtenerDiaActualSemana } from '@/lib/dataService';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { compressImage } from '@/lib/imageCompression';
+import { subirImagenACloudinary } from '@/lib/cloudinaryService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
@@ -246,7 +247,9 @@ export default function AdminPage() {
     setSubiendoFoto(true);
     try {
       const res = await compressImage(file, 800, 0.8);
-      setImagenUrlNueva(res.compressedDataUrl);
+      // Subir a Cloudinary para no saturar la base de datos PostgreSQL con fotos de platos
+      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, 'platos');
+      setImagenUrlNueva(urlNube);
     } catch (e) {
       console.error('Error procesando foto:', e);
       alert('Hubo un problema al procesar la imagen.');
