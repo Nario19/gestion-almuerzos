@@ -245,18 +245,27 @@ export default function FiadoPage() {
     }));
   };
 
-  // Generar y enviar mensaje de cobro por WhatsApp organizado por hijo
+  // Generar y enviar mensaje de cobro o estado de cuenta por WhatsApp al número registrado
   const enviarCobroWhatsApp = (padre: PadreFiadoResumen) => {
+    if (!padre.telefono) {
+      alert('Este apoderado no tiene un número de teléfono celular registrado para WhatsApp.');
+      return;
+    }
     const telefonoLimpio = padre.telefono.replace(/\D/g, '');
+    if (!telefonoLimpio) {
+      alert('El teléfono registrado no tiene un formato válido para WhatsApp.');
+      return;
+    }
     const telefonoFinal = telefonoLimpio.startsWith('51')
       ? telefonoLimpio
       : `51${telefonoLimpio}`;
 
     const pedidosPendientes = padre.pedidos.filter((p) => p.estadoPago !== 'PAGADO');
 
-    // Desglose agrupado por cada hijo
+    // Desglose agrupado por cada hijo (pedidos pendientes o todos los del reporte si está al día)
     const porHijo: Record<string, ItemFiadoPedido[]> = {};
-    pedidosPendientes.forEach((p) => {
+    const pedidosAMostrar = pedidosPendientes.length > 0 ? pedidosPendientes : padre.pedidos;
+    pedidosAMostrar.forEach((p) => {
       if (!porHijo[p.estudianteNombre]) porHijo[p.estudianteNombre] = [];
       porHijo[p.estudianteNombre].push(p);
     });
@@ -269,23 +278,34 @@ export default function FiadoPage() {
           .map((p) => {
             const entregaTag =
               p.estadoPedido === 'ENTREGADO' ? '✓ Entregado' : '⏳ Pendiente';
-            return `    • ${p.fecha}: ${p.entradaNombre ? `${p.entradaNombre} + ` : ''}${p.segundoNombre} [S/ ${(p.monto || 12).toFixed(2)}] (${entregaTag})`;
+            const pagoTag = p.estadoPago === 'PAGADO' ? ' [PAGADO]' : '';
+            return `    • ${p.fecha}: ${p.entradaNombre ? `${p.entradaNombre} + ` : ''}${p.segundoNombre} [S/ ${(p.monto || 12).toFixed(2)}] (${entregaTag})${pagoTag}`;
           })
           .join('\n');
         return `👦 *${hijo}*${grado} - Subtotal: S/ ${subtotal.toFixed(2)}:\n${filas}`;
       })
       .join('\n\n');
 
-    const mensaje =
-      `Hola *${padre.nombrePadre}*, le saludamos de *Placeres Culinarios* (${padre.colegioNombre}).\n\n` +
-      `Le compartimos el estado de cuenta detallado de sus almuerzos bajo la modalidad *"Pagar luego / Fiado"*:\n\n` +
-      `📋 *Detalle por Estudiante (${pedidosPendientes.length} almuerzos pendientes):*\n\n` +
-      `${bloquesHijos}\n\n` +
-      `💰 *Total pendiente de pago: S/ ${padre.totalDeuda.toFixed(2)}*\n\n` +
-      `Puede realizar su abono a través de:\n` +
-      `• *Yape / Plin:* 999-999-999 (Placeres Culinarios)\n` +
-      `• O cancelarlo directamente en el módulo de atención escolar.\n\n` +
-      `Agradecemos enviar su comprobante por este medio para registrar su abono. ¡Muchas gracias!`;
+    let mensaje = '';
+    if (pedidosPendientes.length > 0) {
+      mensaje =
+        `Hola *${padre.nombrePadre}*, le saludamos de *Placeres Culinarios* (${padre.colegioNombre}).\n\n` +
+        `Le compartimos el estado de cuenta detallado de sus almuerzos bajo la modalidad *"Pagar luego / Fiado"*:\n\n` +
+        `📋 *Detalle por Estudiante (${pedidosPendientes.length} almuerzos pendientes):*\n\n` +
+        `${bloquesHijos}\n\n` +
+        `💰 *Total pendiente de pago: S/ ${padre.totalDeuda.toFixed(2)}*\n\n` +
+        `Puede realizar su abono a través de:\n` +
+        `• *Yape / Plin:* 999-999-999 (Placeres Culinarios)\n` +
+        `• O cancelarlo directamente en el módulo de atención escolar.\n\n` +
+        `Agradecemos enviar su comprobante por este medio para registrar su abono. ¡Muchas gracias!`;
+    } else {
+      mensaje =
+        `Hola *${padre.nombrePadre}*, le saludamos de *Placeres Culinarios* (${padre.colegioNombre}).\n\n` +
+        `Le compartimos su reporte de cuenta de almuerzos escolares:\n\n` +
+        `${bloquesHijos}\n\n` +
+        `✅ *Su cuenta familiar se encuentra AL DÍA (S/ 0.00 pendientes).*\n\n` +
+        `¡Muchas gracias por su puntualidad y preferencia!`;
+    }
 
     const url = `https://wa.me/${telefonoFinal}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
@@ -813,10 +833,6 @@ export default function FiadoPage() {
                       <h2 className="text-base sm:text-lg font-black text-slate-900 truncate">
                         {padre.nombrePadre}
                       </h2>
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 flex items-center gap-1">
-                        <Building2 className="w-3 h-3 text-slate-400" />
-                        {padre.colegioNombre}
-                      </span>
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
@@ -899,19 +915,6 @@ export default function FiadoPage() {
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      {/* Botón WhatsApp */}
-                      {padre.telefono && tieneDeuda && (
-                        <button
-                          type="button"
-                          onClick={() => enviarCobroWhatsApp(padre)}
-                          className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
-                          title="Enviar estado de cuenta y recordatorio por WhatsApp"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                          <span>WhatsApp</span>
-                        </button>
-                      )}
-
                       {/* Botón Ver Reporte Detallado */}
                       <button
                         type="button"
@@ -1499,16 +1502,19 @@ export default function FiadoPage() {
               </button>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                {padreReporteModal.telefono && padreReporteModal.totalDeuda > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => enviarCobroWhatsApp(padreReporteModal)}
-                    className="flex-1 sm:flex-initial px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Enviar a WhatsApp</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => enviarCobroWhatsApp(padreReporteModal)}
+                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
+                  title={
+                    padreReporteModal.telefono
+                      ? `Enviar reporte a WhatsApp (${padreReporteModal.telefono})`
+                      : 'Sin teléfono registrado'
+                  }
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Enviar a WhatsApp</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setPadreReporteModal(null)}

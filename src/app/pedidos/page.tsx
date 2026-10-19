@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   AlertCircle,
   FileImage,
-  Send,
   Sparkles,
   ExternalLink,
   ChevronRight,
@@ -312,20 +311,6 @@ function PedidosContent() {
     }
 
     return { etapas, estadoVivo, pagadoOAceptado, entregado };
-  };
-
-  const abrirConsultaWhatsApp = (pedido: Pedido) => {
-    const phone = '51999999999';
-    const texto =
-      `Hola Placeres Culinarios, tengo una consulta sobre mi pedido:\n\n` +
-      `• Código: #${pedido.codigoPedido}\n` +
-      `• Día: ${pedido.diaSemana || 'Hoy'}\n` +
-      `• Estudiante: ${pedido.estudianteNombre}\n` +
-      `• Colegio: ${pedido.colegioNombre} (${pedido.gradoSeccion})\n` +
-      `• Menú: ${pedido.entradaNombre} + ${pedido.segundoNombre}`;
-
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(texto)}`;
-    window.open(url, '_blank');
   };
 
   const formatearFechaLegible = (fechaStr: string) => {
@@ -763,15 +748,6 @@ function PedidosContent() {
                       <span className="hidden sm:inline">Comprobante</span>
                     </button>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={() => abrirConsultaWhatsApp(pedido)}
-                    className="py-2 px-3 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition flex items-center gap-1.5"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>WhatsApp</span>
-                  </button>
                 </div>
               </div>
             </div>

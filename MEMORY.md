@@ -355,7 +355,22 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
 - Impacto:
   1. `src/lib/navUtils.ts` (nuevo)
   2. `src/components/HeaderNav.tsx`
-  3. `tests/header-titulos-dinamicos.test.mjs` (nuevo)
+### D-023 — 2026-10-19 — Remoción de WhatsApp en Tarjetas de Pedidos y Fiado, y Envío a WhatsApp desde Reporte
+- Decisión: A petición explícita del usuario ("en la tarjeta de pedidos aparece un boton de whatsapp. elimina ese boton, y en fiado desparece el boton de whatsapp y de colegio claretiano porque ya se sabe de que colegio es cuando haga clic en reporte y ahi me aparezca el boton de enviar a whatsapp debe poder enviar al whatsapp registrado"):
+  1. Tarjetas de Pedidos ([`src/app/pedidos/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/pedidos/page.tsx)):
+     - Se eliminó el botón de WhatsApp y la función `abrirConsultaWhatsApp`. La tarjeta ahora mantiene únicamente el botón para visualizar el comprobante adjunto si existe.
+  2. Vista Principal de Fiado ([`src/app/fiado/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/fiado/page.tsx)):
+     - Se eliminó el botón directo de WhatsApp de la tarjeta familiar para evitar saturación visual y envíos accidentales.
+     - Se removió la insignia de colegio (ej: "Colegio Claretiano") en la cabecera de la tarjeta familiar dado que el administrador ya opera dentro del ámbito de su sede o colegio seleccionado en los filtros superiores.
+  3. Modal de Reporte Detallado en Fiado:
+     - El botón "Enviar a WhatsApp" se muestra de forma permanente y clara al abrir el modal de reporte.
+     - La función `enviarCobroWhatsApp` valida el número de teléfono celular registrado del apoderado, antepone el prefijo oficial de Perú (`51`) y abre WhatsApp con el desglose de almuerzos escolares (si hay deuda pendiente o indicando cuenta al día si no la hay).
+  4. Suite automatizada en `tests/fiado-pedidos-limpieza-whatsapp.test.mjs` con 163 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/app/pedidos/page.tsx`
+  2. `src/app/fiado/page.tsx`
+  3. `tests/fiado-pedidos-limpieza-whatsapp.test.mjs` (nuevo)
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
