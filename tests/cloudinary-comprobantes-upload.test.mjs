@@ -74,4 +74,15 @@ test('Almacenamiento de Comprobantes en Cloudinary (Blindaje de Supabase Postgre
     assert.match(content, /NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME/, '.env.example debe documentar NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME');
     assert.match(content, /NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET/, '.env.example debe documentar NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET');
   });
+
+  await t.test('6. Modal de Confirmación: Carga y muestra la imagen del comprobante para verificar que sea el correcto', () => {
+    const pagePath = path.join(projectRoot, 'src/app/page.tsx');
+    const content = fs.readFileSync(pagePath, 'utf8');
+
+    // Debe existir la sección de previsualización en el modal de corroboración
+    assert.match(content, /Captura del Comprobante de Pago/, 'El modal de confirmación debe titular la sección Captura del Comprobante de Pago');
+    assert.match(content, /Por favor verifica que la captura corresponda a tu pago/, 'Debe pedir al padre que verifique si la captura es la correcta');
+    assert.match(content, /<img\s*src=\{cloudinaryUrl\s*\|\|\s*comprimidoInfo\?\.compressedDataUrl\}\s*alt="Comprobante de pago a verificar"/, 'Debe renderizar la imagen del comprobante con la URL de Cloudinary o el fallback comprimido');
+  });
 });
+

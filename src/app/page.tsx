@@ -27,6 +27,7 @@ import {
   BarChart3,
   X,
   ClipboardCheck,
+  Receipt,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
@@ -1538,6 +1539,45 @@ function PedidoContent() {
                   </span>
                 </div>
               </div>
+
+              {/* Previsualización del Comprobante Adjunto para Verificación */}
+              {(cloudinaryUrl || comprimidoInfo?.compressedDataUrl) ? (
+                <div className="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                      <Receipt className="w-3.5 h-3.5 text-orange-500" />
+                      Captura del Comprobante de Pago
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      Adjunto
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Por favor verifica que la captura corresponda a tu pago ({metodoPago} por S/ 12.00):
+                  </p>
+
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-900/5 p-2 flex flex-col items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={cloudinaryUrl || comprimidoInfo?.compressedDataUrl}
+                      alt="Comprobante de pago a verificar"
+                      className="max-h-56 sm:max-h-64 w-auto max-w-full rounded-xl object-contain shadow-xs bg-white"
+                    />
+                  </div>
+                </div>
+              ) : metodoPago !== 'Pagar luego' ? (
+                <div className="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">Sin captura de comprobante adjunta</span>
+                    <span className="text-amber-800">
+                      Has elegido {metodoPago}. Si no tienes la captura a mano, podrás enviarla luego por WhatsApp o la administración validará el abono.
+                    </span>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {/* Botones de Acción */}

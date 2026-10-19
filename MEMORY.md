@@ -298,6 +298,19 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   4. `.env.example`
   5. `tests/cloudinary-comprobantes-upload.test.mjs` (nuevo)
 
+### D-020 — 2026-10-19 — Visualización de Comprobante Adjunto en Pantalla de Corroboración de Pedido
+- Decisión: A petición explícita del usuario ("primero n la pantalla de confirmar pedido que se cargue el comprobante para que pueda verificar si es el correcto"):
+  1. Renderizado de Vista Previa del Comprobante:
+     - En el modal de confirmación y corroboración de pedido en `src/app/page.tsx`, se integró un bloque visual de previsualización que carga la imagen del comprobante (`cloudinaryUrl` o `comprimidoInfo?.compressedDataUrl`).
+     - Permite al padre verificar visualmente la captura (monto de S/ 12.00, destinatario y número de operación) antes de confirmar el pedido.
+  2. Manejo de Casos sin Comprobante:
+     - Si el método seleccionado es Yape/Plin y no se adjuntó captura, se muestra un aviso informativo de apoyo recordando que podrá enviarse luego por WhatsApp o la administración validará el pago.
+  3. Suite automatizada en `tests/cloudinary-comprobantes-upload.test.mjs` con 150 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/app/page.tsx`
+  2. `tests/cloudinary-comprobantes-upload.test.mjs`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
