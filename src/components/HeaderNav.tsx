@@ -17,13 +17,31 @@ import {
   Building2,
   Receipt,
   UserPlus,
+  User,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
+import { obtenerInfoPantalla } from '@/lib/navUtils';
+
+const ICONOS_PANTALLA: Record<string, React.ComponentType<{ className?: string }>> = {
+  UtensilsCrossed,
+  ShoppingBag,
+  GraduationCap,
+  User,
+  LogIn,
+  Building2,
+  BarChart3,
+  ChefHat,
+  Receipt,
+  PackageCheck,
+};
 
 export default function HeaderNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { usuario, esAdmin, esSuperAdmin, logout } = useAuth();
+
+  const infoPantalla = obtenerInfoPantalla(pathname, !!usuario);
+  const IconoPantalla = ICONOS_PANTALLA[infoPantalla.iconoNombre] || UtensilsCrossed;
 
   const handleLogout = () => {
     logout();
@@ -42,14 +60,21 @@ export default function HeaderNav() {
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200/80 shadow-xs backdrop-blur-md bg-white/90">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & Marca (Siempre visible) */}
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-slate-800 hover:opacity-90 transition">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-sm shadow-orange-500/20">
-              <UtensilsCrossed className="w-5 h-5" />
+          {/* Título Dinámico de la Pantalla en el Navbar Superior */}
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 font-bold text-slate-800 hover:opacity-90 transition min-w-0"
+            title="Ir al inicio"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-sm shadow-orange-500/20 shrink-0">
+              <IconoPantalla className="w-5 h-5" />
             </div>
-            <div>
-              <span className="text-base tracking-tight font-black text-slate-900 block leading-none">
-                Placeres Culinarios
+            <div className="min-w-0">
+              <span className="text-base sm:text-lg tracking-tight font-black text-slate-900 block leading-tight truncate">
+                {infoPantalla.titulo}
+              </span>
+              <span className="text-[10px] text-slate-400 font-semibold hidden xs:block sm:block leading-none truncate">
+                {infoPantalla.subtitulo}
               </span>
             </div>
           </Link>

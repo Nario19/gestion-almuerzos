@@ -337,6 +337,25 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   11. `src/app/fiado/page.tsx`
   12. `src/app/superadmin/page.tsx`
   13. `tests/pedidos-success-whatsapp-calendar-skeleton.test.mjs` (nuevo)
+### D-022 — 2026-10-19 — Títulos Dinámicos de Pantalla en el Navbar Superior (HeaderNav)
+- Decisión: A petición explícita del usuario ("todos los titulos delas pantallas en la interfaz del padre deben ir en el navbar superior, ya no debe decir placeres culinarios sino el titulo de la pantalla debe subir para ahi."):
+  1. Top App Bar Dinámico:
+     - En `src/components/HeaderNav.tsx`, se retiró el texto fijo de marca "Placeres Culinarios" en el título de la cabecera.
+     - Se creó el módulo `src/lib/navUtils.ts` con la función pura `obtenerInfoPantalla(pathname, estaAutenticado)`.
+     - Según la pantalla actual y estado de sesión, la cabecera superior despliega reactivamente el título, subtítulo e icono correspondiente:
+       - `/` (autenticado como padre): "Pedir Menú" (`UtensilsCrossed`)
+       - `/` (visitante): "Carta Semanal" (`UtensilsCrossed`)
+       - `/pedidos`: "Mis Pedidos" (`ShoppingBag`)
+       - `/hijos`: "Mis Hijos" (`GraduationCap`)
+       - `/perfil`: "Mi Perfil" (`User`)
+       - `/login`: "Iniciar Sesión" (`LogIn`)
+       - Rutas operativas: `/admin` ("Panel Admin"), `/cocina` ("Cocina"), `/fiado` ("Control de Fiados"), `/despacho` ("Despacho"), `/superadmin` ("Super Admin").
+  2. Suite automatizada en `tests/header-titulos-dinamicos.test.mjs` con 159 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/lib/navUtils.ts` (nuevo)
+  2. `src/components/HeaderNav.tsx`
+  3. `tests/header-titulos-dinamicos.test.mjs` (nuevo)
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
