@@ -70,6 +70,19 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
     };
   }
 
+  // Pedido Manual
+  if (
+    ruta.startsWith('/admin/pedido-manual') ||
+    ruta.startsWith('/pedido-manual') ||
+    ruta.startsWith('/superadmin/pedido-manual')
+  ) {
+    return {
+      titulo: 'Pedido Manual',
+      subtitulo: 'Toma de Almuerzo Escolar',
+      iconoNombre: 'UtensilsCrossed',
+    };
+  }
+
   // Paneles de Administración
   if (ruta.startsWith('/superadmin')) {
     return {
@@ -118,3 +131,21 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
     iconoNombre: 'UtensilsCrossed',
   };
 }
+
+/**
+ * Determina si la ruta actual pertenece a la interfaz de administración (Admin o Superadmin).
+ * En la interfaz administrativa el navbar superior ya NO muestra el título de la pantalla,
+ * sino la marca de la empresa "Placeres Culinarios" con el logo corporativo.
+ */
+export function esRutaAdministrativa(pathname: string): boolean {
+  const ruta = (pathname || '').toLowerCase();
+  return (
+    ruta.startsWith('/admin') ||
+    ruta.startsWith('/superadmin') ||
+    ruta.startsWith('/cocina') ||
+    ruta.startsWith('/despacho') ||
+    ruta.startsWith('/fiado') ||
+    ruta.startsWith('/pedido-manual')
+  );
+}
+

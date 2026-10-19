@@ -47,21 +47,22 @@ test('Verificación de Títulos Dinámicos en el Navbar Superior (HeaderNav)', a
     assert.strictEqual(obtenerInfoPantalla('/superadmin', true).titulo, 'Super Admin');
   });
 
-  await t.test('3. HeaderNav.tsx: Integra títulos dinámicos y retira texto estático Placeres Culinarios de la marca', () => {
+  await t.test('3. HeaderNav.tsx: Integra títulos dinámicos para padres y marca corporativa para admin/superadmin', () => {
     const headerPath = path.join(projectRoot, 'src/components/HeaderNav.tsx');
     assert.ok(fs.existsSync(headerPath), 'src/components/HeaderNav.tsx debe existir');
     const headerContent = fs.readFileSync(headerPath, 'utf8');
 
-    // Debe importar obtenerInfoPantalla
+    // Debe importar obtenerInfoPantalla y esRutaAdministrativa
     assert.match(headerContent, /import\s*\{\s*obtenerInfoPantalla\s*\}\s*from\s*['"]@\/lib\/navUtils['"]/, 'HeaderNav debe importar obtenerInfoPantalla de navUtils');
+    assert.match(headerContent, /esRutaAdministrativa/, 'HeaderNav debe utilizar esRutaAdministrativa');
 
-    // Debe renderizar el título dinámico
+    // Debe renderizar el título dinámico para interfaz del padre
     assert.match(headerContent, /\{infoPantalla\.titulo\}/, 'HeaderNav debe renderizar infoPantalla.titulo');
 
     // Debe renderizar el icono dinámico
     assert.match(headerContent, /<IconoPantalla/, 'HeaderNav debe renderizar IconoPantalla dinámico');
 
-    // No debe contener el span con texto fijo 'Placeres Culinarios' en la marca
-    assert.doesNotMatch(headerContent, />\s*Placeres Culinarios\s*<\/span>/, 'HeaderNav ya NO debe contener el texto fijo "Placeres Culinarios" en el título');
+    // En la interfaz de admin y superadmin, debe mostrar la marca Placeres Culinarios (sin título de pantalla)
+    assert.match(headerContent, /Placeres Culinarios/, 'HeaderNav debe mostrar Placeres Culinarios en la interfaz de administración');
   });
 });

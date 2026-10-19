@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { obtenerInfoPantalla } from '@/lib/navUtils';
+import { esRutaAdministrativa } from '@/lib/navUtils';
 import ModalPedidoManual from '@/components/ModalPedidoManual';
 
 const ICONOS_PANTALLA: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -43,6 +44,7 @@ export default function HeaderNav() {
   const { usuario, esAdmin, esSuperAdmin, logout } = useAuth();
   const [modalPedidoManualAbierto, setModalPedidoManualAbierto] = useState(false);
 
+  const esRutaAdmin = esRutaAdministrativa(pathname);
   const infoPantalla = obtenerInfoPantalla(pathname, !!usuario);
   const IconoPantalla = ICONOS_PANTALLA[infoPantalla.iconoNombre] || UtensilsCrossed;
 
@@ -57,29 +59,43 @@ export default function HeaderNav() {
     { href: '/cocina', label: 'Cocina', icon: ChefHat },
     { href: '/fiado', label: 'Fiado', icon: Receipt },
     { href: '/despacho', label: 'Despacho', icon: PackageCheck },
+    { href: '/admin/pedido-manual', label: 'Manual', icon: UtensilsCrossed },
   ];
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200/80 shadow-xs backdrop-blur-md bg-white/90">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Título Dinámico de la Pantalla en el Navbar Superior */}
+          {/* Lado Izquierdo del Navbar:
+              - En la interfaz del padre: El título de la pantalla sube al navbar
+              - En la interfaz de admin y superadmin: YA NO VA EL TÍTULO, se muestra la marca Placeres Culinarios */}
           <Link
-            href="/"
+            href={esRutaAdmin ? (esSuperAdmin ? '/superadmin' : '/admin') : '/'}
             className="flex items-center gap-2.5 font-bold text-slate-800 hover:opacity-90 transition min-w-0"
-            title="Ir al inicio"
+            title={esRutaAdmin ? 'Ir al Panel' : 'Ir al inicio'}
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-sm shadow-orange-500/20 shrink-0">
-              <IconoPantalla className="w-5 h-5" />
+              {esRutaAdmin ? <UtensilsCrossed className="w-5 h-5" /> : <IconoPantalla className="w-5 h-5" />}
             </div>
-            <div className="min-w-0">
-              <span className="text-base sm:text-lg tracking-tight font-black text-slate-900 block leading-tight truncate">
-                {infoPantalla.titulo}
-              </span>
-              <span className="text-[10px] text-slate-400 font-semibold hidden xs:block sm:block leading-none truncate">
-                {infoPantalla.subtitulo}
-              </span>
-            </div>
+            {esRutaAdmin ? (
+              <div className="min-w-0">
+                <span className="text-base sm:text-lg tracking-tight font-black text-slate-900 block leading-tight truncate">
+                  Placeres Culinarios
+                </span>
+                <span className="text-[10px] text-slate-400 font-semibold hidden xs:block sm:block leading-none truncate">
+                  {esSuperAdmin ? 'Portal Super Admin' : 'Panel de Gestión'}
+                </span>
+              </div>
+            ) : (
+              <div className="min-w-0">
+                <span className="text-base sm:text-lg tracking-tight font-black text-slate-900 block leading-tight truncate">
+                  {infoPantalla.titulo}
+                </span>
+                <span className="text-[10px] text-slate-400 font-semibold hidden xs:block sm:block leading-none truncate">
+                  {infoPantalla.subtitulo}
+                </span>
+              </div>
+            )}
           </Link>
 
           {/* Menú Operativo (SOLO VISIBLE PARA ADMINISTRADORES Y SUPER ADMIN) */}
@@ -97,7 +113,7 @@ export default function HeaderNav() {
                 )}
                 {adminNavItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = pathname === item.href || (item.href === '/admin/pedido-manual' && pathname === '/pedido-manual');
                   return (
                     <Link
                       key={item.href}
@@ -106,6 +122,8 @@ export default function HeaderNav() {
                         isActive
                           ? item.href === '/superadmin'
                             ? 'bg-purple-600 text-white shadow-xs'
+                            : item.href === '/admin/pedido-manual'
+                            ? 'bg-emerald-600 text-white shadow-xs'
                             : 'bg-orange-500 text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                       }`}

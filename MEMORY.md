@@ -460,6 +460,44 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   4. `src/app/despacho/page.tsx`
   5. `tests/filtros-grados-despacho-admin.test.mjs` (nuevo)
 
+### D-028 — 2026-10-19 — Pantalla Dedicada de Pedido Manual, Estructura de Módulos (Admin, Superadmin, Padres) y Supresión de Título en Navbar de Gestión
+- Decisión: A petición explícita del usuario ("el pedido manual que sea otra pantalla como admin, fiado etc. y tenemos que trabajr ordenadamente en las carpeta por ejemplo superadmin/page.tsx pero dentro tiene sus propias carpetas fiado desapcho, admin/page.tsx y aca tmb estan las demas fiado etc, padres/tsx pedidos etc, y en el navbar de la interfaz de admin y superadmin por eso te digo que hagas la estructura de esa manera ya no irá el titulo"):
+  1. Pantalla Completa Dedicada de Pedido Manual ([`src/app/admin/pedido-manual/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/admin/pedido-manual/page.tsx)):
+     - Pantalla autónoma para ventanilla y toma de pedidos manuales, con formulario espacioso y responsive, selector de colegio dinámico para Superadmin, sede institucional fija para Admin, carga reactiva de grados y platos del día escolar, selección de entrada/sopa/postre, observaciones médicas de alergias, datos del tutor/solicitante, medios de pago (`Efectivo`, `Yape`, `Plin`, `Pagar luego`), confeti y tarjeta de éxito con código generado (`#CLA-xxx`) y enlaces de navegación a Despacho y Cocina.
+     - Enlace integrado en la barra de pestañas del menú administrativo (`adminNavItems`) con pestaña activa resaltada.
+     - Ruta de compatibilidad directa en [`src/app/pedido-manual/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/pedido-manual/page.tsx).
+  2. Estructura Organizada de Carpetas por Módulo:
+     - **Admin (`src/app/admin/`):** Contiene `despacho/page.tsx`, `fiado/page.tsx`, `cocina/page.tsx` y `pedido-manual/page.tsx`.
+     - **Superadmin (`src/app/superadmin/`):** Contiene `despacho/page.tsx`, `fiado/page.tsx`, `cocina/page.tsx` y `pedido-manual/page.tsx`.
+     - **Padres (`src/app/padres/`):** Contiene `page.tsx` (Home de menú), `pedidos/page.tsx`, `hijos/page.tsx` y `perfil/page.tsx`.
+     - **Rutas Canónicas Raíz:** Se mantienen `src/app/despacho/`, `src/app/fiado/`, `src/app/cocina/`, `src/app/pedidos/`, `src/app/hijos/` y `src/app/perfil/` intactas para garantizar cero roturas de URLs públicas o marcadores.
+  3. Supresión de Título en Navbar de Gestión ([`src/components/HeaderNav.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/components/HeaderNav.tsx)):
+     - Se implementó [`esRutaAdministrativa`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/lib/navUtils.ts).
+     - **En interfaz de Admin y Superadmin:** El navbar superior YA NO muestra el título de la pantalla (evitando duplicar el título que ya está en la barra de pestañas y en la página). Muestra el logo corporativo con la marca **"Placeres Culinarios"** y el subtítulo del portal.
+     - **En interfaz de Padres (`/`, `/pedidos`, `/hijos`, `/perfil`):** Se preserva el título dinámico de la pantalla en el navbar superior ("Pedir Menú", "Mis Pedidos", "Mis Hijos", "Mi Perfil") tal como se definió para la vista móvil de apoderados.
+  4. Suite de Pruebas Automatizadas:
+     - Nueva suite en [`tests/pedido-manual-pantalla-rutas-anidadas.test.mjs`](file:///Users/reyesrios/Dev/gestion-almuerzos/tests/pedido-manual-pantalla-rutas-anidadas.test.mjs) aprobada al 100%.
+     - Suite completa del sistema con 188 pruebas ejecutadas (182 aprobadas, 0 fallos, 0 regresiones).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/lib/navUtils.ts`
+  2. `src/components/HeaderNav.tsx`
+  3. `src/app/admin/pedido-manual/page.tsx` (nuevo)
+  4. `src/app/pedido-manual/page.tsx` (nuevo)
+  5. `src/app/admin/despacho/page.tsx` (nuevo)
+  6. `src/app/admin/fiado/page.tsx` (nuevo)
+  7. `src/app/admin/cocina/page.tsx` (nuevo)
+  8. `src/app/superadmin/despacho/page.tsx` (nuevo)
+  9. `src/app/superadmin/fiado/page.tsx` (nuevo)
+  10. `src/app/superadmin/cocina/page.tsx` (nuevo)
+  11. `src/app/superadmin/pedido-manual/page.tsx` (nuevo)
+  12. `src/app/padres/page.tsx` (nuevo)
+  13. `src/app/padres/pedidos/page.tsx` (nuevo)
+  14. `src/app/padres/hijos/page.tsx` (nuevo)
+  15. `src/app/padres/perfil/page.tsx` (nuevo)
+  16. `tests/header-titulos-dinamicos.test.mjs`
+  17. `tests/pedido-manual-pantalla-rutas-anidadas.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
@@ -472,4 +510,5 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
 
 - Validar con el cliente si el precio de S/ 12 es universal o si se habilitarán formalmente platos con precios variables en la interfaz de compra pública.
 - Establecer si el cierre a las 09:30 AM debe rechazar pedidos automáticamente en el backend vía trigger/función SQL o mantenerse como aviso visual en frontend.
+
 
