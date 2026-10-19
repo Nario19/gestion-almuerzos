@@ -62,7 +62,7 @@ test('Verificación de Títulos Dinámicos en el Navbar Superior (HeaderNav)', a
     // Debe renderizar el icono dinámico
     assert.match(headerContent, /<IconoPantalla/, 'HeaderNav debe renderizar IconoPantalla dinámico');
 
-    // En la interfaz de admin y superadmin, debe mostrar la marca Placeres Culinarios (sin título de pantalla)
-    assert.match(headerContent, /Placeres Culinarios/, 'HeaderNav debe mostrar Placeres Culinarios en la interfaz de administración');
+    // En la interfaz de admin y superadmin, se mantiene un navbar limpio sin títulos redundantes
+    assert.match(headerContent, /esRutaAdmin\s*\?\s*null\s*:/, 'HeaderNav debe mantener un navbar limpio sin títulos redundantes en administración');
   });
 });

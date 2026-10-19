@@ -95,11 +95,11 @@ test('Verificación de Pantalla Dedicada de Pedido Manual y Estructura Ordenada 
       'HeaderNav debe llamar a esRutaAdministrativa'
     );
 
-    // En rutas administrativas muestra Placeres Culinarios (no título de pantalla)
+    // En rutas administrativas mantiene navbar limpio sin títulos de pantalla
     assert.match(
       content,
-      /esRutaAdmin\s*\?\s*\(\s*<div[^>]*>[\s\S]*?Placeres Culinarios[\s\S]*?<\/span>/,
-      'En interfaz de admin y superadmin debe mostrar la marca Placeres Culinarios'
+      /esRutaAdmin\s*\?\s*null\s*:/,
+      'En interfaz de admin y superadmin debe mantener un navbar limpio sin títulos'
     );
   });
 });

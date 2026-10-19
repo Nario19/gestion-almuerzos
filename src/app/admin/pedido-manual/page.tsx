@@ -78,6 +78,7 @@ export default function PedidoManualPage() {
   const [platoPersonalizado, setPlatoPersonalizado] = useState(false);
   const [entradaNombre, setEntradaNombre] = useState('Sin entrada');
   const [observacion, setObservacion] = useState('');
+  const [observacionesDisponibles, setObservacionesDisponibles] = useState<string[]>([]);
   const [padreNombre, setPadreNombre] = useState('');
   const [telefonoContacto, setTelefonoContacto] = useState('');
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('Efectivo');
@@ -157,10 +158,12 @@ export default function PedidoManualPage() {
     Promise.all([
       dataService.obtenerGrados(colegioSeleccionado),
       dataService.obtenerPlatosPorDia(diaSemanaCalculado, colegioSeleccionado),
+      dataService.obtenerObservaciones(colegioSeleccionado),
     ])
-      .then(([resGrados, resPlatos]) => {
+      .then(([resGrados, resPlatos, resObs]) => {
         if (cancelado) return;
         setGrados(resGrados || []);
+        setObservacionesDisponibles(resObs || []);
         if (resGrados && resGrados.length > 0 && !resGrados.includes(gradoSeccion) && !gradoPersonalizado) {
           setGradoSeccion(resGrados[0]);
         }
@@ -921,9 +924,51 @@ export default function PedidoManualPage() {
 
             {/* Observaciones y Alergias */}
             <div>
-              <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> Observaciones / Alergias del Alumno
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> Observaciones / Alergias del Alumno
+                </label>
+                {observacionesDisponibles.length > 0 && (
+                  <span className="text-[10px] text-slate-400 font-semibold">
+                    Etiquetas de {colegioSeleccionado}
+                  </span>
+                )}
+              </div>
+
+              {/* Chips de Observaciones Rápidas del Colegio */}
+              {observacionesDisponibles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {observacionesDisponibles.map((tag) => {
+                    const partes = observacion
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    const seleccionado = partes.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          if (seleccionado) {
+                            setObservacion(partes.filter((s) => s !== tag).join(', '));
+                          } else {
+                            setObservacion(partes.length > 0 ? `${partes.join(', ')}, ${tag}` : tag);
+                          }
+                        }}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer select-none ${
+                          seleccionado
+                            ? 'bg-amber-500 text-white shadow-xs'
+                            : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100'
+                        }`}
+                      >
+                        <span>{tag}</span>
+                        {seleccionado && <span className="text-[10px]">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <input
                 type="text"
                 placeholder="Ej. Alérgica al maní, poco arroz, sin ensalada..."

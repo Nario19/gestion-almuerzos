@@ -78,16 +78,7 @@ export default function HeaderNav() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-sm shadow-orange-500/20 shrink-0">
               {esRutaAdmin ? <UtensilsCrossed className="w-5 h-5" /> : <IconoPantalla className="w-5 h-5" />}
             </div>
-            {esRutaAdmin ? (
-              <div className="min-w-0">
-                <span className="text-base sm:text-lg tracking-tight font-black text-slate-900 block leading-tight truncate">
-                  Placeres Culinarios
-                </span>
-                <span className="text-[10px] text-slate-400 font-semibold hidden xs:block sm:block leading-none truncate">
-                  {esSuperAdmin ? 'Portal Super Admin' : 'Panel de Gestión'}
-                </span>
-              </div>
-            ) : (
+            {esRutaAdmin ? null : (
               <div className="min-w-0">
                 <span className="text-base sm:text-lg tracking-tight font-black text-slate-900 block leading-tight truncate">
                   {infoPantalla.titulo}
@@ -103,15 +94,6 @@ export default function HeaderNav() {
           {esAdmin && (
             <div className="flex items-center gap-1.5 sm:gap-2">
               <nav className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
-                {esSuperAdmin ? (
-                  <span className="text-[10px] font-black uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded-lg mr-1 hidden sm:inline-flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" /> Super Admin
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-black uppercase text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg mr-1 hidden sm:inline-flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" /> Admin
-                  </span>
-                )}
                 {adminNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive =

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   PackageCheck,
   Search,
@@ -20,6 +21,7 @@ import {
   XCircle,
   RotateCcw,
   GraduationCap,
+  Receipt,
 } from 'lucide-react';
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
@@ -1061,6 +1063,15 @@ export default function DespachoPage() {
                                     <span>Pago aceptado</span>
                                   </button>
                                 )
+                              ) : p.metodoPago === 'Pagar luego' ? (
+                                <Link
+                                  href={esSuperAdmin ? '/superadmin/fiado' : '/admin/fiado'}
+                                  className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 shadow-2xs"
+                                  title="Este pedido es fiado: se acepta y liquida en el módulo de Fiados"
+                                >
+                                  <Receipt className="w-3.5 h-3.5 text-amber-700" />
+                                  <span>Cobro en Fiado</span>
+                                </Link>
                               ) : (
                                 <button
                                   type="button"

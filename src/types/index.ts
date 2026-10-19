@@ -165,6 +165,10 @@ export interface PadreFiadoResumen {
   totalPedidos: number;
   pedidosEntregados: number;
   pedidos: ItemFiadoPedido[];
+  tieneConsumoHoy?: boolean;
+  fechasUnicas?: string[];
+  totalDeudaHistorica?: number;
+  horaConsumoHoy?: string;
 }
 
 export interface EstudianteColegioInfo {

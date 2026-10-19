@@ -36,6 +36,7 @@ import {
   formatearFechaLegiblePeru,
   formatearFechaEmisionPeru,
   calcularOffsetFechaPeru,
+  formatearHoraPeru,
 } from '@/lib/dateUtils';
 import { PadreFiadoResumen, ItemFiadoPedido, ConfiguracionPagos } from '@/types';
 
@@ -52,7 +53,7 @@ export default function FiadoPage() {
     !esSuperAdmin && usuario?.colegioNombre ? usuario.colegioNombre : 'TODOS'
   );
   const [filtroEstado, setFiltroEstado] = useState<'PENDIENTES' | 'TODOS' | 'SALDADOS'>('PENDIENTES');
-  const [fechaFiltro, setFechaFiltro] = useState<string>('TODAS');
+  const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [busqueda, setBusqueda] = useState('');
 
   // Paginación de Familias
@@ -155,7 +156,9 @@ export default function FiadoPage() {
         const fechasUnicas = Array.from(new Set(padre.pedidos.map((p) => p.fecha))).sort((a, b) =>
           b.localeCompare(a)
         );
-        const tieneConsumoHoy = padre.pedidos.some((p) => p.fecha === fechaHoy);
+        const pedidosHoy = padre.pedidos.filter((p) => p.fecha === fechaHoy);
+        const tieneConsumoHoy = pedidosHoy.length > 0;
+        const horaConsumoHoy = pedidosHoy.length > 0 ? formatearHoraPeru(pedidosHoy[pedidosHoy.length - 1].createdAt) : '';
 
         // Si se filtra por fecha específica, aislamos los pedidos de esa fecha
         const pedidosCorrespondientes =
@@ -180,6 +183,7 @@ export default function FiadoPage() {
           pedidosEntregados: entregadosCorrespondientes,
           tieneConsumoHoy,
           fechasUnicas,
+          horaConsumoHoy,
         };
       })
       .filter((padre) => {
@@ -969,7 +973,7 @@ export default function FiadoPage() {
                       {padre.tieneConsumoHoy && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black border border-amber-300">
                           <Clock className="w-3 h-3 text-amber-700" />
-                          Consumo de HOY ({fechaHoy})
+                          Consumo de HOY ({padre.horaConsumoHoy || fechaHoy})
                         </span>
                       )}
                       {padre.fechasUnicas && padre.fechasUnicas.length > 0 && (
@@ -988,7 +992,7 @@ export default function FiadoPage() {
                               }`}
                               title={`Filtrar listado por fecha ${f}`}
                             >
-                              {f === fechaHoy ? `Hoy (${f})` : f}
+                              {f === fechaHoy ? (padre.horaConsumoHoy || 'Hoy') : f}
                             </button>
                           ))}
                           {padre.fechasUnicas.length > 4 && (
@@ -1108,10 +1112,19 @@ export default function FiadoPage() {
                                       <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
                                         HOY
                                       </span>
-                                      <span className="font-bold text-slate-900">{ped.fecha}</span>
+                                      <span className="font-bold text-slate-900">
+                                        {ped.createdAt ? formatearHoraPeru(ped.createdAt) : ped.fecha}
+                                      </span>
                                     </div>
                                   ) : (
-                                    <span className="font-bold text-slate-800">{ped.fecha}</span>
+                                    <div className="flex flex-col">
+                                      <span className="font-bold text-slate-800">{ped.fecha}</span>
+                                      {ped.createdAt && (
+                                        <span className="text-[10px] text-slate-400 font-normal">
+                                          {formatearHoraPeru(ped.createdAt)}
+                                        </span>
+                                      )}
+                                    </div>
                                   )}
                                 </td>
                                 <td className="py-2.5 px-3 font-bold text-slate-900 whitespace-nowrap">

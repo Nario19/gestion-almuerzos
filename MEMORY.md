@@ -545,6 +545,36 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   7. `src/app/admin/components/AdminObservacionesTab.tsx` (nuevo)
   8. Suites de pruebas en `tests/` actualizadas para verificar componentes modulares y el flujo canónico de pedido manual (188 pruebas aprobadas, 0 fallos).
 
+### D-031 — 2026-10-19 — Navbar Administrativo Limpio, Observaciones por Colegio en Pedido Manual, Dashboard Renovado, Cocina con Fondo Claro y Horas de Consumo en Fiados
+- Decisión: A solicitud explícita del usuario:
+  1. Navbar Administrativo Limpio en `HeaderNav.tsx`:
+     - Eliminación del bloque de texto redundante de marca (`[Placeres Culinarios / Panel de Gestión]` y `Portal Super Admin`) en rutas de administración.
+     - Supresión de badges de rol decorativos (`Admin` y `Super Admin` con `ShieldCheck`), dejando la cabecera limpia, despejada y enfocada en los accesos de navegación.
+  2. Observaciones Dependientes del Colegio en Pedido Manual:
+     - En `src/app/admin/pedido-manual/page.tsx`, carga reactiva de observaciones rápidas del colegio seleccionado mediante `dataService.obtenerObservaciones(colegioSeleccionado)`.
+     - Renderizado de chips interactivos con toggle para añadir o remover notas comunes al campo de observaciones.
+  3. Rediseño Visual de KPIs en Dashboard de Admin (`AdminDashboardTab.tsx`):
+     - Sección "Platos Más Solicitados": Medallas conmemorativas (1°, 2°, 3°), barras de progreso con gradiente y conteo/porcentajes de venta sobre total de pedidos.
+     - Sección "Últimos Pedidos del Período": Tabla profesional con avatares de iniciales de estudiantes, códigos `#COL-000` en tipografía monospace, badges semánticos de entrega y pago, y monto formateado en soles.
+  4. Consolidado de Cocina con Fondo Claro y Filtro de Hoy por Defecto:
+     - En `src/app/admin/cocina/page.tsx`, transformación del encabezado a fondo blanco (`bg-white`) con bordes sutiles y textos de alto contraste, manteniendo la inicialización por defecto en la fecha de hoy (`fechaHoy`).
+  5. Centralización de Cobro de Fiados en Despacho:
+     - En `src/app/admin/despacho/page.tsx`, para pedidos con método `Pagar luego` pendientes de pago, se suprime el botón "Aceptar pago" para prevenir cobros accidentales en mostrador y se reemplaza por el badge interactivo "Cobro en Fiado" que vincula directamente al módulo de Fiados.
+  6. Visualización de Horas de Consumo en Control de Fiados (`fiado/page.tsx`):
+     - Inicialización obligatoria de `fechaFiltro` en `fechaHoy` al ingresar al módulo.
+     - En la tarjeta familiar, reemplazo de textos redundantes de fechas por la hora real de registro (`Consumo de HOY (hh:mm a. m.)`) y en los chips interactivos de fechas.
+     - En la tabla de órdenes de la familia, visualización de la hora peruana formateada (`formatearHoraPeru(ped.createdAt)`) junto a la insignia HOY.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/components/HeaderNav.tsx`
+  2. `src/app/admin/pedido-manual/page.tsx`
+  3. `src/app/admin/components/AdminDashboardTab.tsx`
+  4. `src/app/admin/cocina/page.tsx`
+  5. `src/app/admin/despacho/page.tsx`
+  6. `src/app/admin/fiado/page.tsx`
+  7. `src/types/index.ts`
+  8. Suites de pruebas en `tests/` actualizadas y aprobadas (188 pass, 0 fail).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
