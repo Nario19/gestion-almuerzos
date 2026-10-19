@@ -25,6 +25,11 @@ interface AuthContextType {
   }) => Promise<{ ok: boolean; error?: string; hijo?: Hijo }>;
   eliminarHijo: (hijoId: string) => Promise<{ ok: boolean; error?: string }>;
   actualizarHijos: () => Promise<void>;
+  actualizarPerfil: (datos: {
+    nombreCompleto: string;
+    telefono: string;
+    dni?: string;
+  }) => Promise<{ ok: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -649,6 +654,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const actualizarPerfil = async (datos: {
+    nombreCompleto: string;
+    telefono: string;
+    dni?: string;
+  }) => {
+    if (!usuario) {
+      return { ok: false, error: 'No hay una sesión activa.' };
+    }
+
+    const nombreLimpio = datos.nombreCompleto.trim();
+    const telLimpio = datos.telefono.trim();
+    const dniLimpio = datos.dni ? datos.dni.trim() : usuario.dni;
+
+    if (!nombreLimpio) {
+      return { ok: false, error: 'El nombre completo es requerido.' };
+    }
+    if (!telLimpio) {
+      return { ok: false, error: 'El número de teléfono es requerido.' };
+    }
+    if (!dniLimpio) {
+      return { ok: false, error: 'El DNI es requerido.' };
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('perfiles_padres')
+          .update({
+            nombre_completo: nombreLimpio,
+            telefono: telLimpio,
+            dni: dniLimpio,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', usuario.id);
+
+        if (error) {
+          console.error('Error actualizando perfil en Supabase:', error);
+          return { ok: false, error: error.message || 'Error al actualizar perfil en base de datos' };
+        }
+      } catch (err: unknown) {
+        console.error('Error de conexión al actualizar perfil:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        return { ok: false, error: msg || 'Error de conexión al actualizar perfil' };
+      }
+    }
+
+    const usuarioActualizado: UsuarioPadre = {
+      ...usuario,
+      nombreCompleto: nombreLimpio,
+      telefono: telLimpio,
+      dni: dniLimpio,
+    };
+
+    setUsuario(usuarioActualizado);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(usuarioActualizado));
+    }
+
+    return { ok: true };
+  };
+
   const esSuperAdmin = Boolean(usuario && usuario.rol === 'SUPER_ADMIN');
   const esAdmin = Boolean(usuario && (usuario.rol === 'ADMIN' || usuario.rol === 'SUPER_ADMIN'));
 
@@ -665,6 +731,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         agregarHijo,
         eliminarHijo,
         actualizarHijos,
+        actualizarPerfil,
       }}
     >
       {children}

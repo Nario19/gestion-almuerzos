@@ -709,10 +709,8 @@ function PedidoContent() {
         {/* Encabezado de la Carta */}
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
           <div>
-            <h1 className="text-lg font-black text-slate-900 tracking-tight">
-              Carta Semanal
-            </h1>
-            <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1 mt-0.5">
+            <h1 className="sr-only">Carta Semanal</h1>
+            <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las 09:30 AM
             </span>
           </div>
@@ -912,10 +910,8 @@ function PedidoContent() {
       {/* Encabezado con horario de cierre y enlace a Mis Pedidos */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
         <div>
-          <h1 className="text-lg font-black text-slate-900 tracking-tight">
-            Menú Escolar
-          </h1>
-          <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1 mt-0.5">
+          <h1 className="sr-only">Menú Escolar</h1>
+          <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
             <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las 09:30 AM
           </span>
         </div>

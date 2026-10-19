@@ -350,23 +350,16 @@ function PedidosContent() {
     <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28">
       {/* Barra de cabecera con retorno */}
       <div className="flex items-center justify-between gap-3 mb-5 pb-3 border-b border-slate-200">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
+            className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-bold"
             title="Volver a la carta"
           >
             <ArrowLeft className="w-5 h-5" />
+            <span className="hidden sm:inline">Volver a Carta</span>
           </Link>
-          <div>
-            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-orange-500" />
-              Historial de Pedidos
-            </h1>
-            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
-              Almuerzos programados para tus hijos
-            </p>
-          </div>
+          <h1 className="sr-only">Historial de Pedidos</h1>
         </div>
 
         <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 border border-orange-200 text-orange-700 rounded-xl">

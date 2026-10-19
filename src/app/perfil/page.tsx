@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -16,17 +16,60 @@ import {
   ShieldCheck,
   Plus,
   LogIn,
+  Pencil,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { SkeletonPerfilPage } from '@/components/Skeleton';
 
 export default function PerfilPage() {
   const router = useRouter();
-  const { usuario, cargando, esAdmin, esSuperAdmin, logout } = useAuth();
+  const { usuario, cargando, esAdmin, esSuperAdmin, logout, actualizarPerfil } = useAuth();
+
+  const [modalEditar, setModalEditar] = useState(false);
+  const [nombreForm, setNombreForm] = useState('');
+  const [telefonoForm, setTelefonoForm] = useState('');
+  const [dniForm, setDniForm] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [mensajeError, setMensajeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (usuario) {
+      setNombreForm(usuario.nombreCompleto || '');
+      setTelefonoForm(usuario.telefono || '');
+      setDniForm(usuario.dni || '');
+    }
+  }, [usuario]);
 
   const handleCerrarSesion = () => {
     logout();
     router.push('/login');
+  };
+
+  const handleGuardarPerfil = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMensajeError(null);
+    setGuardando(true);
+    try {
+      const res = await actualizarPerfil({
+        nombreCompleto: nombreForm,
+        telefono: telefonoForm,
+        dni: dniForm,
+      });
+      if (res.ok) {
+        setMensajeExito('¡Tus datos han sido actualizados con éxito!');
+        setModalEditar(false);
+        setTimeout(() => setMensajeExito(null), 3500);
+      } else {
+        setMensajeError(res.error || 'Ocurrió un error al actualizar tus datos.');
+      }
+    } finally {
+      setGuardando(false);
+    }
   };
 
   if (cargando) {
@@ -42,9 +85,7 @@ export default function PerfilPage() {
             <User className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
-              Mi Perfil
-            </h1>
+            <h1 className="sr-only">Mi Perfil</h1>
             <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
               Inicia sesión o regístrate para acceder al historial de pedidos, registrar a tus hijos y disfrutar de una experiencia ágil.
             </p>
@@ -144,23 +185,50 @@ export default function PerfilPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-8 space-y-5 animate-in fade-in duration-200">
+      {/* Banner de Éxito al actualizar */}
+      {mensajeExito && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-xs animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{mensajeExito}</span>
+        </div>
+      )}
+
       {/* TARJETA PRINCIPAL DEL APODERADO */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-orange-100/60 to-transparent rounded-bl-full pointer-events-none" />
 
-        <div className="flex items-center gap-4 relative">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-orange-500/20 shrink-0">
-            {iniciales || <User className="w-7 h-7" />}
+        <div className="flex items-start justify-between gap-3 relative">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-orange-500/20 shrink-0">
+              {iniciales || <User className="w-7 h-7" />}
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
+                Apoderado
+              </span>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 truncate mt-1">
+                {usuario.nombreCompleto}
+              </h2>
+              <p className="text-xs text-slate-500">Cuenta de Padre de Familia</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
-              Apoderado
-            </span>
-            <h1 className="text-base sm:text-lg font-black text-slate-900 truncate mt-1">
-              {usuario.nombreCompleto}
-            </h1>
-            <p className="text-xs text-slate-500">Cuenta de Padre de Familia</p>
-          </div>
+
+          {/* Botón Editar Datos */}
+          <button
+            type="button"
+            onClick={() => {
+              setNombreForm(usuario.nombreCompleto || '');
+              setTelefonoForm(usuario.telefono || '');
+              setDniForm(usuario.dni || '');
+              setMensajeError(null);
+              setModalEditar(true);
+            }}
+            className="px-3 py-1.5 bg-orange-50 hover:bg-orange-100 active:scale-95 text-orange-700 border border-orange-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+            title="Editar mis datos"
+          >
+            <Pencil className="w-3.5 h-3.5 text-orange-600" />
+            <span>Editar</span>
+          </button>
         </div>
 
         {/* Datos de contacto */}
@@ -312,6 +380,107 @@ export default function PerfilPage() {
           <span>Cerrar Sesión</span>
         </button>
       </div>
+
+      {/* MODAL PARA EDITAR DATOS DEL PERFIL */}
+      {modalEditar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                  <Pencil className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-black text-slate-900">
+                  Editar Mis Datos
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalEditar(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {mensajeError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{mensajeError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleGuardarPerfil} className="space-y-3.5">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Nombres y Apellidos *
+                </label>
+                <input
+                  type="text"
+                  value={nombreForm}
+                  onChange={(e) => setNombreForm(e.target.value)}
+                  required
+                  placeholder="Tu nombre completo"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Teléfono / WhatsApp *
+                </label>
+                <input
+                  type="tel"
+                  value={telefonoForm}
+                  onChange={(e) => setTelefonoForm(e.target.value)}
+                  required
+                  placeholder="Ej. 999888777"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  DNI *
+                </label>
+                <input
+                  type="text"
+                  value={dniForm}
+                  onChange={(e) => setDniForm(e.target.value)}
+                  required
+                  maxLength={8}
+                  placeholder="DNI de 8 dígitos"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalEditar(false)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardando}
+                  className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
+                >
+                  {guardando ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Cambios</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

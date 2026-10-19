@@ -367,10 +367,28 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
      - La función `enviarCobroWhatsApp` valida el número de teléfono celular registrado del apoderado, antepone el prefijo oficial de Perú (`51`) y abre WhatsApp con el desglose de almuerzos escolares (si hay deuda pendiente o indicando cuenta al día si no la hay).
   4. Suite automatizada en `tests/fiado-pedidos-limpieza-whatsapp.test.mjs` con 163 tests totales del sistema aprobados en verde (`0` fallos).
 - Fuente: instrucción explícita del usuario en esta conversación.
+### D-024 — 2026-10-19 — Edición de Datos de Perfil y Supresión de Títulos Duplicados en Pantallas de Padres
+- Decisión: A petición explícita del usuario ("se debe poder editar los datos en el perfil, y como en cada pantalla de la interfaz delpadre ya aparece en el navbar el titulo que ya no aparezca el titulo en la pantalla porque ya aparece en el navbar."):
+  1. Edición de Datos de Apoderado ([`src/app/perfil/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/perfil/page.tsx) y [`src/lib/authContext.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/lib/authContext.tsx)):
+     - Se integró la función `actualizarPerfil(datos)` en `AuthContext` con persistencia en `perfiles_padres` de Supabase y `localStorage`.
+     - Se agregó un botón de edición (`Pencil`) en la tarjeta principal del apoderado en `/perfil`.
+     - Se diseñó un modal interactivo con validación de Nombres y Apellidos, Teléfono WhatsApp y DNI, con feedback visual de guardado y banner de confirmación exitosa.
+  2. Supresión de Títulos Duplicados en Pantallas de Padres:
+     - Dado que la barra de navegación superior (`HeaderNav.tsx`) ya muestra dinámicamente el título e icono de la pantalla ("Pedir Menú", "Carta Semanal", "Mis Pedidos", "Mis Hijos", "Mi Perfil"), se retiraron los encabezados visibles duplicados (`<h1>` convertidos a accesibles `sr-only`) en:
+       - Inicio Visitante ([`src/app/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/page.tsx)): `Carta Semanal` -> `sr-only`.
+       - Inicio Padres ([`src/app/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/page.tsx)): `Menú Escolar` -> `sr-only`.
+       - Historial ([`src/app/pedidos/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/pedidos/page.tsx)): `Historial de Pedidos` -> `sr-only`.
+       - Gestión de Estudiantes ([`src/app/hijos/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/hijos/page.tsx)): `Mis Hijos` -> `sr-only`.
+       - Cuenta ([`src/app/perfil/page.tsx`](file:///Users/reyesrios/Dev/gestion-almuerzos/src/app/perfil/page.tsx)): `Mi Perfil` -> `sr-only`.
+  3. Suite automatizada en `tests/perfil-edicion-titulos-limpios.test.mjs` con 166 tests totales del sistema aprobados en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
 - Impacto:
-  1. `src/app/pedidos/page.tsx`
-  2. `src/app/fiado/page.tsx`
-  3. `tests/fiado-pedidos-limpieza-whatsapp.test.mjs` (nuevo)
+  1. `src/lib/authContext.tsx`
+  2. `src/app/perfil/page.tsx`
+  3. `src/app/page.tsx`
+  4. `src/app/pedidos/page.tsx`
+  5. `src/app/hijos/page.tsx`
+  6. `tests/perfil-edicion-titulos-limpios.test.mjs` (nuevo)
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
