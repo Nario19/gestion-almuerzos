@@ -304,6 +304,11 @@ function PedidoContent() {
       setErrorValidacion('Selecciona un segundo plato.');
       return;
     }
+    if ((metodoPago === 'Yape' || metodoPago === 'Plin') && !comprimidoInfo && !cloudinaryUrl) {
+      setErrorValidacion(`Para pagos con ${metodoPago} es obligatorio adjuntar la captura del comprobante de pago.`);
+      setMostrarModalConfirmacionPedido(false);
+      return;
+    }
     if (cargandoPlatos) {
       setErrorValidacion('Cargando la carta del colegio. Por favor espera un momento.');
       return;
@@ -391,6 +396,12 @@ function PedidoContent() {
       return;
     }
 
+    // Validación estricta de comprobante para pagos digitales (Yape o Plin)
+    if ((metodoPago === 'Yape' || metodoPago === 'Plin') && !comprimidoInfo && !cloudinaryUrl) {
+      setErrorValidacion(`Para pagos con ${metodoPago} es obligatorio adjuntar la captura del comprobante de pago.`);
+      return;
+    }
+
     // Si el usuario es un padre y no tiene hijos registrados, solicitar que agregue uno mediante el modal
     if (usuario && usuario.rol !== 'ADMIN' && (!usuario.hijos || usuario.hijos.length === 0)) {
       setMostrarModalAgregarHijo(true);
@@ -455,6 +466,12 @@ function PedidoContent() {
       seleccionarHijo(hijoCreado);
       setMostrarModalAgregarHijo(false);
       setHijoParaConfirmar(hijoCreado);
+
+      if ((metodoPago === 'Yape' || metodoPago === 'Plin') && !comprimidoInfo && !cloudinaryUrl) {
+        setErrorValidacion(`Para pagos con ${metodoPago} es obligatorio adjuntar la captura del comprobante de pago.`);
+        return;
+      }
+
       setMostrarModalConfirmacionPedido(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -1221,15 +1238,24 @@ function PedidoContent() {
           )}
 
           {metodoPago !== 'Pagar luego' && (
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1 flex items-center gap-1">
-                <FileImage className="w-3.5 h-3.5 text-slate-400" /> Captura de comprobante (Opcional)
-              </label>
+            <div className="p-3.5 bg-orange-50/60 rounded-2xl border border-orange-200/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <FileImage className="w-4 h-4 text-orange-600" /> Captura de comprobante *
+                </label>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-100 text-orange-800 border border-orange-200">
+                  Obligatorio ({metodoPago})
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600">
+                Adjunta la captura de tu transferencia de {metodoPago} por S/ 12.00 para poder confirmar tu pedido.
+              </p>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
+                className="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white hover:file:bg-orange-600 cursor-pointer"
+                required
               />
               {subiendoComprobante && (
                 <p className="text-xs text-orange-600 mt-1 animate-pulse">
@@ -1600,16 +1626,26 @@ function PedidoContent() {
                   </div>
                 </div>
               ) : metodoPago !== 'Pagar luego' ? (
-                <div className="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="bg-rose-50 p-3.5 rounded-2xl border border-rose-200 text-xs text-rose-900 flex items-start gap-2.5">
+                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold block">Sin captura de comprobante adjunta</span>
-                    <span className="text-amber-800">
-                      Has elegido {metodoPago}. Si no tienes la captura a mano, podrás enviarla luego por WhatsApp o la administración validará el abono.
+                    <span className="font-bold block text-rose-800">Falta adjuntar el comprobante</span>
+                    <span className="text-rose-700">
+                      Para pagos con {metodoPago} es obligatorio adjuntar la captura del comprobante de transferencia para validar tu orden.
                     </span>
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block text-emerald-900">Modalidad: Pagar luego</span>
+                    <span className="text-emerald-800">
+                      No se requiere comprobante de pago en este momento. El pedido se registrará y podrás coordinar el pago con la administración escolar.
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Botones de Acción */}
@@ -1626,8 +1662,8 @@ function PedidoContent() {
               <button
                 type="button"
                 onClick={handleConfirmarPedidoFinal}
-                disabled={isPending}
-                className="w-full sm:w-auto px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-black text-white bg-orange-500 hover:bg-orange-600 active:scale-95 rounded-2xl shadow-md shadow-orange-500/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+                disabled={isPending || ((metodoPago === 'Yape' || metodoPago === 'Plin') && !cloudinaryUrl && !comprimidoInfo)}
+                className="w-full sm:w-auto px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-black text-white bg-orange-500 hover:bg-orange-600 active:scale-95 rounded-2xl shadow-md shadow-orange-500/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? (
                   <span className="animate-pulse">Registrando pedido...</span>

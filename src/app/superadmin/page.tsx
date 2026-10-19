@@ -37,7 +37,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { dataService, CONFIG_PAGOS_DEFAULT, HORA_LIMITE_DEFAULT } from '@/lib/dataService';
+import { dataService, CONFIG_PAGOS_DEFAULT, HORA_LIMITE_DEFAULT, obtenerIdentificadorColegio } from '@/lib/dataService';
 import { formatearHoraLimiteLegible } from '@/lib/dateUtils';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
@@ -60,6 +60,7 @@ export default function SuperAdminPage() {
 
   // Campos del Formulario Colegio
   const [nombreColegio, setNombreColegio] = useState('');
+  const [siglaColegio, setSiglaColegio] = useState('');
   const [sedeColegio, setSedeColegio] = useState('');
   const [activoColegio, setActivoColegio] = useState(true);
 
@@ -299,6 +300,7 @@ export default function SuperAdminPage() {
   const abrirCrearColegio = () => {
     setColegioEnEdicion(null);
     setNombreColegio('');
+    setSiglaColegio('');
     setSedeColegio('');
     setActivoColegio(true);
     setAdminNombre('');
@@ -313,6 +315,7 @@ export default function SuperAdminPage() {
   const abrirEditarColegio = (col: ColegioDetallado) => {
     setColegioEnEdicion(col);
     setNombreColegio(col.nombre);
+    setSiglaColegio(col.sigla || '');
     setSedeColegio(col.sede || '');
     setActivoColegio(col.activo);
 
@@ -378,6 +381,7 @@ export default function SuperAdminPage() {
           colegioEnEdicion.id,
           {
             nombre: nombreColegio.trim(),
+            sigla: siglaColegio.trim().toUpperCase() || undefined,
             sede: sedeColegio.trim(),
             activo: activoColegio,
           },
@@ -393,6 +397,7 @@ export default function SuperAdminPage() {
         const res = await dataService.crearColegioConAdmin(
           {
             nombre: nombreColegio.trim(),
+            sigla: siglaColegio.trim().toUpperCase() || undefined,
             sede: sedeColegio.trim(),
             activo: activoColegio,
           },
@@ -891,7 +896,7 @@ export default function SuperAdminPage() {
                       <Building2 className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => abrirModalEstudiantes(col)}
@@ -900,6 +905,12 @@ export default function SuperAdminPage() {
                         >
                           {col.nombre}
                         </button>
+                        <span
+                          className="px-2 py-0.5 rounded-lg text-[10px] font-black font-mono bg-purple-100 text-purple-800 border border-purple-200"
+                          title="Sigla escolar para códigos de pedidos (ej. #CLA-001)"
+                        >
+                          #{col.sigla || obtenerIdentificadorColegio(col.nombre)}
+                        </span>
                         {col.activo ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
                             Activo
@@ -1094,6 +1105,28 @@ export default function SuperAdminPage() {
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
                     required
                   />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Sigla del Colegio (Identificador)
+                    </label>
+                    <span className="text-[10px] text-purple-600 font-mono font-bold">
+                      Ej. CLA, SRO, AGU (2 a 5 letras)
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Ej. CLA"
+                    maxLength={5}
+                    value={siglaColegio}
+                    onChange={(e) => setSiglaColegio(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5))}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 font-mono uppercase font-bold tracking-wider focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Se usará en los códigos de pedidos y almuerzos de este colegio (ej. #{siglaColegio || 'COL'}-001).
+                  </p>
                 </div>
 
                 <div>

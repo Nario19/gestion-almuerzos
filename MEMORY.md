@@ -598,7 +598,26 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   5. `src/lib/dataService.ts` (`obtenerHoraLimite`, `guardarHoraLimite`, `HORA_LIMITE_DEFAULT`)
   6. `src/app/superadmin/page.tsx`
   7. `src/app/padres/page.tsx`
-  8. Nueva suite de pruebas `tests/login-ver-menu-hora-limite-superadmin.test.mjs` (195 pruebas totales aprobadas en verde).
+### D-033 — 2026-10-19 — Sigla del Colegio Configurable para Códigos de Pedidos y Validación Obligatoria de Comprobante para Yape/Plin
+- Decisión: A solicitud explícita del usuario:
+  1. Campo de Sigla del Colegio en Superadmin:
+     - En `/superadmin`: se agregó el campo "Sigla del Colegio (Identificador)" (2 a 5 caracteres mayúsculos alfanuméricos, ej. `CLA`, `SRO`, `AGU`, `COL`) tanto en la creación como en la edición de instituciones educativas.
+     - Cada colegio muestra su sigla como badge identificador (`#CLA`, `#CSR`, etc.) en su tarjeta de administración.
+     - Persistencia de `sigla` en la tabla `colegios` (vía migración tolerante), en el objeto de configuración global de `menus_dia` (`SABADO`), en `localStorage` y en memoria.
+     - Se eliminaron los 5 `if` con nombres quemados de colegios (`claretiano`, `san agustin`, `santa rosa`, `la salle`, `inmaculada`) dentro de `obtenerIdentificadorColegio` en `src/lib/dataService.ts`. La función ahora consulta prioritariamente la sigla configurada del colegio (`col.sigla` o mapa de siglas) y, en su defecto, aplica el algoritmo dinámico agnóstico de acrónimos sin depender de cadenas fijas.
+     - Los códigos de pedidos se generan correlativamente con el prefijo oficial de la sigla configurada (`#SIGLA-001`, `#SIGLA-002`, etc.).
+  2. Validación Estricta de Comprobante de Pago para Yape y Plin:
+     - Si el método de pago seleccionado es `Yape` o `Plin`, es estrictamente obligatorio adjuntar la captura del comprobante de transferencia bancaria/billetera digital (`comprimidoInfo` / `cloudinaryUrl`).
+     - Si el padre intenta confirmar sin haber adjuntado la imagen, el sistema bloquea el avance, muestra un mensaje descriptivo de validación en rojo y deshabilita la confirmación final.
+     - Si el método de pago es `Pagar luego`, el sistema permite confirmar el pedido inmediatamente sin requerir comprobante previo, indicando que el cobro se coordinará mediante el módulo de fiados de la administración escolar.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/types/index.ts` (`sigla?: string` en `ColegioDetallado`)
+  2. `src/lib/dataService.ts` (`obtenerIdentificadorColegio` dinámico, `crearColegioConAdmin`, `actualizarColegioConAdmin`, `eliminarColegioCompleto`, `ConfigMenusDiaObj`)
+  3. `src/app/superadmin/page.tsx` (campo de sigla en modal y badge en tarjetas)
+  4. `src/app/padres/page.tsx` (bloqueo estricto sin comprobante para Yape/Plin y permiso para Pagar luego)
+  5. `supabase/migrations/202610190001_agregar_sigla_colegios.sql`
+  6. Nueva suite de pruebas `tests/sigla-colegio-y-comprobante-obligatorio.test.mjs` (202 pruebas locales totales aprobadas en verde).
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 

@@ -64,24 +64,45 @@ export function obtenerDiaActualSemana(): DiaSemana {
   return obtenerDiaActualSemanaPeru();
 }
 
+const siglasPorColegioMemoria: Record<string, string> = {
+  'Colegio Claretiano': 'CLA',
+  'Colegio San Agustín': 'CSA',
+  'Colegio Santa Rosa': 'CSR',
+  'Colegio La Salle': 'CLS',
+  'Inmaculada Concepción': 'INC',
+};
+
 /**
- * Retorna el identificador / sigla estándar de 3 a 4 letras de un colegio
- * para su uso en códigos de pedidos y numeración independiente de almuerzos.
+ * Retorna el identificador / sigla estándar de un colegio para su uso en códigos
+ * de pedidos y numeración independiente de almuerzos (ej. #CLA-001, #CSR-001, etc.).
+ * Prioriza la sigla personalizada configurada para el colegio en Superadmin; si no
+ * tiene una sigla explícita, genera una sigla representativa de forma automática.
  */
 export function obtenerIdentificadorColegio(colegioNombre?: string): string {
   if (!colegioNombre) return 'COL';
-  const normalizado = colegioNombre.trim().toLowerCase();
-
-  // Mapeos canónicos explícitos para colegios registrados
-  if (normalizado.includes('claretiano')) return 'CLA';
-  if (normalizado.includes('san agustin') || normalizado.includes('san agustín')) return 'CSA';
-  if (normalizado.includes('santa rosa')) return 'CSR';
-  if (normalizado.includes('la salle')) return 'CLS';
-  if (normalizado.includes('inmaculada')) return 'INC';
-
-  // Si el colegio viene con separador de sede o admin (ej: "Colegio Claretiano | 10000001")
+  const normalizado = colegioNombre.trim();
   const soloNombre = normalizado.split('|')[0].trim();
 
+  // 1. Consultar si tiene sigla explícita registrada en el diccionario dinámico de siglas
+  if (siglasPorColegioMemoria[normalizado]) {
+    return siglasPorColegioMemoria[normalizado].toUpperCase();
+  }
+  if (siglasPorColegioMemoria[soloNombre]) {
+    return siglasPorColegioMemoria[soloNombre].toUpperCase();
+  }
+
+  // 2. Buscar en la lista de colegios detallados si tiene sigla explícita
+  const colDet = colegiosDetalladosMemoria.find(
+    (c) =>
+      c.nombre.trim().toLowerCase() === normalizado.toLowerCase() ||
+      c.nombre.trim().toLowerCase() === soloNombre.toLowerCase() ||
+      c.id === normalizado
+  );
+  if (colDet?.sigla && colDet.sigla.trim()) {
+    return colDet.sigla.trim().toUpperCase();
+  }
+
+  // 3. Algoritmo automático limpio agnóstico (sin nombres quemados)
   // Reemplazar signos de puntuación por espacios para tokenizar limpiamente
   const sinPuntuacion = soloNombre.replace(/[.,\-_/]/g, ' ');
 
@@ -165,6 +186,7 @@ interface ConfigMenusDiaObj {
   adminsColegio?: Record<string, AdminColegioInfo>;
   gradosPorColegio?: Record<string, string[]>;
   observacionesPorColegio?: Record<string, string[]>;
+  siglasColegio?: Record<string, string>;
   configuracionPagos?: ConfiguracionPagos;
   filtrosGradosPorColegio?: Record<string, FiltroGrados[]>;
   horaLimitePedidos?: string;
@@ -212,7 +234,15 @@ if (typeof window !== 'undefined') {
     const cd = localStorage.getItem('config_colegios_detallados');
     if (cd) {
       const parsed = JSON.parse(cd);
-      if (Array.isArray(parsed) && parsed.length > 0) colegiosDetalladosMemoria = parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        colegiosDetalladosMemoria = parsed;
+        parsed.forEach((col: ColegioDetallado) => {
+          if (col.sigla && col.sigla.trim()) {
+            siglasPorColegioMemoria[col.nombre] = col.sigla.trim().toUpperCase();
+            siglasPorColegioMemoria[col.id] = col.sigla.trim().toUpperCase();
+          }
+        });
+      }
     }
     const g = localStorage.getItem('config_grados');
     if (g) {
@@ -1283,6 +1313,13 @@ export const dataService = {
                 }
               });
             }
+            if (parsed.siglasColegio) {
+              Object.entries(parsed.siglasColegio).forEach(([k, v]) => {
+                if (typeof v === 'string' && v.trim()) {
+                  siglasPorColegioMemoria[k] = v.trim().toUpperCase();
+                }
+              });
+            }
           } catch (_) {}
         }
 
@@ -1361,9 +1398,14 @@ export const dataService = {
           const totalEstudiantes = conteoEstudiantes[c.id] || 0;
           const totalPedidos = pedidosPorColegio[c.id] || 0;
 
-          const cRaw = c as { grados?: string[]; observaciones?: string[] };
+          const cRaw = c as { grados?: string[]; observaciones?: string[]; sigla?: string };
           const colGrados = Array.isArray(cRaw.grados) ? cRaw.grados : undefined;
           const colObs = Array.isArray(cRaw.observaciones) ? cRaw.observaciones : undefined;
+          const colSigla = (cRaw.sigla && cRaw.sigla.trim()) || siglasPorColegioMemoria[c.nombre] || siglasPorColegioMemoria[c.id] || undefined;
+          if (colSigla) {
+            siglasPorColegioMemoria[c.nombre] = colSigla.toUpperCase();
+            siglasPorColegioMemoria[c.id] = colSigla.toUpperCase();
+          }
           if (colGrados) {
             gradosPorColegioMemoria[c.nombre] = [...colGrados];
             gradosPorColegioMemoria[c.id] = [...colGrados];
@@ -1376,6 +1418,7 @@ export const dataService = {
           return {
             id: c.id,
             nombre: c.nombre,
+            sigla: colSigla ? colSigla.toUpperCase() : undefined,
             sede: sedeLimpia,
             activo: c.activo !== false,
             admin: adminAsignado,
@@ -1480,7 +1523,7 @@ export const dataService = {
   },
 
   async crearColegioConAdmin(
-    colegio: { nombre: string; sede?: string; activo?: boolean },
+    colegio: { nombre: string; sigla?: string; sede?: string; activo?: boolean },
     admin: AdminColegioInfo
   ): Promise<{ ok: boolean; error?: string; colegio?: ColegioDetallado }> {
     const nombreLimpio = colegio.nombre.trim();
@@ -1491,6 +1534,7 @@ export const dataService = {
       return { ok: false, error: 'Debe ingresar el nombre, usuario/DNI y contraseña del administrador.' };
     }
 
+    const siglaLimpia = (colegio.sigla || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5) || undefined;
     const dniAdmin = admin.dni.trim();
     const emailAdmin = admin.email?.trim() || `${dniAdmin.toLowerCase()}@almuerzos.com`;
     const telAdmin = admin.telefono?.trim() || '999999999';
@@ -1527,20 +1571,34 @@ export const dataService = {
         }
         if (usuarioData?.id) adminId = usuarioData.id;
 
-        // 2. Insertar Colegio en tabla colegios
-        const { data: colData, error: errCol } = await supabase
+        // 2. Insertar Colegio en tabla colegios (con fallback tolerante si columna sigla no existe)
+        const colPayload: Record<string, unknown> = {
+          nombre: nombreLimpio,
+          sede: sedeConAdmin,
+          activo: colegio.activo !== false,
+          grados: GRADOS_DEFAULT,
+          observaciones: OBSERVACIONES_DEFAULT,
+        };
+        if (siglaLimpia) {
+          colPayload.sigla = siglaLimpia;
+        }
+
+        let { data: colData, error: errCol } = await supabase
           .from('colegios')
-          .insert([
-            {
-              nombre: nombreLimpio,
-              sede: sedeConAdmin,
-              activo: colegio.activo !== false,
-              grados: GRADOS_DEFAULT,
-              observaciones: OBSERVACIONES_DEFAULT,
-            },
-          ])
+          .insert([colPayload])
           .select()
           .single();
+
+        if (errCol && String(errCol.message || '').includes('sigla')) {
+          delete colPayload.sigla;
+          const retry = await supabase
+            .from('colegios')
+            .insert([colPayload])
+            .select()
+            .single();
+          colData = retry.data;
+          errCol = retry.error;
+        }
 
         if (errCol) {
           console.error('Error insertando colegio en Supabase:', errCol);
@@ -1574,6 +1632,10 @@ export const dataService = {
         cfgObj.gradosPorColegio[nombreLimpio] = [...GRADOS_DEFAULT];
         if (!cfgObj.observacionesPorColegio) cfgObj.observacionesPorColegio = {};
         cfgObj.observacionesPorColegio[nombreLimpio] = [...OBSERVACIONES_DEFAULT];
+        if (!cfgObj.siglasColegio) cfgObj.siglasColegio = {};
+        if (siglaLimpia) {
+          cfgObj.siglasColegio[nombreLimpio] = siglaLimpia;
+        }
 
         await supabase
           .from('menus_dia')
@@ -1589,10 +1651,15 @@ export const dataService = {
     gradosPorColegioMemoria[nuevoId] = [...GRADOS_DEFAULT];
     observacionesPorColegioMemoria[nombreLimpio] = [...OBSERVACIONES_DEFAULT];
     observacionesPorColegioMemoria[nuevoId] = [...OBSERVACIONES_DEFAULT];
+    if (siglaLimpia) {
+      siglasPorColegioMemoria[nombreLimpio] = siglaLimpia;
+      siglasPorColegioMemoria[nuevoId] = siglaLimpia;
+    }
 
     const nuevoColegioDetallado: ColegioDetallado = {
       id: nuevoId,
       nombre: nombreLimpio,
+      sigla: siglaLimpia,
       sede: sedeBase,
       activo: colegio.activo !== false,
       admin: {
@@ -1624,12 +1691,13 @@ export const dataService = {
 
   async actualizarColegioConAdmin(
     colegioId: string,
-    colegio: { nombre: string; sede?: string; activo?: boolean },
+    colegio: { nombre: string; sigla?: string; sede?: string; activo?: boolean },
     admin?: AdminColegioInfo
   ): Promise<{ ok: boolean; error?: string }> {
     const nombreLimpio = colegio.nombre.trim();
     if (!nombreLimpio) return { ok: false, error: 'El nombre es obligatorio.' };
 
+    const siglaLimpia = (colegio.sigla || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5) || undefined;
     const colegioOriginal = colegiosDetalladosMemoria.find((c) => c.id === colegioId);
     const nombreAntiguo = colegioOriginal?.nombre || '';
     const huboCambioNombre = Boolean(nombreAntiguo && nombreAntiguo.toLowerCase() !== nombreLimpio.toLowerCase());
@@ -1642,15 +1710,29 @@ export const dataService = {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        // 1. Actualizar datos del colegio
-        const { error: errCol } = await supabase
+        // 1. Actualizar datos del colegio (con fallback si columna sigla no existe)
+        const updatePayload: Record<string, unknown> = {
+          nombre: nombreLimpio,
+          sede: sedeConAdmin,
+          activo: colegio.activo !== false,
+        };
+        if (siglaLimpia !== undefined) {
+          updatePayload.sigla = siglaLimpia;
+        }
+
+        let { error: errCol } = await supabase
           .from('colegios')
-          .update({
-            nombre: nombreLimpio,
-            sede: sedeConAdmin,
-            activo: colegio.activo !== false,
-          })
+          .update(updatePayload)
           .eq('id', colegioId);
+
+        if (errCol && String(errCol.message || '').includes('sigla')) {
+          delete updatePayload.sigla;
+          const retry = await supabase
+            .from('colegios')
+            .update(updatePayload)
+            .eq('id', colegioId);
+          errCol = retry.error;
+        }
 
         if (errCol) throw errCol;
 
@@ -1683,10 +1765,18 @@ export const dataService = {
         }
         if (!cfgObj.adminsColegio) cfgObj.adminsColegio = {};
 
-        // Si se renombró el colegio, trasladar la entrada en adminsColegio
+        // Si se renombró el colegio, trasladar la entrada en adminsColegio y siglasColegio
         if (huboCambioNombre && cfgObj.adminsColegio[nombreAntiguo]) {
           cfgObj.adminsColegio[nombreLimpio] = cfgObj.adminsColegio[nombreAntiguo];
           delete cfgObj.adminsColegio[nombreAntiguo];
+        }
+
+        if (!cfgObj.siglasColegio) cfgObj.siglasColegio = {};
+        if (huboCambioNombre && cfgObj.siglasColegio[nombreAntiguo]) {
+          cfgObj.siglasColegio[nombreLimpio] = siglaLimpia || cfgObj.siglasColegio[nombreAntiguo];
+          delete cfgObj.siglasColegio[nombreAntiguo];
+        } else if (siglaLimpia) {
+          cfgObj.siglasColegio[nombreLimpio] = siglaLimpia;
         }
 
         // 4. Si se proporcionó información de admin, actualizar en perfiles_padres y en config
@@ -1738,9 +1828,14 @@ export const dataService = {
 
     // Actualizar memoria
     if (huboCambioNombre) {
+      if (nombreAntiguo) delete siglasPorColegioMemoria[nombreAntiguo];
       pedidosMemoria.forEach((p) => {
         if (p.colegioNombre === nombreAntiguo) p.colegioNombre = nombreLimpio;
       });
+    }
+    if (siglaLimpia) {
+      siglasPorColegioMemoria[nombreLimpio] = siglaLimpia;
+      siglasPorColegioMemoria[colegioId] = siglaLimpia;
     }
 
     const idx = colegiosDetalladosMemoria.findIndex((c) => c.id === colegioId || c.nombre === nombreLimpio);
@@ -1748,6 +1843,7 @@ export const dataService = {
       colegiosDetalladosMemoria[idx] = {
         ...colegiosDetalladosMemoria[idx],
         nombre: nombreLimpio,
+        sigla: siglaLimpia !== undefined ? siglaLimpia : colegiosDetalladosMemoria[idx].sigla,
         sede: sedeBase,
         activo: colegio.activo !== false,
         admin: admin ? { ...colegiosDetalladosMemoria[idx].admin, ...admin } : colegiosDetalladosMemoria[idx].admin,
@@ -1777,14 +1873,17 @@ export const dataService = {
         if (configRow && configRow.mensaje_aviso) {
           try {
             const cfgObj = JSON.parse(configRow.mensaje_aviso);
+            if (cfgObj.siglasColegio && cfgObj.siglasColegio[nombreColegio]) {
+              delete cfgObj.siglasColegio[nombreColegio];
+            }
             if (cfgObj.adminsColegio && cfgObj.adminsColegio[nombreColegio]) {
               adminDniAEliminar = cfgObj.adminsColegio[nombreColegio].dni || '';
               delete cfgObj.adminsColegio[nombreColegio];
-              await supabase
-                .from('menus_dia')
-                .update({ mensaje_aviso: JSON.stringify(cfgObj) })
-                .eq('dia_semana', 'SABADO');
             }
+            await supabase
+              .from('menus_dia')
+              .update({ mensaje_aviso: JSON.stringify(cfgObj) })
+              .eq('dia_semana', 'SABADO');
           } catch (_) {}
         }
 
@@ -1808,6 +1907,9 @@ export const dataService = {
         return { ok: false, error: errorMsg };
       }
     }
+
+    delete siglasPorColegioMemoria[nombreColegio];
+    delete siglasPorColegioMemoria[colegioId];
 
     colegiosDetalladosMemoria = colegiosDetalladosMemoria.filter(
       (c) => c.id !== colegioId && c.nombre.toLowerCase() !== nombreColegio.toLowerCase()

@@ -45,6 +45,7 @@ export interface AdminColegioInfo {
 export interface ColegioDetallado {
   id: string;
   nombre: string;
+  sigla?: string;
   sede?: string;
   activo: boolean;
   admin?: AdminColegioInfo | null;
