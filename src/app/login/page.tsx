@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   UtensilsCrossed,
@@ -19,13 +19,21 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const modoParam = searchParams.get('modo');
   const { login, registro, usuario, esAdmin, esSuperAdmin, cargando: cargandoAuth, logout } = useAuth();
 
-  const [esRegistro, setEsRegistro] = useState(false);
+  const [esRegistro, setEsRegistro] = useState(modoParam === 'registro');
   const [cargando, setCargando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (modoParam === 'registro') {
+      setEsRegistro(true);
+    }
+  }, [modoParam]);
 
   // Estados para mostrar u ocultar contraseña
   const [verPasswordLogin, setVerPasswordLogin] = useState(false);
@@ -437,5 +445,20 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-md mx-auto px-4 py-20 text-center">
+          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm font-semibold text-slate-600">Cargando...</p>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

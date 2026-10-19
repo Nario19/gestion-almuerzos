@@ -15,9 +15,9 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { usuario, esAdmin, esSuperAdmin } = useAuth();
 
-  // El navbar inferior móvil es exclusivo para la experiencia de los padres y usuarios generales
-  // Los administradores y superadmin tienen su propia barra de herramientas de gestión arriba
-  if (esAdmin || esSuperAdmin) {
+  // El navbar inferior móvil tipo app es EXCLUSIVO para cuando el usuario ha iniciado sesión como PADRE
+  // No debe aparecer si no está autenticado (visitantes) ni para administradores
+  if (!usuario || esAdmin || esSuperAdmin || usuario.rol !== 'PADRE') {
     return null;
   }
 

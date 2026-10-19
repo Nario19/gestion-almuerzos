@@ -46,8 +46,8 @@ test('Verificación de Navbar Móvil y Nomenclatura de Hijos para Padres', async
     assert.ok(fs.existsSync(bottomNavPath), 'src/components/BottomNav.tsx debe existir');
     const content = fs.readFileSync(bottomNavPath, 'utf8');
 
-    // Debe ocultarse para administradores
-    assert.match(content, /if\s*\(\s*esAdmin\s*\|\|\s*esSuperAdmin\s*\)\s*\{?\s*return\s*null;?\s*\}?/, 'Debe ocultarse para administradores');
+    // Debe ser exclusivo para padres logueados: se oculta si no hay usuario, si es admin/superadmin, o si no es rol PADRE
+    assert.match(content, /if\s*\(\s*!usuario\s*\|\|\s*esAdmin\s*\|\|\s*esSuperAdmin\s*\|\|\s*usuario\.rol\s*!==\s*['"]PADRE['"]\s*\)\s*\{?\s*return\s*null;?\s*\}?/, 'Debe ocultarse para visitantes no logueados, administradores y no-padres');
 
     // Destinos solicitados
     assert.match(content, /href="\/pedidos"/, 'Debe incluir enlace a /pedidos');
@@ -87,4 +87,28 @@ test('Verificación de Navbar Móvil y Nomenclatura de Hijos para Padres', async
     assert.match(content, /<BottomNav\s*\/>/, 'Debe renderizar <BottomNav />');
     assert.match(content, /pb-24|pb-20/, 'main debe contar con padding bottom para evitar solapamiento con el nav fijo');
   });
+
+  await t.test('6. Visitantes: HeaderNav con Iniciar Sesión y Registrarme, LoginPage maneja modo=registro, y Carta Semanal con filtro de colegio', () => {
+    // 1. HeaderNav
+    const headerNavPath = path.join(projectRoot, 'src/components/HeaderNav.tsx');
+    const headerContent = fs.readFileSync(headerNavPath, 'utf8');
+    assert.match(headerContent, /href="\/login"/, 'HeaderNav debe tener enlace a /login');
+    assert.match(headerContent, /Iniciar Sesión/, 'HeaderNav debe tener texto Iniciar Sesión');
+    assert.match(headerContent, /href="\/login\?modo=registro"/, 'HeaderNav debe tener enlace a /login?modo=registro');
+    assert.match(headerContent, /Registrarme/, 'HeaderNav debe tener botón Registrarme');
+
+    // 2. LoginPage
+    const loginPagePath = path.join(projectRoot, 'src/app/login/page.tsx');
+    const loginContent = fs.readFileSync(loginPagePath, 'utf8');
+    assert.match(loginContent, /useSearchParams\(\)/, 'LoginPage debe utilizar useSearchParams()');
+    assert.match(loginContent, /modoParam === ['"]registro['"]/, 'LoginPage debe activar modo registro cuando el query param es registro');
+    assert.match(loginContent, /<Suspense/, 'LoginPage debe envolver el contenido en Suspense para Next.js App Router');
+
+    // 3. Carta Semanal para no logueados en Home
+    const homePagePath = path.join(projectRoot, 'src/app/page.tsx');
+    const homeContent = fs.readFileSync(homePagePath, 'utf8');
+    assert.match(homeContent, /FILTRO POR COLEGIO PARA VISITANTES/, 'Home debe contener sección de filtro por colegio para visitantes');
+    assert.match(homeContent, /value=\{colegio\}\s*onChange=\{\(e\)\s*=>\s*setColegio\(e\.target\.value\)\}/, 'Debe permitir cambiar el colegio seleccionado en la carta semanal');
+  });
 });
+

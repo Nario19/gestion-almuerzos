@@ -256,6 +256,26 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   4. `src/app/page.tsx`
   5. `tests/superadmin-configuracion-pagos-yape-plin.test.mjs` (nuevo)
 
+### D-018 — 2026-10-18 — BottomNav Exclusivo para Padres Logueados, Filtro de Colegio en Carta Pública y Botones Iniciar Sesión/Registrarme
+- Decisión: A petición explícita del usuario ("[Pedidos](https://gestion-almuerzos-six.vercel.app/pedidos)[Hijos](https://gestion-almuerzos-six.vercel.app/hijos)Pedir Menú [Perfil](https://gestion-almuerzos-six.vercel.app/perfil) esta interfaz como de app movil solo debe aparecer cuando entré como padre. sino estoy logueado solo debe aparecer la carta semanal y debo poder filtrarlo por colegio y en el navbar superior el boton de iniciar sesion y de registrarme"):
+  1. BottomNav Condicional y Exclusivo:
+     - `BottomNav.tsx` retorna estrictamente `null` si `!usuario`, si `esAdmin` o `esSuperAdmin`, o si `usuario.rol !== 'PADRE'`. Los visitantes no autenticados y los roles administrativos no ven la barra inferior de app móvil.
+  2. Vista Pública de Carta Semanal con Filtro de Colegio:
+     - En `src/app/page.tsx`, cuando el usuario no está logueado (`if (!usuario)`), se presenta la Carta Semanal enriquecida con un selector interactivo de sede (`<Building2 />` + `<select>`) para filtrar los platos del colegio elegido de forma reactiva.
+  3. Header Superior para Visitantes con Iniciar Sesión y Registrarme:
+     - En `HeaderNav.tsx`, para usuarios no autenticados, se muestran dos accesos diferenciados:
+       - Botón "Iniciar Sesión" (hacia `/login`, con estilo sobrio `bg-slate-900`).
+       - Botón "Registrarme" (hacia `/login?modo=registro`, con botón llamativo `bg-orange-500` e icono `UserPlus`).
+     - En `src/app/login/page.tsx`, se implementó detección de query parameter `modo=registro` vía `useSearchParams()` dentro de un boundary de `<Suspense>`, activando inmediatamente el formulario de registro.
+  4. Suite automatizada en `tests/mobile-parent-navbar-hijos.test.mjs` con 143 tests totales del sistema aprobados en verde (`0` fallos) y compilación limpia en Next.js.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/components/BottomNav.tsx`
+  2. `src/components/HeaderNav.tsx`
+  3. `src/app/login/page.tsx`
+  4. `src/app/page.tsx`
+  5. `tests/mobile-parent-navbar-hijos.test.mjs`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

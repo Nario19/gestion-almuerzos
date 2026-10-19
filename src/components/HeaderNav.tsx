@@ -16,6 +16,7 @@ import {
   BarChart3,
   Building2,
   Receipt,
+  UserPlus,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
@@ -148,13 +149,26 @@ export default function HeaderNav() {
                 </button>
               </div>
             ) : (
-              <Link
-                href="/login"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Ingresar</span>
-              </Link>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                  title="Ingresar a la plataforma"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Iniciar Sesión</span>
+                  <span className="sr-only">Ingresar</span>
+                </Link>
+
+                <Link
+                  href="/login?modo=registro"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                  title="Registrarme en la plataforma"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Registrarme</span>
+                </Link>
+              </div>
             )}
           </div>
         </div>

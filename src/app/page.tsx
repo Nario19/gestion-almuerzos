@@ -712,6 +712,33 @@ function PedidoContent() {
           </div>
         </div>
 
+        {/* FILTRO POR COLEGIO PARA VISITANTES */}
+        <div className="mb-4 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 shrink-0">
+            <Building2 className="w-4 h-4 text-orange-500" />
+            <span>Colegio:</span>
+          </label>
+          <div className="flex-1 sm:max-w-xs">
+            {cargandoColegios ? (
+              <div className="text-xs text-slate-400 py-1.5">Cargando colegios...</div>
+            ) : listaColegios.length === 0 ? (
+              <div className="text-xs text-slate-400 py-1.5">No hay colegios disponibles</div>
+            ) : (
+              <select
+                value={colegio}
+                onChange={(e) => setColegio(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+              >
+                {listaColegios.map((col) => (
+                  <option key={col} value={col}>
+                    {col}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
         {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
         <div className="mb-6">
           <div className="grid grid-cols-5 gap-1.5 bg-slate-200/80 p-1 rounded-2xl">
