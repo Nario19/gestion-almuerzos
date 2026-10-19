@@ -707,6 +707,24 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/components/AccesoRestringido.tsx`
   - `tests/middleware-proteccion-rutas-error.test.mjs` (nuevo)
 
+### D-038 — 2026-10-19 — Reporte de Fiado a Apoderados: Mensaje de WhatsApp Limpio Sin Emojis ni Iconos y Entrega de Comprobante en PDF Detallado
+- Decisión: A solicitud explícita del usuario ("para enviar el reporte de fiado a los padres no solo debe ponerse el mensaje el mensaje esta perfecto no uses iconos ni emojis en el mensaje y debe enviarse el pdf tmb detallado"):
+  1. **Mensaje de WhatsApp 100% Libre de Emojis e Iconos:**
+     - Se eliminaron todos los emojis e iconos del mensaje generado para WhatsApp en el módulo de fiado (`/admin/fiado` y `/superadmin/fiado`): erradicación total de `📄`, `💰`, `💳`, `✅`, `👦`, `✓` y `⏳`.
+     - Se conservó la redacción formal solicitada, utilizando viñetas y formato de texto estándar (`•` y `-`), indicando de manera clara y profesional el estado de deuda, desglose por estudiante, montos pendientes y medios de pago oficiales (Yape/Plin).
+  2. **Generación y Entrega del Comprobante en PDF Detallado:**
+     - Se implementó el módulo `src/lib/pdfComprobanteGenerator.ts` para producir documentos PDF 1.4 binarios auténticos (`application/pdf`) compatibles con el estándar ISO 32000-1 y codificación WinAnsi para caracteres peruanos y tildes, sin librerías externas pesadas.
+     - Incluye membrete oficial de Placeres Culinarios, nombre de la institución educativa, fecha de emisión, datos de familia/estudiantes, tabla detallada de consumos por fecha/hijo/menú/entrega/monto/estado, recuadro de total adeudado y medios de pago oficiales configurados por Superadmin.
+     - Al presionar *"Enviar a WhatsApp"*, el sistema descarga automáticamente el archivo `Comprobante_Deuda_[Padre]_[Fecha].pdf` en el dispositivo del administrador y abre WhatsApp con el mensaje prellenado indicando: `*Adjunto el comprobante y detalle de consumos en PDF:*`, permitiendo adjuntar el documento de inmediato al chat.
+     - Se añadió un botón explícito *"Descargar PDF"* en el modal de reporte familiar para permitir la descarga directa e independiente del archivo PDF en cualquier momento.
+  3. **Suite de Pruebas Automatizadas:**
+     - Se creó la suite `tests/fiado-whatsapp-pdf-sin-emojis.test.mjs` con 5 pruebas unitarias verificando la ausencia total de emojis en el mensaje, la presencia de la descarga en PDF y la validez estructural del binario PDF 1.4 generado.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/lib/pdfComprobanteGenerator.ts` (nuevo)
+  - `src/app/admin/fiado/page.tsx`
+  - `tests/fiado-whatsapp-pdf-sin-emojis.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
