@@ -538,19 +538,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { ok: true, esAdmin, esSuperAdmin: false };
       }
 
-      const u: UsuarioPadre = {
-        id: 'padre-demo',
-        nombreCompleto: 'Padre de Familia',
-        dni: idLimpio,
-        telefono: '999999999',
-        rol: 'PADRE',
-        hijos: [],
-      };
-      setUsuario(u);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
+        try {
+          const cached = localStorage.getItem('sesion_padre_almuerzos');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && (parsed.dni === idLimpio || parsed.email === idLimpio)) {
+              setUsuario(parsed);
+              return { ok: true, esAdmin: false, esSuperAdmin: false };
+            }
+          }
+        } catch (_) {}
       }
-      return { ok: true, esAdmin: false, esSuperAdmin: false };
+
+      return { ok: false, error: 'No se encontró una cuenta con ese DNI o credencial.' };
     }
   };
 

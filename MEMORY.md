@@ -619,6 +619,24 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   5. `supabase/migrations/202610190001_agregar_sigla_colegios.sql`
   6. Nueva suite de pruebas `tests/sigla-colegio-y-comprobante-obligatorio.test.mjs` (202 pruebas locales totales aprobadas en verde).
 
+### D-034 — 2026-10-19 — Erradicación Definitiva de Datos Ficticios / Quemados en Código (Datos 100% Reales y Configurables)
+- Decisión: A solicitud explícita del usuario ("asegurate de que ya no haya datos asi en codigo excepto los seeders en codigo sino todo ya debe ser real en todo el sistema nada de datos inventados todos datos reales"):
+  1. Vaciamiento de Mapeos y Listas por Defecto en `src/lib/dataService.ts`:
+     - `siglasPorColegioMemoria` vaciado a `{}` (se eliminaron los nombres y siglas quemadas de colegios fijos). Las siglas provienen 100% de la base de datos o son calculadas de forma dinámica y agnóstica por el algoritmo de acrónimos en tiempo de ejecución.
+     - `GRADOS_DEFAULT = []`: Los nuevos colegios inician limpios sin grados preestablecidos inventados, requiriendo su configuración explícita por la administración escolar.
+     - `OBSERVACIONES_DEFAULT = []`: Eliminadas las observaciones fijas hardcodeadas; cada colegio gestiona sus propias etiquetas médicas y notas de alergias reales.
+  2. Supresión de Valores de Autocompletado Ficticios en Superadmin (`src/app/superadmin/page.tsx`):
+     - Eliminados los valores por defecto inventados al editar o crear administradores (`Admin Colegio`, `ADM-...`, `colegio123`, `999999999`). Si no hay un administrador asignado, los campos se inicializan vacíos (`''`) para exigir datos reales.
+     - La creación de nuevos administradores exige obligatoriamente la contraseña, sin fallbacks silenciosos a contraseñas ficticias.
+  3. Eliminación de Usuario Simulado en Login Offline (`src/lib/authContext.tsx`):
+     - Erradicada la generación automática de la cuenta demo `padre-demo` (`Padre de Familia`, `999999999`) al fallar la consulta de credenciales. Se valida contra registros reales almacenados localmente o se rechaza con mensaje de error de credenciales no encontradas.
+  4. Los datos sintéticos o de prueba quedan confinados de manera exclusiva y estricta a los scripts de seeders en `scripts/` (ej. `seed-colegios-realistas.mjs`).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  1. `src/lib/dataService.ts`
+  2. `src/app/superadmin/page.tsx`
+  3. `src/lib/authContext.tsx`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

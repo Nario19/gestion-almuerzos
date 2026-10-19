@@ -21,29 +21,9 @@ import { supabase, isSupabaseConfigured } from './supabase';
 
 export const COLEGIOS_DEFAULT: string[] = [];
 
-export const GRADOS_DEFAULT = [
-  '1.° Primaria',
-  '2.° Primaria',
-  '3.° Primaria',
-  '4.° Primaria',
-  '5.° Primaria A',
-  '5.° Primaria B',
-  '6.° Primaria',
-  '1.° Secundaria (7mo)',
-  '2.° Secundaria (8vo)',
-  '3.° Secundaria (9no C)',
-  '3.° Secundaria (9no A)',
-  '4.° Secundaria',
-  '5.° Secundaria',
-];
+export const GRADOS_DEFAULT: string[] = [];
 
-export const OBSERVACIONES_DEFAULT = [
-  'Sin cebolla',
-  'Poca crema',
-  'Sin ensalada',
-  'Presa sin piel',
-  'Solo segundo',
-];
+export const OBSERVACIONES_DEFAULT: string[] = [];
 
 import {
   obtenerFechaHoyPeru,
@@ -64,13 +44,7 @@ export function obtenerDiaActualSemana(): DiaSemana {
   return obtenerDiaActualSemanaPeru();
 }
 
-const siglasPorColegioMemoria: Record<string, string> = {
-  'Colegio Claretiano': 'CLA',
-  'Colegio San Agustín': 'CSA',
-  'Colegio Santa Rosa': 'CSR',
-  'Colegio La Salle': 'CLS',
-  'Inmaculada Concepción': 'INC',
-};
+const siglasPorColegioMemoria: Record<string, string> = {};
 
 /**
  * Retorna el identificador / sigla estándar de un colegio para su uso en códigos

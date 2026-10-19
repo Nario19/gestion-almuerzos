@@ -326,11 +326,11 @@ export default function SuperAdminPage() {
       setAdminTelefono(col.admin.telefono);
       setAdminPassword(col.admin.password || '');
     } else {
-      setAdminNombre(`Admin ${col.nombre.replace(/^COLEGIO\s+/i, '')}`);
-      setAdminDni(`ADM-${col.nombre.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()}`);
-      setAdminEmail(`${col.nombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 10)}@almuerzos.com`);
-      setAdminTelefono('999999999');
-      setAdminPassword('colegio123');
+      setAdminNombre('');
+      setAdminDni('');
+      setAdminEmail('');
+      setAdminTelefono('');
+      setAdminPassword('');
     }
     setVerPassword(false);
     setModalColegioAbierto(true);
@@ -345,11 +345,11 @@ export default function SuperAdminPage() {
       setAdminTelefono(col.admin.telefono);
       setAdminPassword(col.admin.password || '');
     } else {
-      setAdminNombre(`Admin ${col.nombre.replace(/^COLEGIO\s+/i, '')}`);
-      setAdminDni(`ADM-${col.nombre.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()}`);
-      setAdminEmail(`${col.nombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 10)}@almuerzos.com`);
-      setAdminTelefono('999999999');
-      setAdminPassword('colegio123');
+      setAdminNombre('');
+      setAdminDni('');
+      setAdminEmail('');
+      setAdminTelefono('');
+      setAdminPassword('');
     }
     setVerPassword(false);
   };
@@ -371,8 +371,8 @@ export default function SuperAdminPage() {
         nombreCompleto: adminNombre.trim(),
         dni: adminDni.trim(),
         email: adminEmail.trim() || `${adminDni.trim().toLowerCase()}@almuerzos.com`,
-        telefono: adminTelefono.trim() || '999999999',
-        password: adminPassword.trim() || 'colegio123',
+        telefono: adminTelefono.trim(),
+        password: adminPassword.trim() || undefined,
       };
 
       if (colegioEnEdicion) {
