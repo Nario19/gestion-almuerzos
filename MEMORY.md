@@ -896,6 +896,38 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/admin/page.tsx`
   - `tests/menu-imagenes-independientes-entrada-segundo.test.mjs` (5 pruebas nuevas, total de 273 pruebas en la suite).
 
+### D-044 — 2026-10-20 — Imágenes Grandes en Pedir Menú, Soporte para Agregar Opciones Individuales de Platos y Edición Completa en Tarjetas
+
+- Decisión:
+  1. En la interfaz de padres (`/padres`) en "Pedir Menú" y "Ver Menú", las fotografías de los platos deben mostrarse significativamente más grandes y destacadas en lugar de miniaturas pequeñas.
+  2. En el panel de administración (`/admin`), el formulario de menú del día debe permitir registrar opciones de platos de forma individual (por ejemplo, registrar una ensalada sola si la sopa ya fue agregada previamente) sin forzar a rellenar los demás campos del formulario.
+  3. Cada tarjeta de plato en el panel de administración debe contar con un botón de edición (`Pencil`) que permita modificar sus datos (nombre, descripción, categoría, precio, fotografía en Cloudinary y disponibilidad).
+- Fuente: instrucción explícita del usuario: *"en el menu del padre en pedir menu que semuestre mas grande la imagen del plato. y me debe permitir agregar platos porque se escoge entre sopa o ensalada entonces is ya agregue sopa debe permitirime agregar la ensalda sola. porque cuando agrego solo ensalda me pide q rellene los demás campos. entonces debe permititr agregar una sola y debe tener el boton de editar el menu tambien en elcard donde se muestra"*
+- Implementación de Ingeniería:
+  1. `src/lib/dataService.ts`:
+     - Se implementó la función `actualizarPlato(id: string, platoData: Partial<Plato>): Promise<Plato>` con tipado estricto.
+     - Admite la subida automática de nuevas imágenes en Base64 a Cloudinary (`platos/{colegio}/{dia}`).
+     - Actualiza en Supabase asegurando el constraint de base de datos (`ENTRADA`, `SEGUNDO`, `BEBIDA`, `POSTRE`) y preservando los tags de metadatos (`[ColegioId]`, `[Colegio]`, `[TipoOriginal]`).
+     - Notifica a los listeners en tiempo real (`notifyListeners()`).
+  2. `src/app/admin/components/AdminMenuSemanalTab.tsx`:
+     - Se retiró la restricción `required` en los campos `nombreEntradaMenu` y `nombreSegundoMenu`.
+     - Se agregaron etiquetas dinámicas de opcionalidad `(Opcional si solo agregas segundo)` / `(Opcional si solo agregas sopa/ensalada)`.
+     - El botón de envío se adapta dinámicamente: *"+ Publicar Menú Completo"*, *"+ Agregar opción de Sopa/Ensalada"* o *"+ Agregar opción de Segundo"*.
+     - Se incorporó un botón de edición con icono `Pencil` en las tarjetas de Entradas, Segundos y Extras.
+     - Se integró un modal completo de edición de platos con soporte para modificar nombre, categoría, precio, descripción, subir nueva foto a Cloudinary y alternar disponibilidad (Disponible / Agotado).
+  3. `src/app/admin/page.tsx`:
+     - En `handleCrearMenuCompleto`, se flexibilizó la validación: ahora comprueba `tieneEntrada` y `tieneSegundo`, permitiendo publicar una opción sola sin requerir la otra.
+     - Se crearon los estados y controladores de edición (`platoEditando`, `guardandoEdicionPlato`, `subiendoFotoEdicion`, `handleIniciarEditarPlato`, `handleCerrarEditarPlato`, `handleFotoUploadEdicion`, `handleGuardarEdicionPlato`).
+  4. `src/app/padres/page.tsx`:
+     - Se rediseñaron las tarjetas de selección de platos en "Pedir Menú": las fotos pasaron de miniaturas de 56px (`w-14 h-14`) a banners superiores amplios de alta visibilidad (`h-40 sm:h-48` en Entradas y Extras, `h-44 sm:h-52` en Segundos), con `object-cover` y esquinas redondeadas.
+     - En la pestaña "Ver Menú", las imágenes se optimizaron a alturas de `h-44 sm:h-52` y `h-48 sm:h-56`.
+- Impacto:
+  - `src/lib/dataService.ts`
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/app/padres/page.tsx`
+  - `tests/menu-editar-y-opcion-individual.test.mjs` (6 pruebas nuevas, total de 279 pruebas en la suite, 0 fallos).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -606,6 +606,114 @@ export const dataService = {
     notifyListeners();
   },
 
+  async actualizarPlato(id: string, platoData: Partial<Plato>): Promise<Plato> {
+    const platoExistenteIndex = platosMemoria.findIndex((p) => p.id === id);
+    const platoExistente = platoExistenteIndex !== -1 ? platosMemoria[platoExistenteIndex] : null;
+
+    const platoActualizado: Plato = {
+      ...(platoExistente || {
+        id,
+        nombre: '',
+        tipo: 'Segundo',
+        diaSemana: 'LUNES',
+        precio: 12,
+        disponible: true,
+        orden: 1,
+      }),
+      ...platoData,
+      id,
+    };
+
+    // Subir imagen a Cloudinary estructurada si viene en Base64
+    if (platoActualizado.imagenUrl && platoActualizado.imagenUrl.startsWith('data:image')) {
+      try {
+        const carpeta = obtenerCarpetaCloudinaryPlato(platoActualizado.colegioNombre, platoActualizado.diaSemana);
+        const urlCloudinary = await subirImagenACloudinary(platoActualizado.imagenUrl, carpeta);
+        if (urlCloudinary && (urlCloudinary.startsWith('http://') || urlCloudinary.startsWith('https://'))) {
+          platoActualizado.imagenUrl = urlCloudinary;
+        }
+      } catch (errCloudinary) {
+        console.warn('[dataService] Falló subida de imagen al actualizar plato:', errCloudinary);
+      }
+    }
+
+    // Mapeo seguro para el constraint 'platos_tipo_check' de la BD ('ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE')
+    let tipoColumna: 'ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE' = 'SEGUNDO';
+    const tipoNormalizado = (platoActualizado.tipo || '').trim().toUpperCase();
+    if (tipoNormalizado === 'ENTRADA' || tipoNormalizado.includes('SOPA') || tipoNormalizado.includes('ENSALADA')) {
+      tipoColumna = 'ENTRADA';
+    } else if (tipoNormalizado === 'BEBIDA') {
+      tipoColumna = 'BEBIDA';
+    } else if (tipoNormalizado === 'POSTRE') {
+      tipoColumna = 'POSTRE';
+    } else {
+      tipoColumna = 'SEGUNDO';
+    }
+
+    let descFinal = platoActualizado.descripcion || '';
+    // Limpiar tags anteriores para no duplicarlos
+    descFinal = descFinal
+      .replace(/\[TipoOriginal:\s*[^\]]+\]/gi, '')
+      .replace(/\[ColegioId:\s*[^\]]+\]/gi, '')
+      .replace(/\[Colegio:\s*[^\]]+\]/gi, '')
+      .trim();
+
+    if (platoActualizado.tipo) {
+      descFinal = `[TipoOriginal: ${platoActualizado.tipo}] ${descFinal}`.trim();
+    }
+    if (platoActualizado.colegioId) {
+      descFinal = `[ColegioId: ${platoActualizado.colegioId}] ${descFinal}`.trim();
+    }
+    if (platoActualizado.colegioNombre && platoActualizado.colegioNombre !== 'TODOS') {
+      descFinal = `${descFinal} [Colegio: ${platoActualizado.colegioNombre}]`.trim();
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const updatePayload: Record<string, unknown> = {
+          nombre: platoActualizado.nombre,
+          descripcion: descFinal || null,
+          tipo: tipoColumna,
+          precio: platoActualizado.precio,
+          disponible: platoActualizado.disponible,
+        };
+        if (platoActualizado.diaSemana) {
+          updatePayload.dia_semana = platoActualizado.diaSemana;
+        }
+        if (platoActualizado.imagenUrl !== undefined) {
+          updatePayload.imagen_url = platoActualizado.imagenUrl || null;
+        }
+
+        const { data, error } = await supabase
+          .from('platos')
+          .update(updatePayload)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error actualizando plato en Supabase:', error);
+          throw new Error(`Error en base de datos al actualizar plato: ${error.message}`);
+        }
+        if (data) {
+          const mapeado = mapearPlatoDesdeSupabase(data);
+          platoActualizado.id = mapeado.id;
+        }
+      } catch (e: unknown) {
+        console.error('Error en actualizarPlato:', e);
+        throw e;
+      }
+    }
+
+    if (platoExistenteIndex !== -1) {
+      platosMemoria[platoExistenteIndex] = platoActualizado;
+    } else {
+      platosMemoria.push(platoActualizado);
+    }
+    notifyListeners();
+    return platoActualizado;
+  },
+
   async migrarImagenesPlatosACloudinary(): Promise<{ revisados: number; migrados: number }> {
     if (!isSupabaseConfigured || !supabase) return { revisados: 0, migrados: 0 };
     try {

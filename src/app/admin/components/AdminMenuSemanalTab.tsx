@@ -5,6 +5,7 @@ import {
   Calendar,
   Plus,
   Trash2,
+  Pencil,
   Utensils,
   Image as ImageIcon,
   Building2,
@@ -16,6 +17,7 @@ import {
   Tag,
   Cloud,
   X,
+  Check,
 } from 'lucide-react';
 import { DIAS_SEMANA } from '@/lib/dataService';
 import { Plato, DiaSemana } from '@/types';
@@ -93,6 +95,15 @@ interface AdminMenuSemanalTabProps {
   categoriasOrdenadas: string[];
   platosPorCategoria: Record<string, Plato[]>;
   handleSolicitarEliminarPlato: (plato: Plato) => void;
+  // Edición de Plato
+  onIniciarEditarPlato?: (plato: Plato) => void;
+  platoEditando?: Plato | null;
+  setPlatoEditando?: React.Dispatch<React.SetStateAction<Plato | null>>;
+  onCerrarEditarPlato?: () => void;
+  onGuardarEdicionPlato?: (plato: Plato) => Promise<void>;
+  guardandoEdicionPlato?: boolean;
+  subiendoFotoEdicion?: boolean;
+  onFotoUploadEdicion?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
 export default function AdminMenuSemanalTab({
@@ -151,6 +162,14 @@ export default function AdminMenuSemanalTab({
   handleAgregarTipoPersonalizado = () => {},
   platosPorCategoria = {},
   handleSolicitarEliminarPlato,
+  onIniciarEditarPlato,
+  platoEditando,
+  setPlatoEditando,
+  onCerrarEditarPlato,
+  onGuardarEdicionPlato,
+  guardandoEdicionPlato = false,
+  subiendoFotoEdicion = false,
+  onFotoUploadEdicion,
 }: AdminMenuSemanalTabProps) {
   // Clasificación de platos para el día activo
   const platosEntrada = platos.filter(
@@ -275,8 +294,8 @@ export default function AdminMenuSemanalTab({
           {/* 1. MODO: AGREGAR MENÚ (SOPA O ENSALADA + SEGUNDO CON PRECIO CONJUNTO) */}
           {modoRegistroMenu === 'MENU' && (
             <form onSubmit={handleCrearMenuCompleto} className="space-y-4">
-              <div className="p-3 bg-orange-50/70 border border-orange-200/80 rounded-2xl text-[11px] text-orange-950 font-medium">
-                Configura el menú escolar del día con su <strong>sopa o ensalada</strong> y <strong>segundo</strong> por un precio único conjunto.
+              <div className="p-3 bg-orange-50/70 border border-orange-200/80 rounded-2xl text-[11px] text-orange-950 font-medium leading-relaxed">
+                Configura el menú escolar del día con su <strong>sopa o ensalada</strong> y <strong>segundo</strong> juntos, o agrega una opción individual (por ejemplo, agrega una <strong>ensalada sola</strong> si ya registraste la sopa).
               </div>
 
               {/* ENTRADA: SOPA O ENSALADA */}
@@ -315,7 +334,7 @@ export default function AdminMenuSemanalTab({
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Nombre de la {subtipoEntradaMenu} *
+                    Nombre de la {subtipoEntradaMenu} {nombreSegundoMenu.trim() ? '(Opcional si solo agregas segundo)' : '*'}
                   </label>
                   <input
                     type="text"
@@ -327,7 +346,6 @@ export default function AdminMenuSemanalTab({
                     value={nombreEntradaMenu}
                     onChange={(e) => setNombreEntradaMenu(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                    required
                   />
                 </div>
 
@@ -405,7 +423,7 @@ export default function AdminMenuSemanalTab({
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Nombre del Segundo *
+                    Nombre del Segundo {nombreEntradaMenu.trim() ? '(Opcional si solo agregas sopa/ensalada)' : '*'}
                   </label>
                   <input
                     type="text"
@@ -413,7 +431,6 @@ export default function AdminMenuSemanalTab({
                     value={nombreSegundoMenu}
                     onChange={(e) => setNombreSegundoMenu(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                    required
                   />
                 </div>
 
@@ -503,10 +520,18 @@ export default function AdminMenuSemanalTab({
 
               <button
                 type="submit"
-                disabled={guardandoPlato}
+                disabled={guardandoPlato || (!nombreEntradaMenu.trim() && !nombreSegundoMenu.trim())}
                 className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-black rounded-2xl text-xs shadow-md shadow-orange-500/20 transition cursor-pointer disabled:opacity-50"
               >
-                {guardandoPlato ? 'Publicando...' : `+ Publicar Menú Completo para ${diaActivo}`}
+                {guardandoPlato
+                  ? 'Publicando...'
+                  : nombreEntradaMenu.trim() && nombreSegundoMenu.trim()
+                  ? `+ Publicar Menú Completo para ${diaActivo}`
+                  : nombreEntradaMenu.trim()
+                  ? `+ Agregar opción de ${subtipoEntradaMenu} para ${diaActivo}`
+                  : nombreSegundoMenu.trim()
+                  ? `+ Agregar opción de Segundo para ${diaActivo}`
+                  : `+ Publicar en Menú para ${diaActivo}`}
               </button>
             </form>
           )}
@@ -725,14 +750,26 @@ export default function AdminMenuSemanalTab({
                                     <Cloud className="w-2.5 h-2.5 text-emerald-400" /> Cloudinary
                                   </span>
                                 )}
-                                <button
-                                  type="button"
-                                  onClick={() => handleSolicitarEliminarPlato(plato)}
-                                  className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
-                                  title="Eliminar opción"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                                  {onIniciarEditarPlato && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onIniciarEditarPlato(plato)}
+                                      className="p-1.5 bg-white/90 hover:bg-orange-50 text-slate-600 hover:text-orange-600 rounded-xl shadow-xs transition cursor-pointer"
+                                      title="Editar opción"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSolicitarEliminarPlato(plato)}
+                                    className="p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
+                                    title="Eliminar opción"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                                 <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg">
                                   Incluida en el menú
                                 </span>
@@ -747,14 +784,26 @@ export default function AdminMenuSemanalTab({
                                     Sopa o Ensalada
                                   </span>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSolicitarEliminarPlato(plato)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
-                                  title="Eliminar opción"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  {onIniciarEditarPlato && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onIniciarEditarPlato(plato)}
+                                      className="p-1 text-slate-400 hover:text-orange-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                      title="Editar opción"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSolicitarEliminarPlato(plato)}
+                                    className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                    title="Eliminar opción"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </div>
                             )}
 
@@ -799,14 +848,26 @@ export default function AdminMenuSemanalTab({
                                     <Cloud className="w-2.5 h-2.5 text-emerald-400" /> Cloudinary
                                   </span>
                                 )}
-                                <button
-                                  type="button"
-                                  onClick={() => handleSolicitarEliminarPlato(plato)}
-                                  className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
-                                  title="Eliminar plato"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                                  {onIniciarEditarPlato && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onIniciarEditarPlato(plato)}
+                                      className="p-1.5 bg-white/90 hover:bg-orange-50 text-slate-600 hover:text-orange-600 rounded-xl shadow-xs transition cursor-pointer"
+                                      title="Editar plato"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSolicitarEliminarPlato(plato)}
+                                    className="p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
+                                    title="Eliminar plato"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                                 <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-emerald-700 text-white text-[10px] font-black rounded-lg">
                                   Menú S/ {plato.precio.toFixed(2)}
                                 </span>
@@ -821,14 +882,26 @@ export default function AdminMenuSemanalTab({
                                     Menú S/ {plato.precio.toFixed(2)}
                                   </span>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSolicitarEliminarPlato(plato)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
-                                  title="Eliminar plato"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  {onIniciarEditarPlato && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onIniciarEditarPlato(plato)}
+                                      className="p-1 text-slate-400 hover:text-orange-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                      title="Editar plato"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSolicitarEliminarPlato(plato)}
+                                    className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                    title="Eliminar plato"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </div>
                             )}
 
@@ -879,14 +952,26 @@ export default function AdminMenuSemanalTab({
                                 <Cloud className="w-2.5 h-2.5 text-emerald-400" /> Cloudinary
                               </span>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => handleSolicitarEliminarPlato(extra)}
-                              className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
-                              title="Eliminar extra"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                              {onIniciarEditarPlato && (
+                                <button
+                                  type="button"
+                                  onClick={() => onIniciarEditarPlato(extra)}
+                                  className="p-1.5 bg-white/90 hover:bg-purple-50 text-slate-600 hover:text-purple-600 rounded-xl shadow-xs transition cursor-pointer"
+                                  title="Editar extra"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleSolicitarEliminarPlato(extra)}
+                                className="p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
+                                title="Eliminar extra"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                             <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-purple-700 text-white text-[10px] font-black rounded-lg">
                               S/ {extra.precio.toFixed(2)}
                             </span>
@@ -907,14 +992,26 @@ export default function AdminMenuSemanalTab({
                                 {extra.tipo} • S/ {extra.precio.toFixed(2)}
                               </span>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleSolicitarEliminarPlato(extra)}
-                              className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
-                              title="Eliminar extra"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              {onIniciarEditarPlato && (
+                                <button
+                                  type="button"
+                                  onClick={() => onIniciarEditarPlato(extra)}
+                                  className="p-1 text-slate-400 hover:text-purple-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                  title="Editar extra"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleSolicitarEliminarPlato(extra)}
+                                className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                title="Eliminar extra"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         )}
 
@@ -938,6 +1035,182 @@ export default function AdminMenuSemanalTab({
           )}
         </div>
       </div>
+
+      {/* MODAL DE EDICIÓN DE PLATO / MENÚ */}
+      {platoEditando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-black">
+                  <Pencil className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Editar Plato del Menú</h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    {platoEditando.diaSemana} • {platoEditando.colegioNombre || 'Todos los colegios'}
+                  </p>
+                </div>
+              </div>
+              {onCerrarEditarPlato && (
+                <button
+                  type="button"
+                  onClick={onCerrarEditarPlato}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                  title="Cerrar ventana"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (onGuardarEdicionPlato && platoEditando) {
+                  onGuardarEdicionPlato(platoEditando);
+                }
+              }}
+              className="space-y-4 text-xs"
+            >
+              {/* NOMBRE */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Nombre del Plato *</label>
+                <input
+                  type="text"
+                  value={platoEditando.nombre}
+                  onChange={(e) => setPlatoEditando?.((prev) => prev ? { ...prev, nombre: e.target.value } : null)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  required
+                />
+              </div>
+
+              {/* TIPO Y PRECIO */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Categoría / Tipo</label>
+                  <input
+                    type="text"
+                    value={platoEditando.tipo}
+                    onChange={(e) => setPlatoEditando?.((prev) => prev ? { ...prev, tipo: e.target.value } : null)}
+                    placeholder="Ej. Sopa, Ensalada, Segundo, Bebida..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Precio (S/) *</label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 font-bold">S/</span>
+                    <input
+                      type="number"
+                      step="0.50"
+                      min="0"
+                      value={platoEditando.precio}
+                      onChange={(e) => setPlatoEditando?.((prev) => prev ? { ...prev, precio: parseFloat(e.target.value) || 0 } : null)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-bold"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* DESCRIPCIÓN */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Descripción (Opcional)</label>
+                <textarea
+                  rows={2}
+                  value={platoEditando.descripcion || ''}
+                  onChange={(e) => setPlatoEditando?.((prev) => prev ? { ...prev, descripcion: e.target.value } : null)}
+                  placeholder="Detalles sobre ingredientes, guarnición o preparación..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                />
+              </div>
+
+              {/* FOTOGRAFÍA */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía del Plato
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                    <Cloud className="w-3 h-3 text-emerald-500" /> Cloudinary
+                  </span>
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onFotoUploadEdicion}
+                  className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
+                />
+                {subiendoFotoEdicion && (
+                  <p className="text-[11px] text-orange-600 mt-1 animate-pulse flex items-center gap-1.5 font-bold">
+                    <Cloud className="w-3.5 h-3.5 animate-bounce text-orange-500" /> Subiendo y optimizando imagen en Cloudinary...
+                  </p>
+                )}
+                {platoEditando.imagenUrl && (
+                  <div className="mt-2 h-28 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={platoEditando.imagenUrl} alt="Vista previa del plato" className="w-full h-full object-cover" />
+                    {platoEditando.imagenUrl.includes('cloudinary') && (
+                      <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
+                        <Cloud className="w-3 h-3 text-white" /> En Cloudinary
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setPlatoEditando?.((prev) => prev ? { ...prev, imagenUrl: undefined } : null)}
+                      className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg shadow-xs transition cursor-pointer"
+                      title="Quitar fotografía"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* DISPONIBILIDAD */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div>
+                  <span className="block text-xs font-bold text-slate-800">Estado de disponibilidad</span>
+                  <span className="text-[10px] text-slate-500">
+                    {platoEditando.disponible ? 'Disponible para que los padres lo elijan' : 'Marcado como agotado'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPlatoEditando?.((prev) => prev ? { ...prev, disponible: !prev.disponible } : null)}
+                  className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer ${
+                    platoEditando.disponible
+                      ? 'bg-emerald-500 text-white shadow-xs'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {platoEditando.disponible ? 'Disponible' : 'Agotado'}
+                </button>
+              </div>
+
+              {/* BOTONES ACCIÓN */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={onCerrarEditarPlato}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardandoEdicionPlato}
+                  className="px-5 py-2 text-xs font-black text-white bg-orange-500 hover:bg-orange-600 rounded-xl shadow-md shadow-orange-500/20 transition cursor-pointer disabled:opacity-50"
+                >
+                  {guardandoEdicionPlato ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

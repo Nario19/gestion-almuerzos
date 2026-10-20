@@ -937,15 +937,15 @@ function PedidoContent() {
                   return (
                     <div
                       key={ent.id}
-                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col"
+                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col shadow-2xs"
                     >
-                      <div className="h-32 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100">
+                      <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                         {ent.imagenUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover" />
+                          <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                         ) : (
-                          <div className="flex flex-col items-center justify-center gap-1 text-slate-400">
-                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-8 h-8 text-orange-400')}
+                          <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-orange-400')}
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                               {esEnsalada ? 'Ensalada' : 'Sopa'}
                             </span>
@@ -955,7 +955,7 @@ function PedidoContent() {
                           {esEnsalada ? 'Ensalada' : 'Sopa o Entrada'}
                         </span>
                       </div>
-                      <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div className="p-3.5 flex-1 flex flex-col justify-between">
                         <div>
                           <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ent.nombre}</h4>
                           {descLimpia && (
@@ -991,25 +991,25 @@ function PedidoContent() {
                 {segundos.map((seg) => (
                   <div
                     key={seg.id}
-                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col"
+                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col shadow-2xs"
                   >
-                    <div className="h-36 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100">
+                    <div className="h-48 sm:h-56 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {seg.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={seg.imagenUrl} alt={seg.nombre} className="w-full h-full object-cover" />
+                        <img src={seg.imagenUrl} alt={seg.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-1 text-slate-400">
-                          {renderIconoPlato(seg.tipo, seg.nombre, 'w-9 h-9 text-orange-500')}
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                          {renderIconoPlato(seg.tipo, seg.nombre, 'w-10 h-10 text-orange-500')}
                           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                             Plato de Fondo
                           </span>
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                      <span className="absolute top-2 left-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
                         Segundo
                       </span>
                     </div>
-                    <div className="p-3 flex-1 flex flex-col justify-between">
+                    <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div>
                         <h4 className="text-xs sm:text-sm font-bold text-slate-900">{seg.nombre}</h4>
                         {seg.descripcion && (
@@ -1038,28 +1038,28 @@ function PedidoContent() {
                 {extras.map((ext) => (
                   <div
                     key={ext.id}
-                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-emerald-300 transition flex flex-col"
+                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-emerald-300 transition flex flex-col shadow-2xs"
                   >
-                    <div className="h-32 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100">
+                    <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {ext.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={ext.imagenUrl} alt={ext.nombre} className="w-full h-full object-cover" />
+                        <img src={ext.imagenUrl} alt={ext.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-1 text-slate-400">
-                          {renderIconoPlato(ext.tipo, ext.nombre, 'w-8 h-8 text-emerald-500')}
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                          {renderIconoPlato(ext.tipo, ext.nombre, 'w-10 h-10 text-emerald-500')}
                           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                             {ext.tipo}
                           </span>
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                      <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
                         {ext.tipo}
                       </span>
                       <span className="absolute top-2 right-2 bg-white/95 backdrop-blur-xs text-emerald-800 text-[11px] font-black px-2 py-0.5 rounded-lg border border-emerald-200 shadow-xs">
                         S/ {ext.precio.toFixed(2)}
                       </span>
                     </div>
-                    <div className="p-3 flex-1 flex flex-col justify-between">
+                    <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div>
                         <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ext.nombre}</h4>
                         {ext.descripcion && (
@@ -1286,33 +1286,42 @@ function PedidoContent() {
                     type="button"
                     onClick={() => plato.disponible && setEntradaSeleccionada(plato.nombre)}
                     disabled={!plato.disponible}
-                    className={`p-3 rounded-2xl border text-left flex items-start gap-3 transition-all relative ${
+                    className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative ${
                       !plato.disponible
                         ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
                         : seleccionado
-                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-xs'
-                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
+                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-md'
+                        : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-xs'
                     }`}
                   >
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-orange-50/70 shrink-0 flex items-center justify-center border border-orange-100">
+                    <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {plato.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        renderIconoPlato(plato.tipo, plato.nombre, 'w-6 h-6 text-orange-500')
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-orange-400')}
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            {esEnsalada ? 'Ensalada' : 'Sopa'}
+                          </span>
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                        {esEnsalada ? 'Ensalada' : 'Sopa'}
+                      </span>
+                      {seleccionado && (
+                        <span className="absolute top-2 right-2 bg-orange-500 text-white p-1 rounded-full shadow-md">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-100/70 px-1.5 py-0.5 rounded-md">
-                          {esEnsalada ? 'Ensalada' : 'Sopa'}
-                        </span>
-                        {seleccionado && <CheckCircle2 className="w-4 h-4 text-orange-600 shrink-0" />}
+                    <div className="p-3.5 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{plato.nombre}</h3>
+                        {descLimpia && (
+                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">{descLimpia}</p>
+                        )}
                       </div>
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate mt-1">{plato.nombre}</h3>
-                      {descLimpia && (
-                        <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{descLimpia}</p>
-                      )}
                     </div>
                   </button>
                 );
@@ -1347,28 +1356,42 @@ function PedidoContent() {
                     type="button"
                     onClick={() => plato.disponible && setSegundoSeleccionado(plato.nombre)}
                     disabled={!plato.disponible}
-                    className={`p-3 rounded-2xl border text-left flex items-start gap-3 transition-all relative ${
+                    className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative ${
                       !plato.disponible
                         ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
                         : seleccionado
-                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-xs'
-                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
+                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-md'
+                        : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-xs'
                     }`}
                   >
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-amber-50 shrink-0 flex items-center justify-center border border-amber-100">
+                    <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {plato.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        renderIconoPlato(plato.tipo, plato.nombre, 'w-6 h-6 text-amber-600')
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-orange-500')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Plato de Fondo
+                          </span>
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                        Segundo
+                      </span>
+                      {seleccionado && (
+                        <span className="absolute top-2 right-2 bg-orange-500 text-white p-1 rounded-full shadow-md">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">{plato.nombre}</h3>
-                        {seleccionado && <CheckCircle2 className="w-4 h-4 text-orange-600 shrink-0" />}
+                    <div className="p-3.5 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{plato.nombre}</h3>
+                        {plato.descripcion && (
+                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">{plato.descripcion}</p>
+                        )}
                       </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{plato.descripcion}</p>
                     </div>
                   </button>
                 );
@@ -1404,46 +1427,45 @@ function PedidoContent() {
                     type="button"
                     onClick={() => extra.disponible && toggleExtra(extra.id)}
                     disabled={!extra.disponible}
-                    className={`p-3 rounded-2xl border text-left flex items-start gap-3 transition-all relative ${
+                    className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative ${
                       !extra.disponible
                         ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
                         : seleccionado
-                        ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-xs'
-                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
+                        ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-md'
+                        : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-xs'
                     }`}
                   >
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-emerald-50 shrink-0 flex items-center justify-center border border-emerald-100">
+                    <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {extra.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={extra.imagenUrl} alt={extra.nombre} className="w-full h-full object-cover" />
+                        <img src={extra.imagenUrl} alt={extra.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        renderIconoPlato(extra.tipo, extra.nombre, 'w-6 h-6 text-emerald-600')
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                          {renderIconoPlato(extra.tipo, extra.nombre, 'w-10 h-10 text-emerald-500')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            {extra.tipo}
+                          </span>
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                        {extra.tipo}
+                      </span>
+                      <span className="absolute top-2 right-2 bg-white/95 backdrop-blur-xs text-emerald-800 text-[11px] font-black px-2 py-0.5 rounded-lg border border-emerald-200 shadow-xs">
+                        S/ {extra.precio.toFixed(2)}
+                      </span>
+                      {seleccionado && (
+                        <span className="absolute bottom-2 right-2 bg-emerald-600 text-white p-1 rounded-full shadow-md">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded-md">
-                          {extra.tipo}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-black text-slate-800">
-                            + S/ {extra.precio.toFixed(2)}
-                          </span>
-                          <div
-                            className={`w-4 h-4 rounded-md flex items-center justify-center border transition ${
-                              seleccionado
-                                ? 'bg-emerald-600 border-emerald-600 text-white'
-                                : 'border-slate-300 bg-white'
-                            }`}
-                          >
-                            {seleccionado && <Check className="w-3 h-3 stroke-[3]" />}
-                          </div>
-                        </div>
+                    <div className="p-3.5 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{extra.nombre}</h3>
+                        {extra.descripcion && (
+                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">{extra.descripcion}</p>
+                        )}
                       </div>
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate mt-1">{extra.nombre}</h3>
-                      {extra.descripcion && (
-                        <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{extra.descripcion}</p>
-                      )}
                     </div>
                   </button>
                 );

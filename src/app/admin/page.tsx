@@ -92,6 +92,11 @@ export default function AdminPage() {
   const [subiendoFotoEntrada, setSubiendoFotoEntrada] = useState(false);
   const [subiendoFotoSegundo, setSubiendoFotoSegundo] = useState(false);
 
+  // Estados para Edición de Plato en el Menú
+  const [platoEditando, setPlatoEditando] = useState<Plato | null>(null);
+  const [guardandoEdicionPlato, setGuardandoEdicionPlato] = useState(false);
+  const [subiendoFotoEdicion, setSubiendoFotoEdicion] = useState(false);
+
   // Estados para "Agregar Extras" (Bebidas, postres, refrigerios con precio independiente)
   const [tipoExtra, setTipoExtra] = useState('Bebida');
   const [nombreExtra, setNombreExtra] = useState('');
@@ -426,13 +431,17 @@ export default function AdminPage() {
     }
   };
 
-  // Guardar Menú Completo (Sopa o ensalada + Segundo con precio conjunto)
+  // Guardar Menú Completo o Plato Individual del Menú (Sopa/Ensalada sola, Segundo solo, o ambos)
   const handleCrearMenuCompleto = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombreEntradaMenu.trim() || !nombreSegundoMenu.trim() || guardandoPlato) {
-      alert('Por favor ingresa tanto el nombre de la sopa o ensalada como el del segundo plato.');
+    const tieneEntrada = Boolean(nombreEntradaMenu.trim());
+    const tieneSegundo = Boolean(nombreSegundoMenu.trim());
+
+    if (!tieneEntrada && !tieneSegundo) {
+      alert('Por favor ingresa al menos una opción: el nombre de la sopa o ensalada, o el del segundo plato.');
       return;
     }
+    if (guardandoPlato) return;
 
     const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
       ? usuario.colegioNombre
@@ -446,36 +455,44 @@ export default function AdminPage() {
     setGuardandoPlato(true);
 
     try {
+      const platosCreados: Plato[] = [];
+
       // 1. Guardar Entrada (Sopa o Ensalada) con precio 0 (incluida en el menú)
-      const descEntradaCompleta = `${subtipoEntradaMenu === 'Ensalada' ? '[Ensalada]' : '[Sopa]'} ${descripcionEntradaMenu.trim()}`.trim();
-      const nuevaEntrada = await dataService.agregarPlato({
-        diaSemana: diaActivo,
-        tipo: 'ENTRADA',
-        nombre: nombreEntradaMenu.trim(),
-        descripcion: descEntradaCompleta || undefined,
-        precio: 0,
-        imagenUrl: imagenUrlEntradaMenu || imagenUrlMenu || undefined,
-        disponible: true,
-        orden: platos.length + 1,
-        colegioNombre: colFiltro,
-        colegioId: colIdFiltro,
-      });
+      if (tieneEntrada) {
+        const descEntradaCompleta = `${subtipoEntradaMenu === 'Ensalada' ? '[Ensalada]' : '[Sopa]'} ${descripcionEntradaMenu.trim()}`.trim();
+        const nuevaEntrada = await dataService.agregarPlato({
+          diaSemana: diaActivo,
+          tipo: 'ENTRADA',
+          nombre: nombreEntradaMenu.trim(),
+          descripcion: descEntradaCompleta || undefined,
+          precio: 0,
+          imagenUrl: imagenUrlEntradaMenu || imagenUrlMenu || undefined,
+          disponible: true,
+          orden: platos.length + 1,
+          colegioNombre: colFiltro,
+          colegioId: colIdFiltro,
+        });
+        platosCreados.push(nuevaEntrada);
+      }
 
       // 2. Guardar Segundo (Plato de Fondo) con el precio completo del menú
-      const nuevoSegundo = await dataService.agregarPlato({
-        diaSemana: diaActivo,
-        tipo: 'SEGUNDO',
-        nombre: nombreSegundoMenu.trim(),
-        descripcion: descripcionSegundoMenu.trim() || undefined,
-        precio: precioFinal,
-        imagenUrl: imagenUrlSegundoMenu || undefined,
-        disponible: true,
-        orden: platos.length + 2,
-        colegioNombre: colFiltro,
-        colegioId: colIdFiltro,
-      });
+      if (tieneSegundo) {
+        const nuevoSegundo = await dataService.agregarPlato({
+          diaSemana: diaActivo,
+          tipo: 'SEGUNDO',
+          nombre: nombreSegundoMenu.trim(),
+          descripcion: descripcionSegundoMenu.trim() || undefined,
+          precio: precioFinal,
+          imagenUrl: imagenUrlSegundoMenu || undefined,
+          disponible: true,
+          orden: platos.length + (tieneEntrada ? 2 : 1),
+          colegioNombre: colFiltro,
+          colegioId: colIdFiltro,
+        });
+        platosCreados.push(nuevoSegundo);
+      }
 
-      setPlatos((prev) => [...prev, nuevaEntrada, nuevoSegundo]);
+      setPlatos((prev) => [...prev, ...platosCreados]);
       setNombreEntradaMenu('');
       setDescripcionEntradaMenu('');
       setNombreSegundoMenu('');
@@ -491,6 +508,54 @@ export default function AdminPage() {
       alert(msg || 'Error al guardar el menú en la base de datos.');
     } finally {
       setGuardandoPlato(false);
+    }
+  };
+
+  // Manejadores para Edición de Plato
+  const handleIniciarEditarPlato = (plato: Plato) => {
+    setPlatoEditando({ ...plato });
+  };
+
+  const handleCerrarEditarPlato = () => {
+    setPlatoEditando(null);
+    setSubiendoFotoEdicion(false);
+  };
+
+  const handleFotoUploadEdicion = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !platoEditando) return;
+
+    setSubiendoFotoEdicion(true);
+    try {
+      const res = await compressImage(file, 800, 0.8);
+      const carpeta = obtenerCarpetaCloudinaryPlato(platoEditando.colegioNombre, platoEditando.diaSemana);
+      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
+      setPlatoEditando((prev) => (prev ? { ...prev, imagenUrl: urlNube } : null));
+    } catch (e) {
+      console.error('Error procesando foto en edición:', e);
+      alert('Hubo un problema al procesar la imagen.');
+    } finally {
+      setSubiendoFotoEdicion(false);
+    }
+  };
+
+  const handleGuardarEdicionPlato = async (platoModificado: Plato) => {
+    if (!platoModificado.nombre.trim()) {
+      alert('El nombre del plato no puede estar vacío.');
+      return;
+    }
+    setGuardandoEdicionPlato(true);
+    try {
+      const actualizado = await dataService.actualizarPlato(platoModificado.id, platoModificado);
+      setPlatos((prev) => prev.map((p) => (p.id === actualizado.id ? actualizado : p)));
+      setPlatoEditando(null);
+      setGuardadoExitoso(true);
+      setTimeout(() => setGuardadoExitoso(false), 2500);
+    } catch (err) {
+      console.error('Error al actualizar plato:', err);
+      alert('No se pudo guardar la edición del plato.');
+    } finally {
+      setGuardandoEdicionPlato(false);
     }
   };
 
@@ -932,6 +997,14 @@ export default function AdminPage() {
           categoriasOrdenadas={categoriasOrdenadas}
           platosPorCategoria={platosPorCategoria}
           handleSolicitarEliminarPlato={handleSolicitarEliminarPlato}
+          onIniciarEditarPlato={handleIniciarEditarPlato}
+          platoEditando={platoEditando}
+          setPlatoEditando={setPlatoEditando}
+          onCerrarEditarPlato={handleCerrarEditarPlato}
+          onGuardarEdicionPlato={handleGuardarEdicionPlato}
+          guardandoEdicionPlato={guardandoEdicionPlato}
+          subiendoFotoEdicion={subiendoFotoEdicion}
+          onFotoUploadEdicion={handleFotoUploadEdicion}
         />
       )}
 
