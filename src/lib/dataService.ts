@@ -18,6 +18,10 @@ import {
 } from '@/types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabase';
+import {
+  subirImagenACloudinary,
+  obtenerCarpetaCloudinaryPlato,
+} from './cloudinaryService';
 
 export const COLEGIOS_DEFAULT: string[] = [];
 
@@ -516,6 +520,19 @@ export const dataService = {
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `plato-${Date.now()}`,
     };
 
+    // Subir imagen a Cloudinary estructurada por colegio y día si viene en formato Base64 para no sobrecargar Supabase
+    if (nuevoPlato.imagenUrl && nuevoPlato.imagenUrl.startsWith('data:image')) {
+      try {
+        const carpeta = obtenerCarpetaCloudinaryPlato(nuevoPlato.colegioNombre, nuevoPlato.diaSemana);
+        const urlCloudinary = await subirImagenACloudinary(nuevoPlato.imagenUrl, carpeta);
+        if (urlCloudinary && (urlCloudinary.startsWith('http://') || urlCloudinary.startsWith('https://'))) {
+          nuevoPlato.imagenUrl = urlCloudinary;
+        }
+      } catch (errCloudinary) {
+        console.warn('[dataService] Falló subida de imagen de plato a Cloudinary, conservando local:', errCloudinary);
+      }
+    }
+
     // Mapeo seguro para el constraint 'platos_tipo_check' de la BD ('ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE')
     let tipoColumna: 'ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE' = 'SEGUNDO';
     const tipoNormalizado = (nuevoPlato.tipo || '').trim().toUpperCase();
@@ -587,6 +604,36 @@ export const dataService = {
     }
     platosMemoria = platosMemoria.filter((p) => p.id !== id);
     notifyListeners();
+  },
+
+  async migrarImagenesPlatosACloudinary(): Promise<{ revisados: number; migrados: number }> {
+    if (!isSupabaseConfigured || !supabase) return { revisados: 0, migrados: 0 };
+    try {
+      const { data: platosConBase64, error } = await supabase
+        .from('platos')
+        .select('id, nombre, dia_semana, descripcion, imagen_url')
+        .not('imagen_url', 'is', null);
+
+      if (error || !platosConBase64) return { revisados: 0, migrados: 0 };
+
+      let migrados = 0;
+      for (const p of platosConBase64) {
+        if (p.imagen_url && p.imagen_url.startsWith('data:image')) {
+          const matchCol = (p.descripcion || '').match(/\[Colegio:\s*([^\]]+)\]/i);
+          const colNombre = matchCol ? matchCol[1].trim() : undefined;
+          const carpeta = obtenerCarpetaCloudinaryPlato(colNombre, p.dia_semana);
+          const urlCloudinary = await subirImagenACloudinary(p.imagen_url, carpeta);
+          if (urlCloudinary && (urlCloudinary.startsWith('http://') || urlCloudinary.startsWith('https://'))) {
+            await supabase.from('platos').update({ imagen_url: urlCloudinary }).eq('id', p.id);
+            migrados++;
+          }
+        }
+      }
+      return { revisados: platosConBase64.length, migrados };
+    } catch (e) {
+      console.warn('[dataService] Error en migración de imágenes a Cloudinary:', e);
+      return { revisados: 0, migrados: 0 };
+    }
   },
 
   async obtenerPedidos(opciones?: { limit?: number; offset?: number; colegioNombre?: string }): Promise<Pedido[]> {

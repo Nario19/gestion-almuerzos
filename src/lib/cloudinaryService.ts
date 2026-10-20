@@ -23,6 +23,34 @@ export interface CloudinaryErrorResponse {
 }
 
 /**
+ * Genera la ruta de carpeta estructurada en Cloudinary para un plato según colegio y día de la semana.
+ * Ejemplo: 'platos/colegio_san_martin/lunes' o 'platos/general/lunes'
+ *
+ * @param colegio Nombre del colegio (o undefined para platos generales)
+ * @param dia Día de la semana (LUNES, MARTES, etc.)
+ */
+export function obtenerCarpetaCloudinaryPlato(colegio?: string, dia?: string): string {
+  const colValido = (colegio && colegio !== 'TODOS' && colegio.trim().length > 0)
+    ? colegio
+    : 'general';
+
+  const slugCol = colValido
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  const slugDia = (dia || 'general')
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  return `platos/${slugCol || 'general'}/${slugDia || 'menu'}`;
+}
+
+/**
  * Sube una imagen (Blob, File o DataURL Base64) a Cloudinary usando un Upload Preset no firmado (Unsigned).
  *
  * @param fileODataUrl Archivo Blob, File o DataURL Base64 de la imagen.
@@ -33,8 +61,10 @@ export async function subirImagenACloudinary(
   fileODataUrl: Blob | File | string,
   carpeta: string = 'comprobantes'
 ): Promise<string> {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  const cloudName =
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME;
+  const uploadPreset =
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET;
 
   // Si Cloudinary no está configurado en las variables de entorno, aplicar fallback transparente
   if (!cloudName || !uploadPreset) {

@@ -853,6 +853,28 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/lib/navUtils.ts`
   - `tests/fiados-timeline-y-deudas-padre.test.mjs` (6 pruebas nuevas, total de 263 pruebas en la suite).
 
+### D-042 — 2026-10-20 — Almacenamiento Estructurado de Imágenes de Menús en Cloudinary por Colegio y Día
+
+- Decisión: Guardar y optimizar las imágenes del menú del día de cada colegio en Cloudinary para evitar sobrecargar y saturar la base de datos PostgreSQL en Supabase.
+- Fuente: instrucción explícita del usuario: "ok perfecto, ahora lo que necesito es que las imagenes del menu de cada di ay de cada colegio se guarden en cloudinary tambien, para no sobrecargar supabase."
+- Implementación de Ingeniería:
+  1. `src/lib/cloudinaryService.ts`:
+     - Se implementó la función `obtenerCarpetaCloudinaryPlato(colegio?: string, dia?: string): string` que estructura carpetas limpias en Cloudinary bajo el formato `platos/{slug_colegio}/{slug_dia}` (por ejemplo: `platos/colegio_san_martin/lunes`), normalizando tildes, caracteres especiales y espacios.
+     - `subirImagenACloudinary` soporta tanto `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` como `CLOUDINARY_CLOUD_NAME`, enviando el archivo a la subcarpeta jerárquica del colegio y día.
+  2. `src/lib/dataService.ts`:
+     - En `dataService.agregarPlato`, se añadió intercepción preventiva: si la imagen de un plato es enviada como Base64 (`data:image/...`), se sube automáticamente a Cloudinary en su carpeta de colegio y día, sustituyendo la cadena pesada por la URL segura HTTPS antes de la inserción en Supabase `platos`.
+     - Se añadió `dataService.migrarImagenesPlatosACloudinary` para migrar de forma progresiva cualquier plato preexistente con Base64 hacia Cloudinary.
+  3. `src/app/admin/page.tsx` y `src/app/admin/components/AdminMenuSemanalTab.tsx`:
+     - Los métodos `handleFotoUploadMenu` y `handleFotoUploadExtra` calculan dinámicamente la carpeta de Cloudinary según el colegio actualmente seleccionado y el día de la semana activo (`diaActivo`).
+     - Se incorporó la insignia visual *"En Cloudinary"* con icono de nube en la previsualización del menú y de los extras, además de la opción de descartar o quitar la imagen antes de publicar.
+     - En las tarjetas del menú publicado, las imágenes alojadas en Cloudinary muestran un indicador sutil confirmando el almacenamiento en la nube y el ahorro de espacio en Supabase.
+- Impacto:
+  - `src/lib/cloudinaryService.ts`
+  - `src/lib/dataService.ts`
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `tests/cloudinary-imagenes-menu-colegios.test.mjs` (5 pruebas nuevas, total de 268 pruebas en la suite).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

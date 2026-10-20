@@ -14,6 +14,7 @@ import {
 import { dataService, obtenerDiaActualSemana } from '@/lib/dataService';
 import { compressImage } from '@/lib/imageCompression';
 import { subirImagenACloudinary } from '@/lib/cloudinaryService';
+import { obtenerCarpetaCloudinaryPlato } from '@/lib/cloudinaryService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
@@ -328,10 +329,15 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const colActual = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
     setSubiendoFoto(true);
     try {
       const res = await compressImage(file, 800, 0.8);
-      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, 'platos');
+      const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
+      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
       setImagenUrlMenu(urlNube);
     } catch (e) {
       console.error('Error procesando foto del menú:', e);
@@ -346,10 +352,15 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const colActual = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
     setSubiendoFoto(true);
     try {
       const res = await compressImage(file, 800, 0.8);
-      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, 'platos');
+      const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
+      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
       setImagenUrlExtra(urlNube);
     } catch (e) {
       console.error('Error procesando foto del extra:', e);
@@ -817,6 +828,7 @@ export default function AdminPage() {
           precioMenuCompleto={precioMenuCompleto}
           setPrecioMenuCompleto={setPrecioMenuCompleto}
           imagenUrlMenu={imagenUrlMenu}
+          setImagenUrlMenu={setImagenUrlMenu}
           handleFotoUploadMenu={handleFotoUploadMenu}
           handleCrearMenuCompleto={handleCrearMenuCompleto}
           tipoExtra={tipoExtra}
@@ -828,6 +840,7 @@ export default function AdminPage() {
           precioExtra={precioExtra}
           setPrecioExtra={setPrecioExtra}
           imagenUrlExtra={imagenUrlExtra}
+          setImagenUrlExtra={setImagenUrlExtra}
           handleFotoUploadExtra={handleFotoUploadExtra}
           handleCrearExtra={handleCrearExtra}
           tiposDisponibles={tiposDisponibles}
