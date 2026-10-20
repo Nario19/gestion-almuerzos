@@ -928,6 +928,31 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/padres/page.tsx`
   - `tests/menu-editar-y-opcion-individual.test.mjs` (6 pruebas nuevas, total de 279 pruebas en la suite, 0 fallos).
 
+### D-045 — 2026-10-20 — Menú Separado en Sopas, Ensaladas y Segundos con Opciones Rápidas de Añadir (+)
+
+- Decisión:
+  1. En el formulario de Menú del panel de administración (`/admin`), el registro de platos se simplifica a una opción individual seleccionando directamente el tipo (`Sopa`, `Ensalada` o `Segundo`), permitiendo registrar múltiples sopas o múltiples ensaladas con total flexibilidad.
+  2. En el listado visual del Menú del Día en administración, la carta escolar se separa en tres bloques independientes: **Sopas**, **Ensaladas** y **Segundos (Platos de Fondo)**.
+  3. Cada bloque cuenta con su propio botón de acción rápida `+ Añadir Sopa`, `+ Añadir Ensalada` o `+ Añadir Segundo`, que al hacer clic activa inmediatamente el tipo seleccionado en el formulario y enfoca el campo de texto correspondiente.
+  4. En la vista de padres y pública (`/padres` / `Ver Menú`), las Sopas y las Ensaladas se presentan en secciones independientes y diferenciadas.
+- Fuente: instrucción explícita del usuario: *"mejor ponle así en sopa o ensalada que se agregué nada más en el formulario y que se seleccione el tipo si es sopa o ensalda porque puede haber varias sopas o. ensaldas lo mismo con segundos y luego aca donde se muestra que haya una opcion de mas para añadir y que este separado por sopas , ensaladas y segundos."*
+- Implementación de Ingeniería:
+  1. `src/lib/dataService.ts`:
+     - Normalización bidireccional en `agregarPlato` y `actualizarPlato`: mapea `ENSALADA` como `ENTRADA` para cumplir con el check constraint `platos_tipo_check` de Supabase PostgreSQL, registrando `[TipoOriginal: Ensalada]` o `[Ensalada]` en metadatos.
+     - En `mapearPlatoDesdeSupabase`, detección inteligente de subtipo (`Sopa` vs `Ensalada`) analizando metadatos y nombre del plato.
+  2. `src/app/admin/components/AdminMenuSemanalTab.tsx`:
+     - Incorporado selector superior de tipo: `🍲 Sopa`, `🥗 Ensalada` y `🍛 Segundo`.
+     - Renderizado de formulario especializado según el tipo activo con uploader individual a Cloudinary (`platos/{colegio}/{dia}`) y botón contextual `+ Publicar {tipo}`.
+     - Separación del listado del menú del día en tres bloques específicos con iconos `Soup` (ámbar), `Salad` (esmeralda) y `Utensils` (naranja).
+     - Botones `+ Añadir Sopa`, `+ Añadir Ensalada` y `+ Añadir Segundo` en cada bloque con foco automático y apertura del tipo de formulario correspondiente.
+  3. `src/app/padres/page.tsx`:
+     - Separación en la carta de padres ("Ver Menú") entre `1. Sopas` y `2. Ensaladas`, preservando fotos de alta resolución e iconos descriptivos.
+- Impacto:
+  - `src/lib/dataService.ts`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/app/padres/page.tsx`
+  - `tests/menu-separado-sopas-ensaladas-segundos.test.mjs` (5 pruebas nuevas, total de 284 pruebas en la suite, 0 fallos).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -422,7 +422,21 @@ function mapearPlatoDesdeSupabase(d: PlatoRowSupabase): Plato {
       colegioNombre = match[1].trim();
       descLimpia = descLimpia.replace(/\s*•?\s*\[Colegio:\s*[^\]]+\]/, '').trim();
     }
+    const matchSubtipo = descLimpia.match(/\[(Sopa|Ensalada)\]/i);
+    if (matchSubtipo && (tipoFinal === 'Sopa o postre' || tipoFinal === 'ENTRADA')) {
+      tipoFinal = matchSubtipo[1].toLowerCase().includes('ensalada') ? 'Ensalada' : 'Sopa';
+    }
     descLimpia = descLimpia.replace(/\[(Sopa|Ensalada)\]\s*/gi, '').trim();
+  }
+
+  // Si el tipo es entrada genérica, inferir inteligentemente si es Sopa o Ensalada
+  if (tipoFinal === 'Sopa o postre' || tipoFinal === 'ENTRADA') {
+    const nombreLower = (d.nombre || '').toLowerCase();
+    if (nombreLower.includes('ensalada')) {
+      tipoFinal = 'Ensalada';
+    } else {
+      tipoFinal = 'Sopa';
+    }
   }
   return {
     id: d.id,
@@ -536,7 +550,7 @@ export const dataService = {
     // Mapeo seguro para el constraint 'platos_tipo_check' de la BD ('ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE')
     let tipoColumna: 'ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE' = 'SEGUNDO';
     const tipoNormalizado = (nuevoPlato.tipo || '').trim().toUpperCase();
-    if (tipoNormalizado === 'ENTRADA' || tipoNormalizado.includes('SOPA')) {
+    if (tipoNormalizado === 'ENTRADA' || tipoNormalizado.includes('SOPA') || tipoNormalizado.includes('ENSALADA')) {
       tipoColumna = 'ENTRADA';
     } else if (tipoNormalizado === 'BEBIDA') {
       tipoColumna = 'BEBIDA';

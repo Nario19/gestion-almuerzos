@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Calendar,
   Plus,
@@ -171,21 +171,47 @@ export default function AdminMenuSemanalTab({
   subiendoFotoEdicion = false,
   onFotoUploadEdicion,
 }: AdminMenuSemanalTabProps) {
-  // Clasificación de platos para el día activo
-  const platosEntrada = platos.filter(
-    (p) =>
-      p.tipo === 'ENTRADA' ||
-      p.tipo.toLowerCase().includes('sopa') ||
-      p.tipo.toLowerCase().includes('ensalada')
+  // Selector del tipo de plato individual a registrar en el menú
+  const [tipoSeleccionadoMenu, setTipoSeleccionadoMenu] = useState<'Sopa' | 'Ensalada' | 'Segundo'>(
+    subtipoEntradaMenu === 'Ensalada' ? 'Ensalada' : 'Sopa'
   );
-  const platosSegundo = platos.filter((p) => p.tipo === 'SEGUNDO');
+
+  // Clasificación precisa para el día activo: Sopas, Ensaladas, Segundos y Extras
+  const esSopa = (p: Plato) => {
+    const t = (p.tipo || '').toLowerCase().trim();
+    const n = (p.nombre || '').toLowerCase().trim();
+    const d = (p.descripcion || '').toLowerCase().trim();
+    if (t === 'sopa' || d.includes('[sopa]')) return true;
+    if (t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada')) return false;
+    if (t === 'segundo' || t === 'bebida' || t === 'postre' || t === 'refrigerio' || t === 'snack') return false;
+    return t === 'entrada' || t === 'sopa o postre' || t.includes('sopa') || n.includes('sopa') || n.includes('crema') || n.includes('caldo');
+  };
+
+  const esEnsalada = (p: Plato) => {
+    const t = (p.tipo || '').toLowerCase().trim();
+    const n = (p.nombre || '').toLowerCase().trim();
+    const d = (p.descripcion || '').toLowerCase().trim();
+    if (t === 'ensalada' || d.includes('[ensalada]')) return true;
+    if (t === 'sopa' || d.includes('[sopa]')) return false;
+    if (t === 'segundo' || t === 'bebida' || t === 'postre' || t === 'refrigerio' || t === 'snack') return false;
+    return t.includes('ensalada') || n.includes('ensalada') || ((t === 'entrada' || t === 'sopa o postre') && n.includes('ensalada'));
+  };
+
+  const platosSopa = platos.filter(esSopa);
+  const platosEnsalada = platos.filter(esEnsalada);
+  const platosSegundo = platos.filter((p) => (p.tipo || '').toLowerCase().trim() === 'segundo');
   const platosExtras = platos.filter(
     (p) =>
+      !platosSopa.some((s) => s.id === p.id) &&
+      !platosEnsalada.some((e) => e.id === p.id) &&
+      !platosSegundo.some((s) => s.id === p.id) &&
       p.tipo !== 'ENTRADA' &&
-      p.tipo !== 'SEGUNDO' &&
-      !p.tipo.toLowerCase().includes('sopa') &&
-      !p.tipo.toLowerCase().includes('ensalada')
+      p.tipo !== 'Sopa o postre'
   );
+
+  // Mantenemos platosEntrada para retrocompatibilidad
+  const platosEntrada = [...platosSopa, ...platosEnsalada];
+
   // Agrupación dinámica por categoría de platos (platosPorCategoria)
   const categoriasExtras = Object.keys(platosPorCategoria || {}).filter(
     (c) => c !== 'ENTRADA' && c !== 'SEGUNDO' && !c.toLowerCase().includes('sopa') && !c.toLowerCase().includes('ensalada')
@@ -291,247 +317,282 @@ export default function AdminMenuSemanalTab({
             </button>
           </div>
 
-          {/* 1. MODO: AGREGAR MENÚ (SOPA O ENSALADA + SEGUNDO CON PRECIO CONJUNTO) */}
+          {/* 1. MODO: AGREGAR MENÚ (SOPA / ENSALADA / SEGUNDO INDIVIDUAL O CONJUNTO) */}
           {modoRegistroMenu === 'MENU' && (
             <form onSubmit={handleCrearMenuCompleto} className="space-y-4">
               <div className="p-3 bg-orange-50/70 border border-orange-200/80 rounded-2xl text-[11px] text-orange-950 font-medium leading-relaxed">
-                Configura el menú escolar del día con su <strong>sopa o ensalada</strong> y <strong>segundo</strong> juntos, o agrega una opción individual (por ejemplo, agrega una <strong>ensalada sola</strong> si ya registraste la sopa).
+                Selecciona si deseas agregar una <strong>Sopa</strong>, <strong>Ensalada</strong> o <strong>Segundo</strong>. Puedes registrar varias opciones de cada tipo para dar variedad a los padres. (Opcional si solo agregas segundo) (Opcional si solo agregas sopa/ensalada)
               </div>
 
-              {/* ENTRADA: SOPA O ENSALADA */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1">
-                    {subtipoEntradaMenu === 'Sopa' ? <Soup className="w-3.5 h-3.5 text-orange-500" /> : <Salad className="w-3.5 h-3.5 text-emerald-600" />}
-                    1. Sopa o Ensalada
-                  </span>
+              {/* SELECTOR DEL TIPO DE PLATO DEL MENÚ */}
+              <div>
+                <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                  Tipo de opción a agregar:
+                </label>
+                <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTipoSeleccionadoMenu('Sopa');
+                      setSubtipoEntradaMenu('Sopa');
+                    }}
+                    className={`py-2 px-1 rounded-xl font-black text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      tipoSeleccionadoMenu === 'Sopa'
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Soup className="w-3.5 h-3.5" />
+                    <span>Sopa</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTipoSeleccionadoMenu('Ensalada');
+                      setSubtipoEntradaMenu('Ensalada');
+                    }}
+                    className={`py-2 px-1 rounded-xl font-black text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      tipoSeleccionadoMenu === 'Ensalada'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Salad className="w-3.5 h-3.5" />
+                    <span>Ensalada</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTipoSeleccionadoMenu('Segundo')}
+                    className={`py-2 px-1 rounded-xl font-black text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      tipoSeleccionadoMenu === 'Segundo'
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Utensils className="w-3.5 h-3.5" />
+                    <span>Segundo</span>
+                  </button>
+                </div>
+              </div>
 
-                  <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setSubtipoEntradaMenu('Sopa')}
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition ${
+              {/* FORMULARIO DE SOPA O ENSALADA */}
+              {(tipoSeleccionadoMenu === 'Sopa' || tipoSeleccionadoMenu === 'Ensalada') && (
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1">
+                      {subtipoEntradaMenu === 'Sopa' ? <Soup className="w-3.5 h-3.5 text-amber-500" /> : <Salad className="w-3.5 h-3.5 text-emerald-600" />}
+                      {subtipoEntradaMenu === 'Sopa' ? 'Sopa del Menú' : 'Ensalada del Menú'}
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      Incluida (S/ 0.00)
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Nombre de la {subtipoEntradaMenu} *
+                    </label>
+                    <input
+                      id="nombre-entrada-menu"
+                      type="text"
+                      placeholder={
                         subtipoEntradaMenu === 'Sopa'
-                          ? 'bg-orange-500 text-white'
-                          : 'text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      Sopa
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSubtipoEntradaMenu('Ensalada')}
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition ${
-                        subtipoEntradaMenu === 'Ensalada'
-                          ? 'bg-orange-500 text-white'
-                          : 'text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      Ensalada
-                    </button>
+                          ? 'Ej. Sopa criolla / Crema de verduras / Sopa wantán'
+                          : 'Ej. Ensalada fresca santarrosina / Ensalada rusa'
+                      }
+                      value={nombreEntradaMenu}
+                      onChange={(e) => setNombreEntradaMenu(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Descripción (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Con insumos frescos del día y sazón casera..."
+                      value={descripcionEntradaMenu}
+                      onChange={(e) => setDescripcionEntradaMenu(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    />
+                  </div>
+
+                  {/* Fotografía de la Sopa o Ensalada */}
+                  <div className="pt-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía de la {subtipoEntradaMenu} (Opcional)
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                        <Cloud className="w-3 h-3 text-emerald-500" /> Cloudinary
+                      </span>
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFotoUploadEntradaMenu || handleFotoUploadMenu}
+                      className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
+                    />
+                    {(subiendoFotoEntrada || (subiendoFoto && !subiendoFotoSegundo)) && (
+                      <p className="text-[11px] text-orange-600 mt-1 animate-pulse flex items-center gap-1.5 font-bold">
+                        <Cloud className="w-3.5 h-3.5 animate-bounce text-orange-500" /> Subiendo y optimizando imagen en Cloudinary...
+                      </p>
+                    )}
+                    {(imagenUrlEntradaMenu || imagenUrlMenu) && (
+                      <div className="mt-2 h-24 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imagenUrlEntradaMenu || imagenUrlMenu}
+                          alt={`Vista previa de la ${subtipoEntradaMenu}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {(imagenUrlEntradaMenu || imagenUrlMenu)?.includes('cloudinary') && (
+                          <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
+                            <Cloud className="w-3 h-3 text-white" /> En Cloudinary
+                          </span>
+                        )}
+                        {(setImagenUrlEntradaMenu || setImagenUrlMenu) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (setImagenUrlEntradaMenu) setImagenUrlEntradaMenu('');
+                              if (setImagenUrlMenu) setImagenUrlMenu('');
+                            }}
+                            className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg shadow-xs transition cursor-pointer"
+                            title={`Quitar fotografía de la ${subtipoEntradaMenu.toLowerCase()}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Nombre de la {subtipoEntradaMenu} {nombreSegundoMenu.trim() ? '(Opcional si solo agregas segundo)' : '*'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={
-                      subtipoEntradaMenu === 'Sopa'
-                        ? 'Ej. Crema de maíz tierno / Sopa wantán'
-                        : 'Ej. Ensalada fresca santarrosina / Palta rellena'
-                    }
-                    value={nombreEntradaMenu}
-                    onChange={(e) => setNombreEntradaMenu(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Descripción (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Crema suave de choclo con toques de queso fresco..."
-                    value={descripcionEntradaMenu}
-                    onChange={(e) => setDescripcionEntradaMenu(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                  />
-                </div>
-
-                {/* Fotografía de la Sopa o Ensalada */}
-                <div className="pt-1">
-                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                      <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía de la {subtipoEntradaMenu} (Opcional)
+              {/* FORMULARIO DE SEGUNDO */}
+              {tipoSeleccionadoMenu === 'Segundo' && (
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1">
+                      <Utensils className="w-3.5 h-3.5 text-orange-500" />
+                      Segundo (Plato de Fondo)
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-emerald-500" /> Cloudinary
+                    <span className="text-[10px] font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                      Plato Principal
                     </span>
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFotoUploadEntradaMenu || handleFotoUploadMenu}
-                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
-                  />
-                  {(subiendoFotoEntrada || (subiendoFoto && !subiendoFotoSegundo)) && (
-                    <p className="text-[11px] text-orange-600 mt-1 animate-pulse flex items-center gap-1.5 font-bold">
-                      <Cloud className="w-3.5 h-3.5 animate-bounce text-orange-500" /> Subiendo y optimizando imagen en Cloudinary...
-                    </p>
-                  )}
-                  {(imagenUrlEntradaMenu || imagenUrlMenu) && (
-                    <div className="mt-2 h-24 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imagenUrlEntradaMenu || imagenUrlMenu}
-                        alt={`Vista previa de la ${subtipoEntradaMenu}`}
-                        className="w-full h-full object-cover"
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Nombre del Segundo *
+                    </label>
+                    <input
+                      id="nombre-segundo-menu"
+                      type="text"
+                      placeholder="Ej. Pollo doradito con papas doradas / Lomo saltado"
+                      value={nombreSegundoMenu}
+                      onChange={(e) => setNombreSegundoMenu(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Descripción (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Presa sazonada al horno con arroz blanco y guarnición..."
+                      value={descripcionSegundoMenu}
+                      onChange={(e) => setDescripcionSegundoMenu(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    />
+                  </div>
+
+                  {/* PRECIO DEL MENÚ COMPLETO */}
+                  <div className="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl space-y-1">
+                    <label className="block text-[11px] font-black text-emerald-950 uppercase tracking-wider">
+                      Precio del Menú Completo (S/) *
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-emerald-800">S/</span>
+                      <input
+                        type="number"
+                        step="0.50"
+                        min="1"
+                        value={precioMenuCompleto}
+                        onChange={(e) => setPrecioMenuCompleto(e.target.value)}
+                        className="w-full bg-white border border-emerald-300 rounded-lg px-2.5 py-1.5 text-xs font-black text-emerald-900 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
                       />
-                      {(imagenUrlEntradaMenu || imagenUrlMenu)?.includes('cloudinary') && (
-                        <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
-                          <Cloud className="w-3 h-3 text-white" /> En Cloudinary
-                        </span>
-                      )}
-                      {(setImagenUrlEntradaMenu || setImagenUrlMenu) && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (setImagenUrlEntradaMenu) setImagenUrlEntradaMenu('');
-                            if (setImagenUrlMenu) setImagenUrlMenu('');
-                          }}
-                          className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg shadow-xs transition cursor-pointer"
-                          title={`Quitar fotografía de la ${subtipoEntradaMenu.toLowerCase()}`}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {/* SEGUNDO: PLATO DE FONDO */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
-                <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1">
-                  <Utensils className="w-3.5 h-3.5 text-orange-500" />
-                  2. Segundo (Plato de Fondo)
-                </span>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Nombre del Segundo {nombreEntradaMenu.trim() ? '(Opcional si solo agregas sopa/ensalada)' : '*'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Pollo doradito con papas doradas / Lomo saltado"
-                    value={nombreSegundoMenu}
-                    onChange={(e) => setNombreSegundoMenu(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                  />
+                  {/* Fotografía del Segundo */}
+                  <div className="pt-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía del Segundo (Opcional)
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                        <Cloud className="w-3 h-3 text-emerald-500" /> Cloudinary
+                      </span>
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFotoUploadSegundoMenu}
+                      className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
+                    />
+                    {subiendoFotoSegundo && (
+                      <p className="text-[11px] text-orange-600 mt-1 animate-pulse flex items-center gap-1.5 font-bold">
+                        <Cloud className="w-3.5 h-3.5 animate-bounce text-orange-500" /> Subiendo y optimizando imagen en Cloudinary...
+                      </p>
+                    )}
+                    {imagenUrlSegundoMenu && (
+                      <div className="mt-2 h-24 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imagenUrlSegundoMenu}
+                          alt="Vista previa del segundo"
+                          className="w-full h-full object-cover"
+                        />
+                        {imagenUrlSegundoMenu.includes('cloudinary') && (
+                          <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
+                            <Cloud className="w-3 h-3 text-white" /> En Cloudinary
+                          </span>
+                        )}
+                        {setImagenUrlSegundoMenu && (
+                          <button
+                            type="button"
+                            onClick={() => setImagenUrlSegundoMenu('')}
+                            className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg shadow-xs transition cursor-pointer"
+                            title="Quitar fotografía del segundo"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Descripción (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Presa sazonada al horno con arroz blanco..."
-                    value={descripcionSegundoMenu}
-                    onChange={(e) => setDescripcionSegundoMenu(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                  />
-                </div>
-
-                {/* Fotografía del Segundo */}
-                <div className="pt-1">
-                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                      <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía del Segundo (Opcional)
-                    </span>
-                    <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-emerald-500" /> Cloudinary
-                    </span>
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFotoUploadSegundoMenu}
-                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
-                  />
-                  {subiendoFotoSegundo && (
-                    <p className="text-[11px] text-orange-600 mt-1 animate-pulse flex items-center gap-1.5 font-bold">
-                      <Cloud className="w-3.5 h-3.5 animate-bounce text-orange-500" /> Subiendo y optimizando imagen en Cloudinary...
-                    </p>
-                  )}
-                  {imagenUrlSegundoMenu && (
-                    <div className="mt-2 h-24 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imagenUrlSegundoMenu}
-                        alt="Vista previa del segundo"
-                        className="w-full h-full object-cover"
-                      />
-                      {imagenUrlSegundoMenu.includes('cloudinary') && (
-                        <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
-                          <Cloud className="w-3 h-3 text-white" /> En Cloudinary
-                        </span>
-                      )}
-                      {setImagenUrlSegundoMenu && (
-                        <button
-                          type="button"
-                          onClick={() => setImagenUrlSegundoMenu('')}
-                          className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg shadow-xs transition cursor-pointer"
-                          title="Quitar fotografía del segundo"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* PRECIO CONJUNTO DEL MENÚ */}
-              <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl space-y-1.5">
-                <label className="block text-xs font-black text-emerald-950 uppercase tracking-wider">
-                  Precio del Menú Completo (S/) *
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-emerald-800">S/</span>
-                  <input
-                    type="number"
-                    step="0.50"
-                    min="1"
-                    value={precioMenuCompleto}
-                    onChange={(e) => setPrecioMenuCompleto(e.target.value)}
-                    className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-sm font-black text-emerald-900 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                    required
-                  />
-                </div>
-                <p className="text-[10px] text-emerald-800">
-                  Este precio cubre la sopa/ensalada y el segundo plato como un solo menú escolar.
-                </p>
-              </div>
+              )}
 
               <button
                 type="submit"
-                disabled={guardandoPlato || (!nombreEntradaMenu.trim() && !nombreSegundoMenu.trim())}
+                disabled={
+                  guardandoPlato ||
+                  (tipoSeleccionadoMenu === 'Segundo' ? !nombreSegundoMenu.trim() : !nombreEntradaMenu.trim())
+                }
                 className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-black rounded-2xl text-xs shadow-md shadow-orange-500/20 transition cursor-pointer disabled:opacity-50"
               >
                 {guardandoPlato
                   ? 'Publicando...'
-                  : nombreEntradaMenu.trim() && nombreSegundoMenu.trim()
-                  ? `+ Publicar Menú Completo para ${diaActivo}`
-                  : nombreEntradaMenu.trim()
-                  ? `+ Agregar opción de ${subtipoEntradaMenu} para ${diaActivo}`
-                  : nombreSegundoMenu.trim()
-                  ? `+ Agregar opción de Segundo para ${diaActivo}`
-                  : `+ Publicar en Menú para ${diaActivo}`}
+                  : tipoSeleccionadoMenu === 'Segundo'
+                  ? `+ Publicar Segundo para ${diaActivo}`
+                  : `+ Publicar ${subtipoEntradaMenu} para ${diaActivo}`}
               </button>
             </form>
           )}
@@ -713,33 +774,71 @@ export default function AdminMenuSemanalTab({
             </div>
           ) : (
             <>
-              {/* BLOQUE: MENÚ ESCOLAR DEL DÍA */}
-              {(platosEntrada.length > 0 || platosSegundo.length > 0) && (
-                <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+              {/* BLOQUE: MENÚ ESCOLAR DEL DÍA (SEPARADO POR SOPAS, ENSALADAS Y SEGUNDOS) */}
+              {(platosSopa.length > 0 || platosEnsalada.length > 0 || platosSegundo.length > 0) && (
+                <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-6">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
                       <Utensils className="w-4 h-4 text-orange-500" />
                       Menú Escolar de {diaActivo}
                     </h3>
                     <span className="text-[11px] font-bold text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200">
-                      Sopa o ensalada + Segundo
+                      Sopas, Ensaladas y Segundos
                     </span>
                   </div>
+                  <span className="sr-only">Opciones de Sopa o Ensalada (Incluidas):</span>
 
-                  {/* 1. SOPAS O ENSALADAS */}
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Soup className="w-3.5 h-3.5 text-amber-500" />
-                      Opciones de Sopa o Ensalada (Incluidas):
-                    </h4>
-                    {platosEntrada.length === 0 ? (
-                      <p className="text-xs text-slate-400 py-2">Sin sopas o ensaladas registradas.</p>
+                  {/* 1. SOPAS */}
+                  <div className="p-4 bg-amber-50/40 border border-amber-200/70 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-amber-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                          <Soup className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            Sopas ({platosSopa.length})
+                          </h4>
+                          <span className="text-[10px] text-amber-700 font-medium">Incluidas en el menú escolar</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModoRegistroMenu('MENU');
+                          setTipoSeleccionadoMenu('Sopa');
+                          setSubtipoEntradaMenu('Sopa');
+                          setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
+                        }}
+                        className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
+                        title="Añadir una nueva sopa"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Añadir Sopa
+                      </button>
+                    </div>
+
+                    {platosSopa.length === 0 ? (
+                      <div className="p-4 text-center border border-dashed border-amber-200 rounded-xl bg-white/60">
+                        <p className="text-xs text-amber-800 font-medium">No hay sopas registradas para este día.</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModoRegistroMenu('MENU');
+                            setTipoSeleccionadoMenu('Sopa');
+                            setSubtipoEntradaMenu('Sopa');
+                            setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
+                          }}
+                          className="mt-1.5 text-xs text-amber-700 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" /> Registrar una sopa
+                        </button>
+                      </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {platosEntrada.map((plato) => (
+                        {platosSopa.map((plato) => (
                           <div
                             key={plato.id}
-                            className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-white shadow-2xs hover:border-orange-200 transition"
+                            className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-white shadow-2xs hover:border-amber-300 transition"
                           >
                             {plato.imagenUrl ? (
                               <div className="h-28 bg-slate-100 relative">
@@ -755,8 +854,8 @@ export default function AdminMenuSemanalTab({
                                     <button
                                       type="button"
                                       onClick={() => onIniciarEditarPlato(plato)}
-                                      className="p-1.5 bg-white/90 hover:bg-orange-50 text-slate-600 hover:text-orange-600 rounded-xl shadow-xs transition cursor-pointer"
-                                      title="Editar opción"
+                                      className="p-1.5 bg-white/90 hover:bg-amber-50 text-slate-600 hover:text-amber-600 rounded-xl shadow-xs transition cursor-pointer"
+                                      title="Editar sopa"
                                     >
                                       <Pencil className="w-3.5 h-3.5" />
                                     </button>
@@ -765,13 +864,13 @@ export default function AdminMenuSemanalTab({
                                     type="button"
                                     onClick={() => handleSolicitarEliminarPlato(plato)}
                                     className="p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
-                                    title="Eliminar opción"
+                                    title="Eliminar sopa"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
-                                <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg">
-                                  Incluida en el menú
+                                <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-amber-600 text-white text-[10px] font-bold rounded-lg shadow-xs">
+                                  Sopa
                                 </span>
                               </div>
                             ) : (
@@ -780,8 +879,8 @@ export default function AdminMenuSemanalTab({
                                   <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
                                     <Soup className="w-4 h-4" />
                                   </div>
-                                  <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100/60 px-2 py-0.5 rounded-md">
-                                    Sopa o Ensalada
+                                  <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
+                                    Sopa
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1">
@@ -789,8 +888,8 @@ export default function AdminMenuSemanalTab({
                                     <button
                                       type="button"
                                       onClick={() => onIniciarEditarPlato(plato)}
-                                      className="p-1 text-slate-400 hover:text-orange-600 rounded-lg hover:bg-white transition cursor-pointer"
-                                      title="Editar opción"
+                                      className="p-1 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                      title="Editar sopa"
                                     >
                                       <Pencil className="w-3.5 h-3.5" />
                                     </button>
@@ -799,7 +898,7 @@ export default function AdminMenuSemanalTab({
                                     type="button"
                                     onClick={() => handleSolicitarEliminarPlato(plato)}
                                     className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
-                                    title="Eliminar opción"
+                                    title="Eliminar sopa"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -824,20 +923,190 @@ export default function AdminMenuSemanalTab({
                     )}
                   </div>
 
-                  {/* 2. SEGUNDOS */}
-                  <div className="pt-2">
-                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Utensils className="w-3.5 h-3.5 text-orange-500" />
-                      Segundos (Platos de Fondo):
-                    </h4>
+                  {/* 2. ENSALADAS */}
+                  <div className="p-4 bg-emerald-50/40 border border-emerald-200/70 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                          <Salad className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            Ensaladas ({platosEnsalada.length})
+                          </h4>
+                          <span className="text-[10px] text-emerald-700 font-medium">Incluidas en el menú escolar</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModoRegistroMenu('MENU');
+                          setTipoSeleccionadoMenu('Ensalada');
+                          setSubtipoEntradaMenu('Ensalada');
+                          setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
+                        }}
+                        className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
+                        title="Añadir una nueva ensalada"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Añadir Ensalada
+                      </button>
+                    </div>
+
+                    {platosEnsalada.length === 0 ? (
+                      <div className="p-4 text-center border border-dashed border-emerald-200 rounded-xl bg-white/60">
+                        <p className="text-xs text-emerald-800 font-medium">No hay ensaladas registradas para este día.</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModoRegistroMenu('MENU');
+                            setTipoSeleccionadoMenu('Ensalada');
+                            setSubtipoEntradaMenu('Ensalada');
+                            setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
+                          }}
+                          className="mt-1.5 text-xs text-emerald-700 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" /> Registrar una ensalada
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {platosEnsalada.map((plato) => (
+                          <div
+                            key={plato.id}
+                            className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-white shadow-2xs hover:border-emerald-300 transition"
+                          >
+                            {plato.imagenUrl ? (
+                              <div className="h-28 bg-slate-100 relative">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                                {plato.imagenUrl.includes('cloudinary') && (
+                                  <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold rounded flex items-center gap-1" title="Alojada en Cloudinary">
+                                    <Cloud className="w-2.5 h-2.5 text-emerald-400" /> Cloudinary
+                                  </span>
+                                )}
+                                <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                                  {onIniciarEditarPlato && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onIniciarEditarPlato(plato)}
+                                      className="p-1.5 bg-white/90 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 rounded-xl shadow-xs transition cursor-pointer"
+                                      title="Editar ensalada"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSolicitarEliminarPlato(plato)}
+                                    className="p-1.5 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl shadow-xs transition cursor-pointer"
+                                    title="Eliminar ensalada"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                                <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-emerald-700 text-white text-[10px] font-bold rounded-lg shadow-xs">
+                                  Ensalada
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="p-3 bg-gradient-to-r from-emerald-50 to-teal-50 flex items-center justify-between border-b border-slate-100">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                                    <Salad className="w-4 h-4" />
+                                  </div>
+                                  <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                    Ensalada
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {onIniciarEditarPlato && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onIniciarEditarPlato(plato)}
+                                      className="p-1 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                      title="Editar ensalada"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSolicitarEliminarPlato(plato)}
+                                    className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
+                                    title="Eliminar ensalada"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="p-3">
+                              <h5 className="text-xs font-black text-slate-900">{plato.nombre}</h5>
+                              {plato.descripcion && (
+                                <p className="text-[11px] text-slate-500 line-clamp-2 mt-1">{plato.descripcion}</p>
+                              )}
+                              {plato.colegioNombre && (
+                                <span className="inline-block mt-2 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[9px] font-bold">
+                                  {plato.colegioNombre}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. SEGUNDOS (PLATOS DE FONDO) */}
+                  <div className="p-4 bg-orange-50/40 border border-orange-200/70 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-orange-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
+                          <Utensils className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            Segundos (Platos de Fondo) ({platosSegundo.length})
+                          </h4>
+                          <span className="text-[10px] text-orange-700 font-medium">Platos principales del menú</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModoRegistroMenu('MENU');
+                          setTipoSeleccionadoMenu('Segundo');
+                          setTimeout(() => document.getElementById('nombre-segundo-menu')?.focus(), 50);
+                        }}
+                        className="px-2.5 py-1.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
+                        title="Añadir un nuevo plato de fondo"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Añadir Segundo
+                      </button>
+                    </div>
+
                     {platosSegundo.length === 0 ? (
-                      <p className="text-xs text-slate-400 py-2">Sin segundos registrados.</p>
+                      <div className="p-4 text-center border border-dashed border-orange-200 rounded-xl bg-white/60">
+                        <p className="text-xs text-orange-800 font-medium">No hay segundos registrados para este día.</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModoRegistroMenu('MENU');
+                            setTipoSeleccionadoMenu('Segundo');
+                            setTimeout(() => document.getElementById('nombre-segundo-menu')?.focus(), 50);
+                          }}
+                          className="mt-1.5 text-xs text-orange-700 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" /> Registrar un plato de fondo
+                        </button>
+                      </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {platosSegundo.map((plato) => (
                           <div
                             key={plato.id}
-                            className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-white shadow-2xs hover:border-orange-200 transition"
+                            className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-white shadow-2xs hover:border-orange-300 transition"
                           >
                             {plato.imagenUrl ? (
                               <div className="h-32 bg-slate-100 relative">

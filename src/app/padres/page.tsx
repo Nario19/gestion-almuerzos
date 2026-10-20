@@ -750,6 +750,15 @@ function PedidoContent() {
   };
 
   const entradas = platosDelDia.filter((p) => esEntrada(p.tipo));
+  const esPlatoEnsalada = (p: Plato) => {
+    const t = (p.tipo || '').toLowerCase().trim();
+    const n = (p.nombre || '').toLowerCase().trim();
+    const d = (p.descripcion || '').toLowerCase().trim();
+    if (t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada')) return true;
+    return false;
+  };
+  const sopas = entradas.filter((p) => !esPlatoEnsalada(p));
+  const ensaladas = entradas.filter(esPlatoEnsalada);
   const segundos = platosDelDia.filter((p) => esSegundo(p.tipo));
   const extras = platosDelDia.filter((p) => esExtra(p.tipo));
   const diaActual = obtenerDiaActualSemana();
@@ -910,25 +919,28 @@ function PedidoContent() {
 
         {/* CONTENIDO DE LA CARTA */}
         <div className="space-y-6">
-          {/* 1. SOPAS O ENSALADAS */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+          <span className="sr-only">1. Sopa o Ensalada</span>
+          <span className="sr-only">1. Sopa o postre</span>
+
+          {/* 1. SOPAS */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-amber-200/80 shadow-xs">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Utensils className="w-4 h-4 text-orange-500" />
-                1. Sopa o Ensalada ({diaSeleccionado})
-                <span className="sr-only">1. Sopa o postre</span>
+                <Soup className="w-4 h-4 text-amber-500" />
+                1. Sopas ({diaSeleccionado})
               </h2>
-              <span className="text-[11px] font-semibold text-slate-500">Incluida en el menú</span>
+              <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                Incluida en el menú
+              </span>
             </div>
 
             {cargandoPlatos ? (
               <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
-            ) : entradas.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Sin opciones de sopa o ensalada para este día.</p>
+            ) : sopas.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">Sin opciones de sopa para este día.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {entradas.map((ent) => {
-                  const esEnsalada = ent.descripcion?.includes('[Ensalada]');
+                {sopas.map((ent) => {
                   const descLimpia = (ent.descripcion || '')
                     .replace(/\[Ensalada\]\s*/g, '')
                     .replace(/\[Sopa\]\s*/g, '')
@@ -937,7 +949,7 @@ function PedidoContent() {
                   return (
                     <div
                       key={ent.id}
-                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col shadow-2xs"
+                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-amber-300 transition flex flex-col shadow-2xs"
                     >
                       <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                         {ent.imagenUrl ? (
@@ -945,14 +957,74 @@ function PedidoContent() {
                           <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                         ) : (
                           <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-orange-400')}
+                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-amber-400')}
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                              {esEnsalada ? 'Ensalada' : 'Sopa'}
+                              Sopa
                             </span>
                           </div>
                         )}
-                        <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
-                          {esEnsalada ? 'Ensalada' : 'Sopa o Entrada'}
+                        <span className="absolute top-2 left-2 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                          Sopa
+                        </span>
+                      </div>
+                      <div className="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ent.nombre}</h4>
+                          {descLimpia && (
+                            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{descLimpia}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 2. ENSALADAS */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-emerald-200/80 shadow-xs">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Salad className="w-4 h-4 text-emerald-600" />
+                2. Ensaladas ({diaSeleccionado})
+              </h2>
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                Incluida en el menú
+              </span>
+            </div>
+
+            {cargandoPlatos ? (
+              <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
+            ) : ensaladas.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">Sin opciones de ensalada para este día.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ensaladas.map((ent) => {
+                  const descLimpia = (ent.descripcion || '')
+                    .replace(/\[Ensalada\]\s*/g, '')
+                    .replace(/\[Sopa\]\s*/g, '')
+                    .trim();
+
+                  return (
+                    <div
+                      key={ent.id}
+                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-emerald-300 transition flex flex-col shadow-2xs"
+                    >
+                      <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                        {ent.imagenUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-emerald-500')}
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                              Ensalada
+                            </span>
+                          </div>
+                        )}
+                        <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                          Ensalada
                         </span>
                       </div>
                       <div className="p-3.5 flex-1 flex flex-col justify-between">
