@@ -763,6 +763,22 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `package.json`
   - `tests/menu-completo-y-extras.test.mjs` (nuevo)
 
+### D-038 — 2026-10-19 — Suite de Pruebas de Visibilidad e Independencia de Menús para Padres y Home Público
+
+- Decisión: Crear y ejecutar una suite de pruebas automatizadas que certifique que el menú de cada colegio se liste de forma 100% independiente y correcta tanto para visitantes en el Home público (`/`) como para padres autenticados (`/padres`).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Cobertura y Verificación:
+  1. `src/app/page.tsx` re-exporta `PedidoPage` como punto de entrada público.
+  2. El TSX público muestra selector de colegios dinámico conectado a la base de datos real.
+  3. Los platos públicos se listan estructurados en Sopa/Ensalada (menú), Segundos (precio del menú) y Extras (precios individuales) con iconos limpios sin fallbacks a Unsplash.
+  4. Los padres autenticados ven el menú automáticamente filtrado según el colegio del hijo activo (`colegioFiltro = hijoSeleccionado?.colegioNombre || hijoSeleccionado?.colegioId`).
+  5. Selección interactiva de menú + extras con recálculo dinámico de total y validación de pagos.
+  6. Aislamiento multitenant estricto: los platos del Colegio A jamás se mezclan con los del Colegio B.
+  7. La conmutación entre hijos de diferentes colegios actualiza el menú de forma reactiva e instantánea.
+- Impacto:
+  - `tests/menu-colegios-visibilidad-padres-publico.test.mjs` (nuevo archivo con 8 pruebas).
+  - Total de la suite: 241 pruebas locales en verde (`0` fallos).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
