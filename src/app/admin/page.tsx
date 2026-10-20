@@ -87,6 +87,10 @@ export default function AdminPage() {
   const [descripcionSegundoMenu, setDescripcionSegundoMenu] = useState('');
   const [precioMenuCompleto, setPrecioMenuCompleto] = useState('12.00');
   const [imagenUrlMenu, setImagenUrlMenu] = useState('');
+  const [imagenUrlEntradaMenu, setImagenUrlEntradaMenu] = useState('');
+  const [imagenUrlSegundoMenu, setImagenUrlSegundoMenu] = useState('');
+  const [subiendoFotoEntrada, setSubiendoFotoEntrada] = useState(false);
+  const [subiendoFotoSegundo, setSubiendoFotoSegundo] = useState(false);
 
   // Estados para "Agregar Extras" (Bebidas, postres, refrigerios con precio independiente)
   const [tipoExtra, setTipoExtra] = useState('Bebida');
@@ -324,7 +328,58 @@ export default function AdminPage() {
     });
   };
 
-  // Subir foto para el Menú Completo (opcional)
+  // Subir foto para la Entrada del Menú (Sopa o Ensalada)
+  const handleFotoUploadEntradaMenu = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const colActual = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
+    setSubiendoFotoEntrada(true);
+    setSubiendoFoto(true);
+    try {
+      const res = await compressImage(file, 800, 0.8);
+      const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
+      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
+      setImagenUrlEntradaMenu(urlNube);
+      setImagenUrlMenu(urlNube);
+    } catch (e) {
+      console.error('Error procesando foto de la entrada:', e);
+      alert('Hubo un problema al procesar la imagen de la sopa o ensalada.');
+    } finally {
+      setSubiendoFotoEntrada(false);
+      setSubiendoFoto(false);
+    }
+  };
+
+  // Subir foto para el Segundo Plato de Fondo
+  const handleFotoUploadSegundoMenu = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const colActual = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
+    setSubiendoFotoSegundo(true);
+    setSubiendoFoto(true);
+    try {
+      const res = await compressImage(file, 800, 0.8);
+      const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
+      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
+      setImagenUrlSegundoMenu(urlNube);
+    } catch (e) {
+      console.error('Error procesando foto del segundo:', e);
+      alert('Hubo un problema al procesar la imagen del segundo.');
+    } finally {
+      setSubiendoFotoSegundo(false);
+      setSubiendoFoto(false);
+    }
+  };
+
+  // Subir foto para el Menú Completo (retrocompatibilidad)
   const handleFotoUploadMenu = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -339,6 +394,7 @@ export default function AdminPage() {
       const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
       const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
       setImagenUrlMenu(urlNube);
+      setImagenUrlEntradaMenu(urlNube);
     } catch (e) {
       console.error('Error procesando foto del menú:', e);
       alert('Hubo un problema al procesar la imagen.');
@@ -398,7 +454,7 @@ export default function AdminPage() {
         nombre: nombreEntradaMenu.trim(),
         descripcion: descEntradaCompleta || undefined,
         precio: 0,
-        imagenUrl: imagenUrlMenu || undefined,
+        imagenUrl: imagenUrlEntradaMenu || imagenUrlMenu || undefined,
         disponible: true,
         orden: platos.length + 1,
         colegioNombre: colFiltro,
@@ -412,7 +468,7 @@ export default function AdminPage() {
         nombre: nombreSegundoMenu.trim(),
         descripcion: descripcionSegundoMenu.trim() || undefined,
         precio: precioFinal,
-        imagenUrl: imagenUrlMenu || undefined,
+        imagenUrl: imagenUrlSegundoMenu || undefined,
         disponible: true,
         orden: platos.length + 2,
         colegioNombre: colFiltro,
@@ -424,6 +480,8 @@ export default function AdminPage() {
       setDescripcionEntradaMenu('');
       setNombreSegundoMenu('');
       setDescripcionSegundoMenu('');
+      setImagenUrlEntradaMenu('');
+      setImagenUrlSegundoMenu('');
       setImagenUrlMenu('');
       setGuardadoExitoso(true);
       setTimeout(() => setGuardadoExitoso(false), 3000);
@@ -830,6 +888,14 @@ export default function AdminPage() {
           imagenUrlMenu={imagenUrlMenu}
           setImagenUrlMenu={setImagenUrlMenu}
           handleFotoUploadMenu={handleFotoUploadMenu}
+          imagenUrlEntradaMenu={imagenUrlEntradaMenu}
+          setImagenUrlEntradaMenu={setImagenUrlEntradaMenu}
+          handleFotoUploadEntradaMenu={handleFotoUploadEntradaMenu}
+          subiendoFotoEntrada={subiendoFotoEntrada}
+          imagenUrlSegundoMenu={imagenUrlSegundoMenu}
+          setImagenUrlSegundoMenu={setImagenUrlSegundoMenu}
+          handleFotoUploadSegundoMenu={handleFotoUploadSegundoMenu}
+          subiendoFotoSegundo={subiendoFotoSegundo}
           handleCrearMenuCompleto={handleCrearMenuCompleto}
           tipoExtra={tipoExtra}
           setTipoExtra={setTipoExtra}

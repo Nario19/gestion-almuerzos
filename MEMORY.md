@@ -875,6 +875,27 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/admin/components/AdminMenuSemanalTab.tsx`
   - `tests/cloudinary-imagenes-menu-colegios.test.mjs` (5 pruebas nuevas, total de 268 pruebas en la suite).
 
+### D-043 — 2026-10-20 — Imágenes Independientes para Entrada (Sopa o Ensalada) y Segundo en Menú del Día
+
+- Decisión: En el formulario de "Agregar Menú" del panel de administración (`/admin`), la entrada (Sopa o Ensalada) y el segundo plato de fondo deben contar cada uno con su propio campo de carga de fotografía independiente en lugar de compartir una sola imagen.
+- Fuente: instrucción explícita del usuario: "para la 1. Sopa o Ensalada Sopa Ensalada Nombre de la Sopa * sopa de pollo Descripción (Opcional) Ej. Crema suave de choclo con toques de queso fresco... 2. Segundo (Plato de Fondo) Nombre del Segundo * segundo lentejas Descripción (Opcional) Ej. Presa sazonada al horno con arroz blanco... debe ser una imagen por sopa o ensalda y segundo."
+- Implementación de Ingeniería:
+  1. `src/app/admin/components/AdminMenuSemanalTab.tsx`:
+     - Se actualizaron las interfaces y props tipadas agregando `imagenUrlEntradaMenu`, `setImagenUrlEntradaMenu`, `handleFotoUploadEntradaMenu`, `subiendoFotoEntrada`, `imagenUrlSegundoMenu`, `setImagenUrlSegundoMenu`, `handleFotoUploadSegundoMenu` y `subiendoFotoSegundo`, preservando retrocompatibilidad con `imagenUrlMenu`.
+     - En la Sección 1 (*"1. Sopa o Ensalada"*), se integró el cargador de fotografía independiente con previsualización, insignia *"En Cloudinary"* y botón para retirar la imagen seleccionada.
+     - En la Sección 2 (*"2. Segundo (Plato de Fondo)"*), se integró su propio cargador de fotografía independiente con previsualización, insignia *"En Cloudinary"* y botón de descarte.
+     - Se eliminó el campo de fotografía unificada que anteriormente se ubicaba al pie del formulario bajo el precio.
+  2. `src/app/admin/page.tsx`:
+     - Se crearon los estados independientes `imagenUrlEntradaMenu`, `imagenUrlSegundoMenu`, `subiendoFotoEntrada` y `subiendoFotoSegundo`.
+     - Se definieron los controladores `handleFotoUploadEntradaMenu` y `handleFotoUploadSegundoMenu`, optimizando y subiendo cada foto a Cloudinary en su ruta estructurada `platos/{colegio}/{dia}`.
+     - En `handleCrearMenuCompleto`, `nuevaEntrada` recibe de manera estricta `imagenUrlEntradaMenu` y `nuevoSegundo` recibe `imagenUrlSegundoMenu`, reseteando ambos estados al concluir la publicación del menú escolar.
+  3. Visualización en Vistas Públicas y de Padres (`/` y `/padres`):
+     - Tanto la sopa/ensalada como el segundo plato muestran de forma individual su respectiva fotografía en sus tarjetas de menú, permitiendo a los padres y alumnos apreciar visualmente cada componente del almuerzo escolar.
+- Impacto:
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/app/admin/page.tsx`
+  - `tests/menu-imagenes-independientes-entrada-segundo.test.mjs` (5 pruebas nuevas, total de 273 pruebas en la suite).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -43,9 +43,18 @@ interface AdminMenuSemanalTabProps {
   setDescripcionSegundoMenu: (v: string) => void;
   precioMenuCompleto: string;
   setPrecioMenuCompleto: (v: string) => void;
-  imagenUrlMenu: string;
+  imagenUrlMenu?: string;
   setImagenUrlMenu?: (v: string) => void;
-  handleFotoUploadMenu: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  handleFotoUploadMenu?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  // Imágenes independientes para Entrada y Segundo
+  imagenUrlEntradaMenu?: string;
+  setImagenUrlEntradaMenu?: (v: string) => void;
+  handleFotoUploadEntradaMenu?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  subiendoFotoEntrada?: boolean;
+  imagenUrlSegundoMenu?: string;
+  setImagenUrlSegundoMenu?: (v: string) => void;
+  handleFotoUploadSegundoMenu?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  subiendoFotoSegundo?: boolean;
   handleCrearMenuCompleto: (e: React.FormEvent) => Promise<void>;
   // Formulario Extras
   tipoExtra: string;
@@ -110,6 +119,14 @@ export default function AdminMenuSemanalTab({
   imagenUrlMenu,
   setImagenUrlMenu,
   handleFotoUploadMenu,
+  imagenUrlEntradaMenu,
+  setImagenUrlEntradaMenu,
+  handleFotoUploadEntradaMenu,
+  subiendoFotoEntrada = false,
+  imagenUrlSegundoMenu,
+  setImagenUrlSegundoMenu,
+  handleFotoUploadSegundoMenu,
+  subiendoFotoSegundo = false,
   handleCrearMenuCompleto,
   tipoExtra,
   setTipoExtra,
@@ -326,6 +343,57 @@ export default function AdminMenuSemanalTab({
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                   />
                 </div>
+
+                {/* Fotografía de la Sopa o Ensalada */}
+                <div className="pt-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía de la {subtipoEntradaMenu} (Opcional)
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                      <Cloud className="w-3 h-3 text-emerald-500" /> Cloudinary
+                    </span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFotoUploadEntradaMenu || handleFotoUploadMenu}
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
+                  />
+                  {(subiendoFotoEntrada || (subiendoFoto && !subiendoFotoSegundo)) && (
+                    <p className="text-[11px] text-orange-600 mt-1 animate-pulse flex items-center gap-1.5 font-bold">
+                      <Cloud className="w-3.5 h-3.5 animate-bounce text-orange-500" /> Subiendo y optimizando imagen en Cloudinary...
+                    </p>
+                  )}
+                  {(imagenUrlEntradaMenu || imagenUrlMenu) && (
+                    <div className="mt-2 h-24 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imagenUrlEntradaMenu || imagenUrlMenu}
+                        alt={`Vista previa de la ${subtipoEntradaMenu}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {(imagenUrlEntradaMenu || imagenUrlMenu)?.includes('cloudinary') && (
+                        <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
+                          <Cloud className="w-3 h-3 text-white" /> En Cloudinary
+                        </span>
+                      )}
+                      {(setImagenUrlEntradaMenu || setImagenUrlMenu) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (setImagenUrlEntradaMenu) setImagenUrlEntradaMenu('');
+                            if (setImagenUrlMenu) setImagenUrlMenu('');
+                          }}
+                          className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg shadow-xs transition cursor-pointer"
+                          title={`Quitar fotografía de la ${subtipoEntradaMenu.toLowerCase()}`}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* SEGUNDO: PLATO DE FONDO */}
@@ -361,6 +429,54 @@ export default function AdminMenuSemanalTab({
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                   />
                 </div>
+
+                {/* Fotografía del Segundo */}
+                <div className="pt-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía del Segundo (Opcional)
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                      <Cloud className="w-3 h-3 text-emerald-500" /> Cloudinary
+                    </span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFotoUploadSegundoMenu}
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
+                  />
+                  {subiendoFotoSegundo && (
+                    <p className="text-[11px] text-orange-600 mt-1 animate-pulse flex items-center gap-1.5 font-bold">
+                      <Cloud className="w-3.5 h-3.5 animate-bounce text-orange-500" /> Subiendo y optimizando imagen en Cloudinary...
+                    </p>
+                  )}
+                  {imagenUrlSegundoMenu && (
+                    <div className="mt-2 h-24 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imagenUrlSegundoMenu}
+                        alt="Vista previa del segundo"
+                        className="w-full h-full object-cover"
+                      />
+                      {imagenUrlSegundoMenu.includes('cloudinary') && (
+                        <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
+                          <Cloud className="w-3 h-3 text-white" /> En Cloudinary
+                        </span>
+                      )}
+                      {setImagenUrlSegundoMenu && (
+                        <button
+                          type="button"
+                          onClick={() => setImagenUrlSegundoMenu('')}
+                          className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg shadow-xs transition cursor-pointer"
+                          title="Quitar fotografía del segundo"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* PRECIO CONJUNTO DEL MENÚ */}
@@ -383,50 +499,6 @@ export default function AdminMenuSemanalTab({
                 <p className="text-[10px] text-emerald-800">
                   Este precio cubre la sopa/ensalada y el segundo plato como un solo menú escolar.
                 </p>
-              </div>
-
-              {/* FOTOGRAFÍA OPCIONAL (ALMACENAMIENTO EN CLOUDINARY) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> Fotografía del Menú (Opcional)
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
-                    <Cloud className="w-3 h-3 text-emerald-500" /> Cloudinary
-                  </span>
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFotoUploadMenu}
-                  className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-100 file:text-orange-700 cursor-pointer"
-                />
-                {subiendoFoto && (
-                  <p className="text-[11px] text-orange-600 mt-1 animate-pulse flex items-center gap-1.5 font-bold">
-                    <Cloud className="w-3.5 h-3.5 animate-bounce text-orange-500" /> Subiendo y optimizando imagen en Cloudinary...
-                  </p>
-                )}
-                {imagenUrlMenu && (
-                  <div className="mt-2 h-28 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imagenUrlMenu} alt="Vista previa del menú" className="w-full h-full object-cover" />
-                    {imagenUrlMenu.includes('cloudinary') && (
-                      <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
-                        <Cloud className="w-3 h-3 text-white" /> En Cloudinary
-                      </span>
-                    )}
-                    {setImagenUrlMenu && (
-                      <button
-                        type="button"
-                        onClick={() => setImagenUrlMenu('')}
-                        className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg shadow-xs transition cursor-pointer"
-                        title="Quitar fotografía"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
 
               <button
