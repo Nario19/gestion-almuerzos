@@ -75,7 +75,26 @@ export default function AdminPage() {
     }
   };
 
-  // Formulario de nuevo plato
+  // Formulario y Modos de Registro en Menú Semanal
+  const [modoRegistroMenu, setModoRegistroMenu] = useState<'MENU' | 'EXTRAS'>('MENU');
+
+  // Estados para "Agregar Menú" (Sopa o ensalada + Segundo con precio conjunto)
+  const [subtipoEntradaMenu, setSubtipoEntradaMenu] = useState<'Sopa' | 'Ensalada'>('Sopa');
+  const [nombreEntradaMenu, setNombreEntradaMenu] = useState('');
+  const [descripcionEntradaMenu, setDescripcionEntradaMenu] = useState('');
+  const [nombreSegundoMenu, setNombreSegundoMenu] = useState('');
+  const [descripcionSegundoMenu, setDescripcionSegundoMenu] = useState('');
+  const [precioMenuCompleto, setPrecioMenuCompleto] = useState('12.00');
+  const [imagenUrlMenu, setImagenUrlMenu] = useState('');
+
+  // Estados para "Agregar Extras" (Bebidas, postres, refrigerios con precio independiente)
+  const [tipoExtra, setTipoExtra] = useState('Bebida');
+  const [nombreExtra, setNombreExtra] = useState('');
+  const [descripcionExtra, setDescripcionExtra] = useState('');
+  const [precioExtra, setPrecioExtra] = useState('2.50');
+  const [imagenUrlExtra, setImagenUrlExtra] = useState('');
+
+  // Formulario de plato individual (retrocompatibilidad)
   const [tiposDisponibles, setTiposDisponibles] = useState<string[]>([
     'Sopa o postre',
     'Segundo',
@@ -304,7 +323,152 @@ export default function AdminPage() {
     });
   };
 
-  // Manejador para comprimir foto del plato antes de guardarla en Cloudinary
+  // Subir foto para el Menú Completo (opcional)
+  const handleFotoUploadMenu = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSubiendoFoto(true);
+    try {
+      const res = await compressImage(file, 800, 0.8);
+      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, 'platos');
+      setImagenUrlMenu(urlNube);
+    } catch (e) {
+      console.error('Error procesando foto del menú:', e);
+      alert('Hubo un problema al procesar la imagen.');
+    } finally {
+      setSubiendoFoto(false);
+    }
+  };
+
+  // Subir foto para Extra (opcional)
+  const handleFotoUploadExtra = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSubiendoFoto(true);
+    try {
+      const res = await compressImage(file, 800, 0.8);
+      const urlNube = await subirImagenACloudinary(res.compressedDataUrl, 'platos');
+      setImagenUrlExtra(urlNube);
+    } catch (e) {
+      console.error('Error procesando foto del extra:', e);
+      alert('Hubo un problema al procesar la imagen.');
+    } finally {
+      setSubiendoFoto(false);
+    }
+  };
+
+  // Guardar Menú Completo (Sopa o ensalada + Segundo con precio conjunto)
+  const handleCrearMenuCompleto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombreEntradaMenu.trim() || !nombreSegundoMenu.trim() || guardandoPlato) {
+      alert('Por favor ingresa tanto el nombre de la sopa o ensalada como el del segundo plato.');
+      return;
+    }
+
+    const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
+    const colIdFiltro = (!esSuperAdmin && usuario?.colegioId)
+      ? usuario.colegioId
+      : undefined;
+
+    const precioFinal = parseFloat(precioMenuCompleto) || 12.0;
+    setGuardandoPlato(true);
+
+    try {
+      // 1. Guardar Entrada (Sopa o Ensalada) con precio 0 (incluida en el menú)
+      const descEntradaCompleta = `${subtipoEntradaMenu === 'Ensalada' ? '[Ensalada]' : '[Sopa]'} ${descripcionEntradaMenu.trim()}`.trim();
+      const nuevaEntrada = await dataService.agregarPlato({
+        diaSemana: diaActivo,
+        tipo: 'ENTRADA',
+        nombre: nombreEntradaMenu.trim(),
+        descripcion: descEntradaCompleta || undefined,
+        precio: 0,
+        imagenUrl: imagenUrlMenu || undefined,
+        disponible: true,
+        orden: platos.length + 1,
+        colegioNombre: colFiltro,
+        colegioId: colIdFiltro,
+      });
+
+      // 2. Guardar Segundo (Plato de Fondo) con el precio completo del menú
+      const nuevoSegundo = await dataService.agregarPlato({
+        diaSemana: diaActivo,
+        tipo: 'SEGUNDO',
+        nombre: nombreSegundoMenu.trim(),
+        descripcion: descripcionSegundoMenu.trim() || undefined,
+        precio: precioFinal,
+        imagenUrl: imagenUrlMenu || undefined,
+        disponible: true,
+        orden: platos.length + 2,
+        colegioNombre: colFiltro,
+        colegioId: colIdFiltro,
+      });
+
+      setPlatos((prev) => [...prev, nuevaEntrada, nuevoSegundo]);
+      setNombreEntradaMenu('');
+      setDescripcionEntradaMenu('');
+      setNombreSegundoMenu('');
+      setDescripcionSegundoMenu('');
+      setImagenUrlMenu('');
+      setGuardadoExitoso(true);
+      setTimeout(() => setGuardadoExitoso(false), 3000);
+    } catch (err: unknown) {
+      console.error('Error al guardar menú completo:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(msg || 'Error al guardar el menú en la base de datos.');
+    } finally {
+      setGuardandoPlato(false);
+    }
+  };
+
+  // Guardar Extra individual (Bebida, postre, refrigerio)
+  const handleCrearExtra = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombreExtra.trim() || guardandoPlato) return;
+
+    const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
+    const colIdFiltro = (!esSuperAdmin && usuario?.colegioId)
+      ? usuario.colegioId
+      : undefined;
+
+    setGuardandoPlato(true);
+    try {
+      const nuevo = await dataService.agregarPlato({
+        diaSemana: diaActivo,
+        tipo: tipoExtra,
+        nombre: nombreExtra.trim(),
+        descripcion: descripcionExtra.trim() || undefined,
+        precio: parseFloat(precioExtra) || 0,
+        imagenUrl: imagenUrlExtra || undefined,
+        disponible: true,
+        orden: platos.length + 1,
+        colegioNombre: colFiltro,
+        colegioId: colIdFiltro,
+      });
+
+      setPlatos((prev) => [...prev, nuevo]);
+      setNombreExtra('');
+      setDescripcionExtra('');
+      setImagenUrlExtra('');
+      setGuardadoExitoso(true);
+      setTimeout(() => setGuardadoExitoso(false), 3000);
+    } catch (err: unknown) {
+      console.error('Error al guardar extra en el menú:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(msg || 'Error al guardar el extra en la base de datos.');
+    } finally {
+      setGuardandoPlato(false);
+    }
+  };
+
+  // Manejador tradicional para plato individual (retrocompatibilidad)
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -343,7 +507,7 @@ export default function AdminPage() {
         nombre: nombreNuevo.trim(),
         descripcion: descripcionNueva.trim() || undefined,
         precio: esSopa ? 0 : parseFloat(precioNuevo) || 12.0,
-        imagenUrl: imagenUrlNueva || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+        imagenUrl: imagenUrlNueva || undefined,
         disponible: true,
         orden: platos.length + 1,
         colegioNombre: colFiltro,
@@ -638,6 +802,34 @@ export default function AdminPage() {
           colegios={colegios}
           colegioMenuSeleccionado={colegioMenuSeleccionado}
           setColegioMenuSeleccionado={setColegioMenuSeleccionado}
+          modoRegistroMenu={modoRegistroMenu}
+          setModoRegistroMenu={setModoRegistroMenu}
+          subtipoEntradaMenu={subtipoEntradaMenu}
+          setSubtipoEntradaMenu={setSubtipoEntradaMenu}
+          nombreEntradaMenu={nombreEntradaMenu}
+          setNombreEntradaMenu={setNombreEntradaMenu}
+          descripcionEntradaMenu={descripcionEntradaMenu}
+          setDescripcionEntradaMenu={setDescripcionEntradaMenu}
+          nombreSegundoMenu={nombreSegundoMenu}
+          setNombreSegundoMenu={setNombreSegundoMenu}
+          descripcionSegundoMenu={descripcionSegundoMenu}
+          setDescripcionSegundoMenu={setDescripcionSegundoMenu}
+          precioMenuCompleto={precioMenuCompleto}
+          setPrecioMenuCompleto={setPrecioMenuCompleto}
+          imagenUrlMenu={imagenUrlMenu}
+          handleFotoUploadMenu={handleFotoUploadMenu}
+          handleCrearMenuCompleto={handleCrearMenuCompleto}
+          tipoExtra={tipoExtra}
+          setTipoExtra={setTipoExtra}
+          nombreExtra={nombreExtra}
+          setNombreExtra={setNombreExtra}
+          descripcionExtra={descripcionExtra}
+          setDescripcionExtra={setDescripcionExtra}
+          precioExtra={precioExtra}
+          setPrecioExtra={setPrecioExtra}
+          imagenUrlExtra={imagenUrlExtra}
+          handleFotoUploadExtra={handleFotoUploadExtra}
+          handleCrearExtra={handleCrearExtra}
           tiposDisponibles={tiposDisponibles}
           tipoNuevo={tipoNuevo}
           setTipoNuevo={setTipoNuevo}

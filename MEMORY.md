@@ -725,6 +725,44 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/admin/fiado/page.tsx`
   - `tests/fiado-whatsapp-pdf-sin-emojis.test.mjs` (nuevo)
 
+### D-039 — 2026-10-19 — Menú Escolar Conjunto (Sopa/Ensalada + Segundo), Extras Independientes con Precios Dinámicos, Erradicación de Fotos Falsas y Seeder Superadmin Único
+- Decisión: A solicitud explícita del usuario ("cuando agrego el menú del dia debe tener dos uno que sellame agregar menu y ahi debe tener dos opciones sopa o ensalda y segundo eso es el menu luego debe haber otro para poner los extras bebida postre refrigerioetc. pero el menu debe estar junto y debe permitir ponerle precio junto. ahora asegurate de que se muestre correctamente que se liste en el menu del home principal el publico y en el de los padres. cuando agrego un plato se pone una imagen que yo no he puesto. ya te dije que desde ahora ya no habra datos hardcodeado ni escritos excepto los seeder de crdenciale s de ingreso solo debe quedar el seeder de superadmin. lo demás borralo para hacer las pruebas respectivas."):
+  1. **Configuración del Menú en Administrador (`/admin`):**
+     - Se crearon dos modos claros e intuitivos con selector de pestañas:
+       - **"Agregar Menú"**: Permite ingresar conjuntamente la entrada (Sopa o Ensalada) y el plato de fondo (Segundo) con un **precio conjunto único y configurable** (ej. S/ 12.00, S/ 14.00, etc.). La entrada se registra como `ENTRADA` (precio 0) y el segundo como `SEGUNDO` (precio del menú).
+       - **"Agregar Extras"**: Permite registrar productos independientes (Bebidas, Postres, Refrigerios, Snacks u otros tipos personalizados con `+ Otro tipo...`) con **precio unitario propio e independiente**.
+  2. **Erradicación Total de Fotos de Unsplash o Falsas:**
+     - Se eliminó cualquier inyección o fallback automático a imágenes de Unsplash cuando se crea un plato sin foto (`imagenUrl: imagenUrlNueva || undefined`).
+     - Cuando un plato no tiene foto, el sistema renderiza un contenedor estilizado con iconos vectoriales limpios y temáticos (`Soup`, `Salad`, `Utensils`, `Coffee`, `Apple`) sin recuadros rotos ni fotografías no subidas por el usuario.
+  3. **Visualización y Pedidos en Home Público (`/`) y Vista de Padres (`/padres`):**
+     - **Home Público (`/`)**: Desglosa claramente:
+       - 1. Sopa o Ensalada (incluida en el menú)
+       - 2. Segundo / Plato de Fondo con el precio real configurable del menú escolar (`S/ ${precioMenuBase.toFixed(2)}`)
+       - 3. Extras y Adicionales (si existen en el día) con precio unitario (`S/ ${extra.precio.toFixed(2)}`).
+     - **Vista Padres Autenticados (`/padres`)**:
+       - Selección de Sopa o Ensalada + Selección de Segundo.
+       - Sección opcional de Extras y Adicionales con selección múltiple (checkboxes interactivos).
+       - Cálculo de monto total 100% dinámico: `precioTotal = precioMenuBase + totalExtras`.
+       - Métodos de pago (Yape, Plin, Pagar luego) y comprobantes calculan y validan sobre el monto total exacto.
+       - Modal de confirmación y corroboración desglosa el menú y cada extra con sus importes individuales.
+       - Envío a `crearPedido` con `monto: precioTotal` y `refrigerioNombre` con el detalle de extras.
+  4. **Limpieza de Datos de Prueba y Seeder Exclusivo de Superadmin:**
+     - Se ejecutó `scripts/seed-superadmin.mjs` reseteando completamente la base de datos de Supabase; únicamente existe la cuenta oficial del Superadministrador (`00000001` / `superadmin123`).
+     - Se actualizó `package.json` para que `"seed": "node scripts/seed-superadmin.mjs"`.
+  5. **Suite de Pruebas Automatizadas:**
+     - Se implementó `tests/menu-completo-y-extras.test.mjs` con 7 pruebas que validan el registro conjunto de menú, extras individuales, ausencia de Unsplash, cálculo dinámico de montos y seeder único. Toda la suite de 233 pruebas del proyecto pasa en verde (`0` fallos).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/app/padres/page.tsx`
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/lib/dataService.ts`
+  - `package.json`
+  - `tests/menu-completo-y-extras.test.mjs` (nuevo)
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

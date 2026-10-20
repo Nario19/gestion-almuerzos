@@ -319,6 +319,8 @@ export default function DespachoPage() {
         const pedidoDetalle = `${
           p.entradaNombre ? `Sopa o postre: ${p.entradaNombre} | ` : ''
         }Segundo: ${p.segundoNombre}${
+          p.refrigerioNombre ? ` | Extras: ${p.refrigerioNombre}` : ''
+        }${
           p.observacion ? ` (Obs: ${p.observacion})` : ''
         }`;
         const pagoDetalle =
@@ -326,7 +328,7 @@ export default function DespachoPage() {
             ? `CANCELADO (${p.metodoPago || 'Sin pago'})`
             : p.estadoPago === 'PAGADO'
             ? `PAGADO (${p.metodoPago || 'Yape'})`
-            : `POR PAGAR (S/ 12.00 - ${p.metodoPago || 'Pendiente'})`;
+            : `POR PAGAR (S/ ${(p.monto || 12.0).toFixed(2)} - ${p.metodoPago || 'Pendiente'})`;
         const gradoSeccionDetalle =
           colegioFiltro === 'TODOS'
             ? `${p.colegioNombre} - ${p.gradoSeccion}`
@@ -984,7 +986,7 @@ export default function DespachoPage() {
                               </div>
                               {p.entradaNombre && (
                                 <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-                                  <span className="font-semibold text-orange-700">Sopa o postre:</span>{' '}
+                                  <span className="font-semibold text-orange-700">Sopa o ensalada:</span>{' '}
                                   {p.entradaNombre}
                                 </div>
                               )}
@@ -992,6 +994,12 @@ export default function DespachoPage() {
                                 <span className="font-bold text-amber-800">Segundo:</span>{' '}
                                 {p.segundoNombre}
                               </div>
+                              {p.refrigerioNombre && (
+                                <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-emerald-700 font-semibold'}`}>
+                                  <span className="font-bold text-emerald-800">Extras:</span>{' '}
+                                  {p.refrigerioNombre}
+                                </div>
+                              )}
                               {p.observacion && (
                                 <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold rounded-md mt-0.5">
                                   <AlertCircle className="w-3 h-3 shrink-0" />

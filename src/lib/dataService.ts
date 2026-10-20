@@ -348,6 +348,15 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
     }
   }
 
+  let refrigerioNombre: string | undefined = undefined;
+  if (obs && obs.includes('[Extras:')) {
+    const matchExtras = obs.match(/\[Extras:\s*([^\]]+)\]/);
+    if (matchExtras) {
+      refrigerioNombre = matchExtras[1].trim();
+      obs = obs.replace(/\s*•?\s*\[Extras:\s*[^\]]+\]/, '').trim() || undefined;
+    }
+  }
+
   // Normalización defensiva de fecha según la zona horaria de Perú (America/Lima)
   const fechaNormalizada = d.created_at
     ? obtenerFechaPeruDeIso(d.created_at)
@@ -368,6 +377,7 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
     telefonoContacto: d.padre_telefono || (d as { telefono_contacto?: string }).telefono_contacto || '',
     entradaNombre: d.entrada_nombre || '',
     segundoNombre: d.segundo_nombre || '',
+    refrigerioNombre,
     observacion: obs || undefined,
     metodoPago: d.metodo_pago || 'Pagar luego',
     estadoPago: d.estado_pago || 'PENDIENTE',
@@ -704,6 +714,9 @@ export const dataService = {
     };
 
     let obsCompleta = nuevo.observacion || '';
+    if (nuevo.refrigerioNombre) {
+      obsCompleta = obsCompleta ? `${obsCompleta} • [Extras: ${nuevo.refrigerioNombre}]` : `[Extras: ${nuevo.refrigerioNombre}]`;
+    }
     if (nuevo.padreNombre) {
       obsCompleta = obsCompleta ? `${obsCompleta} • [Padre: ${nuevo.padreNombre}]` : `[Padre: ${nuevo.padreNombre}]`;
     }

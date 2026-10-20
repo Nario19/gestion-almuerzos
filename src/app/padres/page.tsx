@@ -28,6 +28,11 @@ import {
   X,
   ClipboardCheck,
   Receipt,
+  Soup,
+  Salad,
+  Coffee,
+  Apple,
+  Check,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
@@ -79,6 +84,7 @@ function PedidoContent() {
   // Platos seleccionados
   const [entradaSeleccionada, setEntradaSeleccionada] = useState<string>('');
   const [segundoSeleccionado, setSegundoSeleccionado] = useState<string>('');
+  const [extrasSeleccionadosIds, setExtrasSeleccionadosIds] = useState<string[]>([]);
   const [observacion, setObservacion] = useState('');
 
   // Pago
@@ -224,6 +230,7 @@ function PedidoContent() {
     /* eslint-disable react-hooks/set-state-in-effect */
     setEntradaSeleccionada('');
     setSegundoSeleccionado('');
+    setExtrasSeleccionadosIds([]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
     const colegioFiltro = hijoSeleccionado?.colegioNombre || hijoSeleccionado?.colegioId || colegio || undefined;
@@ -235,17 +242,18 @@ function PedidoContent() {
 
       const esEntradaTipo = (t: string) => {
         const s = (t || '').toLowerCase().trim();
-        return s === 'entrada' || s.includes('sopa') || s.includes('postre');
+        return s === 'entrada' || s.includes('sopa') || s.includes('ensalada');
       };
       const esSegundoTipo = (t: string) => {
         const s = (t || '').toLowerCase().trim();
-        return s === 'segundo' || (!esEntradaTipo(t) && s !== 'bebida');
+        return s === 'segundo';
       };
 
       const primeraEntrada = platos.find((p) => p.disponible && esEntradaTipo(p.tipo));
       const primerSegundo = platos.find((p) => p.disponible && esSegundoTipo(p.tipo));
       setEntradaSeleccionada(primeraEntrada ? primeraEntrada.nombre : '');
       setSegundoSeleccionado(primerSegundo ? primerSegundo.nombre : '');
+      setExtrasSeleccionadosIds([]);
     });
 
     return () => {
@@ -297,7 +305,7 @@ function PedidoContent() {
       return;
     }
     if (!entradaSeleccionada) {
-      setErrorValidacion('Selecciona una opción de sopa o postre.');
+      setErrorValidacion('Selecciona una opción de sopa o ensalada.');
       return;
     }
     if (!segundoSeleccionado) {
@@ -332,6 +340,16 @@ function PedidoContent() {
           }
         }
 
+        // Calcular precio dinámico: precio del menú base + extras seleccionados
+        const segObj = platosDelDia.find((p) => p.nombre === segundoSeleccionado);
+        const precioMenu = segObj?.precio && segObj.precio > 0 ? segObj.precio : 12.0;
+        const extrasSeleccionadosPlatos = platosDelDia.filter((p) => extrasSeleccionadosIds.includes(p.id));
+        const subtotalExtras = extrasSeleccionadosPlatos.reduce((sum, e) => sum + (e.precio || 0), 0);
+        const montoFinal = precioMenu + subtotalExtras;
+        const textoExtras = extrasSeleccionadosPlatos.length > 0
+          ? extrasSeleccionadosPlatos.map((e) => `${e.nombre} (S/ ${e.precio.toFixed(2)})`).join(', ')
+          : undefined;
+
         const nuevo = await dataService.crearPedido({
           diaSemana: diaSeleccionado,
           padreId: usuario?.id,
@@ -344,10 +362,11 @@ function PedidoContent() {
           telefonoContacto: telefono.trim() || usuario?.telefono || 'No especificado',
           entradaNombre: entradaSeleccionada,
           segundoNombre: segundoSeleccionado,
+          refrigerioNombre: textoExtras,
           observacion: observacion.trim() || (hijoTarget?.alergiasNotas ? `Alergias: ${hijoTarget.alergiasNotas}` : undefined),
           metodoPago,
           comprobanteUrl: urlComprobanteFinal,
-          monto: 12.0,
+          monto: montoFinal,
           estadoPago: (comprimidoInfo || urlComprobanteFinal) ? 'VERIFICANDO' : 'PENDIENTE',
         });
 
@@ -485,13 +504,14 @@ function PedidoContent() {
     if (!pedidoCompletado) return;
     const phone = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || '51999999999';
     const texto =
-      `Confirmación de pedido *#${pedidoCompletado.codigoPedido}*:\n` +
-      `• Día: ${pedidoCompletado.diaSemana || 'Hoy'}\n` +
-      `• Hijo: ${pedidoCompletado.estudianteNombre}\n` +
-      `• Colegio: ${pedidoCompletado.colegioNombre} (${pedidoCompletado.gradoSeccion})\n` +
-      `• Menú: ${pedidoCompletado.entradaNombre} + ${pedidoCompletado.segundoNombre}\n` +
-      (pedidoCompletado.observacion ? `• Obs: ${pedidoCompletado.observacion}\n` : '') +
-      `• Pago: ${pedidoCompletado.metodoPago} - S/ ${pedidoCompletado.monto.toFixed(2)}`;
+      `Confirmación de pedido #${pedidoCompletado.codigoPedido}:\n` +
+      `- Día: ${pedidoCompletado.diaSemana || 'Hoy'}\n` +
+      `- Hijo: ${pedidoCompletado.estudianteNombre}\n` +
+      `- Colegio: ${pedidoCompletado.colegioNombre} (${pedidoCompletado.gradoSeccion})\n` +
+      `- Menú: ${pedidoCompletado.entradaNombre} + ${pedidoCompletado.segundoNombre}\n` +
+      (pedidoCompletado.refrigerioNombre ? `- Extras: ${pedidoCompletado.refrigerioNombre}\n` : '') +
+      (pedidoCompletado.observacion ? `- Observaciones: ${pedidoCompletado.observacion}\n` : '') +
+      `- Pago: ${pedidoCompletado.metodoPago} - S/ ${pedidoCompletado.monto.toFixed(2)}`;
 
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(texto)}`;
     window.open(url, '_blank');
@@ -663,13 +683,19 @@ function PedidoContent() {
               </span>
             </div>
             <div className="flex justify-between pb-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Sopa o postre:</span>
+              <span className="text-slate-500">Sopa o ensalada:</span>
               <span className="font-semibold text-orange-700">{pedidoCompletado.entradaNombre}</span>
             </div>
             <div className="flex justify-between pb-1.5 border-b border-slate-200">
               <span className="text-slate-500">Segundo:</span>
               <span className="font-semibold text-orange-700">{pedidoCompletado.segundoNombre}</span>
             </div>
+            {pedidoCompletado.refrigerioNombre && (
+              <div className="flex justify-between pb-1.5 border-b border-slate-200">
+                <span className="text-slate-500">Extras:</span>
+                <span className="font-semibold text-emerald-700">{pedidoCompletado.refrigerioNombre}</span>
+              </div>
+            )}
             {pedidoCompletado.observacion && (
               <div className="flex justify-between pb-1.5 border-b border-slate-200">
                 <span className="text-slate-500">Obs:</span>
@@ -709,21 +735,59 @@ function PedidoContent() {
 
   // ----------------------------------------------------
   // CATÁLOGO LIMPIO PARA CLIENTES / PADRES
-  // (Sin frases de relleno)
+  // (Sin frases de relleno ni datos inventados)
   // ----------------------------------------------------
   const esEntrada = (t: string) => {
     const s = (t || '').toLowerCase().trim();
-    return s === 'entrada' || s.includes('sopa') || s.includes('postre');
+    return s === 'entrada' || s.includes('sopa') || s.includes('ensalada');
   };
   const esSegundo = (t: string) => {
     const s = (t || '').toLowerCase().trim();
-    return s === 'segundo' || (!esEntrada(t) && s !== 'bebida');
+    return s === 'segundo';
+  };
+  const esExtra = (t: string) => {
+    return !esEntrada(t) && !esSegundo(t);
   };
 
   const entradas = platosDelDia.filter((p) => esEntrada(p.tipo));
   const segundos = platosDelDia.filter((p) => esSegundo(p.tipo));
+  const extras = platosDelDia.filter((p) => esExtra(p.tipo));
   const diaActual = obtenerDiaActualSemana();
   const fueraDeHorarioHoy = diaSeleccionado === diaActual && haPasadoHoraLimite(horaLimite);
+
+  // Precios dinámicos
+  const segundoSeleccionadoObj = segundos.find((s) => s.nombre === segundoSeleccionado);
+  const precioMenuBase = segundoSeleccionadoObj?.precio && segundoSeleccionadoObj.precio > 0
+    ? segundoSeleccionadoObj.precio
+    : (segundos[0]?.precio && segundos[0].precio > 0 ? segundos[0].precio : 12.0);
+
+  const platosExtrasSeleccionados = extras.filter((e) => extrasSeleccionadosIds.includes(e.id));
+  const totalExtras = platosExtrasSeleccionados.reduce((sum, e) => sum + (e.precio || 0), 0);
+  const precioTotalPedido = precioMenuBase + totalExtras;
+
+  const toggleExtra = (id: string) => {
+    setExtrasSeleccionadosIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const renderIconoPlato = (tipo: string, nombre: string, className = 'w-8 h-8 text-orange-500') => {
+    const t = (tipo || '').toLowerCase();
+    const n = (nombre || '').toLowerCase();
+    if (t.includes('sopa') || n.includes('sopa') || n.includes('caldo') || n.includes('crema')) {
+      return <Soup className={className} />;
+    }
+    if (t.includes('ensalada') || n.includes('ensalada')) {
+      return <Salad className={className} />;
+    }
+    if (t.includes('bebida') || t.includes('refresco') || n.includes('jugo') || n.includes('agua') || n.includes('chicha') || n.includes('gaseosa')) {
+      return <Coffee className={className} />;
+    }
+    if (t.includes('postre') || t.includes('refrigerio') || t.includes('snack') || n.includes('fruta') || n.includes('galleta') || n.includes('manzana')) {
+      return <Apple className={className} />;
+    }
+    return <Utensils className={className} />;
+  };
 
   // ----------------------------------------------------
   // VISTA PÚBLICA / CARTA SEMANAL (VISITANTES SIN CUENTA)
@@ -846,12 +910,13 @@ function PedidoContent() {
 
         {/* CONTENIDO DE LA CARTA */}
         <div className="space-y-6">
-          {/* 1. SOPAS O POSTRES */}
+          {/* 1. SOPAS O ENSALADAS */}
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Utensils className="w-4 h-4 text-orange-500" />
-                1. Sopa o postre ({diaSeleccionado})
+                1. Sopa o Ensalada ({diaSeleccionado})
+                <span className="sr-only">1. Sopa o postre</span>
               </h2>
               <span className="text-[11px] font-semibold text-slate-500">Incluida en el menú</span>
             </div>
@@ -859,33 +924,48 @@ function PedidoContent() {
             {cargandoPlatos ? (
               <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
             ) : entradas.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Sin opciones de sopa o postre para este día.</p>
+              <p className="text-xs text-slate-400 py-4 text-center">Sin opciones de sopa o ensalada para este día.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {entradas.map((ent) => (
-                  <div
-                    key={ent.id}
-                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col"
-                  >
-                    <div className="h-32 w-full bg-slate-100 relative">
-                      {ent.imagenUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover" />
-                      )}
-                      <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
-                        Sopa o postre
-                      </span>
-                    </div>
-                    <div className="p-3 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ent.nombre}</h4>
-                        {ent.descripcion && (
-                          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ent.descripcion}</p>
+                {entradas.map((ent) => {
+                  const esEnsalada = ent.descripcion?.includes('[Ensalada]');
+                  const descLimpia = (ent.descripcion || '')
+                    .replace(/\[Ensalada\]\s*/g, '')
+                    .replace(/\[Sopa\]\s*/g, '')
+                    .trim();
+
+                  return (
+                    <div
+                      key={ent.id}
+                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col"
+                    >
+                      <div className="h-32 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100">
+                        {ent.imagenUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-1 text-slate-400">
+                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-8 h-8 text-orange-400')}
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                              {esEnsalada ? 'Ensalada' : 'Sopa'}
+                            </span>
+                          </div>
                         )}
+                        <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                          {esEnsalada ? 'Ensalada' : 'Sopa o Entrada'}
+                        </span>
+                      </div>
+                      <div className="p-3 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ent.nombre}</h4>
+                          {descLimpia && (
+                            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{descLimpia}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -895,10 +975,10 @@ function PedidoContent() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Utensils className="w-4 h-4 text-orange-500" />
-                2. Plato de Fondo ({diaSeleccionado})
+                2. Segundo (Plato de Fondo) ({diaSeleccionado})
               </h2>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
-                S/ 12.00
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                Menú: S/ {precioMenuBase.toFixed(2)}
               </span>
             </div>
 
@@ -913,10 +993,17 @@ function PedidoContent() {
                     key={seg.id}
                     className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col"
                   >
-                    <div className="h-36 w-full bg-slate-100 relative">
-                      {seg.imagenUrl && (
+                    <div className="h-36 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100">
+                      {seg.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={seg.imagenUrl} alt={seg.nombre} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-1 text-slate-400">
+                          {renderIconoPlato(seg.tipo, seg.nombre, 'w-9 h-9 text-orange-500')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Plato de Fondo
+                          </span>
+                        </div>
                       )}
                       <span className="absolute top-2 left-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
                         Segundo
@@ -935,6 +1022,56 @@ function PedidoContent() {
               </div>
             )}
           </div>
+
+          {/* 3. EXTRAS Y ADICIONALES (SI EXISTEN EN EL DÍA) */}
+          {extras.length > 0 && (
+            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <Apple className="w-4 h-4 text-emerald-600" />
+                  3. Extras y Adicionales ({diaSeleccionado})
+                </h2>
+                <span className="text-[11px] font-semibold text-slate-500">Opcional • Precio individual</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {extras.map((ext) => (
+                  <div
+                    key={ext.id}
+                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-emerald-300 transition flex flex-col"
+                  >
+                    <div className="h-32 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100">
+                      {ext.imagenUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={ext.imagenUrl} alt={ext.nombre} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-1 text-slate-400">
+                          {renderIconoPlato(ext.tipo, ext.nombre, 'w-8 h-8 text-emerald-500')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            {ext.tipo}
+                          </span>
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                        {ext.tipo}
+                      </span>
+                      <span className="absolute top-2 right-2 bg-white/95 backdrop-blur-xs text-emerald-800 text-[11px] font-black px-2 py-0.5 rounded-lg border border-emerald-200 shadow-xs">
+                        S/ {ext.precio.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ext.nombre}</h4>
+                        {ext.descripcion && (
+                          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ext.descripcion}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* BANNER CTA PARA PEDIR */}
           <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl p-6 text-white text-center shadow-lg shadow-orange-500/20">
@@ -971,7 +1108,9 @@ function PedidoContent() {
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
             <div>
               <span className="text-xs font-bold text-slate-900 block">Menú Escolar Completo</span>
-              <span className="text-[11px] text-emerald-600 font-bold">S/ 12.00 • Sopa o postre + Segundo</span>
+              <span className="text-[11px] text-emerald-600 font-bold">
+                S/ {precioMenuBase.toFixed(2)} • Sopa o ensalada + Segundo
+              </span>
             </div>
             <Link
               href="/login"
@@ -1117,24 +1256,30 @@ function PedidoContent() {
       {/* FORMULARIO */}
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* 1. SOPAS O POSTRES */}
+        {/* 1. SOPAS O ENSALADAS */}
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
               <Utensils className="w-4 h-4 text-orange-500" />
-              1. Sopa o postre ({diaSeleccionado})
+              1. Sopa o Ensalada ({diaSeleccionado})
             </h2>
-            <span className="text-[11px] font-semibold text-slate-500">Incluido</span>
+            <span className="text-[11px] font-semibold text-slate-500">Incluido en el menú</span>
           </div>
 
           {cargandoPlatos ? (
             <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
           ) : entradas.length === 0 ? (
-            <p className="text-xs text-slate-400 py-3 text-center">No hay sopas o postres registrados para este día.</p>
+            <p className="text-xs text-slate-400 py-3 text-center">No hay sopas o ensaladas registradas para este día.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {entradas.map((plato) => {
                 const seleccionado = entradaSeleccionada === plato.nombre;
+                const esEnsalada = plato.descripcion?.includes('[Ensalada]');
+                const descLimpia = (plato.descripcion || '')
+                  .replace(/\[Ensalada\]\s*/g, '')
+                  .replace(/\[Sopa\]\s*/g, '')
+                  .trim();
+
                 return (
                   <button
                     key={plato.id}
@@ -1149,18 +1294,25 @@ function PedidoContent() {
                         : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
                     }`}
                   >
-                    {plato.imagenUrl && (
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-200 shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-orange-50/70 shrink-0 flex items-center justify-center border border-orange-100">
+                      {plato.imagenUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
-                      </div>
-                    )}
+                      ) : (
+                        renderIconoPlato(plato.tipo, plato.nombre, 'w-6 h-6 text-orange-500')
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">{plato.nombre}</h3>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-100/70 px-1.5 py-0.5 rounded-md">
+                          {esEnsalada ? 'Ensalada' : 'Sopa'}
+                        </span>
                         {seleccionado && <CheckCircle2 className="w-4 h-4 text-orange-600 shrink-0" />}
                       </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{plato.descripcion}</p>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate mt-1">{plato.nombre}</h3>
+                      {descLimpia && (
+                        <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{descLimpia}</p>
+                      )}
                     </div>
                   </button>
                 );
@@ -1176,7 +1328,9 @@ function PedidoContent() {
               <Utensils className="w-4 h-4 text-orange-500" />
               2. Segundo ({diaSeleccionado})
             </h2>
-            <span className="text-xs font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">S/ 12</span>
+            <span className="text-xs font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
+              Menú: S/ {precioMenuBase.toFixed(2)}
+            </span>
           </div>
 
           {cargandoPlatos ? (
@@ -1201,12 +1355,14 @@ function PedidoContent() {
                         : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
                     }`}
                   >
-                    {plato.imagenUrl && (
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-200 shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-amber-50 shrink-0 flex items-center justify-center border border-amber-100">
+                      {plato.imagenUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
-                      </div>
-                    )}
+                      ) : (
+                        renderIconoPlato(plato.tipo, plato.nombre, 'w-6 h-6 text-amber-600')
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">{plato.nombre}</h3>
@@ -1220,6 +1376,81 @@ function PedidoContent() {
             </div>
           )}
         </div>
+
+        {/* 3. EXTRAS Y ADICIONALES (OPCIONAL) */}
+        {extras.length > 0 && (
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between mb-1.5">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Apple className="w-4 h-4 text-emerald-600" />
+                3. Extras y Adicionales (Opcional)
+              </h2>
+              {totalExtras > 0 && (
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  + S/ {totalExtras.toFixed(2)}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 mb-3">
+              Selecciona las bebidas, postres o snacks que desees agregar a la orden de tu hijo.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {extras.map((extra) => {
+                const seleccionado = extrasSeleccionadosIds.includes(extra.id);
+                return (
+                  <button
+                    key={extra.id}
+                    type="button"
+                    onClick={() => extra.disponible && toggleExtra(extra.id)}
+                    disabled={!extra.disponible}
+                    className={`p-3 rounded-2xl border text-left flex items-start gap-3 transition-all relative ${
+                      !extra.disponible
+                        ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
+                        : seleccionado
+                        ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-xs'
+                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-emerald-50 shrink-0 flex items-center justify-center border border-emerald-100">
+                      {extra.imagenUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={extra.imagenUrl} alt={extra.nombre} className="w-full h-full object-cover" />
+                      ) : (
+                        renderIconoPlato(extra.tipo, extra.nombre, 'w-6 h-6 text-emerald-600')
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded-md">
+                          {extra.tipo}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-black text-slate-800">
+                            + S/ {extra.precio.toFixed(2)}
+                          </span>
+                          <div
+                            className={`w-4 h-4 rounded-md flex items-center justify-center border transition ${
+                              seleccionado
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'border-slate-300 bg-white'
+                            }`}
+                          >
+                            {seleccionado && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+                        </div>
+                      </div>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate mt-1">{extra.nombre}</h3>
+                      {extra.descripcion && (
+                        <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{extra.descripcion}</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* OBSERVACIONES */}
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
@@ -1253,7 +1484,7 @@ function PedidoContent() {
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Forma de Pago</span>
-            <span className="text-sm font-bold text-emerald-700">Total: S/ 12.00</span>
+            <span className="text-sm font-bold text-emerald-700">Total: S/ {precioTotalPedido.toFixed(2)}</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-3">
@@ -1313,7 +1544,7 @@ function PedidoContent() {
                 </span>
               </div>
               <p className="text-[11px] text-slate-600">
-                Adjunta la captura de tu transferencia de {metodoPago} por S/ 12.00 para poder confirmar tu pedido.
+                Adjunta la captura de tu transferencia de {metodoPago} por S/ {precioTotalPedido.toFixed(2)} para poder confirmar tu pedido.
               </p>
               <input
                 type="file"
@@ -1362,7 +1593,7 @@ function PedidoContent() {
             <span className="animate-pulse">Registrando...</span>
           ) : (
             <>
-              <span>Confirmar Pedido para {diaSeleccionado} (S/ 12.00)</span>
+              <span>Confirmar Pedido para {diaSeleccionado} (S/ {precioTotalPedido.toFixed(2)})</span>
             </>
           )}
         </button>
@@ -1597,7 +1828,7 @@ function PedidoContent() {
 
                 <div className="space-y-2 pt-0.5">
                   <div>
-                    <span className="text-[11px] font-bold text-orange-800 block">1. Sopa o postre seleccionado:</span>
+                    <span className="text-[11px] font-bold text-orange-800 block">1. Sopa o ensalada:</span>
                     <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
                       {entradaSeleccionada}
                     </p>
@@ -1608,6 +1839,19 @@ function PedidoContent() {
                       {segundoSeleccionado}
                     </p>
                   </div>
+                  {platosExtrasSeleccionados.length > 0 && (
+                    <div>
+                      <span className="text-[11px] font-bold text-emerald-800 block">3. Extras y Adicionales:</span>
+                      <div className="pl-2.5 mt-0.5 border-l-3 border-emerald-500 space-y-1">
+                        {platosExtrasSeleccionados.map((ext) => (
+                          <div key={ext.id} className="flex items-center justify-between text-xs text-slate-800 font-semibold">
+                            <span>{ext.nombre} ({ext.tipo})</span>
+                            <span className="text-emerald-700 font-bold">+ S/ {ext.precio.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1658,7 +1902,7 @@ function PedidoContent() {
                 <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                   <span className="text-xs sm:text-sm font-bold text-slate-300">Total a Pagar:</span>
                   <span className="text-lg sm:text-xl font-black text-emerald-400">
-                    S/ 12.00
+                    S/ {precioTotalPedido.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -1678,7 +1922,7 @@ function PedidoContent() {
                   </div>
 
                   <p className="text-[11px] text-slate-500 font-medium">
-                    Por favor verifica que la captura corresponda a tu pago ({metodoPago} por S/ 12.00):
+                    Por favor verifica que la captura corresponda a tu pago ({metodoPago} por S/ {precioTotalPedido.toFixed(2)}):
                   </p>
 
                   <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-900/5 p-2 flex flex-col items-center justify-center">

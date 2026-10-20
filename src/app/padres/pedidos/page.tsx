@@ -703,13 +703,19 @@ function PedidosContent() {
               {/* Menú seleccionado */}
               <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 space-y-1.5 text-xs">
                 <div className="flex items-start gap-2">
-                  <span className="text-slate-400 font-bold shrink-0">1. Sopa o postre:</span>
+                  <span className="text-slate-400 font-bold shrink-0">1. Sopa o ensalada:</span>
                   <span className="font-semibold text-slate-800">{pedido.entradaNombre}</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-slate-400 font-bold shrink-0">2. Segundo:</span>
                   <span className="font-bold text-slate-900">{pedido.segundoNombre}</span>
                 </div>
+                {pedido.refrigerioNombre && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-bold shrink-0">Extras:</span>
+                    <span className="font-semibold text-emerald-700">{pedido.refrigerioNombre}</span>
+                  </div>
+                )}
                 {pedido.observacion && (
                   <div className="pt-1.5 border-t border-slate-200/60 text-[11px] text-amber-800 flex items-start gap-1.5 font-medium">
                     <span className="font-bold shrink-0">Nota:</span>

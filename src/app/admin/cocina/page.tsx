@@ -573,6 +573,9 @@ export default function CocinaPage() {
                   <div className="text-xs text-slate-700">
                     <span className="text-orange-600 font-semibold">{p.entradaNombre}</span> +{' '}
                     <span className="text-slate-800 font-semibold">{p.segundoNombre}</span>
+                    {p.refrigerioNombre && (
+                      <span className="text-emerald-700 font-bold block mt-0.5">Extras: {p.refrigerioNombre}</span>
+                    )}
                   </div>
                   <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 flex items-start gap-1.5">
                     <span className="shrink-0">⚠️</span>
