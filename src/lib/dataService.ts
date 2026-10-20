@@ -202,6 +202,11 @@ const gradosPorColegioMemoria: Record<string, string[]> = {};
 const observacionesPorColegioMemoria: Record<string, string[]> = {};
 const filtrosGradosPorColegioMemoria: Record<string, FiltroGrados[]> = {};
 
+// Flags dinámicos para tolerar esquemas de Supabase con o sin columnas extendidas en la tabla colegios
+let colegiosSoportaGrados = false;
+let colegiosSoportaObservaciones = false;
+let colegiosSoportaSigla = false;
+
 if (typeof window !== 'undefined') {
   try {
     const c = localStorage.getItem('config_colegios');
@@ -1305,6 +1310,12 @@ export const dataService = {
 
         if (!errCols && colsData) {
           colegiosBase = colsData;
+          if (colsData.length > 0) {
+            const primero = colsData[0] as Record<string, unknown>;
+            colegiosSoportaGrados = 'grados' in primero;
+            colegiosSoportaObservaciones = 'observaciones' in primero;
+            colegiosSoportaSigla = 'sigla' in primero;
+          }
         }
 
         // B. Cargar admins registrados en perfiles_padres
@@ -1606,16 +1617,22 @@ export const dataService = {
         }
         if (usuarioData?.id) adminId = usuarioData.id;
 
-        // 2. Insertar Colegio en tabla colegios (con fallback tolerante si columna sigla no existe)
-        const colPayload: Record<string, unknown> = {
+        // 2. Insertar Colegio en tabla colegios de forma resiliente
+        // Las columnas base garantizadas son (nombre, sede, activo).
+        // Grados, observaciones y siglas se respaldan de forma inmediata en menus_dia (SABADO).
+        let colPayload: Record<string, unknown> = {
           nombre: nombreLimpio,
           sede: sedeConAdmin,
           activo: colegio.activo !== false,
-          grados: GRADOS_DEFAULT,
-          observaciones: OBSERVACIONES_DEFAULT,
         };
-        if (siglaLimpia) {
+        if (siglaLimpia && colegiosSoportaSigla) {
           colPayload.sigla = siglaLimpia;
+        }
+        if (colegiosSoportaGrados) {
+          colPayload.grados = GRADOS_DEFAULT;
+        }
+        if (colegiosSoportaObservaciones) {
+          colPayload.observaciones = OBSERVACIONES_DEFAULT;
         }
 
         let { data: colData, error: errCol } = await supabase
@@ -1624,8 +1641,22 @@ export const dataService = {
           .select()
           .single();
 
-        if (errCol && String(errCol.message || '').includes('sigla')) {
-          delete colPayload.sigla;
+        // Si falla por cualquier columna no existente en el schema cache (PGRST204 o mensaje de schema cache/column)
+        if (
+          errCol &&
+          (errCol.code === 'PGRST204' ||
+            String(errCol.message || '').includes('schema cache') ||
+            String(errCol.message || '').includes('column') ||
+            String(errCol.message || '').includes('sigla') ||
+            String(errCol.message || '').includes('grados') ||
+            String(errCol.message || '').includes('observaciones'))
+        ) {
+          console.warn('Inserción con columnas extendidas en colegios omitida, reintentando con payload base:', errCol.message);
+          colPayload = {
+            nombre: nombreLimpio,
+            sede: sedeConAdmin,
+            activo: colegio.activo !== false,
+          };
           const retry = await supabase
             .from('colegios')
             .insert([colPayload])
@@ -1751,7 +1782,7 @@ export const dataService = {
           sede: sedeConAdmin,
           activo: colegio.activo !== false,
         };
-        if (siglaLimpia !== undefined) {
+        if (siglaLimpia !== undefined && colegiosSoportaSigla) {
           updatePayload.sigla = siglaLimpia;
         }
 
@@ -1760,7 +1791,13 @@ export const dataService = {
           .update(updatePayload)
           .eq('id', colegioId);
 
-        if (errCol && String(errCol.message || '').includes('sigla')) {
+        if (
+          errCol &&
+          (errCol.code === 'PGRST204' ||
+            String(errCol.message || '').includes('sigla') ||
+            String(errCol.message || '').includes('schema cache') ||
+            String(errCol.message || '').includes('column'))
+        ) {
           delete updatePayload.sigla;
           const retry = await supabase
             .from('colegios')
@@ -2039,25 +2076,27 @@ export const dataService = {
     }
 
     if (isSupabaseConfigured && supabase) {
-      try {
-        const esUuid = colKey.length === 36 && colKey.includes('-');
-        let query = supabase.from('colegios').select('id, nombre, grados');
-        if (esUuid) {
-          query = query.eq('id', colKey);
-        } else {
-          query = query.ilike('nombre', colKey);
-        }
-        const { data: colData } = await query.maybeSingle();
-        if (colData && Array.isArray(colData.grados)) {
-          gradosPorColegioMemoria[colKey] = colData.grados;
-          gradosPorColegioMemoria[colData.nombre] = colData.grados;
-          gradosPorColegioMemoria[colData.id] = colData.grados;
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`config_grados_${colData.nombre}`, JSON.stringify(colData.grados));
+      if (colegiosSoportaGrados) {
+        try {
+          const esUuid = colKey.length === 36 && colKey.includes('-');
+          let query = supabase.from('colegios').select('id, nombre, grados');
+          if (esUuid) {
+            query = query.eq('id', colKey);
+          } else {
+            query = query.ilike('nombre', colKey);
           }
-          return [...colData.grados];
-        }
-      } catch (_) {}
+          const { data: colData } = await query.maybeSingle();
+          if (colData && Array.isArray(colData.grados)) {
+            gradosPorColegioMemoria[colKey] = colData.grados;
+            gradosPorColegioMemoria[colData.nombre] = colData.grados;
+            gradosPorColegioMemoria[colData.id] = colData.grados;
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(`config_grados_${colData.nombre}`, JSON.stringify(colData.grados));
+            }
+            return [...colData.grados];
+          }
+        } catch (_) {}
+      }
 
       try {
         const { data: configRow } = await supabase
@@ -2111,17 +2150,19 @@ export const dataService = {
     }
 
     if (isSupabaseConfigured && supabase) {
-      try {
-        const esUuid = colKey.length === 36 && colKey.includes('-');
-        let query = supabase.from('colegios').update({ grados: nuevosGrados });
-        if (esUuid) {
-          query = query.eq('id', colKey);
-        } else {
-          query = query.ilike('nombre', colKey);
+      if (colegiosSoportaGrados) {
+        try {
+          const esUuid = colKey.length === 36 && colKey.includes('-');
+          let query = supabase.from('colegios').update({ grados: nuevosGrados });
+          if (esUuid) {
+            query = query.eq('id', colKey);
+          } else {
+            query = query.ilike('nombre', colKey);
+          }
+          await query;
+        } catch (e) {
+          console.warn('Actualización de columna grados en colegios omitida:', e);
         }
-        await query;
-      } catch (e) {
-        console.warn('Actualización de columna grados en colegios omitida:', e);
       }
 
       try {
@@ -2185,25 +2226,27 @@ export const dataService = {
     }
 
     if (isSupabaseConfigured && supabase) {
-      try {
-        const esUuid = colKey.length === 36 && colKey.includes('-');
-        let query = supabase.from('colegios').select('id, nombre, observaciones');
-        if (esUuid) {
-          query = query.eq('id', colKey);
-        } else {
-          query = query.ilike('nombre', colKey);
-        }
-        const { data: colData } = await query.maybeSingle();
-        if (colData && Array.isArray(colData.observaciones)) {
-          observacionesPorColegioMemoria[colKey] = colData.observaciones;
-          observacionesPorColegioMemoria[colData.nombre] = colData.observaciones;
-          observacionesPorColegioMemoria[colData.id] = colData.observaciones;
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`config_observaciones_${colData.nombre}`, JSON.stringify(colData.observaciones));
+      if (colegiosSoportaObservaciones) {
+        try {
+          const esUuid = colKey.length === 36 && colKey.includes('-');
+          let query = supabase.from('colegios').select('id, nombre, observaciones');
+          if (esUuid) {
+            query = query.eq('id', colKey);
+          } else {
+            query = query.ilike('nombre', colKey);
           }
-          return [...colData.observaciones];
-        }
-      } catch (_) {}
+          const { data: colData } = await query.maybeSingle();
+          if (colData && Array.isArray(colData.observaciones)) {
+            observacionesPorColegioMemoria[colKey] = colData.observaciones;
+            observacionesPorColegioMemoria[colData.nombre] = colData.observaciones;
+            observacionesPorColegioMemoria[colData.id] = colData.observaciones;
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(`config_observaciones_${colData.nombre}`, JSON.stringify(colData.observaciones));
+            }
+            return [...colData.observaciones];
+          }
+        } catch (_) {}
+      }
 
       try {
         const { data: configRow } = await supabase
@@ -2257,17 +2300,19 @@ export const dataService = {
     }
 
     if (isSupabaseConfigured && supabase) {
-      try {
-        const esUuid = colKey.length === 36 && colKey.includes('-');
-        let query = supabase.from('colegios').update({ observaciones: nuevasObs });
-        if (esUuid) {
-          query = query.eq('id', colKey);
-        } else {
-          query = query.ilike('nombre', colKey);
+      if (colegiosSoportaObservaciones) {
+        try {
+          const esUuid = colKey.length === 36 && colKey.includes('-');
+          let query = supabase.from('colegios').update({ observaciones: nuevasObs });
+          if (esUuid) {
+            query = query.eq('id', colKey);
+          } else {
+            query = query.ilike('nombre', colKey);
+          }
+          await query;
+        } catch (e) {
+          console.warn('Actualización de observaciones en colegios omitida:', e);
         }
-        await query;
-      } catch (e) {
-        console.warn('Actualización de observaciones en colegios omitida:', e);
       }
 
       try {

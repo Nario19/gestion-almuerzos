@@ -779,6 +779,21 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/menu-colegios-visibilidad-padres-publico.test.mjs` (nuevo archivo con 8 pruebas).
   - Total de la suite: 241 pruebas locales en verde (`0` fallos).
 
+### D-039 — 2026-10-19 — Blindaje de Esquema Resiliente para Registro de Colegios (Eliminación de Error PGRST204 'grados')
+
+- Decisión: Erradicar de raíz el error `Could not find the 'grados' column of 'colegios' in the schema cache` (código PostgREST PGRST204) al crear o actualizar colegios en Supabase.
+- Fuente: reporte de error del usuario: "me sale error al regisrar colegio coulnd not finf the 'grados' column of 'colegios' in the schema cache, asegurate de que no haya estos errores".
+- Solución e Implementación:
+  1. **Detección Dinámica de Esquema:** `obtenerColegiosDetallados` inspecciona las columnas reales de `colegios` y ajusta banderas dinámicas (`colegiosSoportaGrados`, `colegiosSoportaObservaciones`, `colegiosSoportaSigla`).
+  2. **Inserción Resiliente:** `crearColegioConAdmin` utiliza un payload base garantizado (`nombre`, `sede`, `activo`) e incluye auto-recuperación ante PGRST204 / schema cache errors, reintentando de inmediato con el payload base si la base de datos remota carece de columnas extendidas.
+  3. **Persistencia Garantizada en `menus_dia` (SABADO):** Los atributos extendidos (`gradosPorColegio`, `observacionesPorColegio`, `siglasColegio`, `adminsColegio`) se persisten y cargan de forma íntegra a través de `menus_dia` (SABADO), asegurando funcionalidad completa sin dependencia estricta de DDL en `colegios`.
+  4. **Protección de Consultas y Actualizaciones:** `obtenerGrados`, `guardarGradosColegio`, `obtenerObservaciones` y `guardarObservacionesColegio` protegen sus llamadas directas a `colegios` para evitar generar errores 42703 o 400 Bad Request en la consola.
+  5. **Migración SQL y Recarga de Caché:** Se creó `supabase/migrations/202610190002_colegios_columnas_compatibilidad.sql` con `NOTIFY pgrst, 'reload schema'` para clientes que deseen aplicar las columnas nativas en Supabase SQL Editor.
+- Impacto:
+  - `src/lib/dataService.ts`
+  - `supabase/migrations/202610190002_colegios_columnas_compatibilidad.sql`
+  - `tests/resiliencia-schema-colegios-grados.test.mjs` (9 pruebas nuevas, total 250 pruebas en verde).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
