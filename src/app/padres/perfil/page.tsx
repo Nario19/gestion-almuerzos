@@ -14,6 +14,7 @@ import {
   Building2,
   ChevronRight,
   ShieldCheck,
+  Receipt,
   Plus,
   LogIn,
   Pencil,
@@ -348,6 +349,22 @@ export default function PerfilPage() {
             <div>
               <h3 className="text-xs font-bold text-slate-800">Mis Pedidos</h3>
               <p className="text-[11px] text-slate-400">Historial y estado de entrega de almuerzos</p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+        </Link>
+
+        <Link
+          href="/padres/deudas"
+          className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+              <Receipt className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-slate-800">Mis Deudas y Fiados</h3>
+              <p className="text-[11px] text-slate-400">Consulta saldos pendientes y estados de liquidación</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400" />

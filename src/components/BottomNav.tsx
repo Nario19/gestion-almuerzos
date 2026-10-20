@@ -8,6 +8,7 @@ import {
   ShoppingBag,
   GraduationCap,
   User,
+  Receipt,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
@@ -44,24 +45,19 @@ export default function BottomNav() {
           <span className="text-[10px] mt-1 tracking-tight">Pedidos</span>
         </Link>
 
-        {/* Pestaña: Hijos */}
+        {/* Pestaña: Deudas / Fiados */}
         <Link
-          href="/padres/hijos"
+          href="/padres/deudas"
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
-            pathname === '/padres/hijos' || pathname === '/hijos'
-              ? 'text-orange-600 font-bold scale-105'
+            pathname === '/padres/deudas' || pathname === '/deudas'
+              ? 'text-amber-600 font-bold scale-105'
               : 'text-slate-500 hover:text-slate-800 font-medium'
           }`}
         >
           <div className="relative">
-            <GraduationCap className="w-5 h-5" />
-            {cantidadHijos > 0 && (
-              <span className="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
-                {cantidadHijos}
-              </span>
-            )}
+            <Receipt className="w-5 h-5" />
           </div>
-          <span className="text-[10px] mt-1 tracking-tight">Hijos</span>
+          <span className="text-[10px] mt-1 tracking-tight">Deudas</span>
         </Link>
 
         {/* Pestaña Central Prominente: Pedir Menú */}
@@ -83,6 +79,26 @@ export default function BottomNav() {
             Pedir Menú
           </span>
         </div>
+
+        {/* Pestaña: Hijos */}
+        <Link
+          href="/padres/hijos"
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
+            pathname === '/padres/hijos' || pathname === '/hijos'
+              ? 'text-orange-600 font-bold scale-105'
+              : 'text-slate-500 hover:text-slate-800 font-medium'
+          }`}
+        >
+          <div className="relative">
+            <GraduationCap className="w-5 h-5" />
+            {cantidadHijos > 0 && (
+              <span className="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                {cantidadHijos}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] mt-1 tracking-tight">Hijos</span>
+        </Link>
 
         {/* Pestaña: Perfil */}
         <Link

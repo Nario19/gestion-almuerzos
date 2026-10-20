@@ -55,9 +55,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 6. Protección de rutas privadas de padres de familia (Mis Pedidos, Mis Hijos, Mi Perfil)
+  // 6. Protección de rutas privadas de padres de familia (Mis Pedidos, Mis Deudas, Mis Hijos, Mi Perfil)
   if (
     pathname.startsWith('/padres/pedidos') ||
+    pathname.startsWith('/padres/deudas') ||
     pathname.startsWith('/padres/hijos') ||
     pathname.startsWith('/padres/perfil')
   ) {

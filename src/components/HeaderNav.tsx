@@ -153,6 +153,19 @@ export default function HeaderNav() {
                     </Link>
 
                     <Link
+                      href="/padres/deudas"
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        pathname === '/padres/deudas' || pathname === '/deudas'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                      title="Mis Deudas y Fiados"
+                    >
+                      <Receipt className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span className="hidden sm:inline">Mis Deudas</span>
+                    </Link>
+
+                    <Link
                       href="/padres/hijos"
                       className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
                         pathname === '/padres/hijos' || pathname === '/hijos'

@@ -818,6 +818,41 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/middleware.ts`
   - `tests/admin-login-navegacion-menu-publico.test.mjs` (7 pruebas nuevas, total 257 pruebas, 251 pasadas en verde).
 
+### D-041 — 2026-10-19 — Línea de Tiempo de Fiados Condicional a Liquidación y Nuevo Módulo "Mis Deudas" para Padres
+
+- Decisión:
+  1. **Línea de Tiempo de Fiados (`/padres/pedidos`):** Cuando un pedido bajo modalidad fiado ("Pagar luego") es marcado como entregado (`ENTREGADO`), en la línea de tiempo (stepper) la Etapa 2 recién debe aparecer como "Pago aceptado" (en verde con check) SI el fiado ha sido liquidado (`estadoPago === 'PAGADO'`). Si no se ha liquidado, debe mantenerse en color amarillo/ámbar como "Pagar luego" (fiado pendiente de pago) indicando con precisión su estado financiero sin falsear el pago.
+  2. **Nuevo Módulo "Mis Deudas" para Padres (`/padres/deudas`):** Crear el módulo completo en la interfaz de padres para consultar los almuerzos bajo modalidad fiado o pagar luego, montos acumulados, saldos pendientes y estados de liquidación en tiempo real hasta que la administración los liquide en el sistema.
+  3. **Navegación e Integración:** Añadir enlaces hacia "Mis Deudas" en la barra superior (`HeaderNav`), barra inferior móvil (`BottomNav`), perfil de usuario (`/padres/perfil`) y cabecera de pedidos (`/padres/pedidos`), además de registrar metadatos SEO y protección por middleware.
+- Fuente: instrucción explícita del usuario: "cuando maruqe cmom entregado a un fiado en la linea de tiempo recien debe aparecer como pago aceptado si se ha liquidado el fiado sino debe aparecer de amarillo como pagar luego. y en la interfaz de padre debe aparecer un nuevo modulo llamado deudas para ello ya cree la carpeta deudas dentro de padres eso será para los fiados ahi aparecerá la deuda si tiene fiado o no hasta que el admin liquide l adeuda".
+- Implementación de Ingeniería:
+  1. `src/app/padres/pedidos/page.tsx`:
+     - Se actualizó `obtenerEstadoTimeline`: para pedidos con método fiado (`esFiado`), la Etapa 2 evalúa `fiadoLiquidado`. Si `fiadoLiquidado === false`, el título es "Pagar luego", descripción "Fiado pendiente de pago", icono `Clock`, `completado: false` y `alerta: true` (estilo ámbar). Solo cuando `pedido.estadoPago === 'PAGADO'`, la Etapa 2 pasa a "Pago aceptado" (`completado: true`, verde).
+     - La barra conectora animada del stepper refleja con gradiente o color ámbar el estado del fiado entregado pero pendiente de pago.
+     - `badgeEstadoPago` acepta `pedido.metodoPago` para mostrar el badge `Pagar luego (Fiado)` en color ámbar cuando está pendiente de liquidación.
+     - Se incorporó acceso directo a "Mis Deudas" en la cabecera del historial de pedidos.
+  2. `src/app/padres/deudas/page.tsx` y `src/app/padres/deudas/layout.tsx`:
+     - Página interactiva protegida con autenticación y suscripción a cambios en tiempo real (`dataService.suscribirCambios`).
+     - Banner dinámico: Si `totalDeudaPendiente === 0`, muestra felicitación "Al Día • Sin Deudas" en verde; si `> 0`, muestra alerta de saldo pendiente en ámbar.
+     - Tarjetas KPI: Deuda Pendiente, Almuerzos Fiados Históricos y Total Liquidado.
+     - Desglose por cada hijo/estudiante con grado, sección, colegio y deuda específica.
+     - Recuadro con números de Yape y Plin oficiales obtenidos de `configuracionPagos` e instrucciones para regularización con el colegio.
+     - Botón de descarga de comprobante y estado de cuenta en formato PDF mediante `descargarComprobanteFiadoPdf`.
+     - Pestañas de filtrado: "Pendientes", "Liquidados" y "Todos".
+  3. `src/middleware.ts`, `src/lib/metadataUtils.ts`, `src/lib/navUtils.ts`, `src/components/HeaderNav.tsx`, `src/components/BottomNav.tsx`:
+     - Protección contra accesos no autenticados, metadata personalizada por ruta, iconografía `Receipt`, acceso en desktop y en la barra inferior móvil de 5 pestañas.
+- Impacto:
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/app/padres/deudas/page.tsx`
+  - `src/app/padres/deudas/layout.tsx`
+  - `src/components/HeaderNav.tsx`
+  - `src/components/BottomNav.tsx`
+  - `src/app/padres/perfil/page.tsx`
+  - `src/middleware.ts`
+  - `src/lib/metadataUtils.ts`
+  - `src/lib/navUtils.ts`
+  - `tests/fiados-timeline-y-deudas-padre.test.mjs` (6 pruebas nuevas, total de 263 pruebas en la suite).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

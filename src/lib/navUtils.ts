@@ -44,6 +44,15 @@ export function obtenerInfoPantalla(pathname: string, estaAutenticado: boolean):
     };
   }
 
+  // Deudas y fiados del padre
+  if (ruta.startsWith('/padres/deudas') || ruta.startsWith('/deudas')) {
+    return {
+      titulo: 'Mis Deudas',
+      subtitulo: 'Fiados y Pagos Pendientes',
+      iconoNombre: 'Receipt',
+    };
+  }
+
   // Gestión de hijos
   if (ruta.startsWith('/padres/hijos') || ruta.startsWith('/hijos')) {
     return {

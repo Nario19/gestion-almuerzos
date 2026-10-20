@@ -28,6 +28,11 @@ export const RUTA_METADATA_MAP: Record<string, PageMetadataInfo> = {
     description:
       'Historial de pedidos escolares, estados de preparación en cocina, comprobantes adjuntos y detalle de entregas.',
   },
+  '/padres/deudas': {
+    title: 'Mis Deudas y Fiados | Placeres Culinarios',
+    description:
+      'Control y seguimiento de almuerzos bajo modalidad fiado o pagar luego, saldos por estudiante y estados de liquidación.',
+  },
   '/padres/hijos': {
     title: 'Mis Hijos | Placeres Culinarios',
     description:
