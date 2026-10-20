@@ -50,16 +50,16 @@ function LoginContent() {
   const [identificadorLogin, setIdentificadorLogin] = useState('');
   const [passwordLogin, setPasswordLogin] = useState('');
 
-  // Si ya es admin con sesión activa, redirigir
+  // Si ya es admin con sesión activa, redirigir al panel correspondiente
   React.useEffect(() => {
     if (usuario) {
       if (esSuperAdmin) {
-        router.replace('/superadmin');
+        window.location.href = '/superadmin';
       } else if (esAdmin) {
-        router.replace('/admin');
+        window.location.href = '/admin';
       }
     }
-  }, [usuario, esAdmin, esSuperAdmin, router]);
+  }, [usuario, esAdmin, esSuperAdmin]);
 
   if (cargandoAuth) {
     return <SkeletonLoginPage />;
@@ -94,54 +94,54 @@ function LoginContent() {
           <div className="flex flex-col gap-2 pt-2">
             {esSuperAdmin ? (
               <>
-                <Link
+                <a
                   href="/superadmin"
-                  className="py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl text-sm transition shadow-xs"
+                  className="py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl text-sm transition shadow-xs text-center block"
                 >
                   Ir al Panel de Super Administrador
-                </Link>
-                <Link
+                </a>
+                <a
                   href="/admin"
-                  className="py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs transition"
+                  className="py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs transition text-center block"
                 >
                   Ir al Panel de Menús & Operaciones
-                </Link>
-                <Link
-                  href="/despacho"
-                  className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition"
+                </a>
+                <a
+                  href="/admin/despacho"
+                  className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition text-center block"
                 >
                   Ir a Despacho & Excel
-                </Link>
+                </a>
               </>
             ) : esAdmin ? (
               <>
-                <Link
+                <a
                   href="/admin"
-                  className="py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-sm transition shadow-xs"
+                  className="py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-sm transition shadow-xs text-center block"
                 >
                   Ir al Panel de Administración (Admin)
-                </Link>
-                <Link
-                  href="/despacho"
-                  className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition"
+                </a>
+                <a
+                  href="/admin/despacho"
+                  className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition text-center block"
                 >
                   Ir a Despacho & Excel
-                </Link>
+                </a>
               </>
             ) : (
               <>
-                <Link
+                <a
                   href="/"
-                  className="py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-sm transition"
+                  className="py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-sm transition text-center block"
                 >
                   Ir al Catálogo de Almuerzos
-                </Link>
-                <Link
-                  href="/hijos"
-                  className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-xs transition"
+                </a>
+                <a
+                  href="/padres/hijos"
+                  className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-xs transition text-center block"
                 >
                   Administrar Mis Hijos ({usuario.hijos.length})
-                </Link>
+                </a>
               </>
             )}
             <button
@@ -213,14 +213,14 @@ function LoginContent() {
           setErrorMsg(res.error || 'Credenciales no válidas.');
         } else {
           const redirigir = searchParams.get('redirigir');
-          if (redirigir && redirigir.startsWith('/') && !redirigir.startsWith('//')) {
-            router.push(redirigir);
+          if (redirigir && redirigir.startsWith('/') && !redirigir.startsWith('//') && redirigir !== '/login') {
+            window.location.href = redirigir;
           } else if (res.esSuperAdmin) {
-            router.push('/superadmin');
+            window.location.href = '/superadmin';
           } else if (res.esAdmin) {
-            router.push('/admin');
+            window.location.href = '/admin';
           } else {
-            router.push('/');
+            window.location.href = '/';
           }
         }
       }

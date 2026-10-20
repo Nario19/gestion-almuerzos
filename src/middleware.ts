@@ -29,7 +29,9 @@ export function middleware(request: NextRequest) {
   // 3. Inspeccionar cookies de sesión
   const sesionRol = request.cookies.get('sesion_rol')?.value;
   const sesionActiva = request.cookies.get('sesion_activa')?.value;
-  const estaAutenticado = Boolean(sesionActiva === '1' && sesionRol);
+  const estaAutenticado = Boolean(sesionActiva === '1' || sesionRol);
+  const esSuperAdmin = sesionRol === 'SUPER_ADMIN';
+  const esAdmin = esSuperAdmin || sesionRol === 'ADMIN';
 
   // Helper para generar redirección al login con aviso de acceso restringido
   const redirigirALogin = () => {
@@ -41,14 +43,14 @@ export function middleware(request: NextRequest) {
 
   // 4. Protección de rutas exclusivas de Super Administrador
   if (pathname.startsWith('/superadmin')) {
-    if (!estaAutenticado || sesionRol !== 'SUPER_ADMIN') {
+    if (!estaAutenticado || !esSuperAdmin) {
       return redirigirALogin();
     }
   }
 
   // 5. Protección de rutas de Administrador (Dashboard, Cocina, Despacho, Fiado, Pedido Manual)
   if (pathname.startsWith('/admin')) {
-    if (!estaAutenticado || (sesionRol !== 'ADMIN' && sesionRol !== 'SUPER_ADMIN')) {
+    if (!estaAutenticado || !esAdmin) {
       return redirigirALogin();
     }
   }

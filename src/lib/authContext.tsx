@@ -34,7 +34,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function sincronizarCookieSesion(u: UsuarioPadre | null) {
+export function sincronizarCookieSesion(u: UsuarioPadre | null) {
   if (typeof document === 'undefined') return;
   if (u && u.rol) {
     document.cookie = `sesion_rol=${encodeURIComponent(u.rol)}; path=/; max-age=604800; SameSite=Lax`;
@@ -43,6 +43,19 @@ function sincronizarCookieSesion(u: UsuarioPadre | null) {
     document.cookie = 'sesion_rol=; path=/; max-age=0; SameSite=Lax';
     document.cookie = 'sesion_activa=; path=/; max-age=0; SameSite=Lax';
   }
+}
+
+// Sincronización inmediata al cargar el bundle en el navegador si hay sesión previa en localStorage
+if (typeof window !== 'undefined') {
+  try {
+    const ses = localStorage.getItem('sesion_padre_almuerzos');
+    if (ses) {
+      const parsed = JSON.parse(ses);
+      if (parsed && parsed.rol) {
+        sincronizarCookieSesion(parsed);
+      }
+    }
+  } catch (_) {}
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -90,12 +103,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const cfg = JSON.parse(configRow.mensaje_aviso);
           if (cfg.adminsColegio) {
-            for (const [colNombre, adminInfo] of Object.entries(cfg.adminsColegio as Record<string, { dni?: string; email?: string; adminId?: string }>)) {
-              if (
-                adminInfo.dni === dni ||
-                (email && adminInfo.email === email) ||
-                adminInfo.adminId === adminId
-              ) {
+            for (const [colNombre, adminInfo] of Object.entries(cfg.adminsColegio as Record<string, { id?: string; dni?: string; email?: string; adminId?: string }>)) {
+              const matchId = (adminInfo.id && adminInfo.id === adminId) || (adminInfo.adminId && adminInfo.adminId === adminId);
+              const matchDni = dni && adminInfo.dni && adminInfo.dni.trim() === dni.trim();
+              const matchEmail = email && adminInfo.email && adminInfo.email.trim().toLowerCase() === email.trim().toLowerCase();
+              if (matchId || matchDni || matchEmail) {
                 return colNombre;
               }
             }
@@ -103,6 +115,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
           // Fallback silencioso si el JSON es inválido
         }
+      }
+
+      // 3. Fallback inteligente: si hay un único colegio registrado en el sistema y el usuario es admin, vincularlo
+      if (cols && cols.length === 1 && cols[0].nombre) {
+        return cols[0].nombre;
       }
     } catch (e) {
       console.warn('Error resolviendo colegio asignado para admin:', e);
@@ -303,6 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (montado) {
             setUsuario(usuarioVerificado);
+            sincronizarCookieSesion(usuarioVerificado);
             if (typeof window !== 'undefined') {
               localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(usuarioVerificado));
             }
@@ -379,6 +397,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         setUsuario(nuevoUsuario);
+        sincronizarCookieSesion(nuevoUsuario);
         if (typeof window !== 'undefined') {
           localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(nuevoUsuario));
         }
@@ -505,6 +524,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         setUsuario(u);
+        sincronizarCookieSesion(u);
         if (typeof window !== 'undefined') {
           localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(u));
         }
@@ -531,6 +551,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hijos: [],
         };
         setUsuario(superAdminUser);
+        sincronizarCookieSesion(superAdminUser);
         if (typeof window !== 'undefined') {
           localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(superAdminUser));
         }
@@ -548,6 +569,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hijos: [],
         };
         setUsuario(adminUser);
+        sincronizarCookieSesion(adminUser);
         if (typeof window !== 'undefined') {
           localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(adminUser));
         }

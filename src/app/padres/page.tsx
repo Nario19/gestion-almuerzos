@@ -60,9 +60,9 @@ function PedidoContent() {
   // Si entra como administrador, redirigir directo a /admin
   useEffect(() => {
     if (esAdmin) {
-      router.replace('/admin');
+      window.location.href = '/admin';
     }
-  }, [esAdmin, router]);
+  }, [esAdmin]);
 
   // Estado para el panel de admin si es administrador
   const [resumenAdmin, setResumenAdmin] = useState<ResumenCocina | null>(null);

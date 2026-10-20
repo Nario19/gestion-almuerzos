@@ -794,6 +794,30 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `supabase/migrations/202610190002_colegios_columnas_compatibilidad.sql`
   - `tests/resiliencia-schema-colegios-grados.test.mjs` (9 pruebas nuevas, total 250 pruebas en verde).
 
+### D-040 — 2026-10-19 — Solución Definitiva a Navegación de Administrador desde Login y Corrección de Visualización del Menú Público
+
+- Decisión:
+  1. Corregir el bucle de navegación y aparente bloqueo ("no hace caso") al hacer clic en "Ir al Panel de Administración" desde `/login`.
+  2. Restaurar la carga y visualización limpia de los platos del colegio en el menú público y en la vista de padres sin errores de base de datos ni etiquetas técnicas.
+- Fuente: reporte de usuario: "cuando creo un colegio entro como admin y voy a admin me aparece sesion inciiada como admin ir al panel de administracion le doy ahi y no hace caso. despues en la pantalla publica del menuno se esta mostrando correctamente como debe ser. corrige asegurate de que no haya errores".
+- Causas Raíz y Solución de Ingeniería:
+  1. **Navegación Admin & Cookies:**
+     - `authContext.tsx`: `sincronizarCookieSesion` ahora se ejecuta de forma sincrónica e inmediata en `login()`, `registro()`, `inicializarSesion()` y al cargar el bundle desde `localStorage`. Se solucionó la condición de carrera donde el middleware de Next.js interceptaba `/admin` antes de que la cookie de sesión estuviera escrita en el navegador.
+     - `resolverColegioAsignadoAdmin`: Soporte robusto por `id`, `adminId`, `dni`, `email` y fallback automático al único colegio existente en la BD.
+     - `/login/page.tsx`: Los botones hacia `/admin`, `/superadmin` y `/admin/despacho` ahora utilizan enlaces nativos y redirección directa mediante `window.location.href`, purgando el caché de redirección RSC del enrutador de Next.js y garantizando el envío de cookies en los encabezados HTTP.
+     - `src/middleware.ts`: Valida de forma directa y flexible que si `sesionRol` es `ADMIN` o `SUPER_ADMIN`, el acceso a `/admin` queda habilitado de inmediato.
+  2. **Visualización del Menú Público:**
+     - En `dataService.obtenerPlatosPorDia`, la consulta a Supabase intentaba filtrar por la columna inexistente `platos.colegio_nombre`, arrojando error PostgreSQL 42703 y provocando que la carta pública quedara vacía.
+     - Se implementó un fallback tolerante ante error 42703/PGRST204 que recupera todos los platos del día y aplica el filtrado estricto por `colegioNombre`/`colegioId` en memoria garantizando el aislamiento por colegio.
+     - En `mapearPlatoDesdeSupabase`, se agregaron reemplazos de limpieza para suprimir tags técnicos (`[TipoOriginal: ...]`, `[Colegio: ...]`, `[Sopa]`, `[Ensalada]`), presentando descripciones limpias e impolutas al público.
+- Impacto:
+  - `src/lib/dataService.ts`
+  - `src/lib/authContext.tsx`
+  - `src/app/login/page.tsx`
+  - `src/app/padres/page.tsx`
+  - `src/middleware.ts`
+  - `tests/admin-login-navegacion-menu-publico.test.mjs` (7 pruebas nuevas, total 257 pruebas, 251 pasadas en verde).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

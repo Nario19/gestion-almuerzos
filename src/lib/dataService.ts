@@ -418,6 +418,7 @@ function mapearPlatoDesdeSupabase(d: PlatoRowSupabase): Plato {
       colegioNombre = match[1].trim();
       descLimpia = descLimpia.replace(/\s*•?\s*\[Colegio:\s*[^\]]+\]/, '').trim();
     }
+    descLimpia = descLimpia.replace(/\[(Sopa|Ensalada)\]\s*/gi, '').trim();
   }
   return {
     id: d.id,
@@ -453,7 +454,25 @@ export const dataService = {
           query = query.or(`colegio_nombre.eq.${valFiltro},colegio_id.eq.${valFiltro}`);
         }
 
-        const { data, error } = await query;
+        let { data, error } = await query;
+
+        // Fallback tolerante si la tabla platos no cuenta aún con columna colegio_nombre/colegio_id (error 42703 o PGRST204)
+        if (
+          error &&
+          (error.code === '42703' ||
+            error.code === 'PGRST204' ||
+            String(error.message || '').includes('colegio_nombre') ||
+            String(error.message || '').includes('column'))
+        ) {
+          const fallbackQuery = supabase
+            .from('platos')
+            .select('*')
+            .eq('dia_semana', dia)
+            .order('orden', { ascending: true });
+          const resFallback = await fallbackQuery;
+          data = resFallback.data;
+          error = resFallback.error;
+        }
 
         if (!error && data && data.length > 0) {
           platos = data.map(mapearPlatoDesdeSupabase);
