@@ -251,7 +251,7 @@ function PedidoContent() {
 
       const primeraEntrada = platos.find((p) => p.disponible && esEntradaTipo(p.tipo));
       const primerSegundo = platos.find((p) => p.disponible && esSegundoTipo(p.tipo));
-      setEntradaSeleccionada(primeraEntrada ? primeraEntrada.nombre : '');
+      setEntradaSeleccionada(primeraEntrada ? primeraEntrada.nombre : 'Sin entrada');
       setSegundoSeleccionado(primerSegundo ? primerSegundo.nombre : '');
       setExtrasSeleccionadosIds([]);
     });
@@ -305,7 +305,7 @@ function PedidoContent() {
       return;
     }
     if (!entradaSeleccionada) {
-      setErrorValidacion('Selecciona una opción de sopa o ensalada.');
+      setErrorValidacion('Selecciona una opción de sopa o ensalada (o marca "Sin entrada").');
       return;
     }
     if (!segundoSeleccionado) {
@@ -321,7 +321,11 @@ function PedidoContent() {
       setErrorValidacion('Cargando la carta del colegio. Por favor espera un momento.');
       return;
     }
-    const entradaValida = platosDelDia.some((p) => p.nombre === entradaSeleccionada && p.disponible);
+    const esSinEntrada =
+      entradaSeleccionada === 'Sin entrada' ||
+      entradaSeleccionada === 'Sin entrada / sopa' ||
+      entradaSeleccionada.toLowerCase().includes('sin entrada');
+    const entradaValida = esSinEntrada || platosDelDia.some((p) => p.nombre === entradaSeleccionada && p.disponible);
     const segundoValido = platosDelDia.some((p) => p.nombre === segundoSeleccionado && p.disponible);
     if (!entradaValida || !segundoValido) {
       setErrorValidacion('Por favor selecciona platos disponibles en el menú de este colegio.');
@@ -350,6 +354,8 @@ function PedidoContent() {
           ? extrasSeleccionadosPlatos.map((e) => `${e.nombre} (S/ ${e.precio.toFixed(2)})`).join(', ')
           : undefined;
 
+        const entradaFinal = esSinEntrada ? 'Sin entrada' : entradaSeleccionada;
+
         const nuevo = await dataService.crearPedido({
           diaSemana: diaSeleccionado,
           padreId: usuario?.id,
@@ -360,7 +366,7 @@ function PedidoContent() {
           gradoSeccion: hijoTarget ? hijoTarget.gradoSeccion : grado,
           estudianteNombre: nombreFinal,
           telefonoContacto: telefono.trim() || usuario?.telefono || 'No especificado',
-          entradaNombre: entradaSeleccionada,
+          entradaNombre: entradaFinal,
           segundoNombre: segundoSeleccionado,
           refrigerioNombre: textoExtras,
           observacion: observacion.trim() || (hijoTarget?.alergiasNotas ? `Alergias: ${hijoTarget.alergiasNotas}` : undefined),
@@ -407,7 +413,7 @@ function PedidoContent() {
     setErrorValidacion(null);
 
     if (!entradaSeleccionada) {
-      setErrorValidacion('Por favor selecciona una entrada.');
+      setErrorValidacion('Por favor selecciona una entrada o marca "Sin entrada / sopa".');
       return;
     }
     if (!segundoSeleccionado) {
@@ -1340,10 +1346,45 @@ function PedidoContent() {
 
           {cargandoPlatos ? (
             <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
-          ) : entradas.length === 0 ? (
-            <p className="text-xs text-slate-400 py-3 text-center">No hay sopas o ensaladas registradas para este día.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* OPCIÓN: SIN ENTRADA / SOPA */}
+              <button
+                type="button"
+                onClick={() => setEntradaSeleccionada('Sin entrada')}
+                className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative cursor-pointer ${
+                  entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa'
+                    ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-md'
+                    : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-xs'
+                }`}
+              >
+                <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                  <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
+                    <Utensils className="w-10 h-10 text-slate-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Solo Segundo
+                    </span>
+                  </div>
+                  <span className="absolute top-2 left-2 bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                    Sin Entrada / Sopa
+                  </span>
+                  {(entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa') && (
+                    <span className="absolute top-2 right-2 bg-orange-500 text-white p-1 rounded-full shadow-md">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                <div className="p-3.5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">Sin entrada / sopa</h3>
+                    <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                      Prefiero no incluir sopa ni ensalada en este menú. Servir únicamente el plato de fondo.
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              {/* OPCIONES DE ENTRADAS DEL DÍA */}
               {entradas.map((plato) => {
                 const seleccionado = entradaSeleccionada === plato.nombre;
                 const esEnsalada = plato.descripcion?.includes('[Ensalada]');
@@ -1924,7 +1965,9 @@ function PedidoContent() {
                   <div>
                     <span className="text-[11px] font-bold text-orange-800 block">1. Sopa o ensalada:</span>
                     <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
-                      {entradaSeleccionada}
+                      {entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa'
+                        ? 'Sin entrada / sopa (Solo segundo)'
+                        : entradaSeleccionada}
                     </p>
                   </div>
                   <div>

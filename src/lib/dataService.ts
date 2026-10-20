@@ -1326,18 +1326,27 @@ export const dataService = {
       const tieneObs = Boolean(p.observacion && p.observacion.trim().length > 0);
       if (tieneObs) pedidosConObservacion++;
 
-      // Contar Entradas
-      const entradaActual = entradasMap.get(p.entradaNombre) || { count: 0, obs: [] };
-      entradaActual.count += 1;
-      if (tieneObs) {
-        entradaActual.obs.push({
-          estudiante: p.estudianteNombre,
-          grado: p.gradoSeccion,
-          colegio: p.colegioNombre,
-          observacion: p.observacion!,
-        });
+      // Contar Entradas (excluyendo si el alumno seleccionó "Sin entrada")
+      const esSinEntrada =
+        !p.entradaNombre ||
+        p.entradaNombre.trim() === '' ||
+        p.entradaNombre === 'Sin entrada' ||
+        p.entradaNombre.toLowerCase().includes('sin entrada') ||
+        p.entradaNombre.toLowerCase().includes('sin sopa');
+
+      if (!esSinEntrada) {
+        const entradaActual = entradasMap.get(p.entradaNombre) || { count: 0, obs: [] };
+        entradaActual.count += 1;
+        if (tieneObs) {
+          entradaActual.obs.push({
+            estudiante: p.estudianteNombre,
+            grado: p.gradoSeccion,
+            colegio: p.colegioNombre,
+            observacion: p.observacion!,
+          });
+        }
+        entradasMap.set(p.entradaNombre, entradaActual);
       }
-      entradasMap.set(p.entradaNombre, entradaActual);
 
       // Contar Segundos
       const segundoActual = segundosMap.get(p.segundoNombre) || { count: 0, obs: [] };
@@ -3203,7 +3212,12 @@ export const dataService = {
         if (!conteoPlatos[n]) conteoPlatos[n] = { pedidos: 0, tipo: 'Segundo' };
         conteoPlatos[n].pedidos++;
       }
-      if (p.entradaNombre) {
+      if (
+        p.entradaNombre &&
+        p.entradaNombre !== 'Sin entrada' &&
+        !p.entradaNombre.toLowerCase().includes('sin entrada') &&
+        !p.entradaNombre.toLowerCase().includes('sin sopa')
+      ) {
         const n = p.entradaNombre.trim();
         if (!conteoPlatos[n]) conteoPlatos[n] = { pedidos: 0, tipo: 'Sopa/Entrada' };
         conteoPlatos[n].pedidos++;

@@ -953,6 +953,33 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/padres/page.tsx`
   - `tests/menu-separado-sopas-ensaladas-segundos.test.mjs` (5 pruebas nuevas, total de 284 pruebas en la suite, 0 fallos).
 
+### D-046 — 2026-10-20 — Opción "Sin entrada / sopa" en Selección de Menú para Padres y Exclusión en Cocina
+
+- Decisión:
+  1. En la interfaz de padres (`/padres` en el flujo "Pedir Menú"), se incluye una tarjeta interactiva para **"Sin entrada / sopa"** con el badge *"Sin Entrada / Sopa"* e indicativo *"Solo Segundo"*, permitiendo que el estudiante o padre elija únicamente el plato de fondo (segundo) sin ser forzado a elegir una sopa o ensalada.
+  2. Si un colegio no tiene sopas o ensaladas registradas para el día, el sistema inicializa automáticamente la opción en "Sin entrada", evitando bloquear el pedido del segundo plato.
+  3. La validación del formulario acepta "Sin entrada" como valor válido sin requerir que coincida con un plato de la carta en base de datos.
+  4. En la consolidación operativa de cocina (`calcularResumenCocina` y `calcularResumenCocinaDetalladoPorColegio`), los pedidos marcados con "Sin entrada" quedan expresamente excluidos del conteo de sopas a preparar, previniendo sobreproducción y mermas en cocina, mientras que el conteo de segundos se mantiene exacto.
+  5. En el modal de confirmación y en el historial de pedidos se visualiza con claridad: *"Sin entrada / sopa (Solo segundo)"*.
+- Fuente: instrucción explícita del usuario: *"en el menu de los padres de pedir menu tmb incluye sin entrada/sopa"*
+- Implementación de Ingeniería:
+  1. `src/lib/dataService.ts`:
+     - En `calcularResumenCocina`, filtro `!esSinEntrada` para evitar contabilizar 'Sin entrada' en el mapa de entradas a cocinar.
+     - En `calcularResumenCocinaDetalladoPorColegio`, exclusión de 'Sin entrada' de las métricas de platos más pedidos.
+  2. `src/app/padres/page.tsx`:
+     - Agregada tarjeta interactiva de "Sin entrada / sopa" en la sección `1. Sopa o Ensalada` con icono `Utensils`, badge `Sin Entrada / Sopa` y checkmark `CheckCircle2` de selección.
+     - Inicialización en `Sin entrada` si no hay entradas disponibles para el día.
+     - Validación flexible en `ejecutarCreacionPedido` y `handleSubmit` permitiendo `esSinEntrada`.
+     - Normalización canónica de `entradaNombre: 'Sin entrada'` al invocar `dataService.crearPedido`.
+     - Resumen visual en modal de confirmación como `Sin entrada / sopa (Solo segundo)`.
+  3. `tests/padres-opcion-sin-entrada-sopa.test.mjs`:
+     - 8 pruebas automatizadas verificando interfaz, validación, confirmación, cálculo de cocina y lógica pura sin falsos conteos.
+- Impacto:
+  - `src/lib/dataService.ts`
+  - `src/app/padres/page.tsx`
+  - `MEMORY.md`
+  - `tests/padres-opcion-sin-entrada-sopa.test.mjs` (8 pruebas nuevas, 292 pruebas totales en la suite, 286 pasadas, 0 fallos).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
