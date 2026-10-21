@@ -21,7 +21,18 @@ import { supabase, isSupabaseConfigured } from './supabase';
 import {
   subirImagenACloudinary,
   obtenerCarpetaCloudinaryPlato,
+  extraerPublicIdComprobante,
+  eliminarImagenDeCloudinary,
 } from './cloudinaryService';
+
+export interface ResumenLimpiezaComprobantes {
+  pedidosEvaluados: number;
+  comprobantesPurgadosCloudinary: number;
+  pedidosActualizadosBd: number;
+  errores: string[];
+  diasAntiguedad: number;
+  fechaCorteIso: string;
+}
 
 export const COLEGIOS_DEFAULT: string[] = [];
 
@@ -3313,5 +3324,106 @@ export const dataService = {
       demandaPorDiaSemana,
       metricasPorColegio,
     };
+  },
+
+  /**
+   * Pasa revista y depura los comprobantes de pago de pedidos antiguos (> diasAntiguedad, por defecto 2 días = 48 hrs).
+   * 1. Elimina el archivo pesado de Cloudinary para no saturar el almacenamiento en la nube.
+   * 2. Limpia el campo comprobante_url en la base de datos Supabase y en memoria.
+   * 3. Preserva íntegramente todos los datos contables del pedido, alumno, platos, hora de entrega y ventas.
+   */
+  async limpiarComprobantesAntiguos(diasAntiguedad: number = 2): Promise<ResumenLimpiezaComprobantes> {
+    const ahoraMs = Date.now();
+    const cutoffMs = ahoraMs - diasAntiguedad * 24 * 60 * 60 * 1000;
+    const fechaCorteIso = new Date(cutoffMs).toISOString();
+
+    const resumen: ResumenLimpiezaComprobantes = {
+      pedidosEvaluados: 0,
+      comprobantesPurgadosCloudinary: 0,
+      pedidosActualizadosBd: 0,
+      errores: [],
+      diasAntiguedad,
+      fechaCorteIso,
+    };
+
+    try {
+      // 1. Limpieza en Base de Datos Supabase si está disponible
+      if (isSupabaseConfigured && supabase) {
+        const { data: pedidosCandidatos, error: errorQuery } = await supabase
+          .from('pedidos')
+          .select('id, comprobante_url, created_at')
+          .lt('created_at', fechaCorteIso)
+          .not('comprobante_url', 'is', null)
+          .neq('comprobante_url', '');
+
+        if (errorQuery) {
+          console.error('[LimpiezaComprobantes] Error consultando pedidos en Supabase:', errorQuery);
+          resumen.errores.push(`Error Supabase: ${errorQuery.message}`);
+        } else if (pedidosCandidatos && pedidosCandidatos.length > 0) {
+          resumen.pedidosEvaluados = pedidosCandidatos.length;
+
+          for (const p of pedidosCandidatos) {
+            const url = p.comprobante_url;
+            const publicId = extraerPublicIdComprobante(url);
+
+            // Si es un comprobante en Cloudinary, intentar destruirlo de la nube
+            if (publicId) {
+              const resEliminacion = await eliminarImagenDeCloudinary(publicId);
+              if (resEliminacion.success) {
+                resumen.comprobantesPurgadosCloudinary++;
+              } else if (resEliminacion.error && !resEliminacion.error.includes('no configuradas')) {
+                resumen.errores.push(`ID ${p.id} (${publicId}): ${resEliminacion.error}`);
+              }
+            }
+
+            // Actualizar la base de datos dejando comprobante_url en null
+            const { error: errorUpdate } = await supabase
+              .from('pedidos')
+              .update({ comprobante_url: null })
+              .eq('id', p.id);
+
+            if (errorUpdate) {
+              resumen.errores.push(`Error limpiando pedido ${p.id}: ${errorUpdate.message}`);
+            } else {
+              resumen.pedidosActualizadosBd++;
+            }
+          }
+        }
+      }
+
+      // 2. Limpieza en la copia local en memoria (fallback para tests o entorno sin Supabase)
+      if (typeof window !== 'undefined' || pedidosMemoria.length > 0) {
+        let actualizadosMemoria = 0;
+        for (let i = 0; i < pedidosMemoria.length; i++) {
+          const p = pedidosMemoria[i];
+          if (!p.comprobanteUrl) continue;
+
+          // Comprobar antigüedad
+          const fechaPedidoMs = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+          if (fechaPedidoMs > 0 && fechaPedidoMs < cutoffMs) {
+            resumen.pedidosEvaluados++;
+            const publicId = extraerPublicIdComprobante(p.comprobanteUrl);
+            if (publicId && (!isSupabaseConfigured || !supabase)) {
+              const resEliminacion = await eliminarImagenDeCloudinary(publicId);
+              if (resEliminacion.success) {
+                resumen.comprobantesPurgadosCloudinary++;
+              }
+            }
+            pedidosMemoria[i] = { ...pedidosMemoria[i], comprobanteUrl: undefined };
+            actualizadosMemoria++;
+            resumen.pedidosActualizadosBd++;
+          }
+        }
+        if (actualizadosMemoria > 0) {
+          notifyListeners();
+        }
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[LimpiezaComprobantes] Excepción durante la depuración:', msg);
+      resumen.errores.push(msg);
+    }
+
+    return resumen;
   },
 };

@@ -116,3 +116,112 @@ export async function subirImagenACloudinary(
     throw err;
   }
 }
+
+/**
+ * Genera un hash SHA-1 criptográfico compatible con Node.js y navegadores modernos
+ * para firmar peticiones autenticadas de administración a la API de Cloudinary.
+ */
+export async function generarSha1(texto: string): Promise<string> {
+  if (typeof window === 'undefined') {
+    // Entorno de servidor Node.js
+    const cryptoModule = await import('crypto');
+    return cryptoModule.createHash('sha1').update(texto).digest('hex');
+  } else if (typeof crypto !== 'undefined' && crypto.subtle) {
+    // Entorno navegador o Edge runtime moderno
+    const buffer = new TextEncoder().encode(texto);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  throw new Error('No crypto provider available');
+}
+
+/**
+ * Extrae con estricta seguridad el public_id de un comprobante alojado en Cloudinary.
+ * Solo procesa URLs que contengan la carpeta 'comprobantes/' y rechaza terminantemente
+ * fotos de platos ('platos/...') u otros activos para evitar cualquier purga accidental de menús.
+ *
+ * @param url URL pública de Cloudinary
+ * @returns El public_id (ej. 'comprobantes/abc123xyz') o null si no califica.
+ */
+export function extraerPublicIdComprobante(url?: string | null): string | null {
+  if (!url || typeof url !== 'string') return null;
+  if (!url.includes('cloudinary.com') || !url.includes('/comprobantes/')) return null;
+
+  try {
+    const uploadIndex = url.indexOf('/image/upload/');
+    if (uploadIndex === -1) return null;
+
+    const pathPart = url.substring(uploadIndex + '/image/upload/'.length);
+    const match = pathPart.match(/(comprobantes\/[^.?#]+)/);
+    if (!match) return null;
+
+    let publicId = match[1];
+    publicId = publicId.replace(/\.(webp|jpg|jpeg|png|gif|bmp|tiff|avif|heic|pdf)$/i, '');
+
+    return publicId.startsWith('comprobantes/') ? publicId : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Elimina definitivamente una imagen en Cloudinary mediante su endpoint seguro de destrucción.
+ * Requiere las variables privadas CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET configuradas en el servidor.
+ *
+ * @param publicId Identificador público de la imagen (ej: 'comprobantes/abc123xyz')
+ */
+export async function eliminarImagenDeCloudinary(
+  publicId: string
+): Promise<{ success: boolean; result?: string; error?: string }> {
+  const cloudName =
+    process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const apiKey =
+    process.env.CLOUDINARY_API_KEY || process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName) {
+    return { success: false, error: 'CLOUDINARY_CLOUD_NAME no configurado.' };
+  }
+
+  if (!apiKey || !apiSecret) {
+    console.warn(
+      '[Cloudinary] Para purgar automáticamente imágenes en Cloudinary se requieren las variables CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET en el servidor.'
+    );
+    return {
+      success: false,
+      error: 'Credenciales CLOUDINARY_API_KEY y/o CLOUDINARY_API_SECRET no configuradas en el servidor.',
+    };
+  }
+
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const cadenaParaFirma = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+    const signature = await generarSha1(cadenaParaFirma);
+
+    const formData = new FormData();
+    formData.append('public_id', publicId);
+    formData.append('timestamp', timestamp.toString());
+    formData.append('api_key', apiKey);
+    formData.append('signature', signature);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || (data.result !== 'ok' && data.result !== 'not found')) {
+      const msg = data.error?.message || data.result || `Error HTTP ${res.status}`;
+      return { success: false, error: msg };
+    }
+
+    return { success: true, result: data.result };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[Cloudinary] Error destruyendo imagen ${publicId}:`, msg);
+    return { success: false, error: msg };
+  }
+}
+

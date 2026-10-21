@@ -980,6 +980,33 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `MEMORY.md`
   - `tests/padres-opcion-sin-entrada-sopa.test.mjs` (8 pruebas nuevas, 292 pruebas totales en la suite, 286 pasadas, 0 fallos).
 
+### D-047 — 2026-10-21 — Automatización de Limpieza y Depuración de Comprobantes en Cloudinary (> 2 días)
+
+- Decisión:
+  1. Configurar una política de retención automática de comprobantes de pago (capturas de Yape y Plin) con umbral de 48 horas (2 días de antigüedad) para evitar la saturación de almacenamiento en Cloudinary y garantizar la privacidad de los datos bancarios de los padres.
+  2. Implementar servicio de extracción segura de `public_id` (`extraerPublicIdComprobante`) con blindaje estricto: solo opera sobre la carpeta `comprobantes/` y descarta terminantemente fotos de platos del menú (`platos/...`) para prevenir cualquier borrado accidental de la carta escolar.
+  3. Implementar función de destrucción con firma criptográfica (`generarSha1` y `eliminarImagenDeCloudinary`) comunicándose de forma autenticada con la API de Cloudinary (`image/destroy`).
+  4. Implementar método `dataService.limpiarComprobantesAntiguos(diasAntiguedad = 2)` que destruye el archivo en Cloudinary y actualiza `comprobante_url = null` en Supabase PostgreSQL, preservando intactos todos los registros contables, importes, estudiantes, platos consumidos y estados de entrega.
+  5. Crear el endpoint de servidor `GET` y `POST` en `/api/cron/limpiar-comprobantes` protegido con token `CRON_SECRET`.
+  6. Configurar la ejecución automática diaria mediante `vercel.json` para ejecutarse a las 08:00 UTC (03:00 AM hora oficial de Perú `America/Lima`).
+  7. Incorporar en el panel de Super Administrador (`/superadmin`) una tarjeta de estado de automatización y botón para ejecución inmediata manual con informe de pedidos evaluados y comprobantes liberados.
+- Fuente: instrucción explícita del usuario: *"ok pero para automatizarlo aun más podemos borrar los comprobantes despues de dos dias. y no se llene cloudinary eso se puede hacer? ... si"*
+- Implementación de Ingeniería:
+  - `src/lib/cloudinaryService.ts`: `generarSha1`, `extraerPublicIdComprobante` y `eliminarImagenDeCloudinary`.
+  - `src/lib/dataService.ts`: interfaz `ResumenLimpiezaComprobantes` y método `limpiarComprobantesAntiguos`.
+  - `src/app/api/cron/limpiar-comprobantes/route.ts`: Endpoint Route Handler de Next.js App Router con verificación de autorización.
+  - `vercel.json`: Tarea programada diaria a las 03:00 AM Perú.
+  - `src/app/superadmin/page.tsx`: Tarjeta de mantenimiento y botón de depuración manual.
+  - `tests/cron-limpiar-comprobantes-cloudinary.test.mjs`: 7 pruebas automatizadas unitarias y de integración.
+- Impacto:
+  - `src/lib/cloudinaryService.ts`
+  - `src/lib/dataService.ts`
+  - `src/app/api/cron/limpiar-comprobantes/route.ts`
+  - `vercel.json`
+  - `src/app/superadmin/page.tsx`
+  - `MEMORY.md`
+  - `tests/cron-limpiar-comprobantes-cloudinary.test.mjs` (7 pruebas nuevas, 299 pruebas totales en la suite, 293 pasadas, 0 fallos).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -35,9 +35,18 @@ import {
   Smartphone,
   CreditCard,
   Clock,
+  FileImage,
+  HardDrive,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { dataService, CONFIG_PAGOS_DEFAULT, HORA_LIMITE_DEFAULT, FAVICON_DEFAULT, obtenerIdentificadorColegio } from '@/lib/dataService';
+import {
+  dataService,
+  CONFIG_PAGOS_DEFAULT,
+  HORA_LIMITE_DEFAULT,
+  FAVICON_DEFAULT,
+  obtenerIdentificadorColegio,
+  ResumenLimpiezaComprobantes,
+} from '@/lib/dataService';
 import { formatearHoraLimiteLegible } from '@/lib/dateUtils';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
@@ -92,6 +101,10 @@ export default function SuperAdminPage() {
   const [modalFaviconAbierto, setModalFaviconAbierto] = useState(false);
   const [faviconInput, setFaviconInput] = useState('');
   const [guardandoFavicon, setGuardandoFavicon] = useState(false);
+
+  // Mantenimiento de almacenamiento: Depuración de Comprobantes Cloudinary
+  const [ejecutandoLimpieza, setEjecutandoLimpieza] = useState(false);
+  const [resumenLimpieza, setResumenLimpieza] = useState<ResumenLimpiezaComprobantes | null>(null);
 
   // Modal rápido para editar credenciales de Admin
   const [modalAdminRapido, setModalAdminRapido] = useState<{
@@ -333,6 +346,24 @@ export default function SuperAdminPage() {
       alert('Error inesperado al guardar la configuración de pagos.');
     } finally {
       setGuardandoPagos(false);
+    }
+  };
+
+  const handleLimpiarComprobantesManualmente = async () => {
+    if (ejecutandoLimpieza) return;
+    setEjecutandoLimpieza(true);
+    try {
+      const res = await dataService.limpiarComprobantesAntiguos(2);
+      setResumenLimpieza(res);
+      setMensajeExito(
+        `Limpieza completada: ${res.comprobantesPurgadosCloudinary} comprobantes purgados en Cloudinary (${res.pedidosEvaluados} pedidos evaluados).`
+      );
+      setTimeout(() => setMensajeExito(null), 5000);
+    } catch (err: unknown) {
+      console.error('Error durante la depuración manual de comprobantes:', err);
+      alert('Error ejecutando la depuración de comprobantes.');
+    } finally {
+      setEjecutandoLimpieza(false);
     }
   };
 
@@ -855,6 +886,67 @@ export default function SuperAdminPage() {
             <span className="text-xs font-semibold text-indigo-900/90 bg-white px-3 py-1.5 rounded-xl border border-indigo-200 self-start sm:self-auto">
               Actualizado dinámicamente en tiempo real
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* CONFIGURACIÓN Y MANTENIMIENTO: DEPURACIÓN DE COMPROBANTES CLOUDINARY */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
+              <FileImage className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                  Almacenamiento Cloudinary: Depuración de Comprobantes
+                </h2>
+                <span className="text-[10px] font-black uppercase text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full border border-teal-200">
+                  Automático &gt; 2 días
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Purga las fotos de comprobantes de pago (Yape/Plin) con más de 48 horas de antigüedad para mantener Cloudinary libre de saturación y proteger la privacidad de los padres. Las ventas, pedidos e historial quedan 100% preservados.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLimpiarComprobantesManualmente}
+            disabled={ejecutandoLimpieza}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto cursor-pointer active:scale-95"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${ejecutandoLimpieza ? 'animate-spin' : ''}`} />
+            <span>{ejecutandoLimpieza ? 'Depurando Cloudinary...' : 'Ejecutar Limpieza Ahora (> 2 días)'}</span>
+          </button>
+        </div>
+
+        <div className="pt-3">
+          <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
+                <HardDrive className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-teal-800 block">
+                  Estado de la Automatización
+                </span>
+                <div className="text-xs sm:text-sm font-bold text-teal-950">
+                  Programado automáticamente todas las madrugadas (03:00 AM Perú) vía Vercel Cron
+                </div>
+              </div>
+            </div>
+            {resumenLimpieza ? (
+              <span className="text-xs font-semibold text-teal-900 bg-white px-3 py-1.5 rounded-xl border border-teal-200 self-start sm:self-auto">
+                Última ejecución: {resumenLimpieza.comprobantesPurgadosCloudinary} liberados de {resumenLimpieza.pedidosEvaluados} pedidos evaluados
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-teal-900/90 bg-white px-3 py-1.5 rounded-xl border border-teal-200 self-start sm:self-auto">
+                Retención fijada en 48 horas (2 días)
+              </span>
+            )}
           </div>
         </div>
       </div>
