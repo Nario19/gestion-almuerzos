@@ -150,38 +150,50 @@ export default function AdminPage() {
     ? usuario.colegioNombre
     : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : (colegios[0] || ''));
 
+  // Carga de platos del menú del día activo
   useEffect(() => {
-    if (esAdmin) {
-      let cancelado = false;
-      const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
-        ? usuario.colegioNombre
-        : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+    if (!esAdmin) return;
+    let cancelado = false;
+    const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
 
-      dataService.obtenerPlatosPorDia(diaActivo, colFiltro).then((data) => {
-        if (!cancelado) {
-          setPlatos(data);
-          setCargando(false);
-        }
-      });
-      dataService.obtenerColegios().then((cols) => { if (!cancelado) setColegios(cols); });
-      dataService.obtenerGrados(colegioObjetivo).then((g) => { if (!cancelado) setGrados(g); });
-      dataService.obtenerFiltrosGrados(colegioObjetivo).then((fg) => { if (!cancelado) setFiltrosGrados(fg); });
-      dataService.obtenerObservaciones(colegioObjetivo).then((obs) => { if (!cancelado) setObservaciones(obs); });
-      dataService.obtenerPedidos().then((peds) => { if (!cancelado) setPedidos(peds); });
+    dataService.obtenerPlatosPorDia(diaActivo, colFiltro).then((data) => {
+      if (!cancelado) {
+        setPlatos(data);
+        setCargando(false);
+      }
+    });
 
-      const desuscribir = dataService.suscribirCambios(() => {
-        dataService.obtenerPedidos().then(setPedidos);
-        dataService.obtenerColegios().then(setColegios);
-        dataService.obtenerGrados(colegioObjetivo).then(setGrados);
-        dataService.obtenerFiltrosGrados(colegioObjetivo).then(setFiltrosGrados);
-        dataService.obtenerObservaciones(colegioObjetivo).then(setObservaciones);
-      });
-      return () => {
-        cancelado = true;
-        desuscribir();
-      };
-    }
-  }, [diaActivo, esAdmin, colegioMenuSeleccionado, usuario?.colegioNombre, esSuperAdmin, colegioObjetivo]);
+    return () => {
+      cancelado = true;
+    };
+  }, [diaActivo, esAdmin, colegioMenuSeleccionado, usuario?.colegioNombre, esSuperAdmin]);
+
+  // Carga de metadatos administrativos (colegios, grados, filtros, observaciones, pedidos)
+  useEffect(() => {
+    if (!esAdmin) return;
+    let cancelado = false;
+
+    dataService.obtenerColegios().then((cols) => { if (!cancelado) setColegios(cols); });
+    dataService.obtenerGrados(colegioObjetivo).then((g) => { if (!cancelado) setGrados(g); });
+    dataService.obtenerFiltrosGrados(colegioObjetivo).then((fg) => { if (!cancelado) setFiltrosGrados(fg); });
+    dataService.obtenerObservaciones(colegioObjetivo).then((obs) => { if (!cancelado) setObservaciones(obs); });
+    dataService.obtenerPedidos().then((peds) => { if (!cancelado) setPedidos(peds); });
+
+    const desuscribir = dataService.suscribirCambios(() => {
+      dataService.obtenerPedidos().then(setPedidos);
+      dataService.obtenerColegios().then(setColegios);
+      dataService.obtenerGrados(colegioObjetivo).then(setGrados);
+      dataService.obtenerFiltrosGrados(colegioObjetivo).then(setFiltrosGrados);
+      dataService.obtenerObservaciones(colegioObjetivo).then(setObservaciones);
+    });
+
+    return () => {
+      cancelado = true;
+      desuscribir();
+    };
+  }, [esAdmin, colegioObjetivo]);
 
   const handleAgregarTipoPersonalizado = () => {
     const val = otroTipoInput.trim();

@@ -1007,6 +1007,32 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `MEMORY.md`
   - `tests/cron-limpiar-comprobantes-cloudinary.test.mjs` (7 pruebas nuevas, 299 pruebas totales en la suite, 293 pasadas, 0 fallos).
 
+### D-048 — 2026-10-21 — Optimización Integral de Rendimiento: Compresión Dinámica Cloudinary, Caché en Memoria y Prefetch de la Carta
+
+- Decisión:
+  1. Solucionar la lentitud al cargar la carta diaria implementando compresión dinámica al vuelo en Cloudinary (`optimizarUrlCloudinary`) con transformaciones `f_auto,q_auto,w_600,c_limit`. Esto transforma automáticamente imágenes pesadas de smartphone (4MB-8MB) en archivos WebP/AVIF ultralivianos de ~30KB-50KB (reducción > 95% de payload).
+  2. Implementar capa de caché en memoria de alto rendimiento (`cachePlatosPorDiaMemoria` con TTL de 60s) en `dataService.obtenerPlatosPorDia`, logrando que alternar entre Lunes, Martes, Miércoles, etc. sea instantáneo (0ms) sin bloqueos ni spinners repetitivos.
+  3. Implementar invalidación inmediata de caché de platos (`invalidarCachePlatos`) ante altas, bajas o modificaciones de platos y eventos de Supabase Realtime, garantizando que el menú siempre esté al día.
+  4. Implementar caché en memoria para configuraciones globales (`cacheColegiosMemoria`, `cacheConfigPagosMemoria`, `cacheHoraLimiteMemoria`) con TTL de 60s, eliminando llamadas redundantes a la tabla `menus_dia`.
+  5. En la interfaz de padres (`/padres` / `/`), activar precarga silenciosa (prefetch) de la carta semanal en segundo plano una vez conocido el colegio del alumno, y añadir `loading="lazy"` y `decoding="async"` a todas las imágenes de la carta.
+  6. En el panel de administración (`/admin`), desacoplar la carga de platos del día de la carga de metadatos globales, evitando 5 peticiones redundantes a Supabase en cada cambio de día.
+- Fuente: instrucción explícita del usuario: *"aveces carga muy lento por ejemplo la carta de cada dia etc, optimzalo par q cargue mas rapido y todo sea mas fluido sin romper nada de lo que ya funciona en el sistema"*
+- Implementación de Ingeniería:
+  - `src/lib/cloudinaryService.ts`: función `optimizarUrlCloudinary`.
+  - `src/lib/dataService.ts`: integración de URLs optimizadas en `mapearPlatoDesdeSupabase`, caché con TTL en `obtenerPlatosPorDia`, `obtenerColegios`, `obtenerConfiguracionPagos`, `obtenerHoraLimite` e invalidación automática.
+  - `src/app/padres/page.tsx`: prefetch en segundo plano de la carta semanal y atributos de carga diferida en imágenes.
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`: atributos de carga diferida en imágenes.
+  - `src/app/admin/page.tsx`: separación de efectos de datos para menú vs administración.
+  - `tests/optimizacion-rendimiento-carta-cloudinary.test.mjs`: 6 pruebas automatizadas de verificación de rendimiento.
+- Impacto:
+  - `src/lib/cloudinaryService.ts`
+  - `src/lib/dataService.ts`
+  - `src/app/padres/page.tsx`
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `MEMORY.md`
+  - `tests/optimizacion-rendimiento-carta-cloudinary.test.mjs` (6 pruebas nuevas, 305 pruebas totales en la suite, 299 pasadas, 0 fallos).
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

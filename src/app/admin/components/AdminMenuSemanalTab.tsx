@@ -843,7 +843,7 @@ export default function AdminMenuSemanalTab({
                             {plato.imagenUrl ? (
                               <div className="h-28 bg-slate-100 relative">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                                <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                                 {plato.imagenUrl.includes('cloudinary') && (
                                   <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold rounded flex items-center gap-1" title="Alojada en Cloudinary">
                                     <Cloud className="w-2.5 h-2.5 text-emerald-400" /> Cloudinary
@@ -978,7 +978,7 @@ export default function AdminMenuSemanalTab({
                             {plato.imagenUrl ? (
                               <div className="h-28 bg-slate-100 relative">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                                <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                                 {plato.imagenUrl.includes('cloudinary') && (
                                   <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold rounded flex items-center gap-1" title="Alojada en Cloudinary">
                                     <Cloud className="w-2.5 h-2.5 text-emerald-400" /> Cloudinary
@@ -1111,7 +1111,7 @@ export default function AdminMenuSemanalTab({
                             {plato.imagenUrl ? (
                               <div className="h-32 bg-slate-100 relative">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover" />
+                                <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                                 {plato.imagenUrl.includes('cloudinary') && (
                                   <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold rounded flex items-center gap-1" title="Alojada en Cloudinary">
                                     <Cloud className="w-2.5 h-2.5 text-emerald-400" /> Cloudinary
@@ -1215,7 +1215,7 @@ export default function AdminMenuSemanalTab({
                         {extra.imagenUrl ? (
                           <div className="h-28 bg-slate-100 relative">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={extra.imagenUrl} alt={extra.nombre} className="w-full h-full object-cover" />
+                            <img src={extra.imagenUrl} alt={extra.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                             {extra.imagenUrl.includes('cloudinary') && (
                               <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold rounded flex items-center gap-1" title="Alojada en Cloudinary">
                                 <Cloud className="w-2.5 h-2.5 text-emerald-400" /> Cloudinary
@@ -1420,7 +1420,7 @@ export default function AdminMenuSemanalTab({
                 {platoEditando.imagenUrl && (
                   <div className="mt-2 h-28 rounded-xl overflow-hidden border border-slate-200 relative group bg-slate-50">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={platoEditando.imagenUrl} alt="Vista previa del plato" className="w-full h-full object-cover" />
+                    <img src={platoEditando.imagenUrl} alt="Vista previa del plato" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     {platoEditando.imagenUrl.includes('cloudinary') && (
                       <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow-2xs">
                         <Cloud className="w-3 h-3 text-white" /> En Cloudinary

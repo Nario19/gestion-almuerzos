@@ -23,6 +23,7 @@ import {
   obtenerCarpetaCloudinaryPlato,
   extraerPublicIdComprobante,
   eliminarImagenDeCloudinary,
+  optimizarUrlCloudinary,
 } from './cloudinaryService';
 
 export interface ResumenLimpiezaComprobantes {
@@ -263,6 +264,29 @@ if (typeof window !== 'undefined') {
   } catch (_) {}
 }
 
+interface CacheItem<T> {
+  datos: T;
+  timestamp: number;
+}
+
+const CACHE_TTL_PLATOS_MS = 60 * 1000; // 60 segundos de caché ultrarrápida en memoria
+const CACHE_TTL_CONFIG_MS = 60 * 1000; // 60 segundos para configuraciones globales
+
+const cachePlatosPorDiaMemoria = new Map<string, CacheItem<Plato[]>>();
+let cacheColegiosMemoria: CacheItem<string[]> | null = null;
+let cacheConfigPagosMemoria: CacheItem<ConfiguracionPagos> | null = null;
+let cacheHoraLimiteMemoria: CacheItem<string> | null = null;
+
+export function invalidarCachePlatos() {
+  cachePlatosPorDiaMemoria.clear();
+}
+
+export function invalidarCacheConfig() {
+  cacheColegiosMemoria = null;
+  cacheConfigPagosMemoria = null;
+  cacheHoraLimiteMemoria = null;
+}
+
 const listeners: (() => void)[] = [];
 let globalRealtimeChannel: RealtimeChannel | null = null;
 
@@ -275,12 +299,15 @@ function iniciarCanalRealtimeGlobal() {
         notifyListeners();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'platos' }, () => {
+        invalidarCachePlatos();
         notifyListeners();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'colegios' }, () => {
+        invalidarCacheConfig();
         notifyListeners();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'menus_dia' }, () => {
+        invalidarCacheConfig();
         notifyListeners();
       })
       .subscribe((status, err) => {
@@ -302,6 +329,8 @@ function detenerCanalRealtimeGlobal() {
 }
 
 function notifyListeners() {
+  invalidarCachePlatos();
+  invalidarCacheConfig();
   listeners.forEach((cb) => {
     try {
       cb();
@@ -459,7 +488,7 @@ function mapearPlatoDesdeSupabase(d: PlatoRowSupabase): Plato {
     nombre: d.nombre || '',
     descripcion: descLimpia || undefined,
     precio: Number(d.precio) || 12.0,
-    imagenUrl: d.imagen_url || undefined,
+    imagenUrl: d.imagen_url ? optimizarUrlCloudinary(d.imagen_url, { width: 600 }) : undefined,
     disponible: d.disponible ?? true,
     orden: (d as { orden?: number }).orden || 1,
   };
@@ -468,6 +497,13 @@ function mapearPlatoDesdeSupabase(d: PlatoRowSupabase): Plato {
 export const dataService = {
   async obtenerPlatosPorDia(dia: DiaSemana, colegioNombre?: string): Promise<Plato[]> {
     const colegioIdONombre = colegioNombre;
+    const cacheKey = `${dia}_${(colegioIdONombre || 'todos').toLowerCase().trim()}`;
+    const ahora = Date.now();
+
+    const hit = cachePlatosPorDiaMemoria.get(cacheKey);
+    if (hit && ahora - hit.timestamp < CACHE_TTL_PLATOS_MS) {
+      return hit.datos;
+    }
 
     let platos: Plato[] = [];
     if (isSupabaseConfigured && supabase) {
@@ -515,11 +551,13 @@ export const dataService = {
     }
 
     if (!colegioIdONombre) {
+      cachePlatosPorDiaMemoria.set(cacheKey, { datos: platos, timestamp: ahora });
       return platos;
     }
 
     const val = (colegioIdONombre || '').toLowerCase().trim();
     if (val === 'todos' || !val) {
+      cachePlatosPorDiaMemoria.set(cacheKey, { datos: platos, timestamp: ahora });
       return platos;
     }
     const targetId = val;
@@ -536,10 +574,12 @@ export const dataService = {
     });
 
     // Cada colegio es independiente: sólo devuelve platos de ese colegio
+    cachePlatosPorDiaMemoria.set(cacheKey, { datos: platosColegio, timestamp: ahora });
     return platosColegio;
   },
 
   async agregarPlato(platoData: Omit<Plato, 'id'>): Promise<Plato> {
+    invalidarCachePlatos();
     const nuevoPlato: Plato = {
       ...platoData,
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `plato-${Date.now()}`,
@@ -620,6 +660,7 @@ export const dataService = {
   },
 
   async eliminarPlato(id: string): Promise<void> {
+    invalidarCachePlatos();
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase.from('platos').delete().eq('id', id);
@@ -632,6 +673,7 @@ export const dataService = {
   },
 
   async actualizarPlato(id: string, platoData: Partial<Plato>): Promise<Plato> {
+    invalidarCachePlatos();
     const platoExistenteIndex = platosMemoria.findIndex((p) => p.id === id);
     const platoExistente = platoExistenteIndex !== -1 ? platosMemoria[platoExistenteIndex] : null;
 
@@ -1463,6 +1505,10 @@ export const dataService = {
 
   // --- GESTIÓN DE COLEGIOS Y ADMINISTRADORES DE SEDE (SUPER ADMIN) ---
   async obtenerColegios(): Promise<string[]> {
+    const ahora = Date.now();
+    if (cacheColegiosMemoria && ahora - cacheColegiosMemoria.timestamp < CACHE_TTL_CONFIG_MS) {
+      return [...cacheColegiosMemoria.datos];
+    }
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -1477,6 +1523,7 @@ export const dataService = {
             .filter((n) => n.length > 0);
 
           colegiosMemoria = nombres;
+          cacheColegiosMemoria = { datos: nombres, timestamp: ahora };
           if (typeof window !== 'undefined') {
             localStorage.setItem('config_colegios', JSON.stringify(nombres));
           }
@@ -2623,6 +2670,11 @@ export const dataService = {
   },
 
   async obtenerConfiguracionPagos(): Promise<ConfiguracionPagos> {
+    const ahora = Date.now();
+    if (cacheConfigPagosMemoria && ahora - cacheConfigPagosMemoria.timestamp < CACHE_TTL_CONFIG_MS) {
+      return { ...cacheConfigPagosMemoria.datos };
+    }
+
     if (typeof window !== 'undefined') {
       try {
         const local = localStorage.getItem('config_pagos');
@@ -2661,6 +2713,7 @@ export const dataService = {
               if (typeof window !== 'undefined') {
                 localStorage.setItem('config_pagos', JSON.stringify(configPagosMemoria));
               }
+              cacheConfigPagosMemoria = { datos: configPagosMemoria, timestamp: ahora };
               return { ...configPagosMemoria };
             }
           } catch (_) {}
@@ -2670,10 +2723,12 @@ export const dataService = {
       }
     }
 
+    cacheConfigPagosMemoria = { datos: configPagosMemoria, timestamp: ahora };
     return { ...configPagosMemoria };
   },
 
   async guardarConfiguracionPagos(nuevaConfig: ConfiguracionPagos): Promise<{ ok: boolean; error?: string }> {
+    cacheConfigPagosMemoria = null;
     const configLimpia: ConfiguracionPagos = {
       numeroYape: nuevaConfig.numeroYape.trim() || CONFIG_PAGOS_DEFAULT.numeroYape,
       titularYape: nuevaConfig.titularYape.trim() || CONFIG_PAGOS_DEFAULT.titularYape,
@@ -2739,6 +2794,11 @@ export const dataService = {
 
   // --- CONFIGURACIÓN DE HORA LÍMITE DE PEDIDOS ---
   async obtenerHoraLimite(): Promise<string> {
+    const ahora = Date.now();
+    if (cacheHoraLimiteMemoria && ahora - cacheHoraLimiteMemoria.timestamp < CACHE_TTL_CONFIG_MS) {
+      return cacheHoraLimiteMemoria.datos;
+    }
+
     if (typeof window !== 'undefined') {
       try {
         const local = localStorage.getItem('config_hora_limite');
@@ -2764,6 +2824,7 @@ export const dataService = {
               if (typeof window !== 'undefined') {
                 localStorage.setItem('config_hora_limite', horaLimiteMemoria);
               }
+              cacheHoraLimiteMemoria = { datos: horaLimiteMemoria, timestamp: ahora };
               return horaLimiteMemoria;
             }
           } catch (_) {}
@@ -2773,10 +2834,12 @@ export const dataService = {
       }
     }
 
+    cacheHoraLimiteMemoria = { datos: horaLimiteMemoria, timestamp: ahora };
     return horaLimiteMemoria;
   },
 
   async guardarHoraLimite(nuevaHora: string): Promise<{ ok: boolean; error?: string }> {
+    cacheHoraLimiteMemoria = null;
     const horaLimpia = (nuevaHora || '').trim();
     if (!horaLimpia || !horaLimpia.includes(':')) {
       return { ok: false, error: 'Formato de hora inválido. Debe ser HH:MM.' };

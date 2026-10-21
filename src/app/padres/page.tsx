@@ -261,6 +261,24 @@ function PedidoContent() {
     };
   }, [diaSeleccionado, esAdmin, hijoSeleccionado?.id, hijoSeleccionado?.colegioNombre, hijoSeleccionado?.colegioId, colegio]);
 
+  // Precarga silenciosa (prefetch) de la carta de los demás días para que el cambio de día sea instantáneo
+  useEffect(() => {
+    if (esAdmin) return;
+    const colegioFiltro = hijoSeleccionado?.colegioNombre || hijoSeleccionado?.colegioId || colegio || undefined;
+    if (!colegioFiltro) return;
+
+    const diasSemana: DiaSemana[] = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'];
+    const restantes = diasSemana.filter((d) => d !== diaSeleccionado);
+
+    const timer = setTimeout(() => {
+      restantes.forEach((d) => {
+        dataService.obtenerPlatosPorDia(d, colegioFiltro);
+      });
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [diaSeleccionado, esAdmin, hijoSeleccionado?.colegioNombre, hijoSeleccionado?.colegioId, colegio]);
+
   // Si el usuario tiene hijos o viene por parámetro URL
   useEffect(() => {
     if (usuario && usuario.rol !== 'ADMIN' && usuario.hijos.length > 0) {
@@ -960,7 +978,7 @@ function PedidoContent() {
                       <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                         {ent.imagenUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                          <img src={ent.imagenUrl} alt={ent.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                         ) : (
                           <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                             {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-amber-400')}
@@ -1020,7 +1038,7 @@ function PedidoContent() {
                       <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                         {ent.imagenUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={ent.imagenUrl} alt={ent.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                          <img src={ent.imagenUrl} alt={ent.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                         ) : (
                           <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                             {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-emerald-500')}
@@ -1074,7 +1092,7 @@ function PedidoContent() {
                     <div className="h-48 sm:h-56 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {seg.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={seg.imagenUrl} alt={seg.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                        <img src={seg.imagenUrl} alt={seg.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                           {renderIconoPlato(seg.tipo, seg.nombre, 'w-10 h-10 text-orange-500')}
@@ -1121,7 +1139,7 @@ function PedidoContent() {
                     <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {ext.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={ext.imagenUrl} alt={ext.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                        <img src={ext.imagenUrl} alt={ext.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                           {renderIconoPlato(ext.tipo, ext.nombre, 'w-10 h-10 text-emerald-500')}
@@ -1410,7 +1428,7 @@ function PedidoContent() {
                     <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {plato.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                        <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                           {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-orange-400')}
@@ -1480,7 +1498,7 @@ function PedidoContent() {
                     <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {plato.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={plato.imagenUrl} alt={plato.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                        <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                           {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-orange-500')}
@@ -1551,7 +1569,7 @@ function PedidoContent() {
                     <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                       {extra.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={extra.imagenUrl} alt={extra.nombre} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                        <img src={extra.imagenUrl} alt={extra.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                           {renderIconoPlato(extra.tipo, extra.nombre, 'w-10 h-10 text-emerald-500')}

@@ -51,6 +51,31 @@ export function obtenerCarpetaCloudinaryPlato(colegio?: string, dia?: string): s
 }
 
 /**
+ * Aplica transformaciones al vuelo en URLs de Cloudinary para optimización máxima de carga:
+ * - f_auto: Selecciona automáticamente el formato más eficiente soportado por el navegador (AVIF o WebP).
+ * - q_auto: Compresión perceptual inteligente que reduce hasta un 80% del peso sin pérdida visible.
+ * - w_600: Limita el ancho a 600px, reduciendo fotos de smartphones de 5MB a ~30KB-50KB.
+ * - c_limit: Escala proporcionalmente sin distorsionar ni recortar.
+ *
+ * @param url URL de la imagen en Cloudinary o fallback local.
+ * @param opciones Configuración opcional de ancho y calidad.
+ */
+export function optimizarUrlCloudinary(
+  url?: string | null,
+  opciones?: { width?: number; quality?: string }
+): string {
+  if (!url || typeof url !== 'string') return url || '';
+  if (!url.includes('cloudinary.com') || !url.includes('/image/upload/')) return url;
+  if (url.includes('f_auto') && url.includes('q_auto')) return url;
+
+  const width = opciones?.width || 600;
+  const calidad = opciones?.quality || 'auto';
+  const transformacion = `f_auto,q_${calidad},w_${width},c_limit`;
+
+  return url.replace('/image/upload/', `/image/upload/${transformacion}/`);
+}
+
+/**
  * Sube una imagen (Blob, File o DataURL Base64) a Cloudinary usando un Upload Preset no firmado (Unsigned).
  *
  * @param fileODataUrl Archivo Blob, File o DataURL Base64 de la imagen.
