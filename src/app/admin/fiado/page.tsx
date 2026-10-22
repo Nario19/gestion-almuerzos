@@ -57,6 +57,17 @@ export default function FiadoPage() {
   const [fechaFiltro, setFechaFiltro] = useState<string>(fechaHoy);
   const [busqueda, setBusqueda] = useState('');
 
+  // Sincronizar automáticamente colegioFiltro cuando el perfil de usuario cargue
+  useEffect(() => {
+    if (!esSuperAdmin && usuario?.colegioNombre) {
+      setColegioFiltro(usuario.colegioNombre);
+    }
+  }, [esSuperAdmin, usuario?.colegioNombre]);
+
+  const nombreColegioActivo = !esSuperAdmin
+    ? (usuario?.colegioNombre || (colegioFiltro !== 'TODOS' ? colegioFiltro : (colegios.length === 1 ? colegios[0] : '')))
+    : (colegioFiltro === 'TODOS' ? 'Todos los Colegios' : colegioFiltro);
+
   // Paginación de Familias
   const [paginaActual, setPaginaActual] = useState(1);
   const [porPagina, setPorPagina] = useState(8);
@@ -541,6 +552,13 @@ export default function FiadoPage() {
               <p className="text-xs sm:text-sm text-slate-500 font-medium">
                 Cuentas por cobrar y cobranza
               </p>
+              {!esSuperAdmin && (usuario?.colegioNombre || nombreColegioActivo) && (
+                <div className="mt-1.5">
+                  <span className="inline-flex items-center gap-1.5 font-bold text-orange-900 bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200 text-xs">
+                    🏫 Colegio: {usuario?.colegioNombre || nombreColegioActivo}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -585,18 +603,19 @@ export default function FiadoPage() {
       <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6 space-y-3">
         {/* Selector de Colegio */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-slate-500" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <Building2 className="w-4 h-4 text-orange-500" />
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               Colegio:
             </span>
+            {nombreColegioActivo ? (
+              <span className="px-3 py-1 bg-orange-50 border border-orange-200 rounded-xl text-xs font-black text-orange-950 shadow-2xs">
+                {nombreColegioActivo}
+              </span>
+            ) : null}
           </div>
 
-          {!esSuperAdmin && usuario?.colegioNombre ? (
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-800">
-              <span className="text-slate-900 font-black">{usuario.colegioNombre}</span>
-            </div>
-          ) : (
+          {esSuperAdmin && (
             <div className="flex flex-wrap items-center gap-1.5">
               <button
                 type="button"
@@ -866,6 +885,12 @@ export default function FiadoPage() {
                       <h2 className="text-base sm:text-lg font-black text-slate-900 truncate">
                         {padre.nombrePadre}
                       </h2>
+                      {(padre.colegioNombre || nombreColegioActivo) && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-orange-50 text-orange-800 text-[11px] font-bold border border-orange-200">
+                          <Building2 className="w-3 h-3 text-orange-600" />
+                          Colegio: {padre.colegioNombre || nombreColegioActivo}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
@@ -1042,6 +1067,9 @@ export default function FiadoPage() {
                                       )}
                                     </div>
                                   )}
+                                  <span className="text-[10px] font-medium text-slate-500 block mt-0.5">
+                                    {ped.colegioNombre || padre.colegioNombre || nombreColegioActivo}
+                                  </span>
                                 </td>
                                 <td className="py-2.5 px-3 font-bold text-slate-900 whitespace-nowrap">
                                   {ped.estudianteNombre}

@@ -48,7 +48,6 @@ export default function PerfilPage() {
 
   const handleCerrarSesion = () => {
     logout();
-    router.push('/login');
   };
 
   const handleGuardarPerfil = async (e: React.FormEvent) => {

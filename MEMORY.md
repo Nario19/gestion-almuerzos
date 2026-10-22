@@ -1196,6 +1196,30 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/despacho-filtros-rol-estado.test.mjs`
   - `MEMORY.md`
 
+### D-055 — 2026-10-22 — Redirección Directa a Login en Logout sin Pantalla Intermedia de Bloqueo y Visibilidad Garantizada del Colegio en Fiado
+
+- Decisión:
+  1. **Redirección Directa e Inmediata al Login en Logout:**
+     - Al invocar `logout()`, se efectúa la navegación síncrona inmediata `window.location.href = '/login'`, limpiando el estado de autenticación y las cookies sin permitir el parpadeo de rutas intermedias.
+     - En `AccesoRestringido.tsx`, se detecta cuando no existe usuario con sesión activa (`!cargando && !usuario`) para redirigir de forma automática y silenciosa hacia `/login` (`window.location.replace(urlLogin)`), evitando que tras el cierre de sesión en una página administrativa se muestre la tarjeta de advertencia "No tienes acceso a esta página".
+  2. **Garantía Total de Visualización del Nombre del Colegio en Fiado:**
+     - En `src/app/admin/fiado/page.tsx`, se erradicó la etiqueta aislada `Colegio:` sin datos:
+       - Se sincroniza reactivamente `colegioFiltro` cuando el perfil del administrador termina de cargar su `colegioNombre`.
+       - Se calcula `nombreColegioActivo`, mostrándolo siempre al lado de la etiqueta `Colegio:` (ej. `Colegio: COLEGIO ZAARTEA`).
+       - En la cabecera principal de Control de Fiados se incorporó la insignia `🏫 Colegio: [Nombre]`.
+       - En cada tarjeta de familia se muestra el badge `Colegio: [Nombre]` y en cada fila del desglose de almuerzos se rotula el colegio respectivo.
+       - En `dataService.ts`, `obtenerFiados` y `mapearPedidoDesdeSupabase` resuelven cualquier fallback de colegioNombre ausente mediante persistencia de grupos y extracción de tags `[Colegio:]`.
+- Fuente: instrucción explícita del usuario: *"cunado le doy a logout me lleva a acceso restringido no tienes acceso a esta apgina. simplemente debe llevarme al login de nuevo. y en fiado solo aparece colegio: pero. no el nombre aseugrate que aparezca bien en todo el colegio"*
+- Impacto:
+  - `src/lib/authContext.tsx`
+  - `src/components/AccesoRestringido.tsx`
+  - `src/components/HeaderNav.tsx`
+  - `src/app/padres/perfil/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/lib/dataService.ts`
+  - `tests/logout-redireccion-fiado-colegio-visible.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

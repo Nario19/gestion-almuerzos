@@ -50,7 +50,6 @@ export default function HeaderNav() {
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
   };
 
   if (pathname === '/login') {

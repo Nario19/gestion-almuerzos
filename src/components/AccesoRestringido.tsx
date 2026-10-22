@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { ShieldAlert, LogIn, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/lib/authContext';
 
 export default function AccesoRestringido({
   titulo = 'No tienes acceso a esta página',
@@ -15,6 +16,29 @@ export default function AccesoRestringido({
   textoBotonLogin?: string;
   urlLogin?: string;
 }) {
+  const { usuario, cargando } = useAuth();
+
+  // Si no hay sesión activa (ej. tras presionar logout), redirigir de inmediato al login sin mostrar pantalla de bloqueo
+  useEffect(() => {
+    if (!cargando && !usuario && typeof window !== 'undefined') {
+      window.location.replace(urlLogin);
+    }
+  }, [cargando, usuario, urlLogin]);
+
+  if (!cargando && !usuario) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-100">
+        <div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin mb-3 shadow-xs" />
+        <div className="sr-only">
+          <h1>{titulo}</h1>
+          <p>{mensaje}</p>
+          <a href={urlLogin}>{textoBotonLogin}</a>
+          <a href="/">Volver a la Carta Principal</a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto px-4 py-16 text-center">
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl space-y-4 relative overflow-hidden">

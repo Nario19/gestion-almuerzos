@@ -647,6 +647,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUsuario(null);
     sincronizarCookieSesion(null);
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
   };
 
   const agregarHijo = async (datos: {

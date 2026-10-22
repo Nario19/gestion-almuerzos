@@ -423,6 +423,15 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
     }
   }
 
+  let colegioNombre = d.colegio_nombre || '';
+  if (!colegioNombre && obs && obs.includes('[Colegio:')) {
+    const matchCol = obs.match(/\[Colegio:\s*([^\]]+)\]/);
+    if (matchCol) {
+      colegioNombre = matchCol[1].trim();
+      obs = obs.replace(/\s*•?\s*\[Colegio:\s*[^\]]+\]/, '').trim() || undefined;
+    }
+  }
+
   // Normalización defensiva de fecha según la zona horaria de Perú (America/Lima)
   const fechaNormalizada = d.created_at
     ? obtenerFechaPeruDeIso(d.created_at)
@@ -437,7 +446,7 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
     padreNombre: padreNombre || undefined,
     hijoId: (d as { hijo_id?: string }).hijo_id,
     colegioId,
-    colegioNombre: d.colegio_nombre || '',
+    colegioNombre,
     gradoSeccion: d.grado_seccion || '',
     estudianteNombre: d.estudiante_nombre || '',
     telefonoContacto: d.padre_telefono || (d as { telefono_contacto?: string }).telefono_contacto || '',
@@ -1291,7 +1300,7 @@ export const dataService = {
           padreId: p.padreId,
           nombrePadre,
           telefono,
-          colegioNombre: p.colegioNombre,
+          colegioNombre: p.colegioNombre || (colegioNombre && colegioNombre !== 'TODOS' ? colegioNombre : ''),
           hijosSet: new Set<string>(),
           pedidos: [],
           totalDeuda: 0,
@@ -1300,6 +1309,12 @@ export const dataService = {
       }
 
       const g = gruposMap.get(clave)!;
+      if (!g.colegioNombre && p.colegioNombre) {
+        g.colegioNombre = p.colegioNombre;
+      }
+      if (!g.colegioNombre && colegioNombre && colegioNombre !== 'TODOS') {
+        g.colegioNombre = colegioNombre;
+      }
       g.hijosSet.add(p.estudianteNombre);
       if (p.estadoPedido === 'ENTREGADO') {
         g.pedidosEntregados++;
