@@ -170,6 +170,20 @@ export default function AdminPage() {
     };
   }, [diaActivo, esAdmin, colegioMenuSeleccionado, usuario?.colegioNombre, esSuperAdmin]);
 
+  // Precarga silenciosa (prefetch) de toda la semana escolar en el panel de administración
+  useEffect(() => {
+    if (!esAdmin) return;
+    const colFiltro = (!esSuperAdmin && usuario?.colegioNombre)
+      ? usuario.colegioNombre
+      : (colegioMenuSeleccionado !== 'TODOS' ? colegioMenuSeleccionado : undefined);
+
+    const timer = setTimeout(() => {
+      dataService.precargarSemana(colFiltro);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [esAdmin, colegioMenuSeleccionado, usuario?.colegioNombre, esSuperAdmin]);
+
   // Carga de metadatos administrativos (colegios, grados, filtros, observaciones, pedidos)
   useEffect(() => {
     if (!esAdmin) return;

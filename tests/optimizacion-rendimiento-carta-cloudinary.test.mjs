@@ -87,6 +87,7 @@ describe('Optimización de Rendimiento: Carga Ultrarrápida de Carta y Compresi�
   test('5. Vista de Padres implementa prefetch de días de la semana e imágenes con carga diferida (lazy/async)', () => {
     // Prefetch en background
     assert.ok(
+      padresContent.includes('dataService.precargarSemana(colegioFiltro)') ||
       padresContent.includes('dataService.obtenerPlatosPorDia(d, colegioFiltro)'),
       'La vista de padres debe precargar los platos de los demás días en segundo plano'
     );

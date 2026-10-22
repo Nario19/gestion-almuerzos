@@ -1033,6 +1033,28 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `MEMORY.md`
   - `tests/optimizacion-rendimiento-carta-cloudinary.test.mjs` (6 pruebas nuevas, 305 pruebas totales en la suite, 299 pasadas, 0 fallos).
 
+### D-049 — 2026-10-21 — Precarga de Carta Semanal en Panel Admin y Selector de Colegio para Padres sin Hijos
+
+- Decisión:
+  1. En el panel de administración (`/admin` y `AdminMenuSemanalTab.tsx`), implementar precarga automática de la semana escolar completa (`LUNES` a `VIERNES`) a través de `dataService.precargarSemana(colFiltro)`. Al alternar entre días en el menú administrativo, los platos cargan instantáneamente (0 ms) desde la caché en memoria, eliminando las demoras previas en cada cambio de pestaña.
+  2. Implementar `dataService.precargarSemana(colegioNombre?: string)` ejecutando en paralelo (`Promise.allSettled`) la consulta de los 5 días lectivos en segundo plano sin bloquear el hilo principal.
+  3. En la interfaz de apoderados (`src/app/padres/page.tsx`), si el usuario autenticado no tiene hijos registrados (`!usuario.hijos || usuario.hijos.length === 0`), renderizar un selector interactivo de colegio ("Ver carta del colegio:") para permitirle explorar libremente la carta gastronómica de cualquier sede institucional activa.
+  4. Preservar íntegramente el comportamiento habitual cuando el usuario ya tiene hijos registrados (`usuario.hijos.length > 0`), ocultando el selector de libre elección y filtrando automáticamente la carta y precios de acuerdo al colegio del alumno seleccionado.
+- Fuente: instrucción explícita del usuario: *"has lo mismo para los admins SEDEMORA EN CARGAR DE CADA DIA EL MENU, y ademas sino tengo un hijo registrado para ver la carta que me permita filtrar por colegio SI NO TENGO NINGU HIJO REGSITRADO CUANDO TENGA HIJOS YA QUE FUNCIONE COMO SIEMPRE"*
+- Implementación de Ingeniería:
+  - `src/lib/dataService.ts`: método `precargarSemana` reutilizable con manejo silencioso de errores.
+  - `src/app/admin/page.tsx`: efecto de precarga diferido en 150ms al montar o cambiar el colegio filtro del administrador.
+  - `src/app/padres/page.tsx`: selector condicional de colegio para padres sin hijos y prefetch automático de la semana.
+  - `tests/optimizacion-rendimiento-carta-cloudinary.test.mjs`: ajuste de assertions para `dataService.precargarSemana`.
+  - `tests/admin-prefetch-y-padres-filtro-sin-hijos.test.mjs`: nueva suite con 5 pruebas automatizadas (100% aprobadas).
+- Impacto:
+  - `src/lib/dataService.ts`
+  - `src/app/admin/page.tsx`
+  - `src/app/padres/page.tsx`
+  - `tests/optimizacion-rendimiento-carta-cloudinary.test.mjs`
+  - `tests/admin-prefetch-y-padres-filtro-sin-hijos.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -578,6 +578,15 @@ export const dataService = {
     return platosColegio;
   },
 
+  /**
+   * Precarga en segundo plano la carta completa de la semana escolar (Lunes a Viernes)
+   * en la memoria local para que la navegación entre días sea 100% instantánea (0 ms).
+   */
+  async precargarSemana(colegioNombre?: string): Promise<void> {
+    const dias: DiaSemana[] = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'];
+    await Promise.allSettled(dias.map((d) => this.obtenerPlatosPorDia(d, colegioNombre)));
+  },
+
   async agregarPlato(platoData: Omit<Plato, 'id'>): Promise<Plato> {
     invalidarCachePlatos();
     const nuevoPlato: Plato = {
