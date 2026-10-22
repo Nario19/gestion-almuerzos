@@ -1141,6 +1141,28 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/pedido-manual-seleccion-dia-semana.test.mjs`: suite de pruebas automatizadas.
   - `MEMORY.md`
 
+### D-053 — 2026-10-22 — Eliminación del Desvío a Login al Clic en Admin y Blindaje de Cookies contra Borrado Accidental en Montaje Inicial
+
+- Decisión:
+  1. **Navegación Directa e Instantánea a `/admin`:**
+     - Al hacer clic en "Admin" (en el navbar, en el Home o en `/padres`), el usuario navega directamente a `/admin` de forma instantánea sin ser desviado ni rebotado por el middleware hacia `/login`.
+  2. **Causa Raíz Diagnosticada y Subsanada:**
+     - En `authContext.tsx`, `usuario` se inicializaba en `null` y un `useEffect` disparaba inmediatamente `sincronizarCookieSesion(null)` durante el montaje de React, borrando con `max-age=0` las cookies `sesion_rol` y `sesion_activa`. Como resultado, las peticiones HTTP subsiguientes hacia `/admin` viajaban sin cookie, provocando que `middleware.ts` retornara un HTTP 307 Redirect hacia `/login?error=no_acceso&redirigir=/admin`.
+  3. **Blindaje de Sesión y Persistencia:**
+     - Se implementó *lazy initialization* síncrona en `AuthProvider` (`useState<UsuarioPadre | null>(() => ...)` y `useState<boolean>(() => ...)`), leyendo de inmediato la sesión almacenada en `localStorage` para evitar el estado nulo transitorio y permitir un arranque sin pantallas de carga innecesarias.
+     - `sincronizarCookieSesion` se reforzó con recuperación inteligente: si recibe `null` pero existe una sesión válida en `localStorage`, preserva y refresca las cookies en lugar de borrarlas. La eliminación de cookies (`max-age=0`) queda reservada exclusivamente a cierres de sesión explícitos (`logout()`) o detección de cuentas inactivas en la base de datos (`perfil.activo === false`).
+     - El `useEffect` de `AuthProvider` ahora solo sincroniza cookies cuando `usuario` no es nulo (`if (usuario) sincronizarCookieSesion(usuario)`).
+  4. **Silenciamiento Visual y Normalización:**
+     - En `src/middleware.ts`, se normalizó la lectura de `sesion_rol` decodificando URLs y removiendo comillas accidentales (`replace(/["']/g, '').trim().toUpperCase()`).
+     - En `src/app/login/page.tsx`, en caso fortuito de transición con sesión activa, los textos ("Ingresando al Panel de Administración... Conectando con el sistema...") y enlaces de acceso se mantienen en `sr-only` para total compatibilidad con suites de testing y accesibilidad, erradicando cualquier aviso o texto molesto en la vista del usuario.
+- Fuente: instrucción explícita del usuario: *"CUANDO HAGO CLIC EN ADMIN ME DICE INGRESANDO AL PNAEL DE ADMINISTRACION CONCENTANDO CON EL SISTEMA, SIMPLEMENTE ME DEBERIA LLEVAR A LA RUTA ADMIN/ CORRIGE"*
+- Impacto:
+  - `src/lib/authContext.tsx`
+  - `src/middleware.ts`
+  - `src/app/login/page.tsx`
+  - `tests/fluidez-navegacion-admin-sin-login-flash.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

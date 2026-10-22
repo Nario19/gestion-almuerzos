@@ -78,20 +78,18 @@ function LoginContent() {
     // Por defecto redirige de forma fluida y muestra un loader minimalista sin el flash de la tarjeta
     if (!cambiarCuenta) {
       return (
-        <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
-          <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mb-3 animate-pulse shadow-xs">
-            <Sparkles className="w-6 h-6 text-orange-600" />
-          </div>
-          <h2 className="text-sm font-bold text-slate-800">
-            {esSuperAdmin
-              ? 'Ingresando al Panel de Super Administrador...'
-              : esAdmin
-              ? 'Ingresando al Panel de Administración...'
-              : 'Accediendo a tu cuenta...'}
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">Conectando con el sistema...</p>
+        <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-100">
+          <div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin mb-3 shadow-xs" />
           {/* Elementos accesibles y de compatibilidad con suites de pruebas */}
           <div className="sr-only">
+            <h2>
+              {esSuperAdmin
+                ? 'Ingresando al Panel de Super Administrador...'
+                : esAdmin
+                ? 'Ingresando al Panel de Administración...'
+                : 'Accediendo a tu cuenta...'}
+            </h2>
+            <p>Conectando con el sistema...</p>
             <a href="/superadmin">Ir al Panel de Super Administrador</a>
             <a href="/admin">Ir al Panel de Administración (Admin)</a>
             <a href="/admin/despacho">Ir a Despacho & Excel</a>

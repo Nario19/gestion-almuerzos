@@ -40,10 +40,25 @@ export function sincronizarCookieSesion(u: UsuarioPadre | null) {
   const secureFlag = esHttps ? '; Secure' : '';
   const maxAge = 2592000; // 30 días de persistencia
 
-  if (u && u.rol) {
-    document.cookie = `sesion_rol=${encodeURIComponent(u.rol)}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+  let usuarioFinal = u;
+  // Si u es null, intentar recuperar de localStorage antes de decidir borrar la cookie
+  if (!usuarioFinal && typeof window !== 'undefined') {
+    try {
+      const ses = localStorage.getItem('sesion_padre_almuerzos');
+      if (ses) {
+        const parsed = JSON.parse(ses);
+        if (parsed && parsed.rol) {
+          usuarioFinal = parsed;
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (usuarioFinal && usuarioFinal.rol) {
+    document.cookie = `sesion_rol=${encodeURIComponent(usuarioFinal.rol)}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
     document.cookie = `sesion_activa=1; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
-  } else {
+  } else if (u === null && !usuarioFinal) {
+    // Solo borrar si explícitamente no hay sesión en memoria ni en localStorage
     document.cookie = `sesion_rol=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
     document.cookie = `sesion_activa=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
   }
@@ -63,12 +78,38 @@ if (typeof window !== 'undefined') {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<UsuarioPadre | null>(null);
-  const [cargando, setCargando] = useState(true);
+  // Inicialización síncrona desde localStorage para evitar estado null inicial y pérdida de cookies
+  const [usuario, setUsuario] = useState<UsuarioPadre | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const ses = localStorage.getItem('sesion_padre_almuerzos');
+        if (ses) {
+          const parsed = JSON.parse(ses);
+          if (parsed && parsed.rol) {
+            sincronizarCookieSesion(parsed);
+            return parsed;
+          }
+        }
+      } catch (_) {}
+    }
+    return null;
+  });
 
-  // Sincronizar cookie de sesión cada vez que cambia el estado del usuario para proteger rutas con middleware
+  const [cargando, setCargando] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const ses = localStorage.getItem('sesion_padre_almuerzos');
+        if (ses) return false;
+      } catch (_) {}
+    }
+    return true;
+  });
+
+  // Sincronizar cookie de sesión cuando cambia el usuario, sin borrar cookies en el montaje inicial
   useEffect(() => {
-    sincronizarCookieSesion(usuario);
+    if (usuario) {
+      sincronizarCookieSesion(usuario);
+    }
   }, [usuario]);
 
   const resolverColegioAsignadoAdmin = async (
@@ -287,6 +328,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error || !perfil || perfil.activo === false) {
             console.warn('Sesión no encontrada o cuenta inactiva en base de datos. Cerrando sesión.');
             if (typeof window !== 'undefined') localStorage.removeItem('sesion_padre_almuerzos');
+            sincronizarCookieSesion(null);
             if (montado) {
               setUsuario(null);
               setCargando(false);
@@ -600,11 +642,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    setUsuario(null);
-    sincronizarCookieSesion(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('sesion_padre_almuerzos');
     }
+    setUsuario(null);
+    sincronizarCookieSesion(null);
   };
 
   const agregarHijo = async (datos: {

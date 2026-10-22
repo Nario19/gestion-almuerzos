@@ -87,4 +87,31 @@ test('Fluidez de Navegación Admin y Eliminación Definitiva del Flash de Login'
       'notifyListeners debe invalidar la caché de pedidos ante cualquier mutación o evento Realtime'
     );
   });
+
+  await t.test('5. Blindaje de persistencia de cookies en AuthProvider y transición limpia sin texto visible en login', () => {
+    const middlewarePath = path.resolve(process.cwd(), 'src/middleware.ts');
+    const middlewareContent = fs.readFileSync(middlewarePath, 'utf-8');
+
+    assert.ok(
+      authContent.includes('useState<UsuarioPadre | null>(() =>'),
+      'AuthProvider debe inicializar usuario síncronamente desde localStorage'
+    );
+    assert.ok(
+      authContent.includes('if (usuario) {\n    sincronizarCookieSesion(usuario);\n  }') ||
+      authContent.includes('if (usuario) {\n      sincronizarCookieSesion(usuario);'),
+      'useEffect en AuthProvider no debe borrar cookies cuando el usuario aún no se ha montado'
+    );
+    assert.ok(
+      authContent.includes('usuarioFinal = parsed;'),
+      'sincronizarCookieSesion debe preservar cookies recuperando sesión de localStorage si u es null temporal'
+    );
+    assert.ok(
+      loginContent.includes('sr-only') && loginContent.includes('Conectando con el sistema...'),
+      'En /login los textos de transición deben estar en sr-only para no molestar la vista del usuario'
+    );
+    assert.ok(
+      middlewareContent.includes('decodeURIComponent') && middlewareContent.includes('replace(/["\']/g'),
+      'middleware debe normalizar las cookies de sesión para admitir comillas y URL encoding'
+    );
+  });
 });

@@ -27,7 +27,10 @@ export function middleware(request: NextRequest) {
   }
 
   // 3. Inspeccionar cookies de sesión
-  const sesionRol = request.cookies.get('sesion_rol')?.value;
+  const rawSesionRol = request.cookies.get('sesion_rol')?.value;
+  const sesionRol = rawSesionRol
+    ? decodeURIComponent(rawSesionRol).replace(/["']/g, '').trim().toUpperCase()
+    : undefined;
   const sesionActiva = request.cookies.get('sesion_activa')?.value;
   const estaAutenticado = Boolean(sesionActiva === '1' || sesionRol);
   const esSuperAdmin = sesionRol === 'SUPER_ADMIN';
