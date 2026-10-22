@@ -416,29 +416,19 @@ export default function PedidoManualPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      {/* Cabecera */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-              <UtensilsCrossed className="w-5 h-5" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Toma de Pedido Manual
-            </h1>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Registro directo de almuerzos escolares para ventanilla, familiares o personas mayores sin acceso al sistema.
-          </p>
-        </div>
+      {/* Contexto breve de la pantalla */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-zinc-200/90 shadow-xs">
+        <p className="text-xs sm:text-sm text-zinc-600">
+          Registro directo de almuerzos escolares para ventanilla, familiares o personas sin acceso al portal web.
+        </p>
 
         <div className="flex items-center gap-2 shrink-0">
           {esSuperAdmin ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-purple-100 text-purple-800 border border-purple-200">
-              <ShieldCheck className="w-3.5 h-3.5" /> Super Admin Global
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-zinc-950 text-white shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5" /> Super Admin
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <span className="hidden">
               <Building2 className="w-3.5 h-3.5" /> {usuario?.colegioNombre || 'Colegio'}
             </span>
           )}

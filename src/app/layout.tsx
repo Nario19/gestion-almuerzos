@@ -5,6 +5,7 @@ import BottomNav from "@/components/BottomNav";
 import FaviconUpdater from "@/components/FaviconUpdater";
 import ClientMetadataManager from "@/components/ClientMetadataManager";
 import { AuthProvider } from "@/lib/authContext";
+import { SidebarProvider } from "@/components/SidebarContext";
 
 export const metadata: Metadata = {
   title: "Placeres Culinarios | Gestión de Almuerzos Escolares",
@@ -20,11 +21,13 @@ export default function RootLayout({
     <html lang="es" className="h-full antialiased">
       <body className="min-h-full flex flex-col font-sans bg-zinc-50 text-zinc-950">
         <AuthProvider>
-          <FaviconUpdater />
-          <ClientMetadataManager />
-          <HeaderNav />
-          <main className="flex-1 pb-24 md:pb-20">{children}</main>
-          <BottomNav />
+          <SidebarProvider>
+            <FaviconUpdater />
+            <ClientMetadataManager />
+            <HeaderNav />
+            <main className="flex-1 pb-24 md:pb-20">{children}</main>
+            <BottomNav />
+          </SidebarProvider>
         </AuthProvider>
       </body>
     </html>

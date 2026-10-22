@@ -818,36 +818,6 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 pb-20">
-      {/* Cabecera */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 flex items-center gap-2.5">
-            <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7 text-zinc-900" />
-            Panel de Administración
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1">
-            Métricas clave del negocio, gestión del menú semanal y configuración
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {esSuperAdmin ? (
-            <Link
-              href="/superadmin"
-              className="px-3.5 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5 shadow-xs"
-              title="Panel exclusivo para gestión de colegios y cuentas de administradores"
-            >
-              <Building2 className="w-4 h-4" />
-              <span>Gestión Colegios & Admins</span>
-            </Link>
-          ) : usuario?.colegioNombre ? (
-            <span className="px-3 py-1.5 rounded-lg bg-zinc-50 border border-zinc-200 text-zinc-800 text-xs font-semibold flex items-center gap-1.5 shadow-2xs">
-              <Building2 className="w-3.5 h-3.5 text-zinc-500" /> {usuario.colegioNombre}
-            </span>
-          ) : null}
-        </div>
-      </div>
-
       {guardadoExitoso && (
         <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs sm:text-sm font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle className="w-5 h-5 text-emerald-600" />
@@ -855,9 +825,10 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Pestañas de Gestión Administrativa */}
-      <div className="inline-flex items-center gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200/80 mb-6 overflow-x-auto max-w-full">
-        <button
+      {/* Barra de Pestañas de Gestión Administrativa */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="inline-flex items-center gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200/80 overflow-x-auto max-w-full">
+          <button
           type="button"
           onClick={() => setTabActiva('dashboard')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shrink-0 cursor-pointer ${
@@ -907,18 +878,19 @@ export default function AdminPage() {
           Grados y Secciones ({grados.length})
         </button>
 
-        <button
-          type="button"
-          onClick={() => setTabActiva('observaciones')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shrink-0 cursor-pointer ${
-            tabActiva === 'observaciones'
-              ? 'bg-white text-zinc-950 shadow-xs'
-              : 'text-zinc-600 hover:text-zinc-950 hover:bg-white/50'
-          }`}
-        >
-          <Tag className="w-4 h-4" />
-          Observaciones ({observaciones.length})
-        </button>
+          <button
+            type="button"
+            onClick={() => setTabActiva('observaciones')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shrink-0 cursor-pointer ${
+              tabActiva === 'observaciones'
+                ? 'bg-white text-zinc-950 shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950 hover:bg-white/50'
+            }`}
+          >
+            <Tag className="w-4 h-4" />
+            Observaciones ({observaciones.length})
+          </button>
+        </div>
       </div>
 
       {/* PESTAÑA: DASHBOARD & KPIS */}

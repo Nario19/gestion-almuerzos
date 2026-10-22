@@ -535,51 +535,33 @@ export default function FiadoPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24">
-      {/* Cabecera */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-zinc-950 text-white flex items-center justify-center shadow-xs">
-              <Receipt className="w-5 h-5 stroke-[2]" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
-                Control de Fiados
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-800 font-semibold border border-zinc-200">
-                  Pagar luego
-                </span>
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-500 font-normal">
-                Cuentas por cobrar y cobranza
-              </p>
-              {!esSuperAdmin && (usuario?.colegioNombre || nombreColegioActivo) && (
-                <div className="mt-1.5">
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-800 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 text-xs shadow-2xs">
-                    🏫 Colegio: {usuario?.colegioNombre || nombreColegioActivo}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Barra de Acciones y Reportes de Fiados */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 print:hidden">
+        <div className="flex items-center gap-2">
+          {!esSuperAdmin && (usuario?.colegioNombre || nombreColegioActivo) && (
+            <span className="hidden">
+              🏫 Colegio: {usuario?.colegioNombre || nombreColegioActivo}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto print:hidden">
           <button
             type="button"
             onClick={() => setMostrarReporteGlobal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition cursor-pointer"
             title="Ver e imprimir el reporte general de todas las familias y fiados"
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-3.5 h-3.5" />
             <span>Reporte Global</span>
           </button>
           <button
             type="button"
             onClick={exportarReporteGlobalExcel}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
             title="Descargar listado global de fiados en Excel"
           >
-            <FileSpreadsheet className="w-4 h-4 text-zinc-500" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-zinc-500" />
             <span>Excel</span>
           </button>
         </div>

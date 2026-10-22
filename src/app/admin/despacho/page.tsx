@@ -447,42 +447,34 @@ export default function DespachoPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-20">
-      {/* Cabecera */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 print:hidden">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight flex items-center gap-2.5">
-            <PackageCheck className="w-7 h-7 sm:w-8 sm:h-8 text-zinc-900" />
-            Despacho y Empaque
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 font-normal mt-1">
-            {!esSuperAdmin && usuario?.colegioNombre ? (
-              <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-800 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 shadow-2xs">
-                🏫 Colegio: {usuario.colegioNombre}
-              </span>
-            ) : (
-              'Gestión de pedidos por colegio y grado para armado de loncheras'
-            )}
-          </p>
+      {/* Barra de Herramientas de Despacho (Imprimir y Exportar) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 print:hidden">
+        <div className="flex items-center gap-2">
+          {!esSuperAdmin && usuario?.colegioNombre ? (
+            <span className="hidden">
+              🏫 Colegio: {usuario.colegioNombre}
+            </span>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-2">
           {/* Botón Imprimir Lista (Genera y descarga en Excel con las 5 columnas) */}
           <button
             onClick={exportarExcel}
-            className="flex items-center gap-2 px-3.5 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition cursor-pointer"
             title="Descarga el listado en formato Excel con N°, Grado y Sección, Nombres, Pedido y Pago"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-3.5 h-3.5" />
             Imprimir Lista (Excel)
           </button>
 
           {/* Botón secundario para imprimir a papel / PDF */}
           <button
             onClick={imprimir}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs sm:text-sm font-semibold rounded-lg shadow-2xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
             title="Imprimir directamente en papel o PDF"
           >
-            <Printer className="w-4 h-4 text-zinc-500" />
+            <Printer className="w-3.5 h-3.5 text-zinc-500" />
             Imprimir
           </button>
         </div>

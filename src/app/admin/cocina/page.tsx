@@ -140,28 +140,20 @@ export default function CocinaPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-20">
-      {/* Barra superior de estado de cocina */}
-      <div className="bg-white text-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
-                <Radio className="w-3 h-3 text-emerald-600 animate-pulse" /> TIEMPO REAL ACTIVO
-              </span>
-              <span className="text-xs text-slate-400">
-                Actualizado: {ultimaActualizacion || '--:--'}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
-              <ChefHat className="w-8 h-8 text-orange-500" />
-              Consolidado de Cocina
-            </h1>
+      {/* Barra superior de estado y controles de cocina */}
+      <div className="bg-white text-zinc-950 rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-xs mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+              <Radio className="w-3 h-3 text-emerald-600 animate-pulse" /> TIEMPO REAL ACTIVO
+            </span>
+            <span className="text-xs text-zinc-400">
+              Actualizado: {ultimaActualizacion || '--:--'}
+            </span>
             {!esSuperAdmin && usuario?.colegioNombre && (
-              <div className="mt-2">
-                <span className="inline-flex items-center gap-1.5 font-bold text-orange-900 bg-orange-50 px-2.5 py-1 rounded-xl border border-orange-200 text-xs shadow-2xs">
-                  🏫 Colegio: {usuario.colegioNombre}
-                </span>
-              </div>
+              <span className="hidden">
+                🏫 Colegio: {usuario.colegioNombre}
+              </span>
             )}
           </div>
 
@@ -169,24 +161,24 @@ export default function CocinaPage() {
             <button
               onClick={cargarDatos}
               disabled={cargando}
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded-2xl border border-slate-200 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold rounded-lg border border-zinc-200 shadow-2xs transition cursor-pointer"
             >
-              <RefreshCw className={`w-4 h-4 text-slate-500 ${cargando ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-zinc-500 ${cargando ? 'animate-spin' : ''}`} />
               Refrescar
             </button>
           </div>
         </div>
 
         {/* Selector de Calendario y Fechas (Hoy, Ayer, etc.) */}
-        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div className="mt-4 pt-4 border-t border-zinc-100 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 font-bold flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-orange-500" /> Menú de Cocina:
+            <span className="text-zinc-500 font-semibold flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-zinc-700" /> Menú de Cocina:
             </span>
-            <span className="font-black text-slate-900 capitalize text-sm">
+            <span className="font-bold text-zinc-950 capitalize text-sm">
               {formatearFechaLegible(fechaFiltro)}
               {fechaFiltro === fechaHoy && (
-                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider border border-emerald-200">
+                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold uppercase tracking-wider border border-emerald-200">
                   Hoy
                 </span>
               )}
@@ -198,7 +190,7 @@ export default function CocinaPage() {
             <button
               type="button"
               onClick={() => cambiarDia(-1)}
-              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition cursor-pointer"
+              className="p-1.5 rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition cursor-pointer shadow-2xs"
               title="Ver día anterior (ayer)"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -212,7 +204,7 @@ export default function CocinaPage() {
                 setFechaFiltro(e.target.value || fechaHoy);
                 setPaginaObs(1);
               }}
-              className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer"
+              className="bg-white border border-zinc-200 text-zinc-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden cursor-pointer"
               title="Seleccionar fecha para consultar cocina"
             />
 
@@ -220,7 +212,7 @@ export default function CocinaPage() {
             <button
               type="button"
               onClick={() => cambiarDia(1)}
-              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition cursor-pointer"
+              className="p-1.5 rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition cursor-pointer shadow-2xs"
               title="Ver día siguiente"
             >
               <ChevronRight className="w-4 h-4" />
@@ -233,10 +225,10 @@ export default function CocinaPage() {
                 setFechaFiltro(fechaHoy);
                 setPaginaObs(1);
               }}
-              className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
                 fechaFiltro === fechaHoy
-                  ? 'bg-orange-500 text-white shadow-xs'
-                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                  ? 'bg-zinc-950 text-white shadow-xs'
+                  : 'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'
               }`}
             >
               Hoy
@@ -249,10 +241,10 @@ export default function CocinaPage() {
                 setFechaFiltro('TODAS');
                 setPaginaObs(1);
               }}
-              className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
                 fechaFiltro === 'TODAS'
-                  ? 'bg-slate-900 text-white font-black shadow-xs'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  ? 'bg-zinc-950 text-white shadow-xs'
+                  : 'bg-white text-zinc-600 hover:bg-zinc-50 border border-zinc-200'
               }`}
             >
               Histórico
@@ -262,8 +254,8 @@ export default function CocinaPage() {
 
         {/* Filtro por Institución Educativa: Exclusivo Superadmin */}
         {esSuperAdmin && (
-          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-slate-500 font-bold flex items-center gap-1">
+          <div className="mt-4 pt-3 border-t border-zinc-100 flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-zinc-500 font-semibold flex items-center gap-1">
               <Filter className="w-3.5 h-3.5" /> Filtrar por Colegio:
             </span>
             {['TODOS', ...colegios].map((c) => (
@@ -274,10 +266,10 @@ export default function CocinaPage() {
                   setColegioFiltro(c);
                   setPaginaObs(1);
                 }}
-                className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
                   colegioActivo === c
-                    ? 'bg-orange-500 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-zinc-950 text-white shadow-xs'
+                    : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
                 {c}

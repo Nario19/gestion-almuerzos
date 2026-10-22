@@ -84,16 +84,17 @@ Ninguna tarea se considerará concluida ni entregable al usuario si no cumple co
 El agente debe consultar permanentemente:
 
 - **`MEMORY.md`**: Registro persistente de decisiones arquitectónicas y de negocio confirmadas por el usuario.
-- **Catálogo de 12 Skills Maestras (`skills/`)**:
-  1. `skills/coding-standards/SKILL.md`: Estándares de codificación limpia, TypeScript estricto y patrones SOLID.
-  2. `skills/nextjs-react-architecture/SKILL.md`: Arquitectura Next.js App Router, componentes de servidor/cliente y rendimiento.
-  3. `skills/security-standards/SKILL.md`: Estándares OWASP, control de roles, protección IDOR/BOLA y seguridad de comprobantes.
-  4. `skills/supabase-postgresql/SKILL.md`: Integridad de datos en PostgreSQL, políticas RLS, transacciones y migraciones seguras.
-  5. `skills/business-rules/SKILL.md`: Reglas del negocio de Placeres Culinarios (horarios 09:30 AM, zona horaria Perú, pagos y fiados).
-  6. `skills/testing-and-qa/SKILL.md`: Metodología exhaustiva de testing, pirámide de pruebas y aseguramiento de calidad.
-  7. `skills/regression-prevention/SKILL.md`: Procedimiento obligatorio de análisis de impacto y prevención de regresiones.
-  8. `skills/performance-optimization/SKILL.md`: Optimización de consultas, paginación, control de Realtime y prevención de fugas de memoria.
-  9. `skills/deployment-and-devops/SKILL.md`: Procedimientos de despliegue controlado, compilación de producción y planes de rollback.
-  10. `skills/iso-quality-and-compliance/SKILL.md`: Alineación con ISO/IEC 25010, 25023, 27001, 27034 y 29119.
-  11. `skills/professional-engineering-workflow/SKILL.md`: Flujo de ingeniería transversal de 10 pasos para todas las tareas.
-  12. `skills/data-privacy-and-school-safety/SKILL.md`: Protección de datos personales de menores, DNI, teléfonos y notas médicas/alergias.
+- **Catálogo de 13 Skills Maestras (`skills/`)**:
+  1. `skills/design-system/SKILL.md`: Sistema de diseño maestro, tokens, componentes, tablas, filtros y directivas UI/UX basadas en `DESIGN.md`.
+  2. `skills/coding-standards/SKILL.md`: Estándares de codificación limpia, TypeScript estricto y patrones SOLID.
+  3. `skills/nextjs-react-architecture/SKILL.md`: Arquitectura Next.js App Router, componentes de servidor/cliente y rendimiento.
+  4. `skills/security-standards/SKILL.md`: Estándares OWASP, control de roles, protección IDOR/BOLA y seguridad de comprobantes.
+  5. `skills/supabase-postgresql/SKILL.md`: Integridad de datos en PostgreSQL, políticas RLS, transacciones y migraciones seguras.
+  6. `skills/business-rules/SKILL.md`: Reglas del negocio de Placeres Culinarios (horarios 09:30 AM, zona horaria Perú, pagos y fiados).
+  7. `skills/testing-and-qa/SKILL.md`: Metodología exhaustiva de testing, pirámide de pruebas y aseguramiento de calidad.
+  8. `skills/regression-prevention/SKILL.md`: Procedimiento obligatorio de análisis de impacto y prevención de regresiones.
+  9. `skills/performance-optimization/SKILL.md`: Optimización de consultas, paginación, control de Realtime y prevención de fugas de memoria.
+  10. `skills/deployment-and-devops/SKILL.md`: Procedimientos de despliegue controlado, compilación de producción y planes de rollback.
+  11. `skills/iso-quality-and-compliance/SKILL.md`: Alineación con ISO/IEC 25010, 25023, 27001, 27034 y 29119.
+  12. `skills/professional-engineering-workflow/SKILL.md`: Flujo de ingeniería transversal de 10 pasos para todas las tareas.
+  13. `skills/data-privacy-and-school-safety/SKILL.md`: Protección de datos personales de menores, DNI, teléfonos y notas médicas/alergias.

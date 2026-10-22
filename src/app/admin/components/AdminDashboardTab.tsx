@@ -189,7 +189,7 @@ export default function AdminDashboardTab({
             {esSuperAdmin
               ? `${rankingColegios.length} colegios atendidos`
               : usuario?.colegioNombre
-              ? `Colegio: ${usuario.colegioNombre}`
+              ? `${pedidosActivos.length} raciones en preparación` /* Colegio: ${usuario.colegioNombre} */
               : `${pedidosActivos.length} raciones activas`}
           </p>
         </div>

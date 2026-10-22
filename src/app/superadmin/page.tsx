@@ -627,21 +627,16 @@ export default function SuperAdminPage() {
       )}
 
       {/* BANNER PRINCIPAL DE SUPER ADMIN */}
-      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 text-white rounded-3xl p-5 sm:p-7 shadow-xl mb-6 relative overflow-hidden border border-purple-500/20">
-        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-48 h-48 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+      <div className="bg-white rounded-xl p-5 sm:p-6 shadow-xs mb-6 border border-zinc-200/90">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/30 text-purple-300 text-xs font-black border border-purple-400/30">
-                <ShieldCheck className="w-3.5 h-3.5 text-purple-300" /> SUPER ADMINISTRADOR
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-zinc-950 text-white text-[11px] font-semibold shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5" /> Super Administrador
               </span>
-              <span className="text-xs text-slate-400 font-medium">Control Central Multi-Colegios</span>
+              <span className="text-xs text-zinc-500 font-medium">Control Central Multi-Colegios</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5">
-              <Building2 className="w-8 h-8 text-purple-400" />
-              Gestión de Colegios & Administradores
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl mt-1">
+            <p className="text-xs sm:text-sm text-zinc-600 max-w-xl mt-1">
               Crea colegios con sus propios administradores independientes, administra
               sus credenciales de acceso y supervisa el volumen operativo de cada colegio.
             </p>
@@ -650,15 +645,15 @@ export default function SuperAdminPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/admin"
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-white/10"
+              className="px-3 py-1.5 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition flex items-center gap-1.5"
               title="Ir al panel de menús y KPIs"
             >
-              <BarChart3 className="w-3.5 h-3.5" />
+              <BarChart3 className="w-3.5 h-3.5 text-zinc-500" />
               <span>Panel Operativo</span>
             </Link>
             <Link
               href="/admin/despacho"
-              className="px-3.5 py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5"
+              className="px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center gap-1.5"
               title="Ir al panel de despacho y empaque"
             >
               <PackageCheck className="w-3.5 h-3.5" />
@@ -670,32 +665,32 @@ export default function SuperAdminPage() {
 
       {/* TARJETAS DE KPIS DEL SUPER ADMIN */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+        <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
             Total de Colegios
           </span>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900">{totalColegios}</div>
-          <p className="text-[11px] text-slate-500 mt-0.5">Colegios registrados en el sistema</p>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{totalColegios}</div>
+          <p className="text-[11px] text-zinc-500 mt-1">Colegios registrados en el sistema</p>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
-          <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">
+        <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block mb-1">
             Colegios Activos
           </span>
-          <div className="text-2xl sm:text-3xl font-black text-emerald-700">{colegiosActivos}</div>
-          <p className="text-[11px] text-emerald-600 mt-0.5">Disponibles para pedidos de padres</p>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-emerald-700">{colegiosActivos}</div>
+          <p className="text-[11px] text-zinc-500 mt-1">Disponibles para pedidos de padres</p>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
-          <span className="text-[11px] font-bold text-purple-600 uppercase tracking-wider block mb-1">
+        <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-zinc-700 uppercase tracking-wider block mb-1">
             Admins Asignados
           </span>
-          <div className="text-2xl sm:text-3xl font-black text-purple-700">{adminsAsignados}</div>
-          <p className="text-[11px] text-purple-600 mt-0.5">Cuentas con acceso a su colegio</p>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{adminsAsignados}</div>
+          <p className="text-[11px] text-zinc-500 mt-1">Cuentas con acceso a su colegio</p>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
-          <span className="text-[11px] font-bold text-orange-600 uppercase tracking-wider block mb-1">
+        <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-zinc-700 uppercase tracking-wider block mb-1">
             Almuerzos Atendidos
           </span>
           <div className="text-2xl sm:text-3xl font-black text-orange-700">{totalPedidosSistema}</div>

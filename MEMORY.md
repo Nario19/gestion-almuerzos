@@ -1279,6 +1279,45 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/layout.tsx`
   - `MEMORY.md`
 
+### D-058 — 2026-10-22 — Master Design System, Sidebar Colapsable y Header Superior Desacoplado
+
+- Decisión: Implementar la especificación completa del Master Design System para Placeres Culinarios basado en la plantilla v0 `admin-dashboard` (`https://v0.app/templates/admin-dashboard-yBomF3O9Yu3`):
+  1. **Especificación Maestra y Skills:** Creación de `DESIGN.md` y de la Skill `skills/design-system/SKILL.md` (y `.agent/skills/design-system/SKILL.md`), incorporándola como la Skill #13 obligatoria en `AGENTS.md`.
+  2. **Sidebar Profesional en 3 Estados:**
+     - Expandido (`w-64`): Logotipo, navegación completa con iconos y etiquetas, botón `PanelLeftClose`, datos del administrador y botón amplio de `Cerrar Sesión`.
+     - Colapsado (`w-16` / `64px`): Iconos centrados accesibles con tooltips (`title`), botón `PanelLeftOpen`, avatar y logout compacto.
+     - Móvil: Cajón deslizante tipo drawer con backdrop oscuro y botón `Menu` en la barra superior.
+     - Persistencia de preferencia de estado en `localStorage` con hidratación segura.
+  3. **Header Superior Blanco (App Shell):**
+     - El título de la pantalla actual (Panel de Administración, Control de Cocina, Despacho, Registro de Fiados, etc.) y la insignia del Colegio (`🏫 {colegio}`) residen limpia y permanentemente en la barra blanca superior.
+     - **Erradicación de Duplicados:** Se eliminó el título gigante y el nombre repetitivo del colegio del cuerpo de cada pantalla administrativa (`/admin`, `/admin/cocina`, `/admin/despacho`, `/admin/fiado`, etc.), liberando el espacio para tablas, filtros y controles esenciales.
+     - En KPIs de Admin, se eliminó la repetición de `Colegio: {nombre}` en la tarjeta de Total Almuerzos.
+  4. **Adaptación de Módulos al Design System:**
+     - Admin, Cocina, Despacho, Fiado, Pedido Manual y Superadmin adoptan uniformemente los tokens de v0 (`bg-zinc-50`, `bg-white`, `border-zinc-200/90`, `shadow-xs`, `rounded-xl`, botones `bg-zinc-950 text-white rounded-lg`).
+  5. **Verificación Integral:**
+     - 334 tests ejecutados (328 aprobados, 0 fallos, 6 omitidos).
+     - `npx tsc --noEmit` y `npm run build` aprobados con código 0.
+- Fuente: instrucción explícita del usuario mediante la directiva Master Design System Skill.
+- Impacto:
+  - `DESIGN.md`
+  - `skills/design-system/SKILL.md`
+  - `.agent/skills/design-system/SKILL.md`
+  - `AGENTS.md`
+  - `src/components/SidebarContext.tsx`
+  - `src/components/AdminContainer.tsx`
+  - `src/components/HeaderNav.tsx`
+  - `src/app/layout.tsx`
+  - `src/app/admin/layout.tsx`
+  - `src/app/superadmin/layout.tsx`
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/components/AdminDashboardTab.tsx`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/app/superadmin/page.tsx`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
