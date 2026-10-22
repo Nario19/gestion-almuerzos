@@ -150,24 +150,6 @@ export default function AdminDashboardTab({
             Todas las Fechas
           </button>
         </div>
-
-        {/* Accesos directos a Despacho y Cocina */}
-        <div className="flex items-center gap-2">
-          <Link
-            href="/admin/despacho"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 rounded-lg text-xs font-semibold transition shadow-2xs"
-          >
-            <PackageCheck className="w-3.5 h-3.5 text-zinc-500" />
-            <span>Despacho & Excel</span>
-          </Link>
-          <Link
-            href="/admin/cocina"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 rounded-lg text-xs font-semibold transition shadow-2xs"
-          >
-            <ChefHat className="w-3.5 h-3.5 text-zinc-500" />
-            <span>Panel Cocina</span>
-          </Link>
-        </div>
       </div>
 
       {/* Tarjetas Principales de KPIs Financieros y Volumen */}

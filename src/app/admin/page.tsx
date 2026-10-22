@@ -845,10 +845,6 @@ export default function AdminPage() {
               <Building2 className="w-3.5 h-3.5 text-zinc-500" /> {usuario.colegioNombre}
             </span>
           ) : null}
-          <span className="px-3 py-1.5 rounded-lg bg-zinc-50 border border-zinc-200 text-zinc-700 text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <Cloud className="w-3.5 h-3.5 text-zinc-400" /> Supabase Activo
-          </span>
         </div>
       </div>
 

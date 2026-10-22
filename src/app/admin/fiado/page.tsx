@@ -582,20 +582,6 @@ export default function FiadoPage() {
             <FileSpreadsheet className="w-4 h-4 text-zinc-500" />
             <span>Excel</span>
           </button>
-          <Link
-            href="/admin/despacho"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition"
-          >
-            <PackageCheck className="w-4 h-4 text-zinc-500" />
-            <span>Ir a Despacho</span>
-          </Link>
-          <Link
-            href="/admin/cocina"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition"
-          >
-            <Utensils className="w-4 h-4 text-zinc-500" />
-            <span>Ir a Cocina</span>
-          </Link>
         </div>
       </div>
 

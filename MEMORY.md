@@ -1248,6 +1248,37 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/admin/fiado/page.tsx`
   - `MEMORY.md`
 
+### D-057 — 2026-10-22 — Sidebar Lateral Izquierdo para Administradores, Eliminación de Información Técnica Clutter ("Supabase Activo") y Unificación del Tema en Todo el Sistema
+
+- Decisión: A petición explícita del usuario ("dale el mismo tema a todo el SISTEMA A TODO EL SISTEMA EN GENERAL Y QUE EL DISEBAR ESTE EN LA IZQUIERDA COSA COMO LO QUE TE MANDE DEL DISEÑO EL EJEMPLO. AHORA EVITA PONER ESTO Supabase Activo ESO AL CLIENTE NO LE INTERESA EL QUIERE VER SOLO LO DE SU NEGOCIO [Ir a Despacho] [Ir a Cocina] ESTO DE IR A DESPACHO Y COCINA TAMPOCO YA QUE ESTARA LA OPCION DE CAMBIAR EN EL SIDEBAR. EN EL SIDEBAR TMB DEBE ESTAR LA OPCION DE LOGOUT Y EL NOMBRE DEL ADMNIN. ASEGURATE DE QUE EN CADA PANTALLA DE TODO EL SISTEMA SOLO VAYA INFORMACION RELEVANTE PARA EL QUE LO USA, MIENTRAS MENOS INFO MEJOR PERO LA NECESARIA"):
+  1. **Sidebar Lateral Fijo a la Izquierda para Admin y SuperAdmin:**
+     - En `src/components/HeaderNav.tsx`, se integró el panel lateral `<aside>` fijo a la izquierda (`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-zinc-200/90`) para pantallas de escritorio, y modo cajón deslizable para móviles con botón hamburguesa `<Menu className="w-5 h-5" />` y fondo con backdrop desenfocado.
+     - En el Sidebar se ubican: Marca y logotipo corporativo, Insignia del Colegio o rol Superadmin, Enlaces operativos completos con iconos (`Dashboard`, `Cocina`, `Fiado`, `Despacho`, `Pedido Manual`, `Colegios`, `Analítica`) con soporte para sincronización de sesión en `onPointerDown`.
+     - En el pie del Sidebar se incorporó de forma destacada la tarjeta con el Nombre del Administrador (`usuario.nombreCompleto`), su correo/rol y el botón de `Cerrar Sesión` (`logout()`).
+  2. **Alineación de Contenedores Administrativos:**
+     - En `src/app/admin/layout.tsx` y `src/app/superadmin/layout.tsx`, se configuró `lg:pl-64 min-h-screen`, garantizando que todas las pantallas administrativas se posicionen limpiamente a la derecha del sidebar en escritorio sin solapamientos.
+     - El Header superior aplica `lg:pl-64` en rutas administrativas para alinearse armónicamente con el sidebar.
+  3. **Erradicación de Clutter e Información Irrelevante:**
+     - Se eliminó el badge técnico `Supabase Activo` de `src/app/admin/page.tsx`, priorizando únicamente datos del negocio y del colegio.
+     - Se suprimieron los botones redundantes `[Ir a Despacho]` e `[Ir a Cocina]` de la barra de fechas en `src/app/admin/components/AdminDashboardTab.tsx` y de la cabecera de `src/app/admin/fiado/page.tsx`, ya que la navegación ahora reside centralizada en el Sidebar.
+  4. **Unificación del Tema Minimalista Monocromático:**
+     - `src/app/globals.css`: Definición de tokens base `--background: #ffffff`, `--foreground: #09090b`, fondo de aplicación `bg-zinc-50` y tipografía de trazo fino.
+     - `src/app/layout.tsx`: Base en `bg-zinc-50 text-zinc-950`.
+  5. **Verificación de Cero Regresiones:**
+     - 334 tests ejecutados (328 aprobados, 0 fallos, 6 omitidos).
+     - `npx tsc --noEmit` y `npm run build` aprobados con código 0.
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/components/HeaderNav.tsx`
+  - `src/app/admin/layout.tsx`
+  - `src/app/superadmin/layout.tsx`
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/components/AdminDashboardTab.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/app/globals.css`
+  - `src/app/layout.tsx`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
