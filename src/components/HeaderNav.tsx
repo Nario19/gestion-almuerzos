@@ -84,7 +84,7 @@ export default function HeaderNav() {
             className="flex items-center gap-2.5 font-bold text-slate-800 hover:opacity-90 transition min-w-0"
             title={esRutaAdmin ? 'Ir al Panel' : 'Ir al inicio'}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-sm shadow-orange-500/20 shrink-0">
+            <div className={`w-10 h-10 rounded-xl ${esRutaAdmin ? 'bg-zinc-950 text-white shadow-xs' : 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-sm shadow-orange-500/20'} flex items-center justify-center shrink-0`}>
               {esRutaAdmin || !usuario ? <UtensilsCrossed className="w-5 h-5" /> : <IconoPantalla className="w-5 h-5" />}
             </div>
             {esRutaAdmin ? null : (
@@ -104,7 +104,7 @@ export default function HeaderNav() {
           {/* Menú Operativo (SOLO VISIBLE PARA ADMINISTRADORES Y SUPER ADMIN) */}
           {esAdmin && (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <nav className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+              <nav className="flex items-center gap-1 sm:gap-1.5 bg-zinc-100/90 p-1 rounded-xl border border-zinc-200/80">
                 {adminNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive =
@@ -116,14 +116,10 @@ export default function HeaderNav() {
                       href={item.href}
                       onPointerDown={() => sincronizarCookieSesion(usuario)}
                       onClick={() => sincronizarCookieSesion(usuario)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                         isActive
-                          ? item.href.includes('/superadmin') && !item.href.includes('/pedido-manual')
-                            ? 'bg-purple-600 text-white shadow-xs'
-                            : item.href.includes('/pedido-manual')
-                            ? 'bg-emerald-600 text-white shadow-xs'
-                            : 'bg-orange-500 text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                          ? 'bg-zinc-950 text-white shadow-xs'
+                          : 'text-zinc-600 hover:text-zinc-950 hover:bg-white'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -188,20 +184,20 @@ export default function HeaderNav() {
 
                 {/* Si es Super Admin o Admin */}
                 {esSuperAdmin && (
-                  <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200 hidden sm:inline">
+                  <span className="text-xs font-semibold text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-lg border border-zinc-200 hidden sm:inline">
                     Super Admin
                   </span>
                 )}
                 {esAdmin && !esSuperAdmin && (
-                  <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 hidden sm:inline">
-                    Admin ({usuario.colegioNombre ? usuario.colegioNombre : usuario.nombreCompleto.split(' ')[0]})
+                  <span className="text-xs font-semibold text-zinc-800 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 hidden sm:inline">
+                    🏫 {usuario.colegioNombre ? usuario.colegioNombre : usuario.nombreCompleto.split(' ')[0]}
                   </span>
                 )}
 
                 {/* Botón Cerrar Sesión */}
                 <button
                   onClick={handleLogout}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition"
                   title="Cerrar sesión"
                 >
                   <LogOut className="w-4 h-4" />

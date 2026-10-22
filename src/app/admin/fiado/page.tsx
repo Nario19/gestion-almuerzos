@@ -538,23 +538,23 @@ export default function FiadoPage() {
       {/* Cabecera */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
-              <Receipt className="w-5 h-5 stroke-[2.2]" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-zinc-950 text-white flex items-center justify-center shadow-xs">
+              <Receipt className="w-5 h-5 stroke-[2]" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
                 Control de Fiados
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold border border-amber-200">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-800 font-semibold border border-zinc-200">
                   Pagar luego
                 </span>
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              <p className="text-xs sm:text-sm text-zinc-500 font-normal">
                 Cuentas por cobrar y cobranza
               </p>
               {!esSuperAdmin && (usuario?.colegioNombre || nombreColegioActivo) && (
                 <div className="mt-1.5">
-                  <span className="inline-flex items-center gap-1.5 font-bold text-orange-900 bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200 text-xs">
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-800 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 text-xs shadow-2xs">
                     🏫 Colegio: {usuario?.colegioNombre || nombreColegioActivo}
                   </span>
                 </div>
@@ -567,7 +567,7 @@ export default function FiadoPage() {
           <button
             type="button"
             onClick={() => setMostrarReporteGlobal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-2xl shadow-xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition cursor-pointer"
             title="Ver e imprimir el reporte general de todas las familias y fiados"
           >
             <FileText className="w-4 h-4" />
@@ -576,40 +576,40 @@ export default function FiadoPage() {
           <button
             type="button"
             onClick={exportarReporteGlobalExcel}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl shadow-xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
             title="Descargar listado global de fiados en Excel"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-4 h-4 text-zinc-500" />
             <span>Excel</span>
           </button>
           <Link
             href="/admin/despacho"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-2xl shadow-xs transition"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition"
           >
-            <PackageCheck className="w-4 h-4 text-emerald-600" />
+            <PackageCheck className="w-4 h-4 text-zinc-500" />
             <span>Ir a Despacho</span>
           </Link>
           <Link
             href="/admin/cocina"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-2xl shadow-xs transition"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition"
           >
-            <Utensils className="w-4 h-4 text-orange-500" />
+            <Utensils className="w-4 h-4 text-zinc-500" />
             <span>Ir a Cocina</span>
           </Link>
         </div>
       </div>
 
       {/* Selector de Colegio Asignado o Filtro Global */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6 space-y-3">
+      <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-xs mb-6 space-y-3">
         {/* Selector de Colegio */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-zinc-100">
           <div className="flex items-center gap-2 flex-wrap">
-            <Building2 className="w-4 h-4 text-orange-500" />
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <Building2 className="w-4 h-4 text-zinc-600" />
+            <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">
               Colegio:
             </span>
             {nombreColegioActivo ? (
-              <span className="px-3 py-1 bg-orange-50 border border-orange-200 rounded-xl text-xs font-black text-orange-950 shadow-2xs">
+              <span className="px-3 py-1 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-semibold text-zinc-900 shadow-2xs">
                 {nombreColegioActivo}
               </span>
             ) : null}

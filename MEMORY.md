@@ -1220,6 +1220,34 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/logout-redireccion-fiado-colegio-visible.test.mjs`
   - `MEMORY.md`
 
+### D-056 — 2026-10-22 — Adopción del Estilo y Diseño Minimalista Monocromático (v0 Admin Dashboard) para Administración y Superadmin
+
+- Decisión: Siguiendo la solicitud del usuario ("https://v0.app/templates/admin-dashboard-yBomF3O9Yu3 necesito que uses este diseño para los admin y suoeradmin. sin cambiar nada de lo que ya funciona. solo los diseños y estilos"):
+  1. **Paleta y Filosofía de Diseño Monocromático (Estilo v0 / Fintech Admin Dashboard):**
+     - Se reemplazaron gradientes y fondos de saturación excesiva por una interfaz limpia basada en blanco (`#ffffff`), zinc/slate neutro (`#09090b` / `#18181b`), bordes sutiles de trazo fino (`border-zinc-200`) y sombras difusas (`shadow-xs`).
+  2. **Barra de Navegación Operativa (`src/components/HeaderNav.tsx`):**
+     - Para rutas de administración (`esRutaAdmin`), el contenedor de pestañas operativas (`Admin`, `Cocina`, `Fiado`, `Despacho`, `Pedido Manual`, `Analítica`) se transformó en una barra de control segmentada moderna (`bg-zinc-100 p-1 rounded-xl border border-zinc-200/80`).
+     - Los enlaces activos lucen en negro sólido con texto blanco (`bg-zinc-950 text-white shadow-xs rounded-lg font-semibold`), y los inactivos en gris neutro con hover suave (`text-zinc-600 hover:text-zinc-950 hover:bg-white`).
+     - Se modernizaron las insignias de rol e institución (`🏫 Colegio: [Nombre]`) en formato pill sobrio y el botón de cierre de sesión en trazo minimalista.
+  3. **Dashboard Principal de Administración (`src/app/admin/page.tsx` y `AdminDashboardTab.tsx`):**
+     - **Cabecera y Selector de Pestañas:** Encabezado con tipografía moderna `text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950` y control segmentado tipo píldora (`bg-zinc-100 p-1 rounded-xl`) para alternar entre *Dashboard & KPIs*, *Menú Semanal*, *Grados y Secciones* y *Observaciones*.
+     - **Filtro de Fecha / Calendario:** Barra de fecha estilizada (`bg-white rounded-xl border border-zinc-200 shadow-xs`) con botones de navegación `<` / `>` estilizados, input de calendario nativo enfocado y botones de acceso rápido (`Hoy`, `Últimos 7 días`, `Todas las Fechas`).
+     - **Tarjetas de KPIs:** Reorganizadas con la estructura de tarjeta minimalista de v0: títulos en `text-xs font-semibold text-zinc-500 uppercase`, cifras numéricas de gran escala en `text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950`, indicadores de porcentaje con tracks neutros (`bg-zinc-100`) y barras negras/esmeralda.
+     - **Tabla de Actividad Reciente:** Estilizada con cabecera en `bg-zinc-50`, avatares de inicial de alto contraste en negro carbón y badges redondeados de estado (`PAGADO`, `VERIFICANDO`, `ENTREGADO`).
+  4. **Vistas de Despacho y Fiados (`/admin/despacho` y `/admin/fiado`):**
+     - Se unificó la estética visual de las tarjetas métricas interactivas, barras de búsqueda, botones de exportación a Excel y cabeceras de institución, manteniendo intactas todas las reglas de negocio, filtros por grado, scoping por colegio y métodos de pago (Yape/Plin).
+  5. **Verificación de Cero Regresiones:**
+     - La suite completa de 334 tests automáticos pasa en verde al 100% (328 aprobados, 0 fallos, 6 omitidos).
+     - Tipado estricto `npx tsc --noEmit` y compilación de producción `npm run build` con Next.js 16.3.5 exitosos (código 0).
+- Fuente: instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/components/HeaderNav.tsx`
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/components/AdminDashboardTab.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

@@ -450,13 +450,13 @@ export default function DespachoPage() {
       {/* Cabecera */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 print:hidden">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <PackageCheck className="w-8 h-8 text-emerald-600" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight flex items-center gap-2.5">
+            <PackageCheck className="w-7 h-7 sm:w-8 sm:h-8 text-zinc-900" />
             Despacho y Empaque
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-zinc-500 font-normal mt-1">
             {!esSuperAdmin && usuario?.colegioNombre ? (
-              <span className="inline-flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-800 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 shadow-2xs">
                 🏫 Colegio: {usuario.colegioNombre}
               </span>
             ) : (
@@ -469,7 +469,7 @@ export default function DespachoPage() {
           {/* Botón Imprimir Lista (Genera y descarga en Excel con las 5 columnas) */}
           <button
             onClick={exportarExcel}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-black rounded-2xl shadow-xs transition cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition cursor-pointer"
             title="Descarga el listado en formato Excel con N°, Grado y Sección, Nombres, Pedido y Pago"
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -479,10 +479,10 @@ export default function DespachoPage() {
           {/* Botón secundario para imprimir a papel / PDF */}
           <button
             onClick={imprimir}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold rounded-2xl shadow-xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs sm:text-sm font-semibold rounded-lg shadow-2xs transition cursor-pointer"
             title="Imprimir directamente en papel o PDF"
           >
-            <Printer className="w-4 h-4 text-slate-500" />
+            <Printer className="w-4 h-4 text-zinc-500" />
             Imprimir
           </button>
         </div>
@@ -496,18 +496,18 @@ export default function DespachoPage() {
             setFiltroEstado('TODOS');
             setPaginaActual(1);
           }}
-          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition cursor-pointer shadow-xs ${
+          className={`text-left p-3.5 sm:p-4 rounded-xl border transition cursor-pointer shadow-xs ${
             filtroEstado === 'TODOS'
-              ? 'bg-slate-50 border-slate-900 ring-2 ring-slate-900/10'
-              : 'bg-white border-slate-200 hover:border-slate-300'
+              ? 'bg-zinc-50/70 border-zinc-950 ring-1 ring-zinc-950'
+              : 'bg-white border-zinc-200 hover:border-zinc-300'
           }`}
           title="Clic para ver todos los pedidos"
         >
-          <span className="text-[11px] font-bold text-slate-400 uppercase">Total Pedidos</span>
-          <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 flex items-baseline gap-1.5">
+          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Total Pedidos</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 mt-1 flex items-baseline gap-1.5">
             <span>{pedidosActivos.length}</span>
             {cancelados > 0 && (
-              <span className="text-xs font-bold text-rose-500">
+              <span className="text-xs font-semibold text-rose-600">
                 ({cancelados} cancelado{cancelados > 1 ? 's' : ''})
               </span>
             )}
@@ -520,15 +520,15 @@ export default function DespachoPage() {
             setFiltroEstado((prev) => (prev === 'ENTREGADOS' ? 'TODOS' : 'ENTREGADOS'));
             setPaginaActual(1);
           }}
-          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition cursor-pointer shadow-xs ${
+          className={`text-left p-3.5 sm:p-4 rounded-xl border transition cursor-pointer shadow-xs ${
             filtroEstado === 'ENTREGADOS'
-              ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20'
-              : 'bg-white border-slate-200 hover:border-slate-300'
+              ? 'bg-emerald-50/70 border-emerald-600 ring-1 ring-emerald-600'
+              : 'bg-white border-zinc-200 hover:border-zinc-300'
           }`}
           title="Clic para filtrar por pedidos entregados"
         >
-          <span className="text-[11px] font-bold text-emerald-600 uppercase">Entregados</span>
-          <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-0.5">{entregados}</div>
+          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Entregados</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-emerald-700 mt-1">{entregados}</div>
         </button>
 
         <button
@@ -537,15 +537,15 @@ export default function DespachoPage() {
             setFiltroEstado((prev) => (prev === 'PENDIENTES_ENTREGA' ? 'TODOS' : 'PENDIENTES_ENTREGA'));
             setPaginaActual(1);
           }}
-          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition cursor-pointer shadow-xs ${
+          className={`text-left p-3.5 sm:p-4 rounded-xl border transition cursor-pointer shadow-xs ${
             filtroEstado === 'PENDIENTES_ENTREGA'
-              ? 'bg-amber-50 border-amber-600 ring-2 ring-amber-600/20'
-              : 'bg-white border-slate-200 hover:border-slate-300'
+              ? 'bg-amber-50/70 border-amber-600 ring-1 ring-amber-600'
+              : 'bg-white border-zinc-200 hover:border-zinc-300'
           }`}
           title="Clic para filtrar por pedidos que faltan entregar"
         >
-          <span className="text-[11px] font-bold text-amber-600 uppercase">Falta Entregar</span>
-          <div className="text-xl sm:text-2xl font-black text-amber-600 mt-0.5">{faltaEntregar}</div>
+          <span className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Falta Entregar</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-amber-700 mt-1">{faltaEntregar}</div>
         </button>
 
         <button
@@ -556,19 +556,19 @@ export default function DespachoPage() {
             );
             setPaginaActual(1);
           }}
-          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition cursor-pointer shadow-xs ${
+          className={`text-left p-3.5 sm:p-4 rounded-xl border transition cursor-pointer shadow-xs ${
             filtroEstado === 'PAGADOS' || filtroEstado === 'NO_PAGADOS'
-              ? 'bg-purple-50/50 border-purple-600 ring-2 ring-purple-600/20'
-              : 'bg-white border-slate-200 hover:border-slate-300'
+              ? 'bg-zinc-100 border-zinc-950 ring-1 ring-zinc-950'
+              : 'bg-white border-zinc-200 hover:border-zinc-300'
           }`}
           title="Clic para alternar filtro entre No Pagados, Pagados y Todos"
         >
-          <span className="text-[11px] font-bold text-slate-400 uppercase">Pagados / Por Cobrar</span>
-          <div className="text-sm sm:text-base font-black text-slate-800 mt-1">
+          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Pagados / Por Cobrar</span>
+          <div className="text-sm sm:text-base font-bold tracking-tight text-zinc-950 mt-1">
             <span className={filtroEstado === 'PAGADOS' ? 'underline decoration-2 text-emerald-600' : 'text-emerald-600'}>
               {pagados}
             </span>
-            <span className="text-slate-400 mx-1">/</span>
+            <span className="text-zinc-400 mx-1">/</span>
             <span className={filtroEstado === 'NO_PAGADOS' ? 'underline decoration-2 text-rose-600' : 'text-rose-600'}>
               {pendientesPago}
             </span>
@@ -577,10 +577,10 @@ export default function DespachoPage() {
       </div>
 
       {/* Barra de Filtros y Buscador */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6 space-y-3.5 print:hidden">
+      <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-xs mb-6 space-y-3.5 print:hidden">
         {/* Buscador */}
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
           <input
             type="text"
             placeholder="Buscar por estudiante, grado o código (#ALM)..."
@@ -589,7 +589,7 @@ export default function DespachoPage() {
               setBusqueda(e.target.value);
               setPaginaActual(1);
             }}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 focus:outline-hidden transition"
           />
         </div>
 

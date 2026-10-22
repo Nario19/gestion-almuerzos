@@ -73,10 +73,10 @@ export default function AdminDashboardTab({
   return (
     <div className="space-y-6">
       {/* Selector de Fecha / Período y Enlaces Operativos */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200/90 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-orange-500" />
+          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider shrink-0 flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-zinc-500" />
             Fecha:
           </span>
 
@@ -84,7 +84,7 @@ export default function AdminDashboardTab({
           <button
             type="button"
             onClick={() => cambiarDia(-1)}
-            className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+            className="p-2 rounded-lg bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition cursor-pointer shadow-2xs"
             title="Día anterior"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -96,7 +96,7 @@ export default function AdminDashboardTab({
               type="date"
               value={fechaFiltro === 'TODAS' || fechaFiltro === 'SEMANA' ? '' : fechaFiltro}
               onChange={(e) => setFechaFiltro(e.target.value || fechaHoy)}
-              className="bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer shadow-2xs"
+              className="bg-white border border-zinc-200 text-zinc-900 text-xs sm:text-sm font-semibold rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 focus:outline-hidden cursor-pointer shadow-2xs"
               title="Haz clic para seleccionar cualquier fecha en el calendario"
             />
           </div>
@@ -105,7 +105,7 @@ export default function AdminDashboardTab({
           <button
             type="button"
             onClick={() => cambiarDia(1)}
-            className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+            className="p-2 rounded-lg bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition cursor-pointer shadow-2xs"
             title="Día siguiente"
           >
             <ChevronRight className="w-4 h-4" />
@@ -115,10 +115,10 @@ export default function AdminDashboardTab({
           <button
             type="button"
             onClick={() => setFechaFiltro(fechaHoy)}
-            className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               fechaFiltro === fechaHoy
-                ? 'bg-orange-500 text-white shadow-xs'
-                : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
             }`}
           >
             Hoy
@@ -128,10 +128,10 @@ export default function AdminDashboardTab({
           <button
             type="button"
             onClick={() => setFechaFiltro('SEMANA')}
-            className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               fechaFiltro === 'SEMANA'
-                ? 'bg-orange-500 text-white shadow-xs'
-                : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
             }`}
           >
             Últimos 7 días
@@ -141,10 +141,10 @@ export default function AdminDashboardTab({
           <button
             type="button"
             onClick={() => setFechaFiltro('TODAS')}
-            className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               fechaFiltro === 'TODAS'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
             }`}
           >
             Todas las Fechas
@@ -155,16 +155,16 @@ export default function AdminDashboardTab({
         <div className="flex items-center gap-2">
           <Link
             href="/admin/despacho"
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 rounded-lg text-xs font-semibold transition shadow-2xs"
           >
-            <PackageCheck className="w-3.5 h-3.5" />
+            <PackageCheck className="w-3.5 h-3.5 text-zinc-500" />
             <span>Despacho & Excel</span>
           </Link>
           <Link
             href="/admin/cocina"
-            className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 rounded-lg text-xs font-semibold transition shadow-2xs"
           >
-            <ChefHat className="w-3.5 h-3.5" />
+            <ChefHat className="w-3.5 h-3.5 text-zinc-500" />
             <span>Panel Cocina</span>
           </Link>
         </div>
@@ -173,37 +173,37 @@ export default function AdminDashboardTab({
       {/* Tarjetas Principales de KPIs Financieros y Volumen */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* KPI 1: Ventas Generadas */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+        <div className="bg-white p-5 sm:p-6 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-zinc-300 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
               Ventas Generadas
             </span>
-            <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
             S/ {ventasTotales.toFixed(2)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-zinc-500 mt-1">
             Ticket promedio: S/ {ticketPromedio}
           </p>
         </div>
 
         {/* KPI 2: Total Almuerzos */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+        <div className="bg-white p-5 sm:p-6 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-zinc-300 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
               Total Almuerzos
             </span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center">
               <Utensils className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900">
-            {totalAlmuerzos} <span className="text-xs text-slate-400 font-normal">raciones</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
+            {totalAlmuerzos} <span className="text-xs text-zinc-400 font-normal">raciones</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-zinc-500 mt-1">
             {esSuperAdmin
               ? `${rankingColegios.length} colegios atendidos`
               : usuario?.colegioNombre
@@ -213,95 +213,95 @@ export default function AdminDashboardTab({
         </div>
 
         {/* KPI 3: Pagos Recaudados */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+        <div className="bg-white p-5 sm:p-6 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-zinc-300 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider">
               Cobrado ({porcentajeCobrado}%)
             </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-emerald-700">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
             S/ {ingresosRecaudados.toFixed(2)}
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+          <div className="w-full bg-zinc-100 rounded-full h-1.5 mt-2 overflow-hidden">
             <div
-              className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+              className="bg-zinc-950 h-1.5 rounded-full transition-all duration-500"
               style={{ width: `${porcentajeCobrado}%` }}
             />
           </div>
         </div>
 
         {/* KPI 4: Por Cobrar */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs relative overflow-hidden">
+        <div className="bg-white p-5 sm:p-6 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-zinc-300 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider">
               Por Cobrar
             </span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center">
               <AlertCircle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-rose-600">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
             S/ {montoPorCobrar.toFixed(2)}
           </div>
-          <p className="text-[11px] text-rose-500 mt-1 font-semibold">
+          <p className="text-[11px] text-zinc-500 mt-1 font-medium">
             {pedidosPendientes.length} pedidos sin confirmar
           </p>
         </div>
       </div>
 
       {/* Sección Operativa: Embudo de Despacho del Período */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+      <div className="bg-white rounded-xl p-5 sm:p-6 border border-zinc-200/90 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-100">
           <div>
-            <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <PackageCheck className="w-4 h-4 text-orange-500" />
+            <h3 className="text-sm font-bold text-zinc-950 tracking-tight flex items-center gap-2">
+              <PackageCheck className="w-4 h-4 text-zinc-700" />
               Estado Operativo de Almuerzos
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-zinc-500">
               Progreso de preparación y entrega de loncheras
             </p>
           </div>
-          <div className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl self-start sm:self-auto flex items-center gap-1.5">
-            <span className="font-black text-orange-600">{porcentajeEntrega}%</span>
+          <div className="text-xs font-semibold text-zinc-800 bg-zinc-100 border border-zinc-200/80 px-3 py-1.5 rounded-lg self-start sm:self-auto flex items-center gap-1.5">
+            <span className="font-bold text-zinc-950">{porcentajeEntrega}%</span>
             <span>completado ({entregados} de {totalParaEntrega})</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
+          <div className="p-4 sm:p-5 bg-zinc-50/70 rounded-xl border border-zinc-200 flex items-center justify-between">
             <div>
-              <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider block">
                 Entregados
               </span>
-              <span className="text-2xl sm:text-3xl font-black text-emerald-900 mt-1 block">
+              <span className="text-2xl sm:text-3xl font-bold text-zinc-950 mt-1 block">
                 {entregados}
               </span>
-              <p className="text-[11px] text-emerald-600 mt-0.5">
+              <p className="text-[11px] text-zinc-500 mt-0.5">
                 Almuerzos entregados en colegios
               </p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-              <CheckCircle className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-lg bg-zinc-950 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <CheckCircle className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-center justify-between">
+          <div className="p-4 sm:p-5 bg-zinc-50/70 rounded-xl border border-zinc-200 flex items-center justify-between">
             <div>
-              <span className="text-xs font-bold text-amber-700 uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider block">
                 Falta Entregar
               </span>
-              <span className="text-2xl sm:text-3xl font-black text-amber-900 mt-1 block">
+              <span className="text-2xl sm:text-3xl font-bold text-zinc-950 mt-1 block">
                 {faltaEntregar}
               </span>
-              <p className="text-[11px] text-amber-600 mt-0.5">
+              <p className="text-[11px] text-zinc-500 mt-0.5">
                 Pago aceptado y preparados por entregar
               </p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-              <Clock className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-lg bg-zinc-100 text-zinc-700 border border-zinc-200 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5" />
             </div>
           </div>
         </div>
@@ -311,19 +311,19 @@ export default function AdminDashboardTab({
       <div className={`grid grid-cols-1 ${esSuperAdmin ? 'md:grid-cols-2' : ''} gap-4`}>
         {/* Demanda por Colegio: Exclusivo Superadmin */}
         {esSuperAdmin && (
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-orange-500" />
+          <div className="bg-white rounded-xl p-5 sm:p-6 border border-zinc-200/90 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+              <h3 className="text-sm font-bold text-zinc-950 tracking-tight flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-zinc-700" />
                 Demanda por Colegio
               </h3>
-              <span className="text-xs text-slate-400 font-bold">
+              <span className="text-xs text-zinc-500 font-semibold">
                 {rankingColegios.length} colegios
               </span>
             </div>
 
             {rankingColegios.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">
+              <p className="text-xs text-zinc-400 py-6 text-center">
                 No hay pedidos registrados en este período.
               </p>
             ) : (
@@ -332,15 +332,15 @@ export default function AdminDashboardTab({
                   const pct = totalAlmuerzos > 0 ? Math.round((cant / totalAlmuerzos) * 100) : 0;
                   return (
                     <div key={col} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                      <div className="flex items-center justify-between text-xs font-semibold text-zinc-700">
                         <span className="truncate pr-2">{col}</span>
-                        <span className="shrink-0 text-slate-900">
+                        <span className="shrink-0 text-zinc-950 font-bold">
                           {cant} ({pct}%)
                         </span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-zinc-100 rounded-full h-2 overflow-hidden">
                         <div
-                          className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+                          className="bg-zinc-950 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -353,16 +353,16 @@ export default function AdminDashboardTab({
         )}
 
         {/* Platos Favoritos (Preferencias) */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="bg-white rounded-xl p-5 sm:p-6 border border-zinc-200/90 shadow-xs space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
             <div>
-              <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <Utensils className="w-4 h-4 text-orange-500" />
+              <h3 className="text-sm font-bold text-zinc-950 tracking-tight flex items-center gap-2">
+                <Utensils className="w-4 h-4 text-zinc-700" />
                 Platos Más Solicitados
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">Top preferencias del período</p>
+              <p className="text-xs text-zinc-500 mt-0.5">Top preferencias del período</p>
             </div>
-            <span className="text-[11px] font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-xl">
+            <span className="text-[11px] font-semibold text-zinc-800 bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded-lg">
               Ranking de Ventas
             </span>
           </div>
@@ -490,20 +490,20 @@ export default function AdminDashboardTab({
       </div>
 
       {/* Últimos Pedidos Recientes */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <div className="bg-white rounded-xl p-5 sm:p-6 border border-zinc-200/90 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100">
           <div>
-            <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <Clock className="w-4 h-4 text-orange-500" />
+            <h3 className="text-base font-bold text-zinc-950 tracking-tight flex items-center gap-2">
+              <Clock className="w-4 h-4 text-zinc-700" />
               Últimos Pedidos del Período
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               Actividad reciente de los alumnos y familias ({pedidosPeriodo.length} pedidos totales)
             </p>
           </div>
           <Link
             href="/admin/despacho"
-            className="text-xs font-black text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200/80 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition self-start sm:self-auto shadow-2xs"
+            className="text-xs font-semibold text-zinc-900 hover:text-black bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition self-start sm:self-auto shadow-2xs"
           >
             <span>Ver todos en despacho</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -511,16 +511,16 @@ export default function AdminDashboardTab({
         </div>
 
         {pedidosPeriodo.length === 0 ? (
-          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-100">
-            <Clock className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-xs font-bold text-slate-600">No hay pedidos en este período seleccionado.</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Usa los botones superiores para cambiar de fecha.</p>
+          <div className="p-8 text-center bg-zinc-50 rounded-xl border border-zinc-100">
+            <Clock className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+            <p className="text-xs font-semibold text-zinc-700">No hay pedidos en este período seleccionado.</p>
+            <p className="text-[11px] text-zinc-400 mt-0.5">Usa los botones superiores para cambiar de fecha.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <div className="overflow-x-auto rounded-xl border border-zinc-200">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-black">
+                <tr className="bg-zinc-50/80 border-b border-zinc-200 text-zinc-500 uppercase tracking-wider text-[10px] font-semibold">
                   <th className="py-3 px-3.5">Código</th>
                   <th className="py-3 px-3.5">Estudiante</th>
                   <th className="py-3 px-3.5">Colegio / Grado</th>
@@ -530,15 +530,15 @@ export default function AdminDashboardTab({
                   <th className="py-3 px-3.5 text-center">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-zinc-100 bg-white">
                 {pedidosPeriodo.slice(0, 8).map((p) => {
                   const pagado = p.estadoPago === 'PAGADO';
                   const verificando = p.estadoPago === 'VERIFICANDO';
                   return (
-                    <tr key={p.id} className="hover:bg-orange-50/30 transition-colors">
+                    <tr key={p.id} className="hover:bg-zinc-50/70 transition-colors">
                       {/* Código */}
                       <td className="py-3 px-3.5 whitespace-nowrap">
-                        <span className="font-mono font-black text-slate-900 bg-slate-100 text-[11px] px-2 py-1 rounded-lg border border-slate-200/80">
+                        <span className="font-mono font-bold text-zinc-900 bg-zinc-100 text-[11px] px-2 py-0.5 rounded-md border border-zinc-200">
                           #{p.codigoPedido}
                         </span>
                       </td>
@@ -546,10 +546,10 @@ export default function AdminDashboardTab({
                       {/* Estudiante con avatar de inicial */}
                       <td className="py-3 px-3.5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-orange-400 to-amber-500 text-white font-black text-[11px] flex items-center justify-center shrink-0 shadow-2xs">
+                          <div className="w-7 h-7 rounded-full bg-zinc-950 text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-2xs">
                             {(p.estudianteNombre || 'A').charAt(0).toUpperCase()}
                           </div>
-                          <span className="font-black text-slate-900 text-xs">
+                          <span className="font-semibold text-zinc-900 text-xs">
                             {p.estudianteNombre}
                           </span>
                         </div>
@@ -557,11 +557,11 @@ export default function AdminDashboardTab({
 
                       {/* Colegio / Grado */}
                       <td className="py-3 px-3.5 whitespace-nowrap">
-                        <div className="text-slate-800 font-bold text-xs">
+                        <div className="text-zinc-800 font-semibold text-xs">
                           {p.gradoSeccion}
                         </div>
                         {p.colegioNombre && (
-                          <span className="text-[10px] text-slate-400 font-medium block">
+                          <span className="text-[10px] text-zinc-400 font-medium block">
                             {p.colegioNombre}
                           </span>
                         )}
@@ -569,11 +569,11 @@ export default function AdminDashboardTab({
 
                       {/* Menú */}
                       <td className="py-3 px-3.5">
-                        <div className="font-bold text-slate-900 line-clamp-1 max-w-[200px]" title={p.segundoNombre}>
+                        <div className="font-semibold text-zinc-900 line-clamp-1 max-w-[200px]" title={p.segundoNombre}>
                           {p.segundoNombre}
                         </div>
                         {p.entradaNombre && p.entradaNombre !== 'Sin entrada' && (
-                          <span className="text-[10px] text-orange-700 bg-orange-50 border border-orange-200/60 px-1.5 py-0.5 rounded-md inline-block mt-0.5">
+                          <span className="text-[10px] text-zinc-600 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded-md inline-block mt-0.5">
                             + {p.entradaNombre}
                           </span>
                         )}
@@ -581,7 +581,7 @@ export default function AdminDashboardTab({
 
                       {/* Monto */}
                       <td className="py-3 px-3.5 text-right whitespace-nowrap">
-                        <span className="font-black text-slate-900 text-xs">
+                        <span className="font-bold text-zinc-950 text-xs">
                           S/ {(p.monto || 12).toFixed(2)}
                         </span>
                       </td>
@@ -589,12 +589,12 @@ export default function AdminDashboardTab({
                       {/* Estado Pago */}
                       <td className="py-3 px-3.5 text-center whitespace-nowrap">
                         <span
-                          className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 ${
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider inline-flex items-center gap-1 ${
                             pagado
-                              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : verificando
-                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                              : 'bg-rose-100 text-rose-900 border border-rose-300'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
                           }`}
                         >
                           {p.estadoPago}
@@ -604,12 +604,12 @@ export default function AdminDashboardTab({
                       {/* Estado Pedido */}
                       <td className="py-3 px-3.5 text-center whitespace-nowrap">
                         <span
-                          className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider ${
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
                             p.estadoPedido === 'CANCELADO'
-                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
                               : p.estadoPedido === 'ENTREGADO'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-zinc-100 text-zinc-700 border border-zinc-200'
                           }`}
                         >
                           {p.estadoPedido}
