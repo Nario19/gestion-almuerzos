@@ -47,7 +47,7 @@ import {
   HORA_LIMITE_DEFAULT,
 } from '@/lib/dataService';
 import { formatearHoraLimiteLegible, haPasadoHoraLimite } from '@/lib/dateUtils';
-import { useAuth } from '@/lib/authContext';
+import { useAuth, sincronizarCookieSesion } from '@/lib/authContext';
 import { Plato, Pedido, MetodoPago, DiaSemana, Hijo, ResumenCocina, ConfiguracionPagos } from '@/types';
 
 function PedidoContent() {
@@ -623,6 +623,8 @@ function PedidoContent() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link
             href="/admin"
+            onPointerDown={() => sincronizarCookieSesion(usuario)}
+            onClick={() => sincronizarCookieSesion(usuario)}
             className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-slate-800 hover:shadow-md transition group flex flex-col justify-between"
           >
             <div>
@@ -642,6 +644,8 @@ function PedidoContent() {
 
           <Link
             href="/admin/despacho"
+            onPointerDown={() => sincronizarCookieSesion(usuario)}
+            onClick={() => sincronizarCookieSesion(usuario)}
             className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-emerald-500 hover:shadow-md transition group flex flex-col justify-between"
           >
             <div>
@@ -661,6 +665,8 @@ function PedidoContent() {
 
           <Link
             href="/admin/cocina"
+            onPointerDown={() => sincronizarCookieSesion(usuario)}
+            onClick={() => sincronizarCookieSesion(usuario)}
             className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
           >
             <div>

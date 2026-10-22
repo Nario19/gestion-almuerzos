@@ -1097,6 +1097,31 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/menu-division-entrada-segundo-ensalada.test.mjs`
   - `MEMORY.md`
 
+### D-051 — 2026-10-21 — Eliminación del Flash de Sesión en Login, Sincronización Inmediata de Cookies y Fluidez Global del Sistema
+
+- Decisión:
+  1. **Eliminar el Flash de Sesión Intermedia en `/login`:**
+     - Cuando un usuario con sesión activa (admin o padre) navega a `/login` o es interceptado hacia ella, no debe mostrarse bajo ninguna circunstancia la tarjeta estática de "Sesión iniciada como ADMIN... Ir al panel... Cerrar sesión".
+     - Se reemplaza el `window.location.href` diferido por redirección instantánea SPA con `router.replace(destino)` respetando el parámetro original `searchParams.get('redirigir')`.
+     - Mientras la transición ocurre, se muestra un estado de transición limpio y minimalista con loader animado ("Ingresando al Panel de Administración..."), salvo que explícitamente se solicite `cambiar_cuenta=1`.
+  2. **Blindaje de Cookies de Sesión:**
+     - En `authContext.tsx`, `sincronizarCookieSesion` eleva la persistencia a 30 días (`max-age=2592000`) e incorpora `; Secure` bajo HTTPS.
+     - En los casos de login de bootstrap (`superadmin`, `admin`), se invoca de manera síncrona `sincronizarCookieSesion` inmediatamente antes de resolver la promesa.
+     - En `HeaderNav.tsx` y en las tarjetas de acceso rápido de `padres/page.tsx`, se refresca la cookie síncronamente en los eventos `onPointerDown` y `onClick` de los enlaces administrativos, garantizando que el middleware de Next.js reciba la cookie en la cabecera HTTP sin falsos positivos de redirección.
+  3. **Fluidez Transversal con Caché en Memoria de Pedidos:**
+     - En `dataService.ts`, se introduce caché en memoria (`cachePedidosMemoria`) con TTL de 20 segundos para consultas globales de `obtenerPedidos()`, acelerando instantáneamente la navegación entre `/admin`, `/admin/despacho`, `/admin/cocina` y `/admin/fiado`.
+     - `obtenerPedidosPorPadre()` se beneficia de la caché en memoria cuando está vigente.
+     - `invalidarCachePedidos()` se integra en `notifyListeners()` y en el canal Realtime de Supabase, asegurando que ante cualquier mutación (creación, cambio de estado de entrega, cobro o cancelación), la caché se refresque automáticamente con consistencia absoluta.
+- Fuente: instrucción explícita del usuario: *"asegurate de que todo el sistema este fluido asi como corregiste lo de la carga del menu de admin como del padre tambein asegurate de que todo cargue de manera fluida, por ejemplo cuando le doy. a admin se demora y un segundo me aparece esto Sesión iniciada como ADMIN Administrador de sede: COLEGIO ZAARTEA [Ir al Panel de Administración (Admin)] [Ir a Despacho & Excel] Cerrar Sesión y me lleva a admin pero se demora igual y me meustar eso innecesariamente. en general todo el sistema debe estar fluido"*
+- Impacto:
+  - `src/app/login/page.tsx`
+  - `src/lib/authContext.tsx`
+  - `src/components/HeaderNav.tsx`
+  - `src/app/padres/page.tsx`
+  - `src/lib/dataService.ts`
+  - `tests/fluidez-navegacion-admin-sin-login-flash.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

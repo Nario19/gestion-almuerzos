@@ -21,7 +21,7 @@ import {
   User,
   TrendingUp,
 } from 'lucide-react';
-import { useAuth } from '@/lib/authContext';
+import { useAuth, sincronizarCookieSesion } from '@/lib/authContext';
 import { obtenerInfoPantalla } from '@/lib/navUtils';
 import { esRutaAdministrativa } from '@/lib/navUtils';
 
@@ -80,6 +80,8 @@ export default function HeaderNav() {
               - En la interfaz de admin y superadmin: YA NO VA EL TÍTULO, se muestra la marca */}
           <Link
             href={esRutaAdmin ? (esSuperAdmin ? '/superadmin' : '/admin') : '/'}
+            onPointerDown={() => sincronizarCookieSesion(usuario)}
+            onClick={() => sincronizarCookieSesion(usuario)}
             className="flex items-center gap-2.5 font-bold text-slate-800 hover:opacity-90 transition min-w-0"
             title={esRutaAdmin ? 'Ir al Panel' : 'Ir al inicio'}
           >
@@ -113,6 +115,8 @@ export default function HeaderNav() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      onPointerDown={() => sincronizarCookieSesion(usuario)}
+                      onClick={() => sincronizarCookieSesion(usuario)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                         isActive
                           ? item.href.includes('/superadmin') && !item.href.includes('/pedido-manual')

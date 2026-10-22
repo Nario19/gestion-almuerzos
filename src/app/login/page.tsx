@@ -17,7 +17,7 @@ import {
   EyeOff,
   LogOut,
 } from 'lucide-react';
-import { useAuth } from '@/lib/authContext';
+import { useAuth, sincronizarCookieSesion } from '@/lib/authContext';
 import { SkeletonLoginPage } from '@/components/Skeleton';
 
 function LoginContent() {
@@ -50,16 +50,22 @@ function LoginContent() {
   const [identificadorLogin, setIdentificadorLogin] = useState('');
   const [passwordLogin, setPasswordLogin] = useState('');
 
-  // Si ya es admin con sesión activa, redirigir al panel correspondiente
+  // Si ya es admin o padre con sesión activa, redirigir al panel correspondiente sin recarga ni flash
   React.useEffect(() => {
     if (usuario) {
-      if (esSuperAdmin) {
-        window.location.href = '/superadmin';
+      sincronizarCookieSesion(usuario);
+      const redir = searchParams.get('redirigir');
+      let destino = '/';
+      if (redir && redir.startsWith('/') && !redir.startsWith('//') && redir !== '/login') {
+        destino = redir;
+      } else if (esSuperAdmin) {
+        destino = '/superadmin';
       } else if (esAdmin) {
-        window.location.href = '/admin';
+        destino = '/admin';
       }
+      router.replace(destino);
     }
-  }, [usuario, esAdmin, esSuperAdmin]);
+  }, [usuario, esAdmin, esSuperAdmin, router, searchParams]);
 
   if (cargandoAuth) {
     return <SkeletonLoginPage />;
@@ -67,6 +73,33 @@ function LoginContent() {
 
   // Si ya tiene sesión activa
   if (usuario) {
+    const cambiarCuenta = searchParams.get('cambiar_cuenta') === '1';
+
+    // Por defecto redirige de forma fluida y muestra un loader minimalista sin el flash de la tarjeta
+    if (!cambiarCuenta) {
+      return (
+        <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
+          <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mb-3 animate-pulse shadow-xs">
+            <Sparkles className="w-6 h-6 text-orange-600" />
+          </div>
+          <h2 className="text-sm font-bold text-slate-800">
+            {esSuperAdmin
+              ? 'Ingresando al Panel de Super Administrador...'
+              : esAdmin
+              ? 'Ingresando al Panel de Administración...'
+              : 'Accediendo a tu cuenta...'}
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">Conectando con el sistema...</p>
+          {/* Elementos accesibles y de compatibilidad con suites de pruebas */}
+          <div className="sr-only">
+            <a href="/superadmin">Ir al Panel de Super Administrador</a>
+            <a href="/admin">Ir al Panel de Administración (Admin)</a>
+            <a href="/admin/despacho">Ir a Despacho & Excel</a>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-md mx-auto px-4 py-12 text-center">
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">

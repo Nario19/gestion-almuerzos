@@ -36,12 +36,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function sincronizarCookieSesion(u: UsuarioPadre | null) {
   if (typeof document === 'undefined') return;
+  const esHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const secureFlag = esHttps ? '; Secure' : '';
+  const maxAge = 2592000; // 30 días de persistencia
+
   if (u && u.rol) {
-    document.cookie = `sesion_rol=${encodeURIComponent(u.rol)}; path=/; max-age=604800; SameSite=Lax`;
-    document.cookie = `sesion_activa=1; path=/; max-age=604800; SameSite=Lax`;
+    document.cookie = `sesion_rol=${encodeURIComponent(u.rol)}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+    document.cookie = `sesion_activa=1; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
   } else {
-    document.cookie = 'sesion_rol=; path=/; max-age=0; SameSite=Lax';
-    document.cookie = 'sesion_activa=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = `sesion_rol=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+    document.cookie = `sesion_activa=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
   }
 }
 
@@ -466,6 +470,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               hijos: [],
             };
             setUsuario(superAdminUser);
+            sincronizarCookieSesion(superAdminUser);
             if (typeof window !== 'undefined') {
               localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(superAdminUser));
             }
@@ -483,6 +488,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               hijos: [],
             };
             setUsuario(adminUser);
+            sincronizarCookieSesion(adminUser);
             if (typeof window !== 'undefined') {
               localStorage.setItem('sesion_padre_almuerzos', JSON.stringify(adminUser));
             }

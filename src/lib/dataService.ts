@@ -271,11 +271,13 @@ interface CacheItem<T> {
 
 const CACHE_TTL_PLATOS_MS = 60 * 1000; // 60 segundos de caché ultrarrápida en memoria
 const CACHE_TTL_CONFIG_MS = 60 * 1000; // 60 segundos para configuraciones globales
+const CACHE_TTL_PEDIDOS_MS = 20 * 1000; // 20 segundos de caché para acelerar navegación y dashboards
 
 const cachePlatosPorDiaMemoria = new Map<string, CacheItem<Plato[]>>();
 let cacheColegiosMemoria: CacheItem<string[]> | null = null;
 let cacheConfigPagosMemoria: CacheItem<ConfiguracionPagos> | null = null;
 let cacheHoraLimiteMemoria: CacheItem<string> | null = null;
+let cachePedidosMemoria: CacheItem<Pedido[]> | null = null;
 
 export function invalidarCachePlatos() {
   cachePlatosPorDiaMemoria.clear();
@@ -287,6 +289,10 @@ export function invalidarCacheConfig() {
   cacheHoraLimiteMemoria = null;
 }
 
+export function invalidarCachePedidos() {
+  cachePedidosMemoria = null;
+}
+
 const listeners: (() => void)[] = [];
 let globalRealtimeChannel: RealtimeChannel | null = null;
 
@@ -296,6 +302,7 @@ function iniciarCanalRealtimeGlobal() {
     globalRealtimeChannel = supabase
       .channel('pedidos-realtime-global')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
+        invalidarCachePedidos();
         notifyListeners();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'platos' }, () => {
@@ -331,6 +338,7 @@ function detenerCanalRealtimeGlobal() {
 function notifyListeners() {
   invalidarCachePlatos();
   invalidarCacheConfig();
+  invalidarCachePedidos();
   listeners.forEach((cb) => {
     try {
       cb();
@@ -831,6 +839,17 @@ export const dataService = {
   },
 
   async obtenerPedidos(opciones?: { limit?: number; offset?: number; colegioNombre?: string }): Promise<Pedido[]> {
+    const ahora = Date.now();
+    const esConsultaGeneral =
+      !opciones?.limit &&
+      !opciones?.offset &&
+      (!opciones?.colegioNombre || opciones.colegioNombre.trim().toLowerCase() === 'todos');
+
+    // Retorno instantáneo si la caché en memoria de pedidos sigue vigente
+    if (esConsultaGeneral && cachePedidosMemoria && ahora - cachePedidosMemoria.timestamp < CACHE_TTL_PEDIDOS_MS) {
+      return [...cachePedidosMemoria.datos];
+    }
+
     if (isSupabaseConfigured && supabase) {
       try {
         let query = supabase
@@ -853,7 +872,11 @@ export const dataService = {
 
         if (!error && data) {
           const mapLocal = obtenerMapaHorasEntrega();
-          return data.map((d) => mapearPedidoDesdeSupabase(d, mapLocal));
+          const resultado = data.map((d) => mapearPedidoDesdeSupabase(d, mapLocal));
+          if (esConsultaGeneral) {
+            cachePedidosMemoria = { datos: resultado, timestamp: ahora };
+          }
+          return resultado;
         }
       } catch (err) {
         console.warn('Error leyendo pedidos de Supabase:', err);
@@ -877,6 +900,16 @@ export const dataService = {
 
   async obtenerPedidosPorPadre(padreId?: string, telefono?: string): Promise<Pedido[]> {
     if (!padreId && !telefono) return [];
+
+    // Si la caché global de pedidos está vigente, retornar desde memoria al instante
+    if (cachePedidosMemoria && Date.now() - cachePedidosMemoria.timestamp < CACHE_TTL_PEDIDOS_MS) {
+      const filtrados = cachePedidosMemoria.datos.filter(
+        (p) => (padreId && p.padreId === padreId) || (telefono && p.telefonoContacto === telefono)
+      );
+      if (filtrados.length > 0) {
+        return filtrados;
+      }
+    }
     if (isSupabaseConfigured && supabase) {
       try {
         let query = supabase
