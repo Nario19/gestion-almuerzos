@@ -439,7 +439,7 @@ export default function PedidoManualPage() {
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
-              <Building2 className="w-3.5 h-3.5" /> {usuario?.colegioNombre || 'Sede Escolar'}
+              <Building2 className="w-3.5 h-3.5" /> {usuario?.colegioNombre || 'Colegio'}
             </span>
           )}
         </div>

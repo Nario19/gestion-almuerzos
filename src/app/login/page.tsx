@@ -118,7 +118,7 @@ function LoginContent() {
               ? 'Cuenta con privilegios de Super Administrador (Control Multi-Colegios)'
               : esAdmin
               ? usuario.colegioNombre
-                ? `Administrador de sede: ${usuario.colegioNombre}`
+                ? `Administrador de colegio: ${usuario.colegioNombre}`
                 : 'Cuenta con privilegios de Administrador'
               : `DNI: ${usuario.dni} • ${usuario.hijos.length} hijos registrados`}
           </p>

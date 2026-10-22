@@ -161,4 +161,52 @@ describe('Opción de Cancelar Pedido en Despacho e Impacto Transversal en el Sis
       'Métricas de Despacho (falta entregar, pendientes de pago) deben ignorar pedidos cancelados'
     );
   });
+
+  test('10. Si el pedido ya está entregado, la opción de cancelar desaparece de Despacho y dataService lo rechaza', () => {
+    const despachoContent = fs.readFileSync(despachoPath, 'utf8');
+    const dataServiceContent = fs.readFileSync(dataServicePath, 'utf8');
+
+    // Comprobar que en la rama entregado no existe el botón Cancelar pedido
+    const bloqueEntregado = despachoContent.match(/\) : entregado \? \([\s\S]*?\<\/\>\s*\) : \(/);
+    assert.ok(bloqueEntregado, 'Debe existir el bloque condicional para pedidos entregados');
+    assert.ok(
+      !bloqueEntregado[0].includes('Cancelar pedido'),
+      'La opción de Cancelar pedido debe desaparecer por completo si el pedido ya fue entregado'
+    );
+
+    // dataService rechaza cancelar pedidos ya entregados
+    assert.ok(
+      dataServiceContent.includes('No se puede cancelar un pedido que ya ha sido entregado'),
+      'dataService debe rechazar explícitamente cancelar pedidos en estado ENTREGADO'
+    );
+    assert.ok(
+      dataServiceContent.includes("pedido.estadoPedido === 'ENTREGADO' || pedido.horaEntrega"),
+      'dataService valida tanto estadoPedido como horaEntrega antes de cancelar'
+    );
+  });
+
+  test('11. En todo el sistema visible y filtros, se utiliza "Colegio" en lugar de "Sede"', () => {
+    const cocinaPath = path.resolve(process.cwd(), 'src/app/admin/cocina/page.tsx');
+    const cocinaContent = fs.readFileSync(cocinaPath, 'utf8');
+    const despachoContent = fs.readFileSync(despachoPath, 'utf8');
+    const analyticsPath = path.resolve(process.cwd(), 'src/app/superadmin/analytics/page.tsx');
+    const analyticsContent = fs.readFileSync(analyticsPath, 'utf8');
+
+    assert.ok(
+      cocinaContent.includes('Filtrar por Colegio:'),
+      'Cocina debe indicar "Filtrar por Colegio:" y no "Filtrar por Sede:"'
+    );
+    assert.ok(
+      cocinaContent.includes('🏫 Colegio:'),
+      'Cabecera de Cocina debe mostrar "🏫 Colegio:"'
+    );
+    assert.ok(
+      despachoContent.includes('🏫 Colegio:'),
+      'Cabecera de Despacho debe mostrar "🏫 Colegio:"'
+    );
+    assert.ok(
+      analyticsContent.includes('Todos los Colegios (Consolidado)'),
+      'Analytics debe listar "Todos los Colegios (Consolidado)"'
+    );
+  });
 });

@@ -86,7 +86,7 @@ export const RUTA_METADATA_MAP: Record<string, PageMetadataInfo> = {
   '/superadmin': {
     title: 'Super Administrador Global | Placeres Culinarios',
     description:
-      'Administración central de colegios, sedes educativas, directores, horarios límites y métodos de pago.',
+      'Administración central de colegios, directores, horarios límites y métodos de pago.',
   },
   '/superadmin/analytics': {
     title: 'Analítica y Toma de Decisiones | Placeres Culinarios',

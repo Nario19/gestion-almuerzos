@@ -159,7 +159,7 @@ export default function CocinaPage() {
             {!esSuperAdmin && usuario?.colegioNombre && (
               <div className="mt-2">
                 <span className="inline-flex items-center gap-1.5 font-bold text-orange-900 bg-orange-50 px-2.5 py-1 rounded-xl border border-orange-200 text-xs shadow-2xs">
-                  🏫 Sede: {usuario.colegioNombre}
+                  🏫 Colegio: {usuario.colegioNombre}
                 </span>
               </div>
             )}
@@ -264,7 +264,7 @@ export default function CocinaPage() {
         {esSuperAdmin && (
           <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
             <span className="text-slate-500 font-bold flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" /> Filtrar por Sede:
+              <Filter className="w-3.5 h-3.5" /> Filtrar por Colegio:
             </span>
             {['TODOS', ...colegios].map((c) => (
               <button
@@ -455,7 +455,7 @@ export default function CocinaPage() {
               Almuerzos Independientes por Colegio
             </h2>
             <span className="text-xs font-bold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-xl">
-              {resumen.porColegio.length} sedes con pedidos
+              {resumen.porColegio.length} colegios con pedidos
             </span>
           </div>
 

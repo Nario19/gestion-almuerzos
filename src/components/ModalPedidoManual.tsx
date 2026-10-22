@@ -287,7 +287,7 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                   </span>
                 ) : (
                   <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                    Sede: {colegioSeleccionado}
+                    Colegio: {colegioSeleccionado}
                   </span>
                 )}
               </div>
@@ -391,7 +391,7 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                 <div>
                   <label className="block text-[11px] font-black uppercase text-slate-600 mb-1 flex items-center gap-1">
                     <Building2 className="w-3.5 h-3.5 text-orange-500" />
-                    <span>Colegio / Sede Escolar:</span>
+                    <span>Colegio:</span>
                   </label>
                   {esSuperAdmin ? (
                     <select
@@ -407,8 +407,8 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                     </select>
                   ) : (
                     <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 flex items-center justify-between">
-                      <span>{colegioSeleccionado || 'Sede asignada'}</span>
-                      <span className="text-[10px] text-slate-400 font-normal">Sede actual</span>
+                      <span>{colegioSeleccionado || 'Colegio asignado'}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">Colegio actual</span>
                     </div>
                   )}
                 </div>

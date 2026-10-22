@@ -1163,6 +1163,39 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/fluidez-navegacion-admin-sin-login-flash.test.mjs`
   - `MEMORY.md`
 
+### D-054 — 2026-10-22 — Supresión de Opción Cancelar en Pedidos Entregados y Estandarización Total de "Colegio" en Sustitución de "Sede"
+
+- Decisión:
+  1. **Desaparición de Opción Cancelar Pedido cuando está Entregado:**
+     - En el módulo de Despacho (`src/app/admin/despacho/page.tsx`), se eliminó el botón de "Cancelar pedido" en la rama condicional de pedidos entregados (`entregado ? ...`). Cuando un pedido ya ha sido entregado, únicamente se visualiza el estado confirmado `✓ Entregado` y la hora de entrega, suprimiendo cualquier posibilidad de cancelarlo desde la UI.
+     - En la capa de servicios (`src/lib/dataService.ts:cancelarPedido`), se incorporó una salvaguarda que arroja error si el pedido se encuentra en estado `ENTREGADO` o ya cuenta con `horaEntrega` registrada, blindando la integridad operativa del negocio.
+  2. **Estandarización de Nomenclatura Institucional (Colegio en vez de Sede):**
+     - A requerimiento explícito del negocio ("no hay sedes sino colegios. Colegio A, Colegio B etc, en filtros y en todo el sistema lo que diga sedes cambialo a colegio"), se erradicó la palabra "Sede" / "Sedes" en todas las etiquetas de interfaz, filtros, badges, selectores, modales y reportes:
+       - Cocina (`/admin/cocina`): `🏫 Colegio: [Nombre]` (antes Sede), `Filtrar por Colegio:` (antes Filtrar por Sede), `{N} colegios con pedidos` (antes sedes con pedidos).
+       - Despacho (`/admin/despacho`): `🏫 Colegio: [Nombre]`.
+       - Pedido Manual (`/admin/pedido-manual` y `ModalPedidoManual.tsx`): `Colegio: [Nombre]` y etiqueta `Colegio:` (antes Colegio / Sede Escolar).
+       - Dashboard Admin (`AdminDashboardTab.tsx`): `Colegio: [Nombre]`.
+       - Perfil y Login: `Administrador de colegio:` y badge `Administrador de Colegio`.
+       - Superadmin (`/superadmin` y `/superadmin/analytics`): `Todos los Colegios` (antes Todas las Sedes), `Desglose y Comparativa por Colegio` mostrando `{N} colegios`, textos de creación y eliminación referidos a "colegio", y placeholder `Buscar colegio, admin o DNI...`.
+       - Metadata (`metadataUtils.ts`): descripciones alineadas a colegios.
+- Fuente: instrucción explícita del usuario: *"LO DE CANCELAR PEDIDO SI YA ESTA ENTREGADO DEBE DESAPARECR LA OPCIONDE CANCELARLO. Y HE VISTO QUE HAY VARIAS PARTES DONDE DICE SEDE, ENVES DE SEDE DEBE DECIR COLEGIO EN TODO EL SISTEMA PORQUE NO HAY SEDES SINO COLEGIOS. COLEGIO A, COLEGIO B ETC, EN FILTROS Y EN TODO EL SISTEMA LO QUE DIGA SEDES CAMBIALO A COLEGIO:"*
+- Impacto:
+  - `src/app/admin/despacho/page.tsx`
+  - `src/lib/dataService.ts`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/app/admin/components/AdminDashboardTab.tsx`
+  - `src/app/login/page.tsx`
+  - `src/app/padres/perfil/page.tsx`
+  - `src/components/ModalPedidoManual.tsx`
+  - `src/app/superadmin/page.tsx`
+  - `src/app/superadmin/analytics/page.tsx`
+  - `src/lib/metadataUtils.ts`
+  - `tests/cancelar-pedido-despacho-integracion.test.mjs`
+  - `tests/admin-cocina-filtros-rol-fechas.test.mjs`
+  - `tests/despacho-filtros-rol-estado.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

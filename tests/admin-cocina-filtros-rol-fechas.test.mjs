@@ -21,13 +21,13 @@ const cocinaPageContent = fs.readFileSync(
 
 test('Filtros por Colegio y Fechas según Rol en Admin y Cocina', async (t) => {
   await t.test('1. Cocina: Filtro por colegio es exclusivo de SuperAdmin', () => {
-    // La sección de filtro por sede debe estar condicionada a esSuperAdmin
+    // La sección de filtro por colegio debe estar condicionada a esSuperAdmin
     assert.match(
       cocinaPageContent,
-      /\{esSuperAdmin\s*&&\s*\(\s*<div[^>]*border-t[^>]*>[\s\S]*?Filtrar por Sede:/,
+      /\{esSuperAdmin\s*&&\s*\(\s*<div[^>]*border-t[^>]*>[\s\S]*?Filtrar por (?:Colegio|Sede):/,
       'El filtro de instituciones educativas en cocina debe estar condicionado estrictamente a esSuperAdmin'
     );
-    // No debe existir el span estático "🏫 Colegio: {usuario.colegioNombre}" dentro de "Filtrar por:"
+    // No debe existir el span estático con {usuario.colegioNombre} dentro de "Filtrar por:"
     assert.doesNotMatch(
       cocinaPageContent,
       /Filtrar por:[\s\S]*?Colegio:\s*\{usuario\.colegioNombre\}/,
@@ -35,11 +35,11 @@ test('Filtros por Colegio y Fechas según Rol en Admin y Cocina', async (t) => {
     );
   });
 
-  await t.test('2. Cocina: Header muestra badge de Sede para administrador de colegio', () => {
+  await t.test('2. Cocina: Header muestra badge de Colegio para administrador', () => {
     assert.match(
       cocinaPageContent,
-      /\{!esSuperAdmin\s*&&\s*usuario\?\.colegioNombre\s*&&\s*\([\s\S]*?🏫 Sede:\s*\{usuario\.colegioNombre\}/,
-      'Cocina debe mostrar el badge de Sede en la cabecera cuando es un admin con colegio asignado'
+      /\{!esSuperAdmin\s*&&\s*usuario\?\.colegioNombre\s*&&\s*\([\s\S]*?🏫 (?:Colegio|Sede):\s*\{usuario\.colegioNombre\}/,
+      'Cocina debe mostrar el badge de Colegio en la cabecera cuando es un admin con colegio asignado'
     );
   });
 
@@ -119,8 +119,8 @@ test('Filtros por Colegio y Fechas según Rol en Admin y Cocina', async (t) => {
   await t.test('6. Admin: KPI 2 oculta colegios atendidos para administrador de sede', () => {
     assert.match(
       adminPageContent,
-      /\{esSuperAdmin\s*\?\s*`\$\{rankingColegios\.length\} colegios atendidos`[\s\S]*?Sede:\s*\$\{usuario\.colegioNombre\}/,
-      'KPI 2 debe mostrar número de colegios solo para superadmin y la sede para admin de colegio'
+      /\{esSuperAdmin\s*\?\s*`\$\{rankingColegios\.length\} colegios atendidos`[\s\S]*?(?:Colegio|Sede):\s*\$\{usuario\.colegioNombre\}/,
+      'KPI 2 debe mostrar número de colegios solo para superadmin y el colegio para admin de colegio'
     );
   });
 

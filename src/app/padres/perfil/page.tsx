@@ -140,7 +140,7 @@ export default function PerfilPage() {
           </div>
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-              {esSuperAdmin ? 'Super Administrador' : 'Administrador de Sede'}
+              {esSuperAdmin ? 'Super Administrador' : 'Administrador de Colegio'}
             </span>
             <h1 className="text-lg font-black text-slate-900 mt-2">
               {usuario.nombreCompleto}
@@ -148,7 +148,7 @@ export default function PerfilPage() {
             <p className="text-xs text-slate-500 mt-0.5">DNI: {usuario.dni}</p>
             {usuario.colegioNombre && (
               <p className="text-xs font-bold text-slate-700 mt-1">
-                Sede: {usuario.colegioNombre}
+                Colegio: {usuario.colegioNombre}
               </p>
             )}
           </div>

@@ -31,8 +31,8 @@ describe('Filtros Operativos por Rol y Estado en Despacho', () => {
   test('3. Administrador de sede regular ve su colegio en cabecera sin botones redundantes de colegios', () => {
     assert.match(
       despachoContent,
-      /!esSuperAdmin && usuario\?\.colegioNombre \? \([\s\S]*?🏫 Sede:/,
-      'Para administradores regulares se muestra la insignia de su sede asignada en cabecera'
+      /!esSuperAdmin && usuario\?\.colegioNombre \? \([\s\S]*?🏫 (?:Colegio|Sede):/,
+      'Para administradores regulares se muestra la insignia de su colegio asignado en cabecera'
     );
   });
 

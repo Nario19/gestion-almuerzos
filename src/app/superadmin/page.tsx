@@ -546,7 +546,7 @@ export default function SuperAdminPage() {
       mensaje: (
         <div className="space-y-2">
           <p>
-            Estás a punto de eliminar permanentemente la sede escolar{' '}
+            Estás a punto de eliminar permanentemente el colegio{' '}
             <strong className="text-slate-900">{col.nombre}</strong> del sistema.
           </p>
           <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 space-y-1">
@@ -556,7 +556,7 @@ export default function SuperAdminPage() {
             </p>
             <ul className="list-disc pl-4 space-y-0.5 text-amber-700">
               <li>Los padres de familia ya no podrán seleccionar este colegio al hacer pedidos.</li>
-              <li>El administrador asignado ({col.admin?.dni || 'Sin admin'}) perderá el acceso a esta sede.</li>
+              <li>El administrador asignado ({col.admin?.dni || 'Sin admin'}) perderá el acceso a este colegio.</li>
               <li>Los pedidos históricos mantendrán el registro para trazabilidad.</li>
             </ul>
           </div>
@@ -642,7 +642,7 @@ export default function SuperAdminPage() {
               Gestión de Colegios & Administradores
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-xl mt-1">
-              Crea sedes escolares con sus propios administradores independientes, administra
+              Crea colegios con sus propios administradores independientes, administra
               sus credenciales de acceso y supervisa el volumen operativo de cada colegio.
             </p>
           </div>
@@ -720,7 +720,7 @@ export default function SuperAdminPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Estos números y nombres de titular se mostrarán en la pantalla de pedidos de los padres en todas las sedes.
+                Estos números y nombres de titular se mostrarán en la pantalla de pedidos de los padres en todos los colegios.
               </p>
             </div>
           </div>
@@ -787,7 +787,7 @@ export default function SuperAdminPage() {
                   Hora Límite para Pedidos del Día
                 </h2>
                 <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
-                  Todas las Sedes
+                  Todos los Colegios
                 </span>
               </div>
               <p className="text-xs text-slate-500">
@@ -959,7 +959,7 @@ export default function SuperAdminPage() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Buscar colegio, sede, admin o DNI..."
+              placeholder="Buscar colegio, admin o DNI..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-purple-500 focus:outline-hidden transition"
@@ -1044,7 +1044,7 @@ export default function SuperAdminPage() {
             <h3 className="text-sm font-bold text-slate-800">No se encontraron colegios</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
               {busqueda
-                ? 'Ninguna sede o administrador coincide con tu término de búsqueda.'
+                ? 'Ningún colegio o administrador coincide con tu término de búsqueda.'
                 : 'Aún no has registrado ningún colegio. Haz clic en "Nuevo Colegio & Admin" para empezar.'}
             </p>
             {busqueda ? (
@@ -1266,7 +1266,7 @@ export default function SuperAdminPage() {
                     {colegioEnEdicion ? 'Editar Colegio & Administrador' : 'Nuevo Colegio & Administrador'}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Configura la sede escolar y su cuenta de acceso
+                    Configura el colegio y su cuenta de acceso
                   </p>
                 </div>
               </div>

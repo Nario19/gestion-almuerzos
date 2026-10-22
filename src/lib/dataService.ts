@@ -1174,6 +1174,10 @@ export const dataService = {
   },
 
   async cancelarPedido(id: string, motivo?: string): Promise<void> {
+    const pedido = pedidosMemoria.find((p) => p.id === id);
+    if (pedido && (pedido.estadoPedido === 'ENTREGADO' || pedido.horaEntrega)) {
+      throw new Error('No se puede cancelar un pedido que ya ha sido entregado.');
+    }
     await this.cambiarEstadoPedido(id, 'CANCELADO', undefined, motivo);
   },
 

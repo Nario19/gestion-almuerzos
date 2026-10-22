@@ -457,7 +457,7 @@ export default function DespachoPage() {
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
             {!esSuperAdmin && usuario?.colegioNombre ? (
               <span className="inline-flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
-                🏫 Sede: {usuario.colegioNombre}
+                🏫 Colegio: {usuario.colegioNombre}
               </span>
             ) : (
               'Gestión de pedidos por colegio y grado para armado de loncheras'
@@ -1138,18 +1138,6 @@ export default function DespachoPage() {
                                   ) : (
                                     <span className="text-[10px] text-slate-400">Entregado</span>
                                   )}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setPedidoACancelar(p);
-                                      setMotivoCancelacion('');
-                                    }}
-                                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1 mt-1 transition cursor-pointer"
-                                    title="Cancelar pedido de almuerzo"
-                                  >
-                                    <XCircle className="w-3 h-3" />
-                                    Cancelar pedido
-                                  </button>
                                 </>
                               ) : (p.metodoPago === 'Yape' || p.metodoPago === 'Plin') && !pagado ? (
                                 <>

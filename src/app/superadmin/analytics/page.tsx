@@ -113,7 +113,7 @@ export default function SuperadminAnalyticsPage() {
       'REPORTE DE ANALITICA Y METRICAS - PLACERES CULINARIOS',
       `Fecha de Generacion: ${new Date().toLocaleString('es-PE')}`,
       `Periodo: ${periodo}`,
-      `Sede: ${colegioSeleccionado === 'todos' ? 'Todas las Sedes' : colegioSeleccionado}`,
+      `Colegio: ${colegioSeleccionado === 'todos' ? 'Todos los Colegios' : colegioSeleccionado}`,
       '',
       'RESUMEN GENERAL',
       `Ventas Totales (S/.),${metricas.ventasTotales.toFixed(2)}`,
@@ -242,14 +242,14 @@ export default function SuperadminAnalyticsPage() {
         <div className="flex items-center gap-2">
           <label className="text-xs font-bold text-slate-600 flex items-center gap-1 shrink-0">
             <Building2 className="w-4 h-4 text-purple-600" />
-            Sede:
+            Colegio:
           </label>
           <select
             value={colegioSeleccionado}
             onChange={(e) => setColegioSeleccionado(e.target.value)}
             className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden max-w-xs truncate"
           >
-            <option value="todos">Todas las Sedes (Consolidado)</option>
+            <option value="todos">Todos los Colegios (Consolidado)</option>
             {listaColegios.map((col) => (
               <option key={col} value={col}>
                 {col}
@@ -526,7 +526,7 @@ export default function SuperadminAnalyticsPage() {
                 Desglose y Comparativa por Colegio
               </h3>
               <span className="text-[11px] font-bold text-slate-400">
-                {metricas.metricasPorColegio.length} sedes
+                {metricas.metricasPorColegio.length} colegios
               </span>
             </div>
 
