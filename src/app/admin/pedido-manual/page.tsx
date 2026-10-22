@@ -39,6 +39,7 @@ import {
   obtenerFechaHoyPeru,
   obtenerDiaActualSemanaPeru,
   formatearFechaLegiblePeru,
+  obtenerFechaParaDiaSemana,
 } from '@/lib/dateUtils';
 import { Plato, MetodoPago, EstadoPago, DiaSemana, Pedido } from '@/types';
 
@@ -117,15 +118,37 @@ export default function PedidoManualPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Calcular el día escolar (LUNES a VIERNES) según la fecha elegida
-  const diaSemanaCalculado = useMemo<DiaSemana>(() => {
+  // Día actual escolar de hoy en Perú
+  const diaActualSemana = useMemo(() => obtenerDiaActualSemanaPeru(), []);
+
+  // Estado del día escolar seleccionado (LUNES a VIERNES)
+  const [diaSeleccionado, setDiaSeleccionado] = useState<DiaSemana>(() => {
     try {
-      const d = new Date(`${fecha}T12:00:00-05:00`);
+      const d = new Date(`${fechaHoy}T12:00:00-05:00`);
       return obtenerDiaActualSemanaPeru(d);
     } catch (_) {
       return 'LUNES';
     }
-  }, [fecha]);
+  });
+
+  // Manejador para cambio de fecha calendario (sincroniza el día automáticamente)
+  const handleCambiarFecha = (nuevaFecha: string) => {
+    setFecha(nuevaFecha);
+    try {
+      const d = new Date(`${nuevaFecha}T12:00:00-05:00`);
+      setDiaSeleccionado(obtenerDiaActualSemanaPeru(d));
+    } catch (_) {}
+  };
+
+  // Manejador para selección directa de día (sincroniza la fecha automáticamente)
+  const handleSeleccionarDia = (dia: DiaSemana) => {
+    setDiaSeleccionado(dia);
+    const nuevaFecha = obtenerFechaParaDiaSemana(dia, fecha || fechaHoy);
+    setFecha(nuevaFecha);
+  };
+
+  // Alias para mantener compatibilidad total con referencias existentes
+  const diaSemanaCalculado = diaSeleccionado;
 
   // Cargar lista de colegios
   useEffect(() => {
@@ -525,63 +548,107 @@ export default function PedidoManualPage() {
             </div>
           )}
 
-          {/* 1. SELECCIÓN DE COLEGIO Y FECHA */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-slate-100">
-            {/* Colegio */}
-            <div>
-              <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-emerald-600" /> Colegio / Institución *
-              </label>
-              {esSuperAdmin ? (
-                <select
-                  value={colegioSeleccionado}
-                  onChange={(e) => setColegioSeleccionado(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
-                  required
-                >
-                  {colegios.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800">
-                  {colegioSeleccionado || usuario?.colegioNombre || 'Colegio Asignado'}
+          {/* 1. SELECCIÓN DE COLEGIO, DÍA Y FECHA */}
+          <div className="space-y-4 pb-4 border-b border-slate-100">
+            {/* Fila 1: Colegio y Fecha Calendario */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Colegio */}
+              <div>
+                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-emerald-600" /> Colegio / Institución *
+                </label>
+                {esSuperAdmin ? (
+                  <select
+                    value={colegioSeleccionado}
+                    onChange={(e) => setColegioSeleccionado(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
+                    required
+                  >
+                    {colegios.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800">
+                    {colegioSeleccionado || usuario?.colegioNombre || 'Colegio Asignado'}
+                  </div>
+                )}
+              </div>
+
+              {/* Fecha de Consumo */}
+              <div>
+                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-600" /> Fecha del Almuerzo *
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-700 capitalize">
+                    {diaSeleccionado.toLowerCase()} ({formatearFechaLegiblePeru(fecha)})
+                  </span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={fecha}
+                    onChange={(e) => handleCambiarFecha(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCambiarFecha(fechaHoy)}
+                    className={`px-3 py-2.5 rounded-2xl text-xs font-bold transition border cursor-pointer ${
+                      fecha === fechaHoy
+                        ? 'bg-emerald-600 text-white border-emerald-600'
+                        : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                    }`}
+                    title="Seleccionar fecha actual de hoy"
+                  >
+                    Hoy
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Fecha de Consumo */}
+            {/* Fila 2: Selector Rápido de Días de la Semana Escolar (LUNES A VIERNES) */}
             <div>
               <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-emerald-600" /> Fecha del Almuerzo *
+                  <Clock className="w-3.5 h-3.5 text-emerald-600" /> Seleccionar Día de la Semana *
                 </span>
-                <span className="text-[11px] font-bold text-emerald-700 capitalize">
-                  {diaSemanaCalculado.toLowerCase()} ({formatearFechaLegiblePeru(fecha)})
+                <span className="text-[11px] font-bold text-slate-500">
+                  Menú programado para el <strong className="text-emerald-700 uppercase">{diaSeleccionado}</strong>
                 </span>
               </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setFecha(fechaHoy)}
-                  className={`px-3 py-2.5 rounded-2xl text-xs font-bold transition border cursor-pointer ${
-                    fecha === fechaHoy
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                  }`}
-                  title="Seleccionar fecha actual de hoy"
-                >
-                  Hoy
-                </button>
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+                {DIAS_SEMANA.map((dia) => {
+                  const activo = diaSeleccionado === dia.key;
+                  const esHoy = diaActualSemana === dia.key;
+                  return (
+                    <button
+                      key={dia.key}
+                      type="button"
+                      onClick={() => handleSeleccionarDia(dia.key)}
+                      className={`py-2 sm:py-2.5 px-1 sm:px-2 rounded-2xl text-center transition-all cursor-pointer flex flex-col items-center justify-center border ${
+                        activo
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs font-black scale-[1.02]'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-bold'
+                      }`}
+                    >
+                      <span className="text-xs sm:text-sm leading-tight">{dia.label}</span>
+                      {esHoy && (
+                        <span
+                          className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-md mt-0.5 ${
+                            activo ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'
+                          }`}
+                        >
+                          Hoy
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

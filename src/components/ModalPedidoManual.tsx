@@ -19,12 +19,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { dataService } from '@/lib/dataService';
+import { dataService, DIAS_SEMANA } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import {
   obtenerFechaHoyPeru,
   obtenerDiaActualSemanaPeru,
   formatearFechaLegiblePeru,
+  obtenerFechaParaDiaSemana,
 } from '@/lib/dateUtils';
 import { Plato, MetodoPago, EstadoPago, DiaSemana, Pedido } from '@/types';
 
@@ -64,15 +65,38 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
   const [error, setError] = useState<string | null>(null);
   const [pedidoCreado, setPedidoCreado] = useState<Pedido | null>(null);
 
-  // Calcular el día escolar (LUNES a VIERNES) según la fecha
-  const diaSemanaCalculado = useMemo<DiaSemana>(() => {
+  // Día actual escolar de hoy en Perú
+  const diaActualSemana = useMemo(() => obtenerDiaActualSemanaPeru(), []);
+
+  // Estado del día escolar seleccionado (LUNES a VIERNES)
+  const [diaSeleccionado, setDiaSeleccionado] = useState<DiaSemana>(() => {
     try {
-      const d = new Date(`${fecha}T12:00:00-05:00`);
+      const d = new Date(`${fechaHoy}T12:00:00-05:00`);
       return obtenerDiaActualSemanaPeru(d);
     } catch (_) {
       return 'LUNES';
     }
-  }, [fecha]);
+  });
+
+  // Manejador para cambio de fecha calendario (sincroniza el día automáticamente)
+  const handleCambiarFecha = (nuevaFecha: string) => {
+    const val = nuevaFecha || fechaHoy;
+    setFecha(val);
+    try {
+      const d = new Date(`${val}T12:00:00-05:00`);
+      setDiaSeleccionado(obtenerDiaActualSemanaPeru(d));
+    } catch (_) {}
+  };
+
+  // Manejador para selección directa de día (sincroniza la fecha automáticamente)
+  const handleSeleccionarDia = (dia: DiaSemana) => {
+    setDiaSeleccionado(dia);
+    const nuevaFecha = obtenerFechaParaDiaSemana(dia, fecha || fechaHoy);
+    setFecha(nuevaFecha);
+  };
+
+  // Alias para mantener compatibilidad total con referencias existentes
+  const diaSemanaCalculado = diaSeleccionado;
 
   // Cargar lista de colegios al abrir el modal
   useEffect(() => {
@@ -360,50 +384,108 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
               </div>
             )}
 
-            {/* SELECCIÓN DE COLEGIO Y FECHA */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
-              {/* Colegio: Selector para SuperAdmin, fijo para Admin */}
-              <div>
-                <label className="block text-[11px] font-black uppercase text-slate-600 mb-1 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Colegio / Sede Escolar:</span>
-                </label>
-                {esSuperAdmin ? (
-                  <select
-                    value={colegioSeleccionado}
-                    onChange={(e) => setColegioSeleccionado(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
-                  >
-                    {colegios.map((col) => (
-                      <option key={col} value={col}>
-                        {col}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 flex items-center justify-between">
-                    <span>{colegioSeleccionado || 'Sede asignada'}</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Sede actual</span>
+            {/* SELECCIÓN DE COLEGIO, FECHA Y DÍA ESCOLAR */}
+            <div className="space-y-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Colegio: Selector para SuperAdmin, fijo para Admin */}
+                <div>
+                  <label className="block text-[11px] font-black uppercase text-slate-600 mb-1 flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-orange-500" />
+                    <span>Colegio / Sede Escolar:</span>
+                  </label>
+                  {esSuperAdmin ? (
+                    <select
+                      value={colegioSeleccionado}
+                      onChange={(e) => setColegioSeleccionado(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
+                    >
+                      {colegios.map((col) => (
+                        <option key={col} value={col}>
+                          {col}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 flex items-center justify-between">
+                      <span>{colegioSeleccionado || 'Sede asignada'}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">Sede actual</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Fecha del Almuerzo */}
+                <div>
+                  <label className="block text-[11px] font-black uppercase text-slate-600 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                      <span>Fecha del Almuerzo:</span>
+                    </span>
+                    <span className="text-[10px] font-bold text-orange-700 capitalize">
+                      {diaSeleccionado.toLowerCase()} ({formatearFechaLegiblePeru(fecha)})
+                    </span>
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="date"
+                      value={fecha}
+                      onChange={(e) => handleCambiarFecha(e.target.value)}
+                      className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCambiarFecha(fechaHoy)}
+                      className={`px-2.5 py-2 rounded-xl text-[11px] font-bold transition border cursor-pointer ${
+                        fecha === fechaHoy
+                          ? 'bg-orange-500 text-white border-orange-500'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                      }`}
+                      title="Seleccionar fecha actual de hoy"
+                    >
+                      Hoy
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Fecha del Almuerzo */}
+              {/* Selector Rápido de Días de la Semana Escolar (LUNES A VIERNES) */}
               <div>
-                <label className="block text-[11px] font-black uppercase text-slate-600 mb-1 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Fecha del Almuerzo:</span>
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="date"
-                    value={fecha}
-                    onChange={(e) => setFecha(e.target.value || fechaHoy)}
-                    className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
-                  />
-                  <span className="text-[10px] font-black uppercase px-2 py-2 rounded-xl bg-slate-200 text-slate-700 whitespace-nowrap">
-                    {diaSemanaCalculado}
+                <label className="block text-[11px] font-black uppercase text-slate-600 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-orange-500" />
+                    <span>Seleccionar Día de la Semana:</span>
                   </span>
+                  <span className="text-[10px] font-bold text-slate-500">
+                    Menú: <strong className="text-orange-600 uppercase">{diaSeleccionado}</strong>
+                  </span>
+                </label>
+                <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
+                  {DIAS_SEMANA.map((dia) => {
+                    const activo = diaSeleccionado === dia.key;
+                    const esHoy = diaActualSemana === dia.key;
+                    return (
+                      <button
+                        key={dia.key}
+                        type="button"
+                        onClick={() => handleSeleccionarDia(dia.key)}
+                        className={`py-1.5 sm:py-2 px-1 rounded-xl text-center transition-all cursor-pointer flex flex-col items-center justify-center border ${
+                          activo
+                            ? 'bg-orange-500 text-white border-orange-500 shadow-xs font-black'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 font-bold'
+                        }`}
+                      >
+                        <span className="text-[11px] sm:text-xs leading-tight">{dia.short}</span>
+                        {esHoy && (
+                          <span
+                            className={`text-[8px] font-black uppercase px-1 py-0.1 rounded-sm mt-0.5 ${
+                              activo ? 'bg-white/25 text-white' : 'bg-orange-100 text-orange-800'
+                            }`}
+                          >
+                            Hoy
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

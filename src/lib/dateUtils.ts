@@ -215,3 +215,43 @@ export function haPasadoHoraLimite(horaLimite24: string, date: Date = new Date()
   }
 }
 
+/**
+ * Dada una fecha de referencia 'YYYY-MM-DD' y un día escolar ('LUNES' a 'VIERNES'),
+ * retorna la fecha correspondiente 'YYYY-MM-DD' en la misma semana escolar de Perú.
+ * Si la fecha de referencia cae en fin de semana, apunta a la semana escolar entrante.
+ */
+export function obtenerFechaParaDiaSemana(dia: DiaSemana, fechaReferencia: string = obtenerFechaHoyPeru()): string {
+  try {
+    const [y, m, d] = fechaReferencia.split('-').map(Number);
+    if (!y || !m || !d) return fechaReferencia;
+    const date = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    const diaActualSemana = date.getUTCDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+
+    const MAPA_DIAS: Record<DiaSemana, number> = {
+      LUNES: 1,
+      MARTES: 2,
+      MIERCOLES: 3,
+      JUEVES: 4,
+      VIERNES: 5,
+    };
+    const diaDestinoSemana = MAPA_DIAS[dia] || 1;
+
+    let diffDias = 0;
+    if (diaActualSemana === 0) {
+      // Domingo -> Lunes entrante está a +1 día
+      diffDias = diaDestinoSemana;
+    } else if (diaActualSemana === 6) {
+      // Sábado -> Lunes entrante está a +2 días
+      diffDias = diaDestinoSemana + 1;
+    } else {
+      // Lunes a Viernes -> Moverse dentro de la misma semana
+      diffDias = diaDestinoSemana - diaActualSemana;
+    }
+
+    return calcularOffsetFechaPeru(fechaReferencia, diffDias);
+  } catch {
+    return fechaReferencia;
+  }
+}
+
+

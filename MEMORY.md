@@ -1122,6 +1122,25 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/fluidez-navegacion-admin-sin-login-flash.test.mjs`
   - `MEMORY.md`
 
+### D-052 — 2026-10-22 — Selección de Día Escolar en Toma de Pedidos Manuales
+
+- Decisión:
+  1. **Selector de Días de la Semana en Pedido Manual:**
+     - En el registro de pedidos manuales (`src/app/admin/pedido-manual/page.tsx`, `src/app/superadmin/pedido-manual/page.tsx` y en el modal `src/components/ModalPedidoManual.tsx`), se incorpora un selector explícito e interactivo de los días de la semana escolar (**LUNES, MARTES, MIÉRCOLES, JUEVES, VIERNES**) mediante botones estilo pills con destaque visual del día seleccionado y badge "Hoy".
+  2. **Sincronización Bidireccional de Día y Fecha:**
+     - Al seleccionar un día de la semana (ej. Martes o Jueves), la fecha del pedido (`fecha`) se actualiza automáticamente a la fecha correspondiente de ese día en la semana escolar usando la nueva función `obtenerFechaParaDiaSemana` en `dateUtils.ts`.
+     - Si el administrador ajusta la fecha calendario (`<input type="date">`), el día de la semana (`diaSeleccionado`) se sincroniza inmediatamente.
+  3. **Carga Reactiva de Platos del Menú Escolar:**
+     - Al cambiar de día, el sistema consulta de inmediato los platos configurados para ese día escolar en el colegio seleccionado (`dataService.obtenerPlatosPorDia(diaSeleccionado, colegioSeleccionado)`).
+     - Si la entrada o ensalada seleccionada previamente no existe en el nuevo día, se restablece suavemente a "Sin entrada" y "Sin ensalada" respectivamente, garantizando consistencia gastronómica.
+- Fuente: instrucción explícita del usuario: *"cuando se haga un pedido manualmente tambien debe permitiri selccionar el dia"*
+- Impacto:
+  - `src/lib/dateUtils.ts`: función `obtenerFechaParaDiaSemana`.
+  - `src/app/admin/pedido-manual/page.tsx`: selector de días de la semana escolar y sincronización de fecha y platos.
+  - `src/components/ModalPedidoManual.tsx`: selector de días de la semana escolar y sincronización de fecha y platos.
+  - `tests/pedido-manual-seleccion-dia-semana.test.mjs`: suite de pruebas automatizadas.
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
