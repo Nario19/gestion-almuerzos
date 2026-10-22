@@ -11,6 +11,7 @@ import {
   Filter,
   Flame,
   Utensils,
+  Salad,
   Radio,
   Calendar,
   ChevronLeft,
@@ -342,7 +343,7 @@ export default function CocinaPage() {
       </div>
 
       {/* SECCIÓN 1: CONSOLIDADO DE ENTRADAS Y SEGUNDOS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className={`grid grid-cols-1 ${resumen.ensaladas && resumen.ensaladas.length > 0 ? 'lg:grid-cols-3 md:grid-cols-2' : 'md:grid-cols-2'} gap-6 mb-8`}>
         {/* PANEL ENTRADAS */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
@@ -412,6 +413,37 @@ export default function CocinaPage() {
             )}
           </div>
         </div>
+
+        {/* PANEL ENSALADAS */}
+        {resumen.ensaladas && resumen.ensaladas.length > 0 && (
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <Salad className="w-5 h-5 text-emerald-600" />
+                Consolidado de Ensaladas
+              </h2>
+              <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-xl">
+                {resumen.ensaladas.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {resumen.ensaladas.map((item) => (
+                <div
+                  key={item.plato}
+                  className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80"
+                >
+                  <span className="text-sm font-bold text-slate-800 pr-2">{item.plato}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-2xl font-black text-slate-900 bg-white px-3 py-1 rounded-xl shadow-xs border border-slate-200">
+                      {item.cantidad}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* SECCIÓN 1.5: DESGLOSE INDEPENDIENTE DE ALMUERZOS POR CADA COLEGIO (Exclusivo Superadmin) */}
@@ -573,6 +605,9 @@ export default function CocinaPage() {
                   <div className="text-xs text-slate-700">
                     <span className="text-orange-600 font-semibold">{p.entradaNombre}</span> +{' '}
                     <span className="text-slate-800 font-semibold">{p.segundoNombre}</span>
+                    {p.ensaladaNombre && p.ensaladaNombre !== 'Sin ensalada' && (
+                      <> + <span className="text-emerald-700 font-semibold">{p.ensaladaNombre}</span></>
+                    )}
                     {p.refrigerioNombre && (
                       <span className="text-emerald-700 font-bold block mt-0.5">Extras: {p.refrigerioNombre}</span>
                     )}

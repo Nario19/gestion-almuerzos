@@ -52,6 +52,7 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
   const [segundoNombre, setSegundoNombre] = useState('');
   const [platoPersonalizado, setPlatoPersonalizado] = useState(false);
   const [entradaNombre, setEntradaNombre] = useState('Sin entrada');
+  const [ensaladaNombre, setEnsaladaNombre] = useState('Sin ensalada');
   const [observacion, setObservacion] = useState('');
   const [padreNombre, setPadreNombre] = useState('');
   const [telefonoContacto, setTelefonoContacto] = useState('');
@@ -143,12 +144,22 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
 
   if (!abierto) return null;
 
-  // Filtrar platos por tipo
+  // Filtrar platos por tipo (Entrada, Segundo, Ensalada)
+  const esPlatoEnsalada = (p: Plato) => {
+    const t = (p.tipo || '').toLowerCase().trim();
+    const n = (p.nombre || '').toLowerCase().trim();
+    const d = (p.descripcion || '').toLowerCase().trim();
+    return t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada');
+  };
+  const esPlatoEntrada = (p: Plato) => {
+    if (esPlatoEnsalada(p)) return false;
+    const t = (p.tipo || '').toLowerCase().trim();
+    return t.includes('entrada') || t.includes('sopa') || t.includes('postre') || t.includes('caldo') || t.includes('crema');
+  };
+  const platosEnsaladas = platos.filter(esPlatoEnsalada);
+  const platosEntradas = platos.filter(esPlatoEntrada);
   const platosSegundos = platos.filter(
-    (p) => (p.tipo || '').toUpperCase() === 'SEGUNDO' || !(p.tipo || '').toUpperCase().includes('ENTRADA')
-  );
-  const platosEntradas = platos.filter(
-    (p) => (p.tipo || '').toUpperCase().includes('ENTRADA') || (p.tipo || '').toUpperCase().includes('SOPA') || (p.tipo || '').toUpperCase().includes('POSTRE')
+    (p) => !esPlatoEnsalada(p) && ((p.tipo || '').toUpperCase() === 'SEGUNDO' || !esPlatoEntrada(p))
   );
 
   const reiniciarFormulario = () => {
@@ -156,6 +167,8 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
     setObservacion('');
     setPadreNombre('');
     setTelefonoContacto('');
+    setEntradaNombre('Sin entrada');
+    setEnsaladaNombre('Sin ensalada');
     setPedidoCreado(null);
     setError(null);
     setMetodoPago('Efectivo');
@@ -202,6 +215,7 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
         telefonoContacto: telefonoContacto.trim() || '999999999',
         entradaNombre: entradaNombre.trim() || 'Sin entrada',
         segundoNombre: segundoNombre.trim(),
+        ensaladaNombre: ensaladaNombre.trim() || 'Sin ensalada',
         observacion: observacion.trim() || undefined,
         metodoPago: metodoPago,
         estadoPago: estadoPagoFinal,
@@ -301,6 +315,12 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                 <div className="flex justify-between">
                   <span className="text-slate-500">Entrada/Postre:</span>
                   <span className="font-semibold text-slate-800">{pedidoCreado.entradaNombre}</span>
+                </div>
+              )}
+              {pedidoCreado.ensaladaNombre && pedidoCreado.ensaladaNombre !== 'Sin ensalada' && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Ensalada:</span>
+                  <span className="font-semibold text-slate-800">{pedidoCreado.ensaladaNombre}</span>
                 </div>
               )}
               <div className="flex justify-between">
@@ -514,7 +534,7 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
               {platosEntradas.length > 0 && (
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Entrada, Sopa o Postre (Opcional):
+                    Entrada, Sopa o Fruta (Opcional):
                   </label>
                   <select
                     value={entradaNombre}
@@ -525,6 +545,27 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                     {platosEntradas.map((p) => (
                       <option key={p.id} value={p.nombre}>
                         {p.nombre} ({p.tipo})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Selector de Ensalada (Opcional) */}
+              {platosEnsaladas.length > 0 && (
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Ensalada (Opcional):
+                  </label>
+                  <select
+                    value={ensaladaNombre}
+                    onChange={(e) => setEnsaladaNombre(e.target.value)}
+                    className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
+                  >
+                    <option value="Sin ensalada">Sin ensalada</option>
+                    {platosEnsaladas.map((p) => (
+                      <option key={p.id} value={p.nombre}>
+                        {p.nombre}
                       </option>
                     ))}
                   </select>

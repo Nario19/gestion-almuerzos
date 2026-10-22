@@ -185,9 +185,10 @@ ${marginX} ${currentY} ${contentWidth} ${rowHeight} re f
 ${marginX} ${currentY} m ${marginX + contentWidth} ${currentY} l S
 `;
 
+    const ensaladaTexto = ped.ensaladaNombre && ped.ensaladaNombre !== 'Sin ensalada' ? ` + ${ped.ensaladaNombre}` : '';
     const platoTexto = ped.entradaNombre
-      ? `${ped.entradaNombre} + ${ped.segundoNombre}`
-      : ped.segundoNombre || 'Almuerzo escolar';
+      ? `${ped.entradaNombre} + ${ped.segundoNombre}${ensaladaTexto}`
+      : `${ped.segundoNombre || 'Almuerzo escolar'}${ensaladaTexto}`;
 
     const estudianteTexto = ped.gradoSeccion
       ? `${ped.estudianteNombre} (${ped.gradoSeccion})`

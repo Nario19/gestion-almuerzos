@@ -406,6 +406,15 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
     }
   }
 
+  let ensaladaNombre: string | undefined = undefined;
+  if (obs && obs.includes('[Ensalada:')) {
+    const matchEnsalada = obs.match(/\[Ensalada:\s*([^\]]+)\]/);
+    if (matchEnsalada) {
+      ensaladaNombre = matchEnsalada[1].trim();
+      obs = obs.replace(/\s*•?\s*\[Ensalada:\s*[^\]]+\]/, '').trim() || undefined;
+    }
+  }
+
   // Normalización defensiva de fecha según la zona horaria de Perú (America/Lima)
   const fechaNormalizada = d.created_at
     ? obtenerFechaPeruDeIso(d.created_at)
@@ -426,6 +435,7 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
     telefonoContacto: d.padre_telefono || (d as { telefono_contacto?: string }).telefono_contacto || '',
     entradaNombre: d.entrada_nombre || '',
     segundoNombre: d.segundo_nombre || '',
+    ensaladaNombre: ensaladaNombre || (d as { ensalada_nombre?: string }).ensalada_nombre || undefined,
     refrigerioNombre,
     observacion: obs || undefined,
     metodoPago: d.metodo_pago || 'Pagar luego',
@@ -969,6 +979,9 @@ export const dataService = {
     };
 
     let obsCompleta = nuevo.observacion || '';
+    if (nuevo.ensaladaNombre) {
+      obsCompleta = obsCompleta ? `${obsCompleta} • [Ensalada: ${nuevo.ensaladaNombre}]` : `[Ensalada: ${nuevo.ensaladaNombre}]`;
+    }
     if (nuevo.refrigerioNombre) {
       obsCompleta = obsCompleta ? `${obsCompleta} • [Extras: ${nuevo.refrigerioNombre}]` : `[Extras: ${nuevo.refrigerioNombre}]`;
     }
@@ -1376,6 +1389,7 @@ export const dataService = {
 
     const entradasMap = new Map<string, { count: number; obs: ObservacionCocinaItem[] }>();
     const segundosMap = new Map<string, { count: number; obs: ObservacionCocinaItem[] }>();
+    const ensaladasMap = new Map<string, { count: number; obs: ObservacionCocinaItem[] }>();
 
     let pedidosConObservacion = 0;
     let pendientesPago = 0;
@@ -1422,6 +1436,27 @@ export const dataService = {
         });
       }
       segundosMap.set(p.segundoNombre, segundoActual);
+
+      // Contar Ensaladas (excluyendo si el alumno seleccionó "Sin ensalada")
+      const esSinEnsalada =
+        !p.ensaladaNombre ||
+        p.ensaladaNombre.trim() === '' ||
+        p.ensaladaNombre === 'Sin ensalada' ||
+        p.ensaladaNombre.toLowerCase().includes('sin ensalada');
+
+      if (!esSinEnsalada && p.ensaladaNombre) {
+        const ensaladaActual = ensaladasMap.get(p.ensaladaNombre) || { count: 0, obs: [] };
+        ensaladaActual.count += 1;
+        if (tieneObs) {
+          ensaladaActual.obs.push({
+            estudiante: p.estudianteNombre,
+            grado: p.gradoSeccion,
+            colegio: p.colegioNombre,
+            observacion: p.observacion!,
+          });
+        }
+        ensaladasMap.set(p.ensaladaNombre, ensaladaActual);
+      }
     });
 
     const entradas = Array.from(entradasMap.entries()).map(([plato, data]) => ({
@@ -1434,6 +1469,13 @@ export const dataService = {
     const segundos = Array.from(segundosMap.entries()).map(([plato, data]) => ({
       plato,
       tipo: 'SEGUNDO' as const,
+      cantidad: data.count,
+      observacionesEspeciales: data.obs,
+    }));
+
+    const ensaladas = Array.from(ensaladasMap.entries()).map(([plato, data]) => ({
+      plato,
+      tipo: 'ENSALADA' as const,
       cantidad: data.count,
       observacionesEspeciales: data.obs,
     }));
@@ -1451,6 +1493,7 @@ export const dataService = {
     const porColegio = Array.from(pedidosPorColegioMap.entries()).map(([colNom, pedidosCol]) => {
       const segMapCol = new Map<string, number>();
       const entMapCol = new Map<string, number>();
+      const ensMapCol = new Map<string, number>();
 
       pedidosCol.forEach((p) => {
         if (p.segundoNombre) {
@@ -1458,6 +1501,9 @@ export const dataService = {
         }
         if (p.entradaNombre) {
           entMapCol.set(p.entradaNombre, (entMapCol.get(p.entradaNombre) || 0) + 1);
+        }
+        if (p.ensaladaNombre && p.ensaladaNombre !== 'Sin ensalada' && !p.ensaladaNombre.toLowerCase().includes('sin ensalada')) {
+          ensMapCol.set(p.ensaladaNombre, (ensMapCol.get(p.ensaladaNombre) || 0) + 1);
         }
       });
 
@@ -1477,12 +1523,21 @@ export const dataService = {
         observacionesEspeciales: [],
       }));
 
+      const ensaladasCol = Array.from(ensMapCol.entries()).map(([plato, cantidad]) => ({
+        plato,
+        tipo: 'ENSALADA' as const,
+        cantidad,
+        colegioNombre: colNom,
+        observacionesEspeciales: [],
+      }));
+
       return {
         colegioNombre: colNom,
         identificador: obtenerIdentificadorColegio(colNom),
         totalPedidos: pedidosCol.length,
         segundos: segundosCol,
         entradas: entradasCol,
+        ensaladas: ensaladasCol,
       };
     });
 
@@ -1490,6 +1545,7 @@ export const dataService = {
       totalPedidos: pedidosActivos.length,
       entradas,
       segundos,
+      ensaladas,
       pedidosConObservacion,
       pedidosPendientesPago: pendientesPago,
       pedidosPagados: pagados,

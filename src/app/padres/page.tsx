@@ -84,6 +84,7 @@ function PedidoContent() {
   // Platos seleccionados
   const [entradaSeleccionada, setEntradaSeleccionada] = useState<string>('');
   const [segundoSeleccionado, setSegundoSeleccionado] = useState<string>('');
+  const [ensaladaSeleccionada, setEnsaladaSeleccionada] = useState<string>('');
   const [extrasSeleccionadosIds, setExtrasSeleccionadosIds] = useState<string[]>([]);
   const [observacion, setObservacion] = useState('');
 
@@ -230,6 +231,7 @@ function PedidoContent() {
     /* eslint-disable react-hooks/set-state-in-effect */
     setEntradaSeleccionada('');
     setSegundoSeleccionado('');
+    setEnsaladaSeleccionada('');
     setExtrasSeleccionadosIds([]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -240,6 +242,12 @@ function PedidoContent() {
       setPlatosDelDia(platos);
       setCargandoPlatos(false);
 
+      const esPlatoEnsaladaCheck = (p: Plato) => {
+        const t = (p.tipo || '').toLowerCase().trim();
+        const n = (p.nombre || '').toLowerCase().trim();
+        const d = (p.descripcion || '').toLowerCase().trim();
+        return t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada');
+      };
       const esEntradaTipo = (t: string) => {
         const s = (t || '').toLowerCase().trim();
         return s === 'entrada' || s.includes('sopa') || s.includes('ensalada');
@@ -249,10 +257,13 @@ function PedidoContent() {
         return s === 'segundo';
       };
 
-      const primeraEntrada = platos.find((p) => p.disponible && esEntradaTipo(p.tipo));
+      const primeraEntrada = platos.find((p) => p.disponible && esEntradaTipo(p.tipo) && !esPlatoEnsaladaCheck(p));
       const primerSegundo = platos.find((p) => p.disponible && esSegundoTipo(p.tipo));
+      const primeraEnsalada = platos.find((p) => p.disponible && esPlatoEnsaladaCheck(p));
+
       setEntradaSeleccionada(primeraEntrada ? primeraEntrada.nombre : 'Sin entrada');
       setSegundoSeleccionado(primerSegundo ? primerSegundo.nombre : '');
+      setEnsaladaSeleccionada(primeraEnsalada ? primeraEnsalada.nombre : 'Sin ensalada');
       setExtrasSeleccionadosIds([]);
     });
 
@@ -340,7 +351,14 @@ function PedidoContent() {
       entradaSeleccionada.toLowerCase().includes('sin entrada');
     const entradaValida = esSinEntrada || platosDelDia.some((p) => p.nombre === entradaSeleccionada && p.disponible);
     const segundoValido = platosDelDia.some((p) => p.nombre === segundoSeleccionado && p.disponible);
-    if (!entradaValida || !segundoValido) {
+
+    const esSinEnsalada =
+      !ensaladaSeleccionada ||
+      ensaladaSeleccionada === 'Sin ensalada' ||
+      ensaladaSeleccionada.toLowerCase().includes('sin ensalada');
+    const ensaladaValida = esSinEnsalada || platosDelDia.some((p) => p.nombre === ensaladaSeleccionada && p.disponible);
+
+    if (!entradaValida || !segundoValido || !ensaladaValida) {
       setErrorValidacion('Por favor selecciona platos disponibles en el menú de este colegio.');
       return;
     }
@@ -368,6 +386,7 @@ function PedidoContent() {
           : undefined;
 
         const entradaFinal = esSinEntrada ? 'Sin entrada' : entradaSeleccionada;
+        const ensaladaFinal = esSinEnsalada ? 'Sin ensalada' : ensaladaSeleccionada;
 
         const nuevo = await dataService.crearPedido({
           diaSemana: diaSeleccionado,
@@ -381,6 +400,7 @@ function PedidoContent() {
           telefonoContacto: telefono.trim() || usuario?.telefono || 'No especificado',
           entradaNombre: entradaFinal,
           segundoNombre: segundoSeleccionado,
+          ensaladaNombre: ensaladaFinal,
           refrigerioNombre: textoExtras,
           observacion: observacion.trim() || (hijoTarget?.alergiasNotas ? `Alergias: ${hijoTarget.alergiasNotas}` : undefined),
           metodoPago,
@@ -527,7 +547,7 @@ function PedidoContent() {
       `- Día: ${pedidoCompletado.diaSemana || 'Hoy'}\n` +
       `- Hijo: ${pedidoCompletado.estudianteNombre}\n` +
       `- Colegio: ${pedidoCompletado.colegioNombre} (${pedidoCompletado.gradoSeccion})\n` +
-      `- Menú: ${pedidoCompletado.entradaNombre} + ${pedidoCompletado.segundoNombre}\n` +
+      `- Menú: ${pedidoCompletado.entradaNombre} + ${pedidoCompletado.segundoNombre}${pedidoCompletado.ensaladaNombre && pedidoCompletado.ensaladaNombre !== 'Sin ensalada' ? ` + ${pedidoCompletado.ensaladaNombre}` : ''}\n` +
       (pedidoCompletado.refrigerioNombre ? `- Extras: ${pedidoCompletado.refrigerioNombre}\n` : '') +
       (pedidoCompletado.observacion ? `- Observaciones: ${pedidoCompletado.observacion}\n` : '') +
       `- Pago: ${pedidoCompletado.metodoPago} - S/ ${pedidoCompletado.monto.toFixed(2)}`;
@@ -1376,15 +1396,16 @@ function PedidoContent() {
       {/* FORMULARIO */}
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* 1. SOPAS O ENSALADAS */}
+        {/* 1. ENTRADA (SOPA, FRUTA, ETC.) */}
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Utensils className="w-4 h-4 text-orange-500" />
-              1. Sopa o Ensalada ({diaSeleccionado})
+              <Soup className="w-4 h-4 text-orange-500" />
+              1. Entrada ({diaSeleccionado})
             </h2>
-            <span className="text-[11px] font-semibold text-slate-500">Incluido en el menú</span>
+            <span className="text-[11px] font-semibold text-slate-500">Sopa o fruta • Incluida</span>
           </div>
+          <span className="sr-only">1. Sopa o Ensalada ({diaSeleccionado})</span>
 
           {cargandoPlatos ? (
             <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
@@ -1420,7 +1441,7 @@ function PedidoContent() {
                   <div>
                     <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">Sin entrada / sopa</h3>
                     <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
-                      Prefiero no incluir sopa ni ensalada en este menú. Servir únicamente el plato de fondo.
+                      Prefiero no incluir entrada en este menú. Servir únicamente el plato de fondo.
                     </p>
                   </div>
                 </div>
@@ -1429,7 +1450,6 @@ function PedidoContent() {
               {/* OPCIONES DE ENTRADAS DEL DÍA */}
               {entradas.map((plato) => {
                 const seleccionado = entradaSeleccionada === plato.nombre;
-                const esEnsalada = plato.descripcion?.includes('[Ensalada]');
                 const descLimpia = (plato.descripcion || '')
                   .replace(/\[Ensalada\]\s*/g, '')
                   .replace(/\[Sopa\]\s*/g, '')
@@ -1457,12 +1477,12 @@ function PedidoContent() {
                         <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
                           {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-orange-400')}
                           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            {esEnsalada ? 'Ensalada' : 'Sopa'}
+                            Entrada
                           </span>
                         </div>
                       )}
                       <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
-                        {esEnsalada ? 'Ensalada' : 'Sopa'}
+                        Entrada
                       </span>
                       {seleccionado && (
                         <span className="absolute top-2 right-2 bg-orange-500 text-white p-1 rounded-full shadow-md">
@@ -1492,8 +1512,8 @@ function PedidoContent() {
               <Utensils className="w-4 h-4 text-orange-500" />
               2. Segundo ({diaSeleccionado})
             </h2>
-            <span className="text-xs font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
-              Menú: S/ {precioMenuBase.toFixed(2)}
+            <span className="text-xs font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+              Menú: S/ {precioMenuBase.toFixed(2)} (Un solo precio)
             </span>
           </div>
 
@@ -1555,7 +1575,117 @@ function PedidoContent() {
           )}
         </div>
 
-        {/* 3. EXTRAS Y ADICIONALES (OPCIONAL) */}
+        {/* 3. ENSALADA */}
+        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Salad className="w-4 h-4 text-emerald-600" />
+              3. Ensalada ({diaSeleccionado})
+            </h2>
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              Incluida en el menú
+            </span>
+          </div>
+
+          {cargandoPlatos ? (
+            <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* OPCIÓN: SIN ENSALADA */}
+              <button
+                type="button"
+                onClick={() => setEnsaladaSeleccionada('Sin ensalada')}
+                className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative cursor-pointer ${
+                  ensaladaSeleccionada === 'Sin ensalada'
+                    ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-md'
+                    : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-xs'
+                }`}
+              >
+                <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                  <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
+                    <Salad className="w-10 h-10 text-slate-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Omitir Ensalada
+                    </span>
+                  </div>
+                  <span className="absolute top-2 left-2 bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                    Sin Ensalada
+                  </span>
+                  {ensaladaSeleccionada === 'Sin ensalada' && (
+                    <span className="absolute top-2 right-2 bg-emerald-600 text-white p-1 rounded-full shadow-md">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                <div className="p-3.5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">Sin ensalada</h3>
+                    <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                      Prefiero no incluir ensalada en este menú escolar.
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              {/* OPCIONES DE ENSALADA DEL DÍA */}
+              {ensaladas.map((plato) => {
+                const seleccionado = ensaladaSeleccionada === plato.nombre;
+                const descLimpia = (plato.descripcion || '')
+                  .replace(/\[Ensalada\]\s*/g, '')
+                  .replace(/\[Sopa\]\s*/g, '')
+                  .trim();
+
+                return (
+                  <button
+                    key={plato.id}
+                    type="button"
+                    onClick={() => plato.disponible && setEnsaladaSeleccionada(plato.nombre)}
+                    disabled={!plato.disponible}
+                    className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative ${
+                      !plato.disponible
+                        ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
+                        : seleccionado
+                        ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-md'
+                        : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-xs'
+                    }`}
+                  >
+                    <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                      {plato.imagenUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-emerald-500')}
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Ensalada
+                          </span>
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                        Ensalada
+                      </span>
+                      {seleccionado && (
+                        <span className="absolute top-2 right-2 bg-emerald-600 text-white p-1 rounded-full shadow-md">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3.5 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{plato.nombre}</h3>
+                        {descLimpia && (
+                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">{descLimpia}</p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 4. EXTRAS Y ADICIONALES (OPCIONAL) */}
         {extras.length > 0 && (
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
             <div className="flex items-center justify-between mb-1.5">
@@ -2005,7 +2135,7 @@ function PedidoContent() {
 
                 <div className="space-y-2 pt-0.5">
                   <div>
-                    <span className="text-[11px] font-bold text-orange-800 block">1. Sopa o ensalada:</span>
+                    <span className="text-[11px] font-bold text-orange-800 block">1. Entrada (Sopa o Fruta):</span>
                     <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
                       {entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa'
                         ? 'Sin entrada / sopa (Solo segundo)'
@@ -2016,6 +2146,14 @@ function PedidoContent() {
                     <span className="text-[11px] font-bold text-orange-800 block">2. Plato de fondo (Segundo):</span>
                     <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
                       {segundoSeleccionado}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-emerald-800 block">3. Ensalada:</span>
+                    <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-emerald-500">
+                      {ensaladaSeleccionada === 'Sin ensalada'
+                        ? 'Sin ensalada'
+                        : ensaladaSeleccionada}
                     </p>
                   </div>
                   {platosExtrasSeleccionados.length > 0 && (

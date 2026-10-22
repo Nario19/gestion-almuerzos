@@ -1055,6 +1055,48 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/admin-prefetch-y-padres-filtro-sin-hijos.test.mjs`
   - `MEMORY.md`
 
+### D-050 — 2026-10-21 — Estructura del Menú en 3 Componentes (Entrada, Segundo, Ensalada) con Opciones "Sin Entrada" y "Sin Ensalada" a Un Solo Precio
+
+- Decisión:
+  1. Estructurar el menú escolar en tres componentes gastronómicos diferenciados e independientes:
+     - **1. Entrada:** Opciones ligeras del día (ej. Caldo de pollo, Sopa criolla, Crema de verduras, Fruta de temporada, etc.) con opción de exclusión explícita **"Sin entrada"** (Solo segundo).
+     - **2. Segundo:** Plato principal de fondo (ej. Op 1: Lentejitas con chuleta de chancho, Op 2: Tallarines a lo Alfredo, Op 3: Filete a la parrilla con papas y arroz).
+     - **3. Ensalada:** Ensaladas frescas o cocidas del día (ej. Ensalada fresca santarrosina, Ensalada rusa, etc.) con opción de exclusión explícita **"Sin ensalada"**.
+  2. **Un Solo Precio Universal del Menú:** El almuerzo completo tiene un único precio integral (precio base configurado, ej. S/ 12.00). La elección o exclusión de entrada y/o ensalada no altera el precio final (no hay recargos por pedir entrada y ensalada juntas, ni descuentos por omitirlas). Los únicos incrementos provienen de extras opcionales (bebidas, snacks, postres adicionales).
+  3. **Persistencia e Integridad sin Alteración de Esquema Productivo:**
+     - `ensaladaNombre` se almacena y recupera a través de la propiedad tipada `Pedido.ensaladaNombre` y el tag estructurado `[Ensalada: ...]`, garantizando compatibilidad con la base de datos PostgreSQL en Supabase sin romper constraints ni llamadas API.
+  4. **Visualización y Operatividad Transversal:**
+     - **Padres (`src/app/padres/page.tsx`):** Selector de tres secciones ordenadas (Entrada, Segundo, Ensalada) con tarjetas interactivas "Sin entrada" y "Sin ensalada", modal de confirmación con los tres platos desglosados y mensaje de WhatsApp con el detalle completo.
+     - **Admin Pedido Manual (`pedido-manual/page.tsx` y `ModalPedidoManual.tsx`):** Formularios con selección independiente de Entrada, Segundo y Ensalada.
+     - **Despacho (`despacho/page.tsx`):** Columnas y filas visualizan Entrada, Segundo y Ensalada asignados al alumno.
+     - **Cocina (`cocina/page.tsx`):** Panel de consolidado de Ensaladas junto a Sopas y Segundos, permitiendo a cocina conocer con precisión las raciones exactas de cada preparación.
+- Fuente: instrucción explícita del usuario: *"EL MENU SE DIVIDE ASI: ENTRADA (SOPA O FRUTA ETC), SEGUNDO, ENSALADA. TE ENVIO UN EJEMPLO PARA QUE ME ENTIENDAS ES UN EJEMPLO REAL GUIATE DE ESTO. AHORA DEBE HABER LA OPCION DE SIN ENTRADA Y SIN ENSALADA. ENTRADA:CALDO DE POLLO O FRUTA DE TEMPORADA. SEGUNDO: OP 1: LENTEJITAS CON CHULETA DE CHANCHO, OP 2: TALLARINES A LO ALFREDO, OP 3: FILETE A LA PARRILLA CON PAPAS Y ARROZ. ENSALADA: ENSALADA FRESCA. Y TODO TIENEN UN SOLO PRECIO"*
+- Implementación de Ingeniería:
+  - `src/types/index.ts`: inclusión de `'ENSALADA'` en `TipoPlato`, `ensaladaNombre?: string` en `Pedido` e `ItemFiadoPedido`, y `ensaladas?: ResumenCocinaItem[]` en `ResumenCocina`.
+  - `src/lib/dataService.ts`: normalización y extracción de `[Ensalada: ...]`, persistencia en `crearPedido`, cálculo de porciones de ensalada en `calcularResumenCocina`.
+  - `src/app/padres/page.tsx`: secciones 1 (Entrada), 2 (Segundo), 3 (Ensalada) con tarjetas "Sin entrada" y "Sin ensalada", corroboración de pedido y WhatsApp.
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`: registro y visualización de opciones del menú escolar.
+  - `src/app/admin/pedido-manual/page.tsx` y `src/components/ModalPedidoManual.tsx`: selección de Ensalada con "Sin ensalada".
+  - `src/app/admin/despacho/page.tsx`: columna de pedido visualiza Ensalada junto a Entrada y Segundo.
+  - `src/app/admin/cocina/page.tsx`: consolidado de porciones de ensalada y tickets de preparación.
+  - `src/app/admin/fiado/page.tsx`: desglose en estados de cuenta y mensajes de cobranza.
+  - `src/lib/pdfComprobanteGenerator.ts`: mención de la ensalada en el comprobante imprimible.
+  - `tests/menu-division-entrada-segundo-ensalada.test.mjs`: nueva suite con 6 pruebas automatizadas (100% aprobadas).
+- Impacto:
+  - `src/types/index.ts`
+  - `src/lib/dataService.ts`
+  - `src/app/padres/page.tsx`
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/components/ModalPedidoManual.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/lib/pdfComprobanteGenerator.ts`
+  - `tests/menu-division-entrada-segundo-ensalada.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

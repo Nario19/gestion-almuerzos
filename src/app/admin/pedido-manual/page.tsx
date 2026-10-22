@@ -23,6 +23,7 @@ import {
   Receipt,
   PlusCircle,
   Utensils,
+  Salad,
   Search,
   History,
   X,
@@ -77,6 +78,7 @@ export default function PedidoManualPage() {
   const [segundoNombre, setSegundoNombre] = useState('');
   const [platoPersonalizado, setPlatoPersonalizado] = useState(false);
   const [entradaNombre, setEntradaNombre] = useState('Sin entrada');
+  const [ensaladaNombre, setEnsaladaNombre] = useState('Sin ensalada');
   const [observacion, setObservacion] = useState('');
   const [observacionesDisponibles, setObservacionesDisponibles] = useState<string[]>([]);
   const [padreNombre, setPadreNombre] = useState('');
@@ -210,18 +212,27 @@ export default function PedidoManualPage() {
     );
   }
 
-  // Filtrar platos por tipo (igual que en Menú Semanal)
-  const esEntrada = (tipo: string) => {
-    const s = (tipo || '').toLowerCase().trim();
-    return s === 'entrada' || s.includes('sopa') || s.includes('postre');
+  // Filtrar platos por tipo (Entrada, Segundo, Ensalada)
+  const esPlatoEnsalada = (p: Plato) => {
+    const t = (p.tipo || '').toLowerCase().trim();
+    const n = (p.nombre || '').toLowerCase().trim();
+    const d = (p.descripcion || '').toLowerCase().trim();
+    return t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada');
   };
-  const esSegundo = (tipo: string) => {
-    const s = (tipo || '').toLowerCase().trim();
-    return s === 'segundo' || (!esEntrada(tipo) && s !== 'bebida');
+  const esPlatoEntrada = (p: Plato) => {
+    if (esPlatoEnsalada(p)) return false;
+    const s = (p.tipo || '').toLowerCase().trim();
+    return s === 'entrada' || s.includes('sopa') || s.includes('postre') || s.includes('caldo') || s.includes('crema');
+  };
+  const esPlatoSegundo = (p: Plato) => {
+    if (esPlatoEnsalada(p)) return false;
+    const s = (p.tipo || '').toLowerCase().trim();
+    return s === 'segundo' || (!esPlatoEntrada(p) && s !== 'bebida');
   };
 
-  const platosEntradas = platos.filter((p) => esEntrada(p.tipo));
-  const platosSegundos = platos.filter((p) => esSegundo(p.tipo));
+  const platosEnsaladas = platos.filter(esPlatoEnsalada);
+  const platosEntradas = platos.filter(esPlatoEntrada);
+  const platosSegundos = platos.filter(esPlatoSegundo);
 
   // Alumnos manuales filtrados por el colegio actual
   const alumnosDelColegio = alumnosGuardados.filter(
@@ -344,6 +355,7 @@ export default function PedidoManualPage() {
         telefonoContacto: telefonoContacto.trim() || '999999999',
         entradaNombre: entradaNombre.trim() || 'Sin entrada',
         segundoNombre: segundo,
+        ensaladaNombre: ensaladaNombre.trim() || 'Sin ensalada',
         observacion: observacion.trim() || undefined,
         metodoPago: metodoPago,
         estadoPago: estadoPagoFinal,
@@ -456,6 +468,14 @@ export default function PedidoManualPage() {
                 <span className="text-slate-500 font-semibold">Sopa / Entrada:</span>
                 <span className="text-slate-800 font-bold">
                   {pedidoCreado.entradaNombre}
+                </span>
+              </div>
+            )}
+            {pedidoCreado.ensaladaNombre && pedidoCreado.ensaladaNombre !== 'Sin ensalada' && (
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="text-slate-500 font-semibold">Ensalada:</span>
+                <span className="text-slate-800 font-bold">
+                  {pedidoCreado.ensaladaNombre}
                 </span>
               </div>
             )}
@@ -912,6 +932,90 @@ export default function PedidoManualPage() {
                               <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
                                 Seleccionado
                               </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* SECCIÓN 3: ENSALADA */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Salad className="w-3.5 h-3.5 text-emerald-600" /> 3. Ensalada
+                </label>
+                <span className="text-[11px] font-bold text-slate-500">Incluida en el menú</span>
+              </div>
+
+              {cargandoDatos ? (
+                <div className="text-xs text-slate-400 py-4 text-center">Cargando opciones de ensalada...</div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {/* Opción Sin Ensalada */}
+                  <button
+                    type="button"
+                    onClick={() => setEnsaladaNombre('Sin ensalada')}
+                    className={`text-left p-3 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
+                      ensaladaNombre === 'Sin ensalada'
+                        ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20'
+                        : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Opción</span>
+                        {ensaladaNombre === 'Sin ensalada' && (
+                          <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="font-black text-xs sm:text-sm text-slate-800 mt-1">Sin ensalada</div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Omitir ensalada</p>
+                    </div>
+                  </button>
+
+                  {/* Ensaladas del Día */}
+                  {platosEnsaladas.map((ens) => {
+                    const seleccionada = ensaladaNombre === ens.nombre;
+                    return (
+                      <button
+                        key={ens.id}
+                        type="button"
+                        onClick={() => setEnsaladaNombre(ens.nombre)}
+                        className={`text-left rounded-2xl border overflow-hidden transition cursor-pointer flex flex-col justify-between ${
+                          seleccionada
+                            ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20'
+                            : 'bg-white border-slate-200 hover:border-emerald-300'
+                        }`}
+                      >
+                        <div className="h-24 w-full bg-slate-100 relative">
+                          {ens.imagenUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={ens.imagenUrl} alt={ens.nombre} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                              <Salad className="w-6 h-6 text-emerald-500" />
+                            </div>
+                          )}
+                          <span className="absolute top-1.5 left-1.5 bg-emerald-800/90 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                            Ensalada
+                          </span>
+                          {seleccionada && (
+                            <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-2.5 flex-1 flex flex-col justify-between">
+                          <div>
+                            <div className="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1">{ens.nombre}</div>
+                            {ens.descripcion && (
+                              <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{ens.descripcion}</p>
                             )}
                           </div>
                         </div>

@@ -986,7 +986,7 @@ export default function DespachoPage() {
                               </div>
                               {p.entradaNombre && (
                                 <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-                                  <span className="font-semibold text-orange-700">Sopa o ensalada:</span>{' '}
+                                  <span className="font-semibold text-orange-700">Entrada:</span>{' '}
                                   {p.entradaNombre}
                                 </div>
                               )}
@@ -994,6 +994,12 @@ export default function DespachoPage() {
                                 <span className="font-bold text-amber-800">Segundo:</span>{' '}
                                 {p.segundoNombre}
                               </div>
+                              {p.ensaladaNombre && (
+                                <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                                  <span className="font-semibold text-emerald-700">Ensalada:</span>{' '}
+                                  {p.ensaladaNombre}
+                                </div>
+                              )}
                               {p.refrigerioNombre && (
                                 <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-emerald-700 font-semibold'}`}>
                                   <span className="font-bold text-emerald-800">Extras:</span>{' '}

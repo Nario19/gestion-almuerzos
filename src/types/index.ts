@@ -1,4 +1,4 @@
-export type TipoPlato = 'ENTRADA' | 'SEGUNDO' | 'BEBIDA' | 'POSTRE' | 'REFRIGERIO' | string;
+export type TipoPlato = 'ENTRADA' | 'SEGUNDO' | 'ENSALADA' | 'BEBIDA' | 'POSTRE' | 'REFRIGERIO' | string;
 
 export type DiaSemana = 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES';
 
@@ -96,6 +96,7 @@ export interface Pedido {
   telefonoContacto: string;
   entradaNombre: string;
   segundoNombre: string;
+  ensaladaNombre?: string;
   refrigerioNombre?: string;
   observacion?: string;
   metodoPago: MetodoPago;
@@ -126,12 +127,14 @@ export interface ResumenCocinaColegio {
   totalPedidos: number;
   entradas: ResumenCocinaItem[];
   segundos: ResumenCocinaItem[];
+  ensaladas?: ResumenCocinaItem[];
 }
 
 export interface ResumenCocina {
   totalPedidos: number;
   entradas: ResumenCocinaItem[]; // Corresponde a 'Sopa o postre'
   segundos: ResumenCocinaItem[]; // Corresponde a 'Segundo'
+  ensaladas?: ResumenCocinaItem[]; // Corresponde a 'Ensalada'
   pedidosConObservacion: number;
   pedidosPendientesPago: number;
   pedidosPagados: number;
@@ -149,6 +152,7 @@ export interface ItemFiadoPedido {
   colegioNombre: string;
   entradaNombre: string; // Sopa o postre
   segundoNombre: string; // Segundo
+  ensaladaNombre?: string; // Ensalada
   monto: number;
   estadoPedido: EstadoPedido;
   horaEntrega?: string;

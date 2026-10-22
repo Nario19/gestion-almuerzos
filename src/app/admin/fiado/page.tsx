@@ -309,7 +309,7 @@ export default function FiadoPage() {
             const entregaTag =
               p.estadoPedido === 'ENTREGADO' ? 'Entregado' : 'Pendiente';
             const pagoTag = p.estadoPago === 'PAGADO' ? ' [PAGADO]' : '';
-            return `    - ${p.fecha}: ${p.entradaNombre ? `${p.entradaNombre} + ` : ''}${p.segundoNombre} [S/ ${(p.monto || 12).toFixed(2)}] (${entregaTag})${pagoTag}`;
+            return `    - ${p.fecha}: ${p.entradaNombre ? `${p.entradaNombre} + ` : ''}${p.segundoNombre}${p.ensaladaNombre && p.ensaladaNombre !== 'Sin ensalada' ? ` + ${p.ensaladaNombre}` : ''} [S/ ${(p.monto || 12).toFixed(2)}] (${entregaTag})${pagoTag}`;
           })
           .join('\n');
         return `- *${hijo}*${grado} - Subtotal: S/ ${subtotal.toFixed(2)}:\n${filas}`;
@@ -448,6 +448,7 @@ export default function FiadoPage() {
             <span>
               {pedido.entradaNombre ? `${pedido.entradaNombre} + ` : ''}
               {pedido.segundoNombre}
+              {pedido.ensaladaNombre && pedido.ensaladaNombre !== 'Sin ensalada' ? ` + ${pedido.ensaladaNombre}` : ''}
             </span>
           </div>
         </div>
