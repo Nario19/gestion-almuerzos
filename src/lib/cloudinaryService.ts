@@ -22,6 +22,10 @@ export interface CloudinaryErrorResponse {
   };
 }
 
+/** Configuración predeterminada verificada para Cloudinary */
+export const CLOUDINARY_DEFAULT_CLOUD_NAME = 'qeqjhqpv';
+export const CLOUDINARY_DEFAULT_UPLOAD_PRESET = 'comprobantes_almuerzos';
+
 /**
  * Genera la ruta de carpeta estructurada en Cloudinary para un plato según colegio y día de la semana.
  * Ejemplo: 'platos/colegio_san_martin/lunes' o 'platos/general/lunes'
@@ -77,32 +81,32 @@ export function optimizarUrlCloudinary(
 
 /**
  * Sube una imagen (Blob, File o DataURL Base64) a Cloudinary usando un Upload Preset no firmado (Unsigned).
+ * Aplica estrategia de doble canal:
+ * 1. Intento directo hacia la API pública de Cloudinary (0 ms de sobrecarga).
+ * 2. Si falla en el navegador (por ad-blockers, extensiones o restricciones CORS), recurre de forma transparente al endpoint servidor /api/upload-cloudinary.
  *
  * @param fileODataUrl Archivo Blob, File o DataURL Base64 de la imagen.
  * @param carpeta Subcarpeta de destino en Cloudinary (por defecto: 'comprobantes').
- * @returns La URL segura HTTPS generada por Cloudinary, o el fallback en Base64 si no está configurado.
+ * @returns La URL segura HTTPS generada por Cloudinary.
  */
 export async function subirImagenACloudinary(
   fileODataUrl: Blob | File | string,
   carpeta: string = 'comprobantes'
 ): Promise<string> {
   const rawCloudName =
-    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME || '';
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+    process.env.CLOUDINARY_CLOUD_NAME ||
+    CLOUDINARY_DEFAULT_CLOUD_NAME;
   const rawUploadPreset =
-    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET || '';
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
+    process.env.CLOUDINARY_UPLOAD_PRESET ||
+    CLOUDINARY_DEFAULT_UPLOAD_PRESET;
 
-  const cloudName = rawCloudName.replace(/^["']|["']$/g, '').trim();
-  const uploadPreset = rawUploadPreset.replace(/^["']|["']$/g, '').trim();
+  const cloudName = (rawCloudName || CLOUDINARY_DEFAULT_CLOUD_NAME).replace(/^["']|["']$/g, '').trim();
+  const uploadPreset = (rawUploadPreset || CLOUDINARY_DEFAULT_UPLOAD_PRESET).replace(/^["']|["']$/g, '').trim();
 
-  // Si Cloudinary no está configurado en las variables de entorno, aplicar fallback transparente
-  if (!cloudName || !uploadPreset) {
-    if (typeof fileODataUrl === 'string') {
-      return fileODataUrl;
-    }
-    return '';
-  }
-
-  try {
+  // Intento 1: Subida directa a Cloudinary
+  const subirDirecto = async (): Promise<string> => {
     const formData = new FormData();
     formData.append('file', fileODataUrl);
     formData.append('upload_preset', uploadPreset);
@@ -118,30 +122,65 @@ export async function subirImagenACloudinary(
     if (!res.ok) {
       const errorJson: CloudinaryErrorResponse = await res.json().catch(() => ({}));
       const msg = errorJson.error?.message || `Error HTTP ${res.status}: ${res.statusText}`;
-      console.error('[Cloudinary] Error en la subida:', msg);
-
-      // Si falla Cloudinary (por ejemplo problemas de red o cuota), mantener la data comprimida como fallback
-      // para no frustrar la orden del padre
-      if (typeof fileODataUrl === 'string' && fileODataUrl.startsWith('data:image')) {
-        console.warn('[Cloudinary] Usando respaldo local temporal para evitar pérdida del pedido.');
-        return fileODataUrl;
-      }
-      throw new Error(`Error al subir imagen a Cloudinary: ${msg}`);
+      throw new Error(msg);
     }
 
     const data: CloudinaryUploadResponse = await res.json();
     if (!data.secure_url) {
       throw new Error('Cloudinary no retornó una URL segura válida.');
     }
-
     return data.secure_url;
-  } catch (err: unknown) {
-    console.error('[Cloudinary] Excepción durante la subida:', err);
-    // En caso de fallo de red, si tenemos el string DataURL, fallback de contingencia
-    if (typeof fileODataUrl === 'string' && fileODataUrl.startsWith('data:image')) {
+  };
+
+  // Intento 2: Subida por proxy interno si estamos en el navegador
+  const subirViaApiServidor = async (): Promise<string> => {
+    if (typeof window === 'undefined') {
+      throw new Error('Entorno no-navegador para proxy');
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileODataUrl);
+    if (carpeta) {
+      formData.append('folder', carpeta);
+    }
+
+    const res = await fetch('/api/upload-cloudinary', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error || `Error HTTP ${res.status} en proxy de servidor`);
+    }
+
+    const data = await res.json();
+    if (!data.secure_url) {
+      throw new Error('Proxy de servidor no retornó secure_url');
+    }
+    return data.secure_url;
+  };
+
+  try {
+    return await subirDirecto();
+  } catch (errDirecto) {
+    console.warn('[Cloudinary] Intento directo falló, usando proxy servidor:', errDirecto);
+    try {
+      if (typeof window !== 'undefined') {
+        return await subirViaApiServidor();
+      }
+    } catch (errProxy) {
+      console.error('[Cloudinary] Intento de proxy servidor también falló:', errProxy);
+    }
+
+    // Para comprobantes de pago de padres, mantener contingencia si todo falló
+    if (carpeta.startsWith('comprobantes') && typeof fileODataUrl === 'string' && fileODataUrl.startsWith('data:image')) {
+      console.warn('[Cloudinary] Usando respaldo local para no perder el pedido del padre.');
       return fileODataUrl;
     }
-    throw err;
+
+    const msg = errDirecto instanceof Error ? errDirecto.message : String(errDirecto);
+    throw new Error(`Error al subir imagen a Cloudinary: ${msg}`);
   }
 }
 

@@ -375,11 +375,17 @@ export default function AdminPage() {
       const res = await compressImage(file, 800, 0.8);
       const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
       const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
+      if (!urlNube || !urlNube.startsWith('http')) {
+        throw new Error('No se recibió un enlace HTTPS seguro de Cloudinary');
+      }
       setImagenUrlEntradaMenu(urlNube);
       setImagenUrlMenu(urlNube);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Error procesando foto de la entrada:', e);
-      alert('Hubo un problema al procesar la imagen de la entrada o ensalada.');
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`No se pudo subir la foto de la entrada a Cloudinary: ${msg}`);
+      setImagenUrlEntradaMenu('');
+      setImagenUrlMenu('');
     } finally {
       setSubiendoFotoEntrada(false);
       setSubiendoFoto(false);
@@ -401,10 +407,15 @@ export default function AdminPage() {
       const res = await compressImage(file, 800, 0.8);
       const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
       const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
+      if (!urlNube || !urlNube.startsWith('http')) {
+        throw new Error('No se recibió un enlace HTTPS seguro de Cloudinary');
+      }
       setImagenUrlSegundoMenu(urlNube);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Error procesando foto del segundo:', e);
-      alert('Hubo un problema al procesar la imagen del segundo.');
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`No se pudo subir la foto del segundo a Cloudinary: ${msg}`);
+      setImagenUrlSegundoMenu('');
     } finally {
       setSubiendoFotoSegundo(false);
       setSubiendoFoto(false);
@@ -425,11 +436,17 @@ export default function AdminPage() {
       const res = await compressImage(file, 800, 0.8);
       const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
       const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
+      if (!urlNube || !urlNube.startsWith('http')) {
+        throw new Error('No se recibió un enlace HTTPS seguro de Cloudinary');
+      }
       setImagenUrlMenu(urlNube);
       setImagenUrlEntradaMenu(urlNube);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Error procesando foto del menú:', e);
-      alert('Hubo un problema al procesar la imagen.');
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`No se pudo subir la foto a Cloudinary: ${msg}`);
+      setImagenUrlMenu('');
+      setImagenUrlEntradaMenu('');
     } finally {
       setSubiendoFoto(false);
     }
@@ -449,10 +466,15 @@ export default function AdminPage() {
       const res = await compressImage(file, 800, 0.8);
       const carpeta = obtenerCarpetaCloudinaryPlato(colActual, diaActivo);
       const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
+      if (!urlNube || !urlNube.startsWith('http')) {
+        throw new Error('No se recibió un enlace HTTPS seguro de Cloudinary');
+      }
       setImagenUrlExtra(urlNube);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Error procesando foto del extra:', e);
-      alert('Hubo un problema al procesar la imagen.');
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`No se pudo subir la foto del extra a Cloudinary: ${msg}`);
+      setImagenUrlExtra('');
     } finally {
       setSubiendoFoto(false);
     }
@@ -557,10 +579,14 @@ export default function AdminPage() {
       const res = await compressImage(file, 800, 0.8);
       const carpeta = obtenerCarpetaCloudinaryPlato(platoEditando.colegioNombre, platoEditando.diaSemana);
       const urlNube = await subirImagenACloudinary(res.compressedDataUrl, carpeta);
+      if (!urlNube || !urlNube.startsWith('http')) {
+        throw new Error('No se recibió un enlace HTTPS seguro de Cloudinary');
+      }
       setPlatoEditando((prev) => (prev ? { ...prev, imagenUrl: urlNube } : null));
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Error procesando foto en edición:', e);
-      alert('Hubo un problema al procesar la imagen.');
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`No se pudo subir la foto a Cloudinary: ${msg}`);
     } finally {
       setSubiendoFotoEdicion(false);
     }
@@ -638,10 +664,15 @@ export default function AdminPage() {
     try {
       const res = await compressImage(file, 800, 0.8);
       const urlNube = await subirImagenACloudinary(res.compressedDataUrl, 'platos');
+      if (!urlNube || !urlNube.startsWith('http')) {
+        throw new Error('No se recibió un enlace HTTPS seguro de Cloudinary');
+      }
       setImagenUrlNueva(urlNube);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Error procesando foto:', e);
-      alert('Hubo un problema al procesar la imagen.');
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`No se pudo subir la foto a Cloudinary: ${msg}`);
+      setImagenUrlNueva('');
     } finally {
       setSubiendoFoto(false);
     }

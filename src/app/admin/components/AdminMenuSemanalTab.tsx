@@ -18,6 +18,7 @@ import {
   Cloud,
   X,
   Check,
+  Loader2,
 } from 'lucide-react';
 import { DIAS_SEMANA } from '@/lib/dataService';
 import { Plato, DiaSemana } from '@/types';
@@ -675,13 +676,22 @@ export default function AdminMenuSemanalTab({
                   type="submit"
                   disabled={
                     guardandoPlato ||
+                    subiendoFotoSegundo ||
+                    subiendoFotoEntrada ||
+                    subiendoFoto ||
                     (tipoSeleccionadoMenu === 'Segundo' ? !nombreSegundoMenu.trim() : !nombreEntradaMenu.trim())
                   }
                   className="w-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs py-2.5 rounded-lg transition shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {guardandoPlato
-                    ? 'Publicando...'
-                    : tipoSeleccionadoMenu === 'Segundo'
+                  {guardandoPlato ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Publicando...
+                    </span>
+                  ) : subiendoFotoSegundo || subiendoFotoEntrada || subiendoFoto ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Cloud className="w-3.5 h-3.5 animate-bounce" /> Subiendo imagen a Cloudinary...
+                    </span>
+                  ) : tipoSeleccionadoMenu === 'Segundo'
                     ? `+ Publicar Segundo para ${diaActivo}`
                     : tipoSeleccionadoMenu === 'Ensalada'
                     ? `+ Publicar Ensalada para ${diaActivo}`
@@ -849,10 +859,20 @@ export default function AdminMenuSemanalTab({
 
                 <Button
                   type="submit"
-                  disabled={guardandoPlato}
+                  disabled={guardandoPlato || subiendoFoto || !nombreExtra.trim()}
                   className="w-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs py-2.5 transition shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {guardandoPlato ? 'Publicando...' : `+ Publicar Extra para ${diaActivo}`}
+                  {guardandoPlato ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Publicando...
+                    </span>
+                  ) : subiendoFoto ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Cloud className="w-3.5 h-3.5 animate-bounce" /> Subiendo imagen a Cloudinary...
+                    </span>
+                  ) : (
+                    `+ Publicar Extra para ${diaActivo}`
+                  )}
                 </Button>
               </form>
             )}
@@ -1592,10 +1612,18 @@ export default function AdminMenuSemanalTab({
                 <Button
                   type="submit"
                   size="sm"
-                  disabled={guardandoEdicionPlato}
+                  disabled={guardandoEdicionPlato || subiendoFotoEdicion}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
                 >
-                  {guardandoEdicionPlato ? 'Guardando...' : 'Guardar Cambios'}
+                  {guardandoEdicionPlato ? (
+                    'Guardando...'
+                  ) : subiendoFotoEdicion ? (
+                    <span className="flex items-center gap-1.5">
+                      <Cloud className="w-3.5 h-3.5 animate-bounce" /> Subiendo a Cloudinary...
+                    </span>
+                  ) : (
+                    'Guardar Cambios'
+                  )}
                 </Button>
               </div>
             </form>

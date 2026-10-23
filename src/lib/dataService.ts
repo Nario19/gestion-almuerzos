@@ -629,12 +629,11 @@ export const dataService = {
         if (urlCloudinary && (urlCloudinary.startsWith('http://') || urlCloudinary.startsWith('https://'))) {
           nuevoPlato.imagenUrl = urlCloudinary;
         } else {
-          // Si no retornó una URL pública en la nube, evitar guardar Base64 pesado en Supabase
-          nuevoPlato.imagenUrl = undefined;
+          throw new Error('Cloudinary no devolvió una URL pública HTTPS válida');
         }
       } catch (errCloudinary) {
-        console.warn('[dataService] Falló subida de imagen de plato a Cloudinary, evitando guardar Base64:', errCloudinary);
-        nuevoPlato.imagenUrl = undefined;
+        console.error('[dataService] Falló subida obligatoria de imagen de plato a Cloudinary:', errCloudinary);
+        throw new Error('No se pudo guardar la fotografía en Cloudinary. Por favor vuelve a seleccionar la foto e inténtalo nuevamente.');
       }
     }
 
@@ -739,11 +738,11 @@ export const dataService = {
         if (urlCloudinary && (urlCloudinary.startsWith('http://') || urlCloudinary.startsWith('https://'))) {
           platoActualizado.imagenUrl = urlCloudinary;
         } else {
-          platoActualizado.imagenUrl = undefined;
+          throw new Error('Cloudinary no devolvió una URL pública HTTPS válida');
         }
       } catch (errCloudinary) {
-        console.warn('[dataService] Falló subida de imagen al actualizar plato, evitando guardar Base64:', errCloudinary);
-        platoActualizado.imagenUrl = undefined;
+        console.error('[dataService] Falló subida obligatoria de imagen al actualizar plato:', errCloudinary);
+        throw new Error('No se pudo guardar la fotografía en Cloudinary al editar el plato.');
       }
     }
 

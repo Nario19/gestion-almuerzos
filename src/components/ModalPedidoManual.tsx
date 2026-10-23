@@ -186,6 +186,10 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
     (p) => !esPlatoEnsalada(p) && ((p.tipo || '').toUpperCase() === 'SEGUNDO' || !esPlatoEntrada(p))
   );
 
+  const platoSegundoObj = platosSegundos.find((p) => p.nombre === segundoNombre);
+  const platoEntradaObj = platosEntradas.find((p) => p.nombre === entradaNombre);
+  const platoEnsaladaObj = platosEnsaladas.find((p) => p.nombre === ensaladaNombre);
+
   const reiniciarFormulario = () => {
     setEstudianteNombre('');
     setObservacion('');
@@ -588,6 +592,20 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                       </option>
                     ))}
                   </select>
+                  {platoEntradaObj?.imagenUrl && entradaNombre !== 'Sin entrada' && (
+                    <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={platoEntradaObj.imagenUrl}
+                        alt={platoEntradaObj.nombre}
+                        className="w-10 h-10 rounded-md object-cover border border-slate-200 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[9px] font-bold text-orange-600 block">Fotografía de Entrada</span>
+                        <p className="text-[11px] font-semibold text-slate-800 truncate">{platoEntradaObj.nombre}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -612,24 +630,43 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                     </span>
                   </div>
                 ) : (
-                  <select
-                    value={segundoNombre}
-                    onChange={(e) => {
-                      const sel = e.target.value;
-                      setSegundoNombre(sel);
-                      const platoEncontrado = platosSegundos.find((p) => p.nombre === sel);
-                      if (platoEncontrado && platoEncontrado.precio) {
-                        setMonto(platoEncontrado.precio);
-                      }
-                    }}
-                    className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
-                  >
-                    {platosSegundos.map((p) => (
-                      <option key={p.id} value={p.nombre}>
-                        {p.nombre} — S/ {(p.precio || 12).toFixed(2)}
-                      </option>
-                    ))}
-                  </select>
+                  <div>
+                    <select
+                      value={segundoNombre}
+                      onChange={(e) => {
+                        const sel = e.target.value;
+                        setSegundoNombre(sel);
+                        const platoEncontrado = platosSegundos.find((p) => p.nombre === sel);
+                        if (platoEncontrado && platoEncontrado.precio) {
+                          setMonto(platoEncontrado.precio);
+                        }
+                      }}
+                      className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
+                    >
+                      {platosSegundos.map((p) => (
+                        <option key={p.id} value={p.nombre}>
+                          {p.nombre} — S/ {(p.precio || 12).toFixed(2)}
+                        </option>
+                      ))}
+                    </select>
+                    {platoSegundoObj?.imagenUrl && !platoPersonalizado && (
+                      <div className="mt-1.5 flex items-center gap-2.5 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={platoSegundoObj.imagenUrl}
+                          alt={platoSegundoObj.nombre}
+                          className="w-12 h-12 rounded-lg object-cover border border-slate-200 shrink-0 shadow-2xs"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[9px] font-bold text-orange-600 block uppercase tracking-wider">Fotografía del Segundo</span>
+                          <p className="text-xs font-bold text-slate-800 truncate">{platoSegundoObj.nombre}</p>
+                          {platoSegundoObj.descripcion && (
+                            <p className="text-[10px] text-slate-500 line-clamp-1">{platoSegundoObj.descripcion}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -651,6 +688,20 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                       </option>
                     ))}
                   </select>
+                  {platoEnsaladaObj?.imagenUrl && ensaladaNombre !== 'Sin ensalada' && (
+                    <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={platoEnsaladaObj.imagenUrl}
+                        alt={platoEnsaladaObj.nombre}
+                        className="w-10 h-10 rounded-md object-cover border border-slate-200 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[9px] font-bold text-orange-600 block">Fotografía de Ensalada</span>
+                        <p className="text-[11px] font-semibold text-slate-800 truncate">{platoEnsaladaObj.nombre}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
