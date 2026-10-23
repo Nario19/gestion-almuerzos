@@ -758,9 +758,9 @@ function PedidoContent() {
           <div className="mt-5 space-y-2">
             <Link
               href="/padres/pedidos"
-              className="w-full py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg shadow-2xs flex items-center justify-center gap-2 text-xs sm:text-sm transition cursor-pointer"
+              className="w-full py-2.5 px-4 bg-[#010101] hover:bg-zinc-800 text-yellow-400 font-bold rounded-lg shadow-2xs flex items-center justify-center gap-2 text-xs sm:text-sm transition cursor-pointer"
             >
-              <ShoppingBag className="w-4 h-4 text-white" />
+              <ShoppingBag className="w-4 h-4 text-yellow-400" />
               Ver en Mis Pedidos
             </Link>
 
@@ -856,7 +856,7 @@ function PedidoContent() {
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/20">
+              <div className="w-10 h-10 rounded-xl bg-[#010101] text-yellow-400 flex items-center justify-center shrink-0 shadow-sm">
                 <UtensilsCrossed className="w-5 h-5" />
               </div>
               <div>
@@ -873,17 +873,17 @@ function PedidoContent() {
             <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 pt-1 sm:pt-0">
               <Link
                 href="/login"
-                className="w-full sm:w-auto px-4 py-2.5 bg-zinc-950 hover:bg-zinc-800 active:scale-[0.98] text-white font-semibold rounded-lg text-xs sm:text-sm shadow-2xs transition flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto px-4 py-2.5 bg-[#010101] hover:bg-zinc-800 active:scale-[0.98] text-white font-semibold rounded-lg text-xs sm:text-sm shadow-2xs transition flex items-center justify-center gap-1.5"
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5 text-yellow-400" />
                 <span>Iniciar Sesión para Pedir</span>
                 <span className="sr-only">Iniciar Sesión</span>
               </Link>
               <Link
                 href="/login?modo=registro"
-                className="w-full sm:w-auto px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 active:scale-[0.98] text-zinc-900 border border-zinc-200 font-semibold rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto px-4 py-2.5 bg-yellow-400 hover:bg-yellow-500 active:scale-[0.98] text-[#010101] border border-yellow-500 font-bold rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-2xs"
               >
-                <UserPlus className="w-3.5 h-3.5 text-zinc-700" />
+                <UserPlus className="w-3.5 h-3.5 text-[#010101]" />
                 <span>Registrarme</span>
               </Link>
             </div>
@@ -941,13 +941,13 @@ function PedidoContent() {
                   onClick={() => setDiaSeleccionado(dia.key)}
                   className={`py-1.5 px-1 rounded-md text-center transition ${
                     activo
-                      ? 'bg-white text-zinc-950 font-bold shadow-2xs'
+                      ? 'bg-[#010101] text-yellow-400 font-bold shadow-2xs'
                       : 'text-zinc-600 hover:text-zinc-900 font-medium'
                   }`}
                 >
                   <span className="block text-xs">{dia.short}</span>
                   {esHoy && (
-                    <span className="inline-block text-[9px] font-bold px-1.5 bg-zinc-200 text-zinc-800 rounded">
+                    <span className={`inline-block text-[9px] font-bold px-1.5 rounded ${activo ? 'bg-yellow-400 text-[#010101]' : 'bg-zinc-200 text-zinc-800'}`}>
                       Hoy
                     </span>
                   )}
@@ -1229,22 +1229,14 @@ function PedidoContent() {
   // ----------------------------------------------------
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28 sm:pb-24">
-      {/* Encabezado con horario de cierre y enlace a Mis Pedidos */}
+      {/* Encabezado limpio con horario de cierre */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-200">
         <div>
           <h1 className="sr-only">Menú Escolar</h1>
-          <span className="text-[11px] font-medium text-zinc-500 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-zinc-500" /> Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}
+          <span className="text-[11px] font-semibold text-zinc-800 flex items-center gap-1.5 bg-yellow-50 text-amber-950 px-2.5 py-1 rounded-md border border-amber-200/80">
+            <Clock className="w-3.5 h-3.5 text-amber-600" /> Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}
           </span>
         </div>
-
-        <Link
-          href="/padres/pedidos"
-          className="text-xs font-semibold px-3 py-1.5 bg-zinc-100 text-zinc-900 border border-zinc-200 rounded-lg hover:bg-zinc-200 transition flex items-center gap-1.5 shadow-2xs"
-        >
-          <ShoppingBag className="w-3.5 h-3.5 text-zinc-700" />
-          <span>Mis Pedidos</span>
-        </Link>
       </div>
 
       {/* CTA ABOVE THE FOLD SI EL PADRE NO TIENE HIJOS AÚN */}
@@ -1262,9 +1254,9 @@ function PedidoContent() {
             </div>
             <Link
               href="/padres/hijos"
-              className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 active:scale-[0.98] text-white text-xs font-semibold rounded-lg shadow-2xs transition flex items-center justify-center gap-1.5 shrink-0"
+              className="px-4 py-2 bg-[#010101] hover:bg-zinc-800 active:scale-[0.98] text-yellow-400 text-xs font-bold rounded-lg shadow-2xs transition flex items-center justify-center gap-1.5 shrink-0"
             >
-              <Plus className="w-4 h-4" /> Agregar Hijo
+              <Plus className="w-4 h-4 text-yellow-400" /> Agregar Hijo
             </Link>
           </div>
 
@@ -1322,8 +1314,8 @@ function PedidoContent() {
                   onClick={() => seleccionarHijo(hijo)}
                   className={`p-2.5 rounded-lg border text-left flex items-center justify-between transition ${
                     activo
-                      ? 'border-zinc-950 bg-zinc-50/80 shadow-2xs ring-1 ring-zinc-950'
-                      : 'border-zinc-200 bg-zinc-50/40 hover:bg-zinc-100/70 hover:border-zinc-300'
+                      ? 'border-[#010101] bg-yellow-50/60 shadow-2xs ring-1 ring-[#010101]'
+                      : 'border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300'
                   }`}
                 >
                   <div>
@@ -1332,7 +1324,7 @@ function PedidoContent() {
                       {hijo.colegioNombre} • {hijo.gradoSeccion}
                     </p>
                   </div>
-                  {activo && <CheckCircle2 className="w-4 h-4 text-zinc-950 shrink-0" />}
+                  {activo && <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0" />}
                 </button>
               );
             })}
@@ -1353,13 +1345,13 @@ function PedidoContent() {
                 onClick={() => setDiaSeleccionado(dia.key)}
                 className={`py-1.5 px-1 rounded-md text-center transition ${
                   activo
-                    ? 'bg-white text-zinc-950 font-bold shadow-2xs'
+                    ? 'bg-[#010101] text-yellow-400 font-bold shadow-2xs'
                     : 'text-zinc-600 hover:text-zinc-900 font-medium'
                 }`}
               >
                 <span className="block text-xs">{dia.short}</span>
                 {esHoy && (
-                  <span className="inline-block text-[9px] font-bold px-1.5 bg-zinc-200 text-zinc-800 rounded">
+                  <span className={`inline-block text-[9px] font-bold px-1.5 rounded ${activo ? 'bg-yellow-400 text-[#010101]' : 'bg-zinc-200 text-zinc-800'}`}>
                     Hoy
                   </span>
                 )}
@@ -1889,7 +1881,7 @@ function PedidoContent() {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full py-3 px-6 bg-zinc-950 hover:bg-zinc-800 active:scale-[0.99] text-white font-semibold text-sm rounded-lg shadow-2xs flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
+          className="w-full py-3.5 px-6 bg-[#010101] hover:bg-zinc-800 active:scale-[0.99] text-yellow-400 font-bold text-sm sm:text-base rounded-xl shadow-md flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
         >
           {isPending ? (
             <span className="animate-pulse">Registrando...</span>
@@ -2284,7 +2276,7 @@ function PedidoContent() {
                 type="button"
                 onClick={handleConfirmarPedidoFinal}
                 disabled={isPending || ((metodoPago === 'Yape' || metodoPago === 'Plin') && !cloudinaryUrl && !comprimidoInfo)}
-                className="w-full sm:w-auto px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-zinc-950 hover:bg-zinc-800 active:scale-95 rounded-lg shadow-2xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-5 py-2.5 text-xs sm:text-sm font-bold text-yellow-400 bg-[#010101] hover:bg-zinc-800 active:scale-95 rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? (
                   <span className="animate-pulse">Registrando pedido...</span>

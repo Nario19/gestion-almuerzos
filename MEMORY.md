@@ -1514,6 +1514,29 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/superadmin/analytics/page.tsx`
   - `MEMORY.md`
 
+### D-018 — 2026-10-22 — Supresión de Barra Superior para Padres y Paleta Exclusiva (#010101, Blanco y Amarillo)
+- Decisión:
+  1. **Supresión de la barra superior para padres:**
+     - En la interfaz de padres y en la vista pública, se oculta completamente la barra superior fija de navegación (`HeaderNav`), eliminando el bloque con títulos y enlaces redundantes (`[Pedir MenúAlmuerzos Escolares] [Mis Pedidos] [Mis Deudas] [Hijos0]`).
+     - Se eliminan botones redundantes de "Mis Pedidos" en las vistas de padres (`src/app/padres/page.tsx`, `src/app/padres/deudas/page.tsx`), centralizando la navegación de forma intuitiva y minimalista en la barra inferior fija (`BottomNav`).
+     - Para la administración y superadmin (`/admin/*`, `/superadmin/*`), se preserva intacto el App Shell con su sidebar y header superior con títulos de pantalla y colegio.
+  2. **Paleta de Colores Exclusiva para Padres y Página Pública:**
+     - Aplicar exclusivamente a la interfaz de padres (`/padres/*`) y página pública (`/`):
+       - **Negro Profundo (#010101):** Botones principales de acción, hero icons, selectores activos y elementos destacados.
+       - **Blanco (#FFFFFF):** Fondo limpio de tarjetas, contenedores de contenido y modales.
+       - **Texto Negro (#010101 / text-zinc-950):** Títulos, platos, precios y textos legibles de alto contraste.
+       - **Amarillo / Ámbar (#FACC15 / yellow-400 / yellow-50):** Acentos de marca, botón central flotante "Pedir Menú", chips activos y badges de estado.
+- Fuente: Instrucción explícita del usuario ("de l ainterfaz del padre quita la barra superior que dice [Pedir MenúAlmuerzos Escolares] [Mis Pedidos] [Mis Deudas] [Hijos0], y ya no pongas otros botones de mis pedidosporque con la navigate de la parte inferior ya peude desplazarse por todos los modulos debe ser una interfaz limpia e inutitiva facil de usar para los padres. y SOLO A LA INTERFAZ DE LOS PADRES Y PARA LA PAGINA PUBLICA QUIERO QUE LO ADAPTES A ESTE TEAMDE COLORRES #010101 #010101 #010101 YA TU DISTRIBUYE EL FONDO BLACNO LA LETRA NEGRA Y ALGUNASPARTE AMARILLO YA TU VES PERO QUE QUEDE BIEN").
+- Impacto:
+  - `src/components/HeaderNav.tsx`
+  - `src/components/BottomNav.tsx`
+  - `src/app/padres/page.tsx`
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/app/padres/deudas/page.tsx`
+  - `src/app/padres/hijos/page.tsx`
+  - `src/app/padres/perfil/page.tsx`
+  - `MEMORY.md`
+
 
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)

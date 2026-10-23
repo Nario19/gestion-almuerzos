@@ -203,8 +203,8 @@ export default function PerfilPage() {
       <Card className="p-5 relative overflow-hidden">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
-              {iniciales || <User className="w-6 h-6" />}
+            <div className="w-12 h-12 rounded-xl bg-[#010101] text-yellow-400 flex items-center justify-center font-black text-base shadow-xs shrink-0">
+              {iniciales || <User className="w-6 h-6 text-yellow-400" />}
             </div>
             <div className="min-w-0">
               <Badge variant="outline" className="text-[10px] font-semibold text-zinc-700 bg-zinc-100 border-zinc-200">
@@ -506,7 +506,7 @@ export default function PerfilPage() {
                   type="submit"
                   disabled={guardando}
                   size="sm"
-                  className="flex items-center gap-1.5"
+                  className="flex items-center gap-1.5 bg-[#010101] hover:bg-zinc-800 text-yellow-400 font-bold"
                 >
                   {guardando ? (
                     <>

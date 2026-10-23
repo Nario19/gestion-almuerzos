@@ -195,9 +195,9 @@ function HijosContent() {
 
         <Link
           href="/"
-          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#010101] hover:bg-zinc-800 text-yellow-400 text-xs font-bold rounded-lg shadow-xs transition self-start sm:self-auto"
         >
-          <UtensilsCrossed className="w-3.5 h-3.5" />
+          <UtensilsCrossed className="w-3.5 h-3.5 text-yellow-400" />
           Ir al Menú Escolar
         </Link>
       </div>
@@ -301,7 +301,7 @@ function HijosContent() {
               <Button
                 type="submit"
                 disabled={guardando || cargandoConfig || listaColegios.length === 0}
-                className="w-full"
+                className="w-full bg-[#010101] hover:bg-zinc-800 text-yellow-400 font-bold shadow-xs cursor-pointer"
               >
                 {guardando ? 'Guardando...' : '+ Agregar Hijo'}
               </Button>

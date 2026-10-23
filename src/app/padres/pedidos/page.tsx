@@ -466,7 +466,7 @@ function PedidosContent() {
                 }}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
                   fechaFiltro === 'TODAS'
-                    ? 'bg-zinc-950 text-white shadow-xs'
+                    ? 'bg-[#010101] text-yellow-400 font-bold shadow-xs'
                     : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                 }`}
               >
@@ -480,7 +480,7 @@ function PedidosContent() {
                 }}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
                   fechaFiltro === fechaHoy
-                    ? 'bg-zinc-950 text-white shadow-xs'
+                    ? 'bg-[#010101] text-yellow-400 font-bold shadow-xs'
                     : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                 }`}
               >

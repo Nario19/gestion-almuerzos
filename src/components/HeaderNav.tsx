@@ -64,8 +64,9 @@ export default function HeaderNav() {
     return null;
   }
 
-  // Suprimir el navbar en la vista pública de almuerzos para visitantes
-  if (!usuario && (pathname === '/' || pathname === '/padres')) {
+  // Suprimir completamente el navbar superior en la interfaz de padres y visitantes
+  // Los padres cuentan con la barra inferior (BottomNav) para una experiencia limpia y sin redundancias
+  if (!esAdmin || !esRutaAdmin) {
     return null;
   }
 

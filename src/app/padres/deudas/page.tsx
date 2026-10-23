@@ -257,29 +257,19 @@ export default function DeudasPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28 space-y-5">
-      {/* Barra de cabecera con navegación */}
+      {/* Barra de cabecera limpia */}
       <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-200">
-        <div className="flex items-center gap-2">
-          <Link
-            href="/padres/pedidos"
-            className="p-1.5 -ml-1 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5 text-xs font-semibold"
-            title="Ir a mis pedidos"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Mis Pedidos</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
-              <Receipt className="w-4 h-4" />
-            </div>
-            <div>
-              <h1 className="text-sm sm:text-base font-bold text-zinc-950 leading-tight">
-                Mis Deudas y Fiados
-              </h1>
-              <p className="text-[11px] text-zinc-500">
-                Almuerzos bajo modalidad pagar luego y estados de liquidación
-              </p>
-            </div>
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-[#010101] text-yellow-400 flex items-center justify-center shrink-0 shadow-2xs">
+            <Receipt className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-sm sm:text-base font-bold text-zinc-950 leading-tight">
+              Mis Deudas y Fiados
+            </h1>
+            <p className="text-[11px] text-zinc-500">
+              Almuerzos bajo modalidad pagar luego y estados de liquidación
+            </p>
           </div>
         </div>
 
@@ -487,7 +477,7 @@ export default function DeudasPage() {
             onClick={() => setFiltroEstado('PENDIENTES')}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
               filtroEstado === 'PENDIENTES'
-                ? 'bg-zinc-950 text-white shadow-xs'
+                ? 'bg-[#010101] text-yellow-400 font-bold shadow-xs'
                 : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
@@ -500,7 +490,7 @@ export default function DeudasPage() {
             onClick={() => setFiltroEstado('LIQUIDADOS')}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
               filtroEstado === 'LIQUIDADOS'
-                ? 'bg-zinc-950 text-white shadow-xs'
+                ? 'bg-[#010101] text-yellow-400 font-bold shadow-xs'
                 : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
@@ -513,7 +503,7 @@ export default function DeudasPage() {
             onClick={() => setFiltroEstado('TODOS')}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
               filtroEstado === 'TODOS'
-                ? 'bg-zinc-950 text-white shadow-xs'
+                ? 'bg-[#010101] text-yellow-400 font-bold shadow-xs'
                 : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >

@@ -65,15 +65,15 @@ export default function BottomNav() {
           <Link
             href="/"
             aria-label="Pedir Menú"
-            className={`-mt-6 w-13 h-13 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-white flex flex-col items-center justify-center shadow-lg shadow-orange-500/25 border-4 border-white active:scale-95 hover:scale-105 transition-all ${
-              pathname === '/' || pathname === '/padres' ? 'ring-2 ring-orange-500 ring-offset-2' : ''
+            className={`-mt-6 w-13 h-13 rounded-full bg-yellow-400 text-[#010101] flex flex-col items-center justify-center shadow-lg shadow-yellow-500/25 border-4 border-white active:scale-95 hover:scale-105 transition-all ${
+              pathname === '/' || pathname === '/padres' ? 'ring-2 ring-[#010101] ring-offset-2' : ''
             }`}
           >
-            <UtensilsCrossed className="w-6 h-6" />
+            <UtensilsCrossed className="w-6 h-6 stroke-[2.2]" />
           </Link>
           <span
             className={`text-[10px] mt-1 tracking-tight font-bold ${
-              pathname === '/' || pathname === '/padres' ? 'text-orange-600' : 'text-zinc-500'
+              pathname === '/' || pathname === '/padres' ? 'text-[#010101]' : 'text-zinc-500'
             }`}
           >
             Pedir Menú
@@ -92,7 +92,7 @@ export default function BottomNav() {
           <div className="relative">
             <GraduationCap className="w-5 h-5" />
             {cantidadHijos > 0 && (
-              <span className="absolute -top-1 -right-2 bg-zinc-900 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
+              <span className="absolute -top-1 -right-2 bg-yellow-400 text-[#010101] text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
                 {cantidadHijos}
               </span>
             )}
