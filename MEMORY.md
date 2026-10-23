@@ -1738,6 +1738,20 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/cloudinary-platos-upload-robustez.test.mjs`
   - `MEMORY.md`
 
+### D-060 — 2026-10-23 — Separación Estricta en Cloudinary: Dos Carpetas Raíz ('comprobantes' y 'platos')
+
+- Decisión: Estructurar el almacenamiento en Cloudinary de forma limpia y plana en exactamente dos únicas carpetas raíz:
+  1. `comprobantes/`: Destinada exclusivamente a los vouchers y comprobantes de pago de los padres.
+  2. `platos/`: Destinada exclusivamente a todas las fotografías de platos y menús escolares (Entradas, Segundos, Ensaladas y Extras).
+  3. `obtenerCarpetaCloudinaryPlato` retorna directamente `'platos'`. Tanto en cliente directo como en el proxy servidor `/api/upload-cloudinary`, cualquier solicitud referente a platos se normaliza forzosamente a `'platos'`, evitando anidaciones innecesarias o desvíos a `comprobantes`.
+- Fuente: Solicitud e instrucción explícita del usuario ("ES MEJOR TENER DOS CARPETAS UNA DE COMPROBANTES Y OTRA DE PLATOS. ASI ESTA MEJOR ORDENADO. HAZLO DE ESA MANERA.").
+- Impacto:
+  - `src/lib/cloudinaryService.ts`
+  - `src/app/api/upload-cloudinary/route.ts`
+  - `tests/cloudinary-imagenes-menu-colegios.test.mjs`
+  - `tests/cloudinary-platos-upload-robustez.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
