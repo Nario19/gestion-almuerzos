@@ -628,9 +628,13 @@ export const dataService = {
         const urlCloudinary = await subirImagenACloudinary(nuevoPlato.imagenUrl, carpeta);
         if (urlCloudinary && (urlCloudinary.startsWith('http://') || urlCloudinary.startsWith('https://'))) {
           nuevoPlato.imagenUrl = urlCloudinary;
+        } else {
+          // Si no retornó una URL pública en la nube, evitar guardar Base64 pesado en Supabase
+          nuevoPlato.imagenUrl = undefined;
         }
       } catch (errCloudinary) {
-        console.warn('[dataService] Falló subida de imagen de plato a Cloudinary, conservando local:', errCloudinary);
+        console.warn('[dataService] Falló subida de imagen de plato a Cloudinary, evitando guardar Base64:', errCloudinary);
+        nuevoPlato.imagenUrl = undefined;
       }
     }
 
@@ -669,7 +673,7 @@ export const dataService = {
               nombre: nuevoPlato.nombre,
               descripcion: descFinal || null,
               precio: nuevoPlato.precio,
-              imagen_url: nuevoPlato.imagenUrl,
+              imagen_url: (nuevoPlato.imagenUrl && !nuevoPlato.imagenUrl.startsWith('data:image')) ? nuevoPlato.imagenUrl : null,
               disponible: nuevoPlato.disponible,
               orden: nuevoPlato.orden,
             },
@@ -734,9 +738,12 @@ export const dataService = {
         const urlCloudinary = await subirImagenACloudinary(platoActualizado.imagenUrl, carpeta);
         if (urlCloudinary && (urlCloudinary.startsWith('http://') || urlCloudinary.startsWith('https://'))) {
           platoActualizado.imagenUrl = urlCloudinary;
+        } else {
+          platoActualizado.imagenUrl = undefined;
         }
       } catch (errCloudinary) {
-        console.warn('[dataService] Falló subida de imagen al actualizar plato:', errCloudinary);
+        console.warn('[dataService] Falló subida de imagen al actualizar plato, evitando guardar Base64:', errCloudinary);
+        platoActualizado.imagenUrl = undefined;
       }
     }
 
@@ -784,7 +791,9 @@ export const dataService = {
           updatePayload.dia_semana = platoActualizado.diaSemana;
         }
         if (platoActualizado.imagenUrl !== undefined) {
-          updatePayload.imagen_url = platoActualizado.imagenUrl || null;
+          updatePayload.imagen_url = (platoActualizado.imagenUrl && !platoActualizado.imagenUrl.startsWith('data:image'))
+            ? platoActualizado.imagenUrl
+            : null;
         }
 
         const { data, error } = await supabase
@@ -1034,6 +1043,25 @@ export const dataService = {
       obsCompleta = `${obsCompleta} • [ColegioId: ${nuevo.colegioId}]`;
     }
 
+    // Blindaje estricto: Si el comprobante viene en Base64, subirlo a Cloudinary
+    if (nuevo.comprobanteUrl && nuevo.comprobanteUrl.startsWith('data:image')) {
+      try {
+        const urlNube = await subirImagenACloudinary(nuevo.comprobanteUrl, 'comprobantes');
+        if (urlNube && (urlNube.startsWith('http://') || urlNube.startsWith('https://'))) {
+          nuevo.comprobanteUrl = urlNube;
+        } else {
+          nuevo.comprobanteUrl = undefined;
+        }
+      } catch (errCloudinary) {
+        console.warn('[dataService] Falló subida de comprobante a Cloudinary, evitando guardar Base64 en BD:', errCloudinary);
+        nuevo.comprobanteUrl = undefined;
+      }
+    }
+
+    const comprobanteUrlBd = (nuevo.comprobanteUrl && !nuevo.comprobanteUrl.startsWith('data:image'))
+      ? nuevo.comprobanteUrl
+      : null;
+
     if (isSupabaseConfigured && supabase) {
       let intento = 0;
       let exito = false;
@@ -1063,7 +1091,7 @@ export const dataService = {
                 metodo_pago: nuevo.metodoPago,
                 estado_pago: nuevo.estadoPago,
                 estado_pedido: nuevo.estadoPedido,
-                comprobante_url: nuevo.comprobanteUrl,
+                comprobante_url: comprobanteUrlBd,
                 monto: nuevo.monto,
               },
             ])

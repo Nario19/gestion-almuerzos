@@ -86,10 +86,13 @@ export async function subirImagenACloudinary(
   fileODataUrl: Blob | File | string,
   carpeta: string = 'comprobantes'
 ): Promise<string> {
-  const cloudName =
-    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME;
-  const uploadPreset =
-    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET;
+  const rawCloudName =
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME || '';
+  const rawUploadPreset =
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET || '';
+
+  const cloudName = rawCloudName.replace(/^["']|["']$/g, '').trim();
+  const uploadPreset = rawUploadPreset.replace(/^["']|["']$/g, '').trim();
 
   // Si Cloudinary no está configurado en las variables de entorno, aplicar fallback transparente
   if (!cloudName || !uploadPreset) {

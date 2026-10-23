@@ -1705,6 +1705,19 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/fiado-tabla-desglose-pedido-despacho.test.mjs`
   - `MEMORY.md`
 
+### D-058 — 2026-10-23 — Blindaje Estricto de Almacenamiento Cloudinary vs Supabase PostgreSQL
+
+- Decisión: Garantizar que ninguna imagen pesada en formato Base64 se persista jamás en la base de datos PostgreSQL de Supabase:
+  1. Sanitización defensiva en `src/lib/cloudinaryService.ts`: Limpieza automática de comillas literales y espacios en `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` y `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`.
+  2. En `src/lib/dataService.ts`: Tanto en `crearPedido` (comprobantes de pago) como en `agregarPlato` y `actualizarPlato` (fotos de platos), cualquier imagen en Base64 se sube directamente a Cloudinary (`comprobantes/` y `platos/`).
+  3. En las columnas `comprobante_url` y `imagen_url` de Supabase únicamente se almacena la URL pública HTTPS de Cloudinary (`https://res.cloudinary.com/...`). Si no existe una URL remota válida, se almacena `null`, blindando la cuota de 500MB de PostgreSQL contra saturación por Base64.
+- Fuente: Solicitud e instrucción explícita del usuario.
+- Impacto:
+  - `src/lib/cloudinaryService.ts`
+  - `src/lib/dataService.ts`
+  - `.env.local`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
