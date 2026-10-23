@@ -1005,6 +1005,19 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `vercel.json`
   - `src/app/superadmin/page.tsx`
   - `MEMORY.md`
+
+### D-013 — 2026-10-22 — Línea de tiempo de pedidos con colores, botón Pedir Menú vibrante y migración de Pedir Menú a shadcn/ui
+- Decisión: En la interfaz de padres:
+  1. La línea de tiempo de seguimiento de pedidos (`/padres/pedidos`) debe utilizar colores semánticos (verde esmeralda para entregado/completado, azul para en curso/pago aceptado, ámbar para fiado/por verificar, rojo para cancelado), con barra de progreso activa en degradado de color y tarjeta de estado en vivo con fondo y bordes coloreados.
+  2. El botón central "Pedir Menú" en la barra inferior móvil (`BottomNav`) debe ser vibrante y destacado con gradiente cálido ámbar/naranja y texto naranja cuando está activo.
+  3. La pantalla de pedir menú escolar (`/padres` y `/`) debe migrarse por completo a la estética shadcn/ui (zinc/monochrome, bordes limpios, control segmentado para selector de días, cards de platos minimalistas, modal de corroboración compacto y elegante) preservando 100% de la lógica de negocio y las aserciones de pruebas automatizadas.
+- Fuente: Instrucción explícita del usuario ("la linea de tiempo de los pedidos si que sea de colores y el icono depedir menu tambien esto en la interfaz de lso padres, y la pantalla de pedir menu dale el estilo que le diste a todas sigue igual").
+- Impacto:
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/components/BottomNav.tsx`
+  - `src/app/padres/page.tsx`
+  - `MEMORY.md`
+
   - `tests/cron-limpiar-comprobantes-cloudinary.test.mjs` (7 pruebas nuevas, 299 pruebas totales en la suite, 293 pasadas, 0 fallos).
 
 ### D-048 — 2026-10-21 — Optimización Integral de Rendimiento: Compresión Dinámica Cloudinary, Caché en Memoria y Prefetch de la Carta
@@ -1318,6 +1331,19 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/superadmin/page.tsx`
   - `MEMORY.md`
 
+### D-013 — 2026-10-22 — Línea de tiempo de pedidos con colores, botón Pedir Menú vibrante y migración de Pedir Menú a shadcn/ui
+- Decisión: En la interfaz de padres:
+  1. La línea de tiempo de seguimiento de pedidos (`/padres/pedidos`) debe utilizar colores semánticos (verde esmeralda para entregado/completado, azul para en curso/pago aceptado, ámbar para fiado/por verificar, rojo para cancelado), con barra de progreso activa en degradado de color y tarjeta de estado en vivo con fondo y bordes coloreados.
+  2. El botón central "Pedir Menú" en la barra inferior móvil (`BottomNav`) debe ser vibrante y destacado con gradiente cálido ámbar/naranja y texto naranja cuando está activo.
+  3. La pantalla de pedir menú escolar (`/padres` y `/`) debe migrarse por completo a la estética shadcn/ui (zinc/monochrome, bordes limpios, control segmentado para selector de días, cards de platos minimalistas, modal de corroboración compacto y elegante) preservando 100% de la lógica de negocio y las aserciones de pruebas automatizadas.
+- Fuente: Instrucción explícita del usuario ("la linea de tiempo de los pedidos si que sea de colores y el icono depedir menu tambien esto en la interfaz de lso padres, y la pantalla de pedir menu dale el estilo que le diste a todas sigue igual").
+- Impacto:
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/components/BottomNav.tsx`
+  - `src/app/padres/page.tsx`
+  - `MEMORY.md`
+
+
 ### D-059 — 2026-10-22 — Expansión Integral de shadcn/ui a Toda la Aplicación y Portal de Padres
 
 - Decisión: aplicar de forma transversal e integral los componentes y estándares oficiales de `shadcn/ui` (zinc monocromático, cards, tablas, badges, inputs y modales limpios) en la totalidad de módulos del sistema:
@@ -1379,6 +1405,19 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/admin/components/AdminMenuSemanalTab.tsx`
   - `src/app/superadmin/page.tsx`
   - `MEMORY.md`
+
+### D-013 — 2026-10-22 — Línea de tiempo de pedidos con colores, botón Pedir Menú vibrante y migración de Pedir Menú a shadcn/ui
+- Decisión: En la interfaz de padres:
+  1. La línea de tiempo de seguimiento de pedidos (`/padres/pedidos`) debe utilizar colores semánticos (verde esmeralda para entregado/completado, azul para en curso/pago aceptado, ámbar para fiado/por verificar, rojo para cancelado), con barra de progreso activa en degradado de color y tarjeta de estado en vivo con fondo y bordes coloreados.
+  2. El botón central "Pedir Menú" en la barra inferior móvil (`BottomNav`) debe ser vibrante y destacado con gradiente cálido ámbar/naranja y texto naranja cuando está activo.
+  3. La pantalla de pedir menú escolar (`/padres` y `/`) debe migrarse por completo a la estética shadcn/ui (zinc/monochrome, bordes limpios, control segmentado para selector de días, cards de platos minimalistas, modal de corroboración compacto y elegante) preservando 100% de la lógica de negocio y las aserciones de pruebas automatizadas.
+- Fuente: Instrucción explícita del usuario ("la linea de tiempo de los pedidos si que sea de colores y el icono depedir menu tambien esto en la interfaz de lso padres, y la pantalla de pedir menu dale el estilo que le diste a todas sigue igual").
+- Impacto:
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/components/BottomNav.tsx`
+  - `src/app/padres/page.tsx`
+  - `MEMORY.md`
+
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
