@@ -379,7 +379,7 @@ export default function AdminPage() {
       setImagenUrlMenu(urlNube);
     } catch (e) {
       console.error('Error procesando foto de la entrada:', e);
-      alert('Hubo un problema al procesar la imagen de la sopa o ensalada.');
+      alert('Hubo un problema al procesar la imagen de la entrada o ensalada.');
     } finally {
       setSubiendoFotoEntrada(false);
       setSubiendoFoto(false);
@@ -465,7 +465,7 @@ export default function AdminPage() {
     const tieneSegundo = Boolean(nombreSegundoMenu.trim());
 
     if (!tieneEntrada && !tieneSegundo) {
-      alert('Por favor ingresa al menos una opción: el nombre de la sopa o ensalada, o el del segundo plato.');
+      alert('Por favor ingresa al menos una opción: el nombre de la entrada o ensalada, o el del segundo plato.');
       return;
     }
     if (guardandoPlato) return;
@@ -484,9 +484,9 @@ export default function AdminPage() {
     try {
       const platosCreados: Plato[] = [];
 
-      // 1. Guardar Entrada (Sopa o Ensalada) con precio 0 (incluida en el menú)
+      // 1. Guardar Entrada (Entrada o Ensalada) con precio 0 (incluida en el menú)
       if (tieneEntrada) {
-        const descEntradaCompleta = `${subtipoEntradaMenu === 'Ensalada' ? '[Ensalada]' : '[Sopa]'} ${descripcionEntradaMenu.trim()}`.trim();
+        const descEntradaCompleta = `${subtipoEntradaMenu === 'Ensalada' ? '[Ensalada]' : '[Entrada]'} ${descripcionEntradaMenu.trim()}`.trim();
         const nuevaEntrada = await dataService.agregarPlato({
           diaSemana: diaActivo,
           tipo: 'ENTRADA',

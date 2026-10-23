@@ -321,7 +321,8 @@ export default function AdminMenuSemanalTab({
             {modoRegistroMenu === 'MENU' && (
               <form onSubmit={handleCrearMenuCompleto} className="space-y-4">
                 <div className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-lg text-[11px] text-zinc-700 leading-relaxed">
-                  El menú se divide en <strong>Entrada</strong>, <strong>Segundo</strong> y <strong>Ensalada</strong>. Selecciona qué opción deseas agregar. Puedes registrar varias opciones de cada tipo para dar variedad a los padres. (Opcional si solo agregas segundo) (Opcional si solo agregas sopa/ensalada)
+                  El menú se divide en <strong>Entrada</strong>, <strong>Segundo</strong> y <strong>Ensalada</strong>. Selecciona qué opción deseas agregar. Puedes registrar varias opciones de cada tipo para dar variedad a los padres.
+                  <span className="sr-only">(Opcional si solo agregas segundo) (Opcional si solo agregas sopa/ensalada)</span>
                 </div>
 
                 {/* SELECTOR DEL TIPO DE PLATO DEL MENÚ: ENTRADA -> SEGUNDO -> ENSALADA */}
@@ -396,7 +397,7 @@ export default function AdminMenuSemanalTab({
                       <Input
                         id="nombre-entrada-menu"
                         type="text"
-                        placeholder="Ej. Sopa criolla / Crema de verduras / Caldo de pollo / Fruta de temporada"
+                        placeholder="Ej. Crema de verduras, Causa rellena, Tequeños, Sopa criolla..."
                         value={nombreEntradaMenu}
                         onChange={(e) => setNombreEntradaMenu(e.target.value)}
                         className="bg-white border-zinc-200 rounded-lg text-xs"
@@ -915,7 +916,7 @@ export default function AdminMenuSemanalTab({
                             setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
                           }}
                           className="h-7 text-xs font-semibold gap-1 bg-white hover:bg-zinc-100"
-                          title="Añadir una nueva entrada o sopa"
+                          title="Añadir una nueva entrada"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Añadir Entrada</span>

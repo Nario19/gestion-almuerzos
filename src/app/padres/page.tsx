@@ -331,7 +331,7 @@ function PedidoContent() {
       return;
     }
     if (!entradaSeleccionada) {
-      setErrorValidacion('Selecciona una opción de sopa o ensalada (o marca "Sin entrada").');
+      setErrorValidacion('Selecciona una opción de entrada o ensalada (o marca "Sin entrada").');
       return;
     }
     if (!segundoSeleccionado) {
@@ -448,7 +448,7 @@ function PedidoContent() {
     setErrorValidacion(null);
 
     if (!entradaSeleccionada) {
-      setErrorValidacion('Por favor selecciona una entrada o marca "Sin entrada / sopa".');
+      setErrorValidacion('Por favor selecciona una entrada o marca "Sin entrada".');
       return;
     }
     if (!segundoSeleccionado) {

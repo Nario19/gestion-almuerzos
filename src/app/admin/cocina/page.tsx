@@ -358,7 +358,7 @@ export default function CocinaPage() {
               {resumen.entradas.length === 0 ? (
                 <EmptyState
                   title="Sin raciones de entrada"
-                  description={`No hay pedidos de sopas o postres para ${formatearFechaLegible(fechaFiltro)}.`}
+                  description={`No hay pedidos de entrada para ${formatearFechaLegible(fechaFiltro)}.`}
                   className="py-8 border-none bg-transparent"
                 />
               ) : (
