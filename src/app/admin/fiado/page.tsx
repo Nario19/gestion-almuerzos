@@ -40,11 +40,11 @@ import {
 } from '@/lib/dateUtils';
 import { PadreFiadoResumen, ItemFiadoPedido, ConfiguracionPagos } from '@/types';
 import { descargarComprobanteFiadoPdf } from '@/lib/pdfComprobanteGenerator';
-import { PageHeader } from '@/components/shared/PageHeader';
 import { StatCard } from '@/components/shared/StatCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { EmptyState } from '@/components/shared/EmptyState';
 
 export default function FiadoPage() {
@@ -541,43 +541,41 @@ export default function FiadoPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
-      {/* Barra de Acciones y Reportes de Fiados */}
-      <PageHeader
-        title="Gestión de Fiados y Cobranzas"
-        description="Control de saldos por cobrar, consumos bajo modalidad 'Pagar luego', emisión de comprobantes y cobranza por WhatsApp."
-        actions={
-          <div className="flex items-center gap-2">
-            {!esSuperAdmin && (usuario?.colegioNombre || nombreColegioActivo) && (
-              <span className="hidden">
-                🏫 Colegio: {usuario?.colegioNombre || nombreColegioActivo}
-              </span>
-            )}
+      {/* Barra de Acciones y Reportes de Fiados (el título canónico ya se muestra en la barra superior blanca del navbar) */}
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-2">
+          {!esSuperAdmin && (usuario?.colegioNombre || nombreColegioActivo) && (
+            <span className="hidden">
+              🏫 Colegio: {usuario?.colegioNombre || nombreColegioActivo}
+            </span>
+          )}
+        </div>
 
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={() => setMostrarReporteGlobal(true)}
-              className="gap-1.5 h-8 text-xs font-semibold"
-              title="Ver e imprimir el reporte general de todas las familias y fiados"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Reporte Global</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={exportarReporteGlobalExcel}
-              className="gap-1.5 h-8 text-xs font-semibold"
-              title="Descargar listado global de fiados en Excel"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-zinc-500" />
-              <span>Excel</span>
-            </Button>
-          </div>
-        }
-      />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() => setMostrarReporteGlobal(true)}
+            className="gap-1.5 h-8 text-xs font-semibold"
+            title="Ver e imprimir el reporte general de todas las familias y fiados"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Reporte Global</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={exportarReporteGlobalExcel}
+            className="gap-1.5 h-8 text-xs font-semibold"
+            title="Descargar listado global de fiados en Excel"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-zinc-500" />
+            <span>Excel</span>
+          </Button>
+        </div>
+      </div>
 
       {/* Selector de Colegio Asignado y Filtros Unificados */}
       <Card className="mb-6">
@@ -811,282 +809,326 @@ export default function FiadoPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {fiadosPaginados.map((padre, idx) => {
-            const claveCard = padre.padreId || padre.telefono || `card-${idx}`;
-            const expandido = Boolean(tarjetasExpandidas[claveCard]);
-            const tieneDeuda = padre.totalDeuda > 0;
-            const pedidosPendientes = padre.pedidos.filter((p) => p.estadoPago !== 'PAGADO');
+          <Card className="shadow-2xs overflow-hidden border-zinc-200">
+            <div className="overflow-x-auto">
+              <Table className="min-w-[950px]">
+                <TableHeader>
+                  <TableRow className="border-b border-zinc-200 bg-zinc-50/80 hover:bg-transparent">
+                    <TableHead className="py-3 px-4 text-center w-28 text-xs font-semibold text-zinc-600">Almuerzos</TableHead>
+                    <TableHead className="py-3 px-4 w-44 text-xs font-semibold text-zinc-600">Grado y Estudiante</TableHead>
+                    <TableHead className="py-3 px-4 w-48 text-xs font-semibold text-zinc-600">Nombre (Padre y Teléfono)</TableHead>
+                    <TableHead className="py-3 px-4 text-xs font-semibold text-zinc-600">Detalle de Pedidos</TableHead>
+                    <TableHead className="py-3 px-4 w-44 text-xs font-semibold text-zinc-600">Fecha y Hora</TableHead>
+                    <TableHead className="py-3 px-4 w-36 text-right text-xs font-semibold text-zinc-600">Deuda / Pago</TableHead>
+                    <TableHead className="py-3 px-4 text-center w-40 text-xs font-semibold text-zinc-600 print:hidden">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="text-xs sm:text-sm">
+                  {fiadosPaginados.map((padre, idx) => {
+                    const claveCard = padre.padreId || padre.telefono || `card-${idx}`;
+                    const expandido = Boolean(tarjetasExpandidas[claveCard]);
+                    const tieneDeuda = padre.totalDeuda > 0;
+                    const pedidosPendientes = padre.pedidos.filter((p) => p.estadoPago !== 'PAGADO');
 
-            return (
-              <Card
-                key={claveCard}
-                className={`transition shadow-2xs overflow-hidden ${
-                  tieneDeuda ? 'border-amber-200/90' : 'border-zinc-200/90'
-                }`}
-              >
-                {/* Cabecera de la Familia / Padre */}
-                <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-base sm:text-lg font-bold text-zinc-950 truncate">
-                        {padre.nombrePadre}
-                      </h2>
-                      {(padre.colegioNombre || nombreColegioActivo) && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-orange-50 text-orange-800 text-[11px] font-bold border border-orange-200">
-                          <Building2 className="w-3 h-3 text-orange-600" />
-                          Colegio: {padre.colegioNombre || nombreColegioActivo}
-                        </span>
-                      )}
-                    </div>
+                    return (
+                      <React.Fragment key={claveCard}>
+                        <TableRow className={`transition-colors border-b border-zinc-100 ${tieneDeuda ? 'bg-amber-50/20' : 'hover:bg-zinc-50/50'}`}>
+                          {/* Columna: Almuerzos */}
+                          <TableCell className="py-3.5 px-4 text-center">
+                            <div className="flex flex-col items-center justify-center">
+                              <span className="font-bold text-xs sm:text-sm text-zinc-950">
+                                {padre.pedidos.length} {padre.pedidos.length === 1 ? 'almuerzo' : 'almuerzos'}
+                              </span>
+                              {tieneDeuda ? (
+                                <Badge variant="warning" className="text-[10px] font-semibold mt-1">
+                                  {pedidosPendientes.length} pendientes
+                                </Badge>
+                              ) : (
+                                <Badge variant="success" className="text-[10px] font-semibold mt-1">
+                                  ✓ Al día
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
 
-                    <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">
-                      {padre.telefono && (
-                        <div className="flex items-center gap-1 font-medium text-zinc-600">
-                          <Phone className="w-3.5 h-3.5 text-zinc-400" />
-                          <span>{padre.telefono}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1 font-medium text-zinc-700">
-                        <GraduationCap className="w-3.5 h-3.5 text-zinc-500" />
-                        <span>Hijos: {padre.hijosNombres.join(', ')}</span>
-                      </div>
-                      <div className="text-zinc-400">
-                        • {padre.pedidos.length} {padre.pedidos.length === 1 ? 'almuerzo' : 'almuerzos'}
-                      </div>
-                    </div>
+                          {/* Columna: Grado y Estudiante */}
+                          <TableCell className="py-3.5 px-4">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-bold text-zinc-950">
+                                {padre.hijosNombres.join(', ')}
+                              </span>
+                              <span className="text-[11px] text-zinc-500">
+                                {padre.pedidos.map((p) => p.gradoSeccion).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
+                              </span>
+                            </div>
+                          </TableCell>
 
-                    {/* Resumen de Fechas de Consumo */}
-                    <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                      {padre.tieneConsumoHoy && (
-                        <Badge variant="warning" className="gap-1 text-[10px] font-bold py-0 px-2 uppercase tracking-wider">
-                          <Clock className="w-3 h-3 text-amber-700" />
-                          Consumo de HOY ({padre.horaConsumoHoy || fechaHoy})
-                        </Badge>
-                      )}
-                      {padre.fechasUnicas && padre.fechasUnicas.length > 0 && (
-                        <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-[11px] text-zinc-400 font-medium">Fechas:</span>
-                          {padre.fechasUnicas.slice(0, 4).map((f) => (
-                            <button
-                              key={f}
-                              type="button"
-                              onClick={() => setFechaFiltro(f)}
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer ${
-                                f === fechaHoy
-                                  ? 'bg-amber-100 text-amber-950 font-bold border-amber-300 hover:bg-amber-200'
-                                  : fechaFiltro === f
-                                  ? 'bg-zinc-950 text-white border-zinc-950'
-                                  : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-200'
-                              }`}
-                              title={`Filtrar listado por fecha ${f}`}
-                            >
-                              {f === fechaHoy ? (padre.horaConsumoHoy || 'Hoy') : f}
-                            </button>
-                          ))}
-                          {padre.fechasUnicas.length > 4 && (
-                            <span className="text-[10px] text-zinc-400 font-semibold">
-                              +{padre.fechasUnicas.length - 4}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                          {/* Columna: Nombre (Padre y Teléfono) */}
+                          <TableCell className="py-3.5 px-4">
+                            <div className="font-bold text-xs sm:text-sm text-zinc-950">
+                              {padre.nombrePadre}
+                            </div>
+                            {padre.telefono && (
+                              <div className="text-[11px] text-zinc-500 font-medium mt-0.5 flex items-center gap-1">
+                                <Phone className="w-3 h-3 text-zinc-400" />
+                                <span>{padre.telefono}</span>
+                              </div>
+                            )}
+                            {(padre.colegioNombre || nombreColegioActivo) && (
+                              <span className="text-[10px] text-zinc-400 block mt-0.5">
+                                Colegio: {padre.colegioNombre || nombreColegioActivo}
+                              </span>
+                            )}
+                          </TableCell>
 
-                  {/* Resumen de Deuda y Botones de Acción */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
-                    <div className="text-left sm:text-right">
-                      <span
-                        className={`text-xl sm:text-2xl font-bold block leading-none tracking-tight ${
-                          tieneDeuda ? 'text-amber-700' : 'text-emerald-700'
-                        }`}
-                      >
-                        S/ {padre.totalDeuda.toFixed(2)}
-                      </span>
-                      {fechaFiltro !== 'TODAS' && padre.totalDeudaHistorica > padre.totalDeuda && (
-                        <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
-                          Total acumulado: S/ {padre.totalDeudaHistorica.toFixed(2)}
-                        </span>
-                      )}
-                      {tieneDeuda ? (
-                        <Badge variant="warning" className="text-[10px] font-semibold mt-1">
-                          {pedidosPendientes.length} pendientes
-                        </Badge>
-                      ) : (
-                        <Badge variant="success" className="text-[10px] font-semibold mt-1">
-                          ✓ Al día
-                        </Badge>
-                      )}
-                    </div>
+                          {/* Columna: Detalle de Pedidos */}
+                          <TableCell className="py-3.5 px-4">
+                            <div className="space-y-0.5 max-w-xs">
+                              {padre.pedidos.slice(0, 2).map((p, pIdx) => (
+                                <div key={p.id || pIdx} className="text-xs text-zinc-700 truncate">
+                                  <span className="font-semibold text-zinc-900">{p.segundoNombre}</span>
+                                  {p.entradaNombre ? ` + ${p.entradaNombre}` : ''}
+                                </div>
+                              ))}
+                              {padre.pedidos.length > 2 && (
+                                <span className="text-[11px] text-zinc-400 font-medium">
+                                  +{padre.pedidos.length - 2} pedido(s) más
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
 
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {/* Botón Ver Reporte Detallado */}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPadreReporteModal(padre)}
-                        className="h-8 text-xs font-semibold gap-1.5"
-                        title="Ver e imprimir reporte detallado por fecha de cada hijo"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-zinc-500" />
-                        <span className="hidden sm:inline">Reporte</span>
-                      </Button>
-
-                      {/* Botón Liquidar Deuda Total */}
-                      {tieneDeuda && (
-                        <Button
-                          type="button"
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleSolicitarLiquidarTotal(padre)}
-                          className="h-8 text-xs font-semibold gap-1.5 bg-amber-600 hover:bg-amber-700 text-white"
-                          title="Marcar todos los pedidos como pagados"
-                        >
-                          <CreditCard className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Liquidar</span>
-                        </Button>
-                      )}
-
-                      {/* Botón Desplegar / Contraer */}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => toggleExpandir(claveCard)}
-                        className="h-8 w-8"
-                        title={expandido ? 'Ocultar detalles' : 'Ver detalle de almuerzos'}
-                      >
-                        {expandido ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Desglose Expandido de Almuerzos */}
-                {expandido && (
-                  <div className="border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5 animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                        <Utensils className="w-3.5 h-3.5 text-orange-500" />
-                        Desglose de Almuerzos (&quot;Pagar luego&quot;)
-                      </h4>
-                      <span className="text-xs text-slate-500 font-medium">
-                        {padre.pedidos.length} órdenes en total
-                      </span>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                        <thead>
-                          <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-bold text-[11px]">
-                            <th className="py-2.5 px-3">Fecha</th>
-                            <th className="py-2.5 px-3">Estudiante</th>
-                            <th className="py-2.5 px-3">Sopa o postre</th>
-                            <th className="py-2.5 px-3">Segundo</th>
-                            <th className="py-2.5 px-3 text-center">Entrega</th>
-                            <th className="py-2.5 px-3 text-right">Monto</th>
-                            <th className="py-2.5 px-3 text-center">Estado Pago</th>
-                            <th className="py-2.5 px-3 text-right">Acción</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {padre.pedidos.map((ped) => {
-                            const pagado = ped.estadoPago === 'PAGADO';
-                            const entregado = ped.estadoPedido === 'ENTREGADO';
-                            return (
-                              <tr key={ped.id} className="hover:bg-slate-50/70 transition">
-                                <td className="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
-                                  {ped.fecha === fechaHoy ? (
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
-                                        HOY
-                                      </span>
-                                      <span className="font-bold text-slate-900">
-                                        {ped.createdAt ? formatearHoraPeru(ped.createdAt) : ped.fecha}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="flex flex-col">
-                                      <span className="font-bold text-slate-800">{ped.fecha}</span>
-                                      {ped.createdAt && (
-                                        <span className="text-[10px] text-slate-400 font-normal">
-                                          {formatearHoraPeru(ped.createdAt)}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                  <span className="text-[10px] font-medium text-slate-500 block mt-0.5">
-                                    {ped.colegioNombre || padre.colegioNombre || nombreColegioActivo}
-                                  </span>
-                                </td>
-                                <td className="py-2.5 px-3 font-bold text-slate-900 whitespace-nowrap">
-                                  {ped.estudianteNombre}
-                                  <span className="block text-[10px] font-normal text-slate-500">
-                                    {ped.gradoSeccion}
-                                  </span>
-                                </td>
-                                <td className="py-2.5 px-3 text-slate-700">
-                                  {ped.entradaNombre || '-'}
-                                </td>
-                                <td className="py-2.5 px-3 font-medium text-slate-800">
-                                  {ped.segundoNombre}
-                                </td>
-                                <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                                  {entregado ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                      ✓ Entregado {ped.horaEntrega ? `(${ped.horaEntrega})` : ''}
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                      ⏳ Pendiente
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="py-2.5 px-3 text-right font-black text-slate-900 whitespace-nowrap">
-                                  S/ {(ped.monto || 12).toFixed(2)}
-                                </td>
-                                <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                                  {pagado ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                                      PAGADO
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md">
-                                      POR COBRAR
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                                  {!pagado ? (
+                          {/* Columna: Fecha y Hora juntadas */}
+                          <TableCell className="py-3.5 px-4">
+                            <div className="flex flex-col gap-1">
+                              {padre.tieneConsumoHoy && (
+                                <Badge variant="warning" className="gap-1 text-[10px] font-bold py-0 px-2 uppercase tracking-wider w-fit">
+                                  <Clock className="w-3 h-3 text-amber-700" />
+                                  Consumo de HOY ({padre.horaConsumoHoy || fechaHoy})
+                                </Badge>
+                              )}
+                              {padre.fechasUnicas && padre.fechasUnicas.length > 0 && (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  {padre.fechasUnicas.slice(0, 3).map((f) => (
                                     <button
+                                      key={f}
                                       type="button"
-                                      onClick={() => handleSolicitarPagoIndividual(ped)}
-                                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg transition shadow-2xs cursor-pointer"
+                                      onClick={() => setFechaFiltro(f)}
+                                      className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold border transition cursor-pointer ${
+                                        f === fechaHoy
+                                          ? 'bg-amber-100 text-amber-950 font-bold border-amber-300'
+                                          : fechaFiltro === f
+                                          ? 'bg-zinc-950 text-white border-zinc-950'
+                                          : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-200'
+                                      }`}
+                                      title={`Filtrar por fecha ${f}`}
                                     >
-                                      Marcar Pagado
+                                      {f === fechaHoy ? (padre.horaConsumoHoy || 'Hoy') : f}
                                     </button>
-                                  ) : (
-                                    <span className="text-[11px] text-slate-400 font-bold">
-                                      ✓ Cancelado
+                                  ))}
+                                  {padre.fechasUnicas.length > 3 && (
+                                    <span className="text-[10px] text-zinc-400 font-semibold">
+                                      +{padre.fechasUnicas.length - 3}
                                     </span>
                                   )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            );
-          })}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* Columna: Deuda / Pago */}
+                          <TableCell className="py-3.5 px-4 text-right">
+                            <span
+                              className={`text-base sm:text-lg font-bold block leading-none ${
+                                tieneDeuda ? 'text-amber-700' : 'text-emerald-700'
+                              }`}
+                            >
+                              S/ {padre.totalDeuda.toFixed(2)}
+                            </span>
+                            {fechaFiltro !== 'TODAS' && padre.totalDeudaHistorica > padre.totalDeuda && (
+                              <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
+                                Hist: S/ {padre.totalDeudaHistorica.toFixed(2)}
+                              </span>
+                            )}
+                          </TableCell>
+
+                          {/* Columna: Acciones */}
+                          <TableCell className="py-3.5 px-4 text-center print:hidden">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPadreReporteModal(padre)}
+                                className="h-7 text-xs font-semibold px-2"
+                                title="Ver e imprimir reporte detallado por fecha de cada hijo"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline ml-1">Reporte</span>
+                              </Button>
+
+                              {tieneDeuda && (
+                                <Button
+                                  type="button"
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleSolicitarLiquidarTotal(padre)}
+                                  className="h-7 text-xs font-semibold px-2 bg-amber-600 hover:bg-amber-700 text-white"
+                                  title="Marcar todos los pedidos como pagados"
+                                >
+                                  <CreditCard className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline ml-1">Liquidar</span>
+                                </Button>
+                              )}
+
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => toggleExpandir(claveCard)}
+                                className="h-7 w-7 text-zinc-500 hover:text-zinc-950"
+                                title={expandido ? 'Ocultar detalles' : 'Ver detalle de almuerzos'}
+                              >
+                                {expandido ? (
+                                  <ChevronUp className="w-4 h-4" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Fila expandible con el desglose ordenado de pedidos */}
+                        {expandido && (
+                          <TableRow className="bg-zinc-50/70 hover:bg-zinc-50/70 border-b border-zinc-200">
+                            <TableCell colSpan={7} className="p-3 sm:p-4">
+                              <div className="border border-zinc-200 rounded-xl bg-white overflow-hidden shadow-2xs">
+                                <div className="px-3 py-2 bg-zinc-100/70 border-b border-zinc-200 flex items-center justify-between text-xs font-bold text-zinc-700">
+                                  <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                                    <Utensils className="w-3.5 h-3.5 text-orange-600" />
+                                    Desglose de Almuerzos (&quot;Pagar luego&quot;)
+                                  </span>
+                                  <span className="text-zinc-500 font-medium">
+                                    {padre.pedidos.length} órdenes en total
+                                  </span>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-left text-xs">
+                                    <thead>
+                                      <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 font-bold text-[11px]">
+                                        <th className="py-2.5 px-3">Fecha y Hora</th>
+                                        <th className="py-2.5 px-3">Estudiante</th>
+                                        <th className="py-2.5 px-3">Sopa o postre</th>
+                                        <th className="py-2.5 px-3">Segundo</th>
+                                        <th className="py-2.5 px-3 text-center">Entrega</th>
+                                        <th className="py-2.5 px-3 text-right">Monto</th>
+                                        <th className="py-2.5 px-3 text-center">Estado Pago</th>
+                                        <th className="py-2.5 px-3 text-right">Acción</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-zinc-100">
+                                      {padre.pedidos.map((ped) => {
+                                        const pagado = ped.estadoPago === 'PAGADO';
+                                        const entregado = ped.estadoPedido === 'ENTREGADO';
+                                        return (
+                                          <tr key={ped.id} className="hover:bg-zinc-50 transition">
+                                            <td className="py-2.5 px-3 font-semibold text-zinc-800 whitespace-nowrap">
+                                              {ped.fecha === fechaHoy ? (
+                                                <div className="flex items-center gap-1.5">
+                                                  <Badge variant="success" className="px-1.5 py-0 text-[10px] font-bold">
+                                                    HOY
+                                                  </Badge>
+                                                  <span className="font-bold text-zinc-950">
+                                                    {ped.createdAt ? formatearHoraPeru(ped.createdAt) : ped.fecha}
+                                                  </span>
+                                                </div>
+                                              ) : (
+                                                <div className="flex flex-col">
+                                                  <span className="font-bold text-zinc-800">{ped.fecha}</span>
+                                                  {ped.createdAt && (
+                                                    <span className="text-[10px] text-zinc-400 font-normal">
+                                                      {formatearHoraPeru(ped.createdAt)}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              )}
+                                              <span className="text-[10px] font-medium text-zinc-500 block mt-0.5">
+                                                {ped.colegioNombre || padre.colegioNombre || nombreColegioActivo}
+                                              </span>
+                                            </td>
+                                            <td className="py-2.5 px-3 font-bold text-zinc-900 whitespace-nowrap">
+                                              {ped.estudianteNombre}
+                                              <span className="block text-[10px] font-normal text-zinc-500">
+                                                {ped.gradoSeccion}
+                                              </span>
+                                            </td>
+                                            <td className="py-2.5 px-3 text-zinc-700">
+                                              {ped.entradaNombre || '-'}
+                                            </td>
+                                            <td className="py-2.5 px-3 font-medium text-zinc-800">
+                                              {ped.segundoNombre}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                              {entregado ? (
+                                                <Badge variant="success" className="text-[10px] font-bold">
+                                                  ✓ Entregado {ped.horaEntrega ? `(${ped.horaEntrega})` : ''}
+                                                </Badge>
+                                              ) : (
+                                                <Badge variant="outline" className="text-[10px] font-medium text-zinc-500">
+                                                  ⏳ Pendiente
+                                                </Badge>
+                                              )}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-right font-black text-zinc-900 whitespace-nowrap">
+                                              S/ {(ped.monto || 12).toFixed(2)}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                              {pagado ? (
+                                                <Badge variant="success" className="text-[10px] font-bold">
+                                                  PAGADO
+                                                </Badge>
+                                              ) : (
+                                                <Badge variant="warning" className="text-[10px] font-bold">
+                                                  POR COBRAR
+                                                </Badge>
+                                              )}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                                              {!pagado ? (
+                                                <Button
+                                                  type="button"
+                                                  size="sm"
+                                                  variant="default"
+                                                  onClick={() => handleSolicitarPagoIndividual(ped)}
+                                                  className="h-6 text-[11px] font-bold px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                >
+                                                  Marcar Pagado
+                                                </Button>
+                                              ) : (
+                                                <span className="text-[11px] text-zinc-400 font-bold">
+                                                  ✓ Cancelado
+                                                </span>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
 
           {/* Barra de Paginación */}
           {totalFamilias > 0 && (

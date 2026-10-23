@@ -1462,6 +1462,33 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/components/HeaderNav.tsx`
   - `MEMORY.md`
 
+### D-016 — 2026-10-22 — Formato de Tablas y Unificación de Fecha y Hora en Despacho y Fiados
+- Decisión:
+  1. **Despacho (`/admin/despacho`):**
+     - Formatear la vista en una tabla shadcn/ui con las 7 columnas canónicas exactas:
+       1. `N° Almuerzo`: correlativo independiente de almuerzo, código de pedido y estado cancelado.
+       2. `Grado y Sección`: grado escolar del alumno.
+       3. `Nombre`: nombre del estudiante en negrita, nombre del padre (`Padre: ...`) y teléfono de contacto (`Tel: ...`).
+       4. `Pedido`: plato de fondo (segundo), sopa o postre, ensalada, extras y observaciones médicas/alergias.
+       5. `Fecha y Hora`: columna dedicada que unifica fecha y hora de consumo en una sola celda limpia.
+       6. `Pago`: método de pago (Yape/Plin/Pagar luego), comprobante voucher y botón/estado de aceptación de pago.
+       7. `Entrega`: estado de entrega en tiempo real (`✓ Entregado`, `Marcar Entregado`, `Requiere Pago` o `Cancelar pedido`).
+     - Suprimir el encabezado con título redundante en el cuerpo de la página, manteniendo los accesos a Excel y PDF.
+  2. **Fiados (`/admin/fiado`):**
+     - Reemplazar las tarjetas apiladas por una tabla shadcn/ui análoga y profesional:
+       1. `Almuerzos`: total de órdenes y balance de pedidos pendientes o al día.
+       2. `Grado y Estudiante`: nombres y grados de los hijos de la familia.
+       3. `Nombre (Padre y Teléfono)`: datos del padre de familia, teléfono y colegio asignado.
+       4. `Detalle de Pedidos`: vista previa de las órdenes bajo la modalidad "Pagar luego".
+       5. `Fecha y Hora`: columna unificada con insignia `Consumo de HOY` y acceso a fechas de consumo.
+       6. `Deuda / Pago`: saldo total deudor y desglose histórico acumulado.
+       7. `Acciones`: emisión de Reporte (con WhatsApp y PDF), botón Liquidar deuda total y toggle para desplegar la sub-tabla detallada de almuerzos individuales.
+- Fuente: Instrucción explícita del usuario ("que lo de fiados este en tabla y lo de despacho tambien este en tabla la fehca y hora juntalo. qu etenga estas columnas el despacho. n° allmuerzo grado y seccion nombre (aqui va su nombre padre y telefono) pedido fecha y hora pago entra. en el fiado algo parecido pero con los datos de fiado").
+- Impacto:
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `MEMORY.md`
+
 
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)

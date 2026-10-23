@@ -35,7 +35,6 @@ import {
   formatearFechaEmisionPeru,
 } from '@/lib/dateUtils';
 import { Pedido, EstadoPedido, EstadoPago, FiltroGrados } from '@/types';
-import { PageHeader } from '@/components/shared/PageHeader';
 import { StatCard } from '@/components/shared/StatCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -454,44 +453,42 @@ export default function DespachoPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
-      {/* Encabezado Principal de Despacho */}
-      <PageHeader
-        title="Control de Despacho"
-        description="Empaque y entrega de almuerzos en colegios, validación de pagos y control de entrega en tiempo real."
-        actions={
-          <div className="flex items-center gap-2">
-            {!esSuperAdmin && usuario?.colegioNombre ? (
-              <span className="hidden">
-                🏫 Colegio: {usuario.colegioNombre}
-              </span>
-            ) : null}
+      {/* Barra de Acciones de Despacho (el título canónico ya se muestra en la barra superior blanca del navbar) */}
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-2">
+          {!esSuperAdmin && usuario?.colegioNombre ? (
+            <span className="hidden">
+              🏫 Colegio: {usuario.colegioNombre}
+            </span>
+          ) : null}
+        </div>
 
-            {/* Botón Imprimir Lista (Genera y descarga en Excel con las 5 columnas) */}
-            <Button
-              variant="default"
-              size="sm"
-              onClick={exportarExcel}
-              className="gap-2 h-8 text-xs font-semibold"
-              title="Descarga el listado en formato Excel con N°, Grado y Sección, Nombres, Pedido y Pago"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Imprimir Lista (Excel)</span>
-            </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Botón Imprimir Lista (Genera y descarga en Excel con las columnas solicitadas) */}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={exportarExcel}
+            className="gap-2 h-8 text-xs font-semibold"
+            title="Descarga el listado en formato Excel con N°, Grado y Sección, Nombres, Pedido y Pago"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Imprimir Lista (Excel)</span>
+          </Button>
 
-            {/* Botón secundario para imprimir a papel / PDF */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={imprimir}
-              className="gap-1.5 h-8 text-xs font-semibold"
-              title="Imprimir directamente en papel o PDF"
-            >
-              <Printer className="w-3.5 h-3.5 text-zinc-500" />
-              <span>Imprimir</span>
-            </Button>
-          </div>
-        }
-      />
+          {/* Botón secundario para imprimir a papel / PDF */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={imprimir}
+            className="gap-1.5 h-8 text-xs font-semibold"
+            title="Imprimir directamente en papel o PDF"
+          >
+            <Printer className="w-3.5 h-3.5 text-zinc-500" />
+            <span>Imprimir</span>
+          </Button>
+        </div>
+      </div>
 
       {/* Métricas Resumen - Interactivas como filtros rápidos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 print:hidden">
@@ -844,17 +841,20 @@ export default function DespachoPage() {
                 </Badge>
               </CardHeader>
 
-              {/* Tabla con la estructura de reporte solicitada: N°, Grado y Sección, Nombres, Pedido, Pago (+ Acción Empaque) */}
+              {/* Tabla con la estructura de reporte solicitada: N° Almuerzo, Grado y Sección, Nombre, Pedido, Fecha y Hora, Pago, Entrega */}
               <div className="overflow-x-auto">
-                <Table className="min-w-[700px]">
+                <Table className="min-w-[850px]">
                   <TableHeader>
-                    <TableRow className="border-b border-zinc-100 hover:bg-transparent">
-                      <TableHead className="py-3 px-4 text-center w-28 text-xs font-semibold text-zinc-500">N° Almuerzo / Hora</TableHead>
-                      <TableHead className="py-3 px-4 w-40 text-xs font-semibold text-zinc-500">Grado y Sección</TableHead>
-                      <TableHead className="py-3 px-4 w-48 text-xs font-semibold text-zinc-500">Nombres</TableHead>
-                      <TableHead className="py-3 px-4 text-xs font-semibold text-zinc-500">Pedido</TableHead>
-                      <TableHead className="py-3 px-4 w-44 text-xs font-semibold text-zinc-500">Pago</TableHead>
-                      <TableHead className="py-3 px-4 text-left w-44 print:hidden text-xs font-semibold text-zinc-500">Entrega</TableHead>
+                    <TableRow className="border-b border-zinc-200 bg-zinc-50/80 hover:bg-transparent">
+                      <TableHead className="py-3 px-4 text-center w-28 text-xs font-semibold text-zinc-600" title="N° Almuerzo / Hora">
+                        N° Almuerzo
+                      </TableHead>
+                      <TableHead className="py-3 px-4 w-36 text-xs font-semibold text-zinc-600">Grado y Sección</TableHead>
+                      <TableHead className="py-3 px-4 w-48 text-xs font-semibold text-zinc-600">Nombre</TableHead>
+                      <TableHead className="py-3 px-4 text-xs font-semibold text-zinc-600">Pedido</TableHead>
+                      <TableHead className="py-3 px-4 w-36 text-xs font-semibold text-zinc-600">Fecha y Hora</TableHead>
+                      <TableHead className="py-3 px-4 w-40 text-xs font-semibold text-zinc-600">Pago</TableHead>
+                      <TableHead className="py-3 px-4 text-left w-44 print:hidden text-xs font-semibold text-zinc-600">Entrega</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="text-xs sm:text-sm">
@@ -876,7 +876,7 @@ export default function DespachoPage() {
                               : 'hover:bg-zinc-50/50'
                           }`}
                         >
-                          {/* Columna: N° y Hora del Pedido */}
+                          {/* Columna 1: N° Almuerzo */}
                           <TableCell className="py-3.5 px-4 text-center">
                             <div className="flex flex-col items-center justify-center">
                               <span className={`font-mono font-bold text-xs sm:text-sm block ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-950'}`}>
@@ -890,24 +890,17 @@ export default function DespachoPage() {
                                   CANCELADO
                                 </Badge>
                               )}
-                              <span
-                                className="inline-flex items-center gap-1 text-[10px] font-medium text-zinc-500 mt-1"
-                                title="Hora en que se registró el pedido"
-                              >
-                                <Clock className="w-2.5 h-2.5 text-zinc-400" />
-                                {formatearHora(p.createdAt)}
-                              </span>
                             </div>
                           </TableCell>
 
-                          {/* Columna: Grado y Sección */}
+                          {/* Columna 2: Grado y Sección */}
                           <TableCell className="py-3.5 px-4">
                             <Badge variant="outline" className="px-2 py-0.5 text-xs font-semibold bg-zinc-50 border-zinc-200 text-zinc-700">
                               {p.gradoSeccion}
                             </Badge>
                           </TableCell>
 
-                          {/* Columna: Nombres */}
+                          {/* Columna 3: Nombre (estudiante, padre y teléfono) */}
                           <TableCell className="py-3.5 px-4">
                             <div className={`font-bold text-xs sm:text-sm ${cancelado ? 'text-zinc-500' : 'text-zinc-950'}`}>
                               {p.estudianteNombre}
@@ -924,21 +917,12 @@ export default function DespachoPage() {
                             )}
                           </TableCell>
 
-                          {/* Columna: Pedido */}
+                          {/* Columna 4: Pedido */}
                           <TableCell className="py-3.5 px-4">
                             <div className="space-y-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
-                                  📅 {p.fecha ? p.fecha.slice(0, 10) : p.diaSemana || 'Hoy'}
-                                </span>
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
-                                  <Clock className="w-2.5 h-2.5 text-zinc-400" />
-                                  {formatearHora(p.createdAt)}
-                                </span>
-                              </div>
                               {p.entradaNombre && (
                                 <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>
-                                  <span className="font-semibold text-orange-700">Entrada:</span>{' '}
+                                  <span className="font-semibold text-orange-700">Sopa o postre:</span>{' '}
                                   {p.entradaNombre}
                                 </div>
                               )}
@@ -964,6 +948,20 @@ export default function DespachoPage() {
                                   <span>Obs: {p.observacion}</span>
                                 </div>
                               )}
+                            </div>
+                          </TableCell>
+
+                          {/* Columna 5: Fecha y Hora (Juntadas) */}
+                          <TableCell className="py-3.5 px-4">
+                            <div className="flex flex-col gap-1 text-xs">
+                              <span className="font-semibold text-zinc-900 flex items-center gap-1.5 whitespace-nowrap">
+                                <CalendarIcon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                {p.fecha ? p.fecha.slice(0, 10) : p.diaSemana || 'Hoy'}
+                              </span>
+                              <span className="text-[11px] text-zinc-500 flex items-center gap-1.5 font-medium whitespace-nowrap">
+                                <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                {formatearHora(p.createdAt)}
+                              </span>
                             </div>
                           </TableCell>
 
