@@ -287,7 +287,7 @@ function PedidoContent() {
 
   // Si el usuario tiene hijos o viene por parámetro URL
   useEffect(() => {
-    if (usuario && usuario.rol !== 'ADMIN' && usuario.hijos.length > 0) {
+    if (usuario && usuario.rol !== 'ADMIN' && usuario.hijos && usuario.hijos.length > 0) {
       if (hijoIdParam) {
         const encontrado = usuario.hijos.find((h) => h.id === hijoIdParam);
         if (encontrado) {
@@ -575,44 +575,44 @@ function PedidoContent() {
   if (esAdmin) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-20">
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-200">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-md">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-900 bg-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200">
               Panel Administrativo
             </span>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight mt-1.5">
               Control de Operaciones
             </h1>
           </div>
-          <span className="text-xs font-semibold text-slate-500">
-            Usuario: {usuario?.nombreCompleto}
+          <span className="text-xs font-medium text-zinc-500">
+            Usuario: <strong className="text-zinc-900 font-semibold">{usuario?.nombreCompleto}</strong>
           </span>
         </div>
 
         {/* Resumen rápido de hoy */}
         {resumenAdmin && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-            <div className="bg-white rounded-2xl p-4 border border-slate-200">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">Total Pedidos</span>
-              <span className="text-2xl font-black text-slate-900 block mt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white rounded-xl p-4 border border-zinc-200/90 shadow-2xs">
+              <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Total Pedidos</span>
+              <span className="text-2xl font-bold text-zinc-950 block mt-1 tracking-tight">
                 {resumenAdmin.totalPedidos}
               </span>
             </div>
-            <div className="bg-white rounded-2xl p-4 border border-slate-200">
-              <span className="text-[11px] font-bold text-amber-600 uppercase">Observaciones</span>
-              <span className="text-2xl font-black text-amber-600 block mt-1">
+            <div className="bg-white rounded-xl p-4 border border-zinc-200/90 shadow-2xs">
+              <span className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">Observaciones</span>
+              <span className="text-2xl font-bold text-amber-700 block mt-1 tracking-tight">
                 {resumenAdmin.pedidosConObservacion}
               </span>
             </div>
-            <div className="bg-white rounded-2xl p-4 border border-slate-200">
-              <span className="text-[11px] font-bold text-emerald-600 uppercase">Pagados</span>
-              <span className="text-2xl font-black text-emerald-600 block mt-1">
+            <div className="bg-white rounded-xl p-4 border border-zinc-200/90 shadow-2xs">
+              <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wide">Pagados</span>
+              <span className="text-2xl font-bold text-emerald-700 block mt-1 tracking-tight">
                 {resumenAdmin.pedidosPagados}
               </span>
             </div>
-            <div className="bg-white rounded-2xl p-4 border border-slate-200">
-              <span className="text-[11px] font-bold text-rose-600 uppercase">Pendientes</span>
-              <span className="text-2xl font-black text-rose-600 block mt-1">
+            <div className="bg-white rounded-xl p-4 border border-zinc-200/90 shadow-2xs">
+              <span className="text-[11px] font-semibold text-rose-700 uppercase tracking-wide">Pendientes</span>
+              <span className="text-2xl font-bold text-rose-700 block mt-1 tracking-tight">
                 {resumenAdmin.pedidosPendientesPago}
               </span>
             </div>
@@ -620,25 +620,25 @@ function PedidoContent() {
         )}
 
         {/* Los 3 Módulos Operativos */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <Link
             href="/admin"
             onPointerDown={() => sincronizarCookieSesion(usuario)}
             onClick={() => sincronizarCookieSesion(usuario)}
-            className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-slate-800 hover:shadow-md transition group flex flex-col justify-between"
+            className="bg-white rounded-xl p-5 border border-zinc-200/90 hover:border-zinc-950 hover:shadow-xs transition group flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <BarChart3 className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <BarChart3 className="w-5 h-5" />
               </div>
-              <h2 className="text-base font-black text-slate-900">Panel Admin & KPIs</h2>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              <h2 className="text-sm font-bold text-zinc-950">Panel Admin & KPIs</h2>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
                 Dashboard de ventas, embudo operativo, gestión del menú semanal y colegios.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-800">
+            <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs font-semibold text-zinc-900">
               <span>Abrir Panel Admin</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-950 transition" />
             </div>
           </Link>
 
@@ -646,20 +646,20 @@ function PedidoContent() {
             href="/admin/despacho"
             onPointerDown={() => sincronizarCookieSesion(usuario)}
             onClick={() => sincronizarCookieSesion(usuario)}
-            className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-emerald-500 hover:shadow-md transition group flex flex-col justify-between"
+            className="bg-white rounded-xl p-5 border border-zinc-200/90 hover:border-emerald-600 hover:shadow-xs transition group flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <PackageCheck className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <PackageCheck className="w-5 h-5" />
               </div>
-              <h2 className="text-base font-black text-slate-900">Despacho</h2>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              <h2 className="text-sm font-bold text-zinc-950">Despacho</h2>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
                 Recepción de órdenes, verificación de pagos, rotulado de loncheras y reporte Excel.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+            <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs font-semibold text-emerald-700">
               <span>Abrir Despacho</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-emerald-500 group-hover:text-emerald-700 transition" />
             </div>
           </Link>
 
@@ -667,20 +667,20 @@ function PedidoContent() {
             href="/admin/cocina"
             onPointerDown={() => sincronizarCookieSesion(usuario)}
             onClick={() => sincronizarCookieSesion(usuario)}
-            className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
+            className="bg-white rounded-xl p-5 border border-zinc-200/90 hover:border-orange-600 hover:shadow-xs transition group flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <ChefHat className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <ChefHat className="w-5 h-5" />
               </div>
-              <h2 className="text-base font-black text-slate-900">Cocina</h2>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              <h2 className="text-sm font-bold text-zinc-950">Cocina</h2>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
                 Consolidado de platos de pedidos aceptados y alertas de dietas especiales a preparar.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-orange-600">
+            <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs font-semibold text-orange-700">
               <span>Abrir Cocina</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-orange-500 group-hover:text-orange-700 transition" />
             </div>
           </Link>
         </div>
@@ -694,69 +694,69 @@ function PedidoContent() {
   if (pedidoCompletado) {
     return (
       <div className="max-w-md mx-auto px-4 py-8 animate-in fade-in duration-300">
-        <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-xl border border-emerald-100 text-center relative overflow-hidden">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-9 h-9" />
+        <div className="bg-white rounded-xl p-6 sm:p-7 shadow-xs border border-zinc-200/90 text-center relative overflow-hidden">
+          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-3 border border-emerald-200">
+            <CheckCircle2 className="w-6 h-6" />
           </div>
 
-          <span className="inline-block px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-full mb-2">
+          <span className="inline-block px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold rounded-md mb-2">
             PEDIDO REGISTRADO
           </span>
 
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
             Código: <span className="text-emerald-600">#{pedidoCompletado.codigoPedido}</span>
           </h1>
 
           {/* MENSAJE EXACTO SOLICITADO */}
-          <p className="text-sm font-bold text-slate-800 mt-2 bg-slate-50 py-2.5 px-4 rounded-xl border border-slate-200">
+          <p className="text-xs sm:text-sm font-medium text-zinc-700 mt-2 bg-zinc-50 py-2.5 px-4 rounded-lg border border-zinc-200">
             El almuerzo ya está programado.
           </p>
 
-          <div className="mt-5 bg-slate-50 rounded-2xl p-4 text-left border border-slate-200/80 space-y-2 text-xs sm:text-sm">
-            <div className="flex justify-between pb-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Día:</span>
-              <span className="font-bold text-slate-900">{pedidoCompletado.diaSemana || 'Hoy'}</span>
+          <div className="mt-4 bg-zinc-50 rounded-lg p-3.5 text-left border border-zinc-200/80 space-y-2 text-xs">
+            <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+              <span className="text-zinc-500">Día:</span>
+              <span className="font-bold text-zinc-900">{pedidoCompletado.diaSemana || 'Hoy'}</span>
             </div>
-            <div className="flex justify-between pb-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Hijo:</span>
-              <span className="font-bold text-slate-900">{pedidoCompletado.estudianteNombre}</span>
+            <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+              <span className="text-zinc-500">Hijo:</span>
+              <span className="font-bold text-zinc-900">{pedidoCompletado.estudianteNombre}</span>
             </div>
-            <div className="flex justify-between pb-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Colegio:</span>
-              <span className="font-semibold text-slate-800">
+            <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+              <span className="text-zinc-500">Colegio:</span>
+              <span className="font-medium text-zinc-800">
                 {pedidoCompletado.colegioNombre} - {pedidoCompletado.gradoSeccion}
               </span>
             </div>
-            <div className="flex justify-between pb-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Sopa o ensalada:</span>
-              <span className="font-semibold text-orange-700">{pedidoCompletado.entradaNombre}</span>
+            <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+              <span className="text-zinc-500">Sopa o ensalada:</span>
+              <span className="font-semibold text-zinc-900">{pedidoCompletado.entradaNombre}</span>
             </div>
-            <div className="flex justify-between pb-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Segundo:</span>
-              <span className="font-semibold text-orange-700">{pedidoCompletado.segundoNombre}</span>
+            <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+              <span className="text-zinc-500">Segundo:</span>
+              <span className="font-semibold text-zinc-900">{pedidoCompletado.segundoNombre}</span>
             </div>
             {pedidoCompletado.refrigerioNombre && (
-              <div className="flex justify-between pb-1.5 border-b border-slate-200">
-                <span className="text-slate-500">Extras:</span>
+              <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+                <span className="text-zinc-500">Extras:</span>
                 <span className="font-semibold text-emerald-700">{pedidoCompletado.refrigerioNombre}</span>
               </div>
             )}
             {pedidoCompletado.observacion && (
-              <div className="flex justify-between pb-1.5 border-b border-slate-200">
-                <span className="text-slate-500">Obs:</span>
-                <span className="font-semibold text-rose-600">{pedidoCompletado.observacion}</span>
+              <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+                <span className="text-zinc-500">Obs:</span>
+                <span className="font-medium text-rose-600">{pedidoCompletado.observacion}</span>
               </div>
             )}
-            <div className="flex justify-between pt-1 font-bold text-slate-900">
+            <div className="flex justify-between pt-1 font-bold text-zinc-900">
               <span>Total:</span>
-              <span className="text-emerald-600 text-base">S/ {pedidoCompletado.monto.toFixed(2)}</span>
+              <span className="text-emerald-600 text-sm">S/ {pedidoCompletado.monto.toFixed(2)}</span>
             </div>
           </div>
 
-          <div className="mt-6 space-y-2.5">
+          <div className="mt-5 space-y-2">
             <Link
               href="/padres/pedidos"
-              className="w-full py-3.5 px-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl shadow-md shadow-orange-500/25 flex items-center justify-center gap-2 text-xs sm:text-sm transition cursor-pointer"
+              className="w-full py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg shadow-2xs flex items-center justify-center gap-2 text-xs sm:text-sm transition cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4 text-white" />
               Ver en Mis Pedidos
@@ -767,7 +767,7 @@ function PedidoContent() {
                 setPedidoCompletado(null);
                 setComprimidoInfo(null);
               }}
-              className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs transition cursor-pointer"
+              className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold rounded-lg flex items-center justify-center gap-2 text-xs transition cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Hacer otro pedido
@@ -825,7 +825,7 @@ function PedidoContent() {
     );
   };
 
-  const renderIconoPlato = (tipo: string, nombre: string, className = 'w-8 h-8 text-orange-500') => {
+  const renderIconoPlato = (tipo: string, nombre: string, className = 'w-8 h-8 text-zinc-500') => {
     const t = (tipo || '').toLowerCase();
     const n = (nombre || '').toLowerCase();
     if (t.includes('sopa') || n.includes('sopa') || n.includes('caldo') || n.includes('crema')) {
@@ -850,31 +850,30 @@ function PedidoContent() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28">
         {/* HERO BANNER CON CTA ABOVE THE FOLD (VISITANTES) */}
-        <div className="mb-5 bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 rounded-3xl p-5 sm:p-6 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="mb-5 bg-zinc-950 text-white rounded-xl p-5 sm:p-6 border border-zinc-800 shadow-xs relative overflow-hidden">
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-xs rounded-full text-[11px] font-bold text-white mb-2.5">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-zinc-800 text-zinc-300 rounded-full text-[11px] font-semibold mb-2.5 border border-zinc-700">
+              <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
               Almuerzos Escolares Nutritivos
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight">
               Pide el menú escolar de hoy para tus hijos
             </h2>
-            <p className="text-xs sm:text-sm text-orange-50/90 mt-1 leading-relaxed max-w-lg">
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1 leading-relaxed max-w-lg">
               Comida fresca, balanceada y preparada con altos estándares de higiene para cada día escolar.
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <Link
                 href="/login"
-                className="px-5 py-2.5 bg-white hover:bg-orange-50 active:scale-[0.98] text-orange-600 font-black rounded-xl text-xs sm:text-sm shadow-md transition flex items-center gap-2"
+                className="px-4 py-2 bg-white hover:bg-zinc-100 active:scale-[0.98] text-zinc-950 font-semibold rounded-lg text-xs sm:text-sm shadow-2xs transition flex items-center gap-2"
               >
-                <LogIn className="w-4 h-4 text-orange-600" />
+                <LogIn className="w-4 h-4 text-zinc-950" />
                 Iniciar Sesión para Pedir
               </Link>
               <Link
                 href="/login?modo=registro"
-                className="px-4 py-2.5 bg-orange-700/60 hover:bg-orange-700/80 active:scale-[0.98] text-white font-bold rounded-xl text-xs sm:text-sm border border-white/20 transition flex items-center gap-1.5"
+                className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-zinc-200 font-semibold rounded-lg text-xs sm:text-sm border border-zinc-700 transition flex items-center gap-1.5"
               >
                 Crear Cuenta
               </Link>
@@ -883,32 +882,32 @@ function PedidoContent() {
         </div>
 
         {/* Encabezado de la Carta */}
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-200">
           <div>
             <h1 className="sr-only">Carta Semanal</h1>
             {/* Pedidos hasta las 09:30 AM (Horario por defecto configurable en Superadmin) */}
-            <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}
+            <span className="text-[11px] font-medium text-zinc-500 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-zinc-500" /> Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}
             </span>
           </div>
         </div>
 
         {/* FILTRO POR COLEGIO PARA VISITANTES */}
-        <div className="mb-4 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 shrink-0">
-            <Building2 className="w-4 h-4 text-orange-500" />
+        <div className="mb-4 bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5 shrink-0">
+            <Building2 className="w-4 h-4 text-zinc-500" />
             <span>Colegio:</span>
           </label>
           <div className="flex-1 sm:max-w-xs">
             {cargandoColegios ? (
-              <div className="text-xs text-slate-400 py-1.5">Cargando colegios...</div>
+              <div className="text-xs text-zinc-400 py-1.5">Cargando colegios...</div>
             ) : listaColegios.length === 0 ? (
-              <div className="text-xs text-slate-400 py-1.5">No hay colegios disponibles</div>
+              <div className="text-xs text-zinc-400 py-1.5">No hay colegios disponibles</div>
             ) : (
               <select
                 value={colegio}
                 onChange={(e) => setColegio(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-zinc-900 focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 focus:outline-hidden"
               >
                 {listaColegios.map((col) => (
                   <option key={col} value={col}>
@@ -921,8 +920,8 @@ function PedidoContent() {
         </div>
 
         {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
-        <div className="mb-6">
-          <div className="grid grid-cols-5 gap-1.5 bg-slate-200/80 p-1 rounded-2xl">
+        <div className="mb-5">
+          <div className="grid grid-cols-5 gap-1 bg-zinc-100 p-1 rounded-lg border border-zinc-200/80">
             {DIAS_SEMANA.map((dia) => {
               const activo = diaSeleccionado === dia.key;
               const esHoy = diaActual === dia.key;
@@ -931,15 +930,15 @@ function PedidoContent() {
                   key={dia.key}
                   type="button"
                   onClick={() => setDiaSeleccionado(dia.key)}
-                  className={`py-2 px-1 rounded-xl text-center transition ${
+                  className={`py-1.5 px-1 rounded-md text-center transition ${
                     activo
-                      ? 'bg-white text-orange-600 font-bold shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 font-medium'
+                      ? 'bg-white text-zinc-950 font-bold shadow-2xs'
+                      : 'text-zinc-600 hover:text-zinc-900 font-medium'
                   }`}
                 >
                   <span className="block text-xs">{dia.short}</span>
                   {esHoy && (
-                    <span className="inline-block text-[9px] font-bold px-1.5 bg-orange-100 text-orange-700 rounded-md">
+                    <span className="inline-block text-[9px] font-bold px-1.5 bg-zinc-200 text-zinc-800 rounded">
                       Hoy
                     </span>
                   )}
@@ -951,11 +950,11 @@ function PedidoContent() {
 
         {/* Aviso de fuera de horario */}
         {fueraDeHorarioHoy && (
-          <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
+          <div className="mb-4 p-3.5 bg-amber-50/80 border border-amber-200/90 rounded-xl text-xs text-amber-950 flex items-start gap-2.5 shadow-2xs">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <span className="font-bold block">Aviso de Horario de Pedidos:</span>
-              <span className="text-[11px] text-amber-800 leading-relaxed block mt-0.5">
+              <span className="text-[11px] text-amber-900 leading-relaxed block mt-0.5">
                 La hora límite de pedidos para hoy ({formatearHoraLimiteLegible(horaLimite)}) ha culminado. Si ingresas a tu cuenta aún puedes registrar tu pedido; la cocina hará lo posible por atenderlo según disponibilidad.
               </span>
             </div>
@@ -963,26 +962,26 @@ function PedidoContent() {
         )}
 
         {/* CONTENIDO DE LA CARTA */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <span className="sr-only">1. Sopa o Ensalada</span>
           <span className="sr-only">1. Sopa o postre</span>
 
           {/* 1. SOPAS */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-amber-200/80 shadow-xs">
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Soup className="w-4 h-4 text-amber-500" />
+              <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Soup className="w-4 h-4 text-zinc-600" />
                 1. Sopas ({diaSeleccionado})
               </h2>
-              <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              <span className="text-[11px] font-medium text-zinc-700 bg-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200">
                 Incluida en el menú
               </span>
             </div>
 
             {cargandoPlatos ? (
-              <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
+              <p className="text-xs text-zinc-400 py-6 text-center font-medium">Cargando opciones...</p>
             ) : sopas.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Sin opciones de sopa para este día.</p>
+              <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin opciones de sopa para este día.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {sopas.map((ent) => {
@@ -994,29 +993,29 @@ function PedidoContent() {
                   return (
                     <div
                       key={ent.id}
-                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-amber-300 transition flex flex-col shadow-2xs"
+                      className="rounded-lg border border-zinc-200/90 overflow-hidden bg-white hover:border-zinc-300 transition flex flex-col shadow-2xs"
                     >
-                      <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                      <div className="h-44 sm:h-52 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
                         {ent.imagenUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={ent.imagenUrl} alt={ent.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                         ) : (
-                          <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-amber-400')}
-                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-zinc-400')}
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                               Sopa
                             </span>
                           </div>
                         )}
-                        <span className="absolute top-2 left-2 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                        <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                           Sopa
                         </span>
                       </div>
                       <div className="p-3.5 flex-1 flex flex-col justify-between">
                         <div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ent.nombre}</h4>
+                          <h4 className="text-xs sm:text-sm font-bold text-zinc-900">{ent.nombre}</h4>
                           {descLimpia && (
-                            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{descLimpia}</p>
+                            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{descLimpia}</p>
                           )}
                         </div>
                       </div>
@@ -1028,21 +1027,21 @@ function PedidoContent() {
           </div>
 
           {/* 2. ENSALADAS */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-emerald-200/80 shadow-xs">
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Salad className="w-4 h-4 text-emerald-600" />
+              <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Salad className="w-4 h-4 text-zinc-600" />
                 2. Ensaladas ({diaSeleccionado})
               </h2>
-              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              <span className="text-[11px] font-medium text-zinc-700 bg-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200">
                 Incluida en el menú
               </span>
             </div>
 
             {cargandoPlatos ? (
-              <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
+              <p className="text-xs text-zinc-400 py-6 text-center font-medium">Cargando opciones...</p>
             ) : ensaladas.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Sin opciones de ensalada para este día.</p>
+              <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin opciones de ensalada para este día.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {ensaladas.map((ent) => {
@@ -1054,29 +1053,29 @@ function PedidoContent() {
                   return (
                     <div
                       key={ent.id}
-                      className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-emerald-300 transition flex flex-col shadow-2xs"
+                      className="rounded-lg border border-zinc-200/90 overflow-hidden bg-white hover:border-zinc-300 transition flex flex-col shadow-2xs"
                     >
-                      <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                      <div className="h-44 sm:h-52 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
                         {ent.imagenUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={ent.imagenUrl} alt={ent.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                         ) : (
-                          <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-emerald-500')}
-                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-zinc-400')}
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                               Ensalada
                             </span>
                           </div>
                         )}
-                        <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                        <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                           Ensalada
                         </span>
                       </div>
                       <div className="p-3.5 flex-1 flex flex-col justify-between">
                         <div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ent.nombre}</h4>
+                          <h4 className="text-xs sm:text-sm font-bold text-zinc-900">{ent.nombre}</h4>
                           {descLimpia && (
-                            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{descLimpia}</p>
+                            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{descLimpia}</p>
                           )}
                         </div>
                       </div>
@@ -1088,49 +1087,49 @@ function PedidoContent() {
           </div>
 
           {/* 2. SEGUNDOS */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Utensils className="w-4 h-4 text-orange-500" />
+              <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Utensils className="w-4 h-4 text-zinc-600" />
                 2. Segundo (Plato de Fondo) ({diaSeleccionado})
               </h2>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+              <span className="text-xs font-semibold text-zinc-900 bg-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200">
                 Menú: S/ {precioMenuBase.toFixed(2)}
               </span>
             </div>
 
             {cargandoPlatos ? (
-              <p className="text-xs text-slate-400 py-6 text-center">Cargando opciones...</p>
+              <p className="text-xs text-zinc-400 py-6 text-center font-medium">Cargando opciones...</p>
             ) : segundos.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Sin platos de fondo para este día.</p>
+              <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin platos de fondo para este día.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {segundos.map((seg) => (
                   <div
                     key={seg.id}
-                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-orange-300 transition flex flex-col shadow-2xs"
+                    className="rounded-lg border border-zinc-200/90 overflow-hidden bg-white hover:border-zinc-300 transition flex flex-col shadow-2xs"
                   >
-                    <div className="h-48 sm:h-56 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                    <div className="h-48 sm:h-56 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
                       {seg.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={seg.imagenUrl} alt={seg.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                          {renderIconoPlato(seg.tipo, seg.nombre, 'w-10 h-10 text-orange-500')}
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                          {renderIconoPlato(seg.tipo, seg.nombre, 'w-10 h-10 text-zinc-400')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                             Plato de Fondo
                           </span>
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                      <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                         Segundo
                       </span>
                     </div>
                     <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div>
-                        <h4 className="text-xs sm:text-sm font-bold text-slate-900">{seg.nombre}</h4>
+                        <h4 className="text-xs sm:text-sm font-bold text-zinc-900">{seg.nombre}</h4>
                         {seg.descripcion && (
-                          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{seg.descripcion}</p>
+                          <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{seg.descripcion}</p>
                         )}
                       </div>
                     </div>
@@ -1142,45 +1141,45 @@ function PedidoContent() {
 
           {/* 3. EXTRAS Y ADICIONALES (SI EXISTEN EN EL DÍA) */}
           {extras.length > 0 && (
-            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Apple className="w-4 h-4 text-emerald-600" />
+                <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <Apple className="w-4 h-4 text-zinc-600" />
                   3. Extras y Adicionales ({diaSeleccionado})
                 </h2>
-                <span className="text-[11px] font-semibold text-slate-500">Opcional • Precio individual</span>
+                <span className="text-[11px] font-medium text-zinc-500">Opcional • Precio individual</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {extras.map((ext) => (
                   <div
                     key={ext.id}
-                    className="rounded-2xl border border-slate-200 overflow-hidden bg-white hover:border-emerald-300 transition flex flex-col shadow-2xs"
+                    className="rounded-lg border border-zinc-200/90 overflow-hidden bg-white hover:border-zinc-300 transition flex flex-col shadow-2xs"
                   >
-                    <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                    <div className="h-44 sm:h-52 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
                       {ext.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={ext.imagenUrl} alt={ext.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                          {renderIconoPlato(ext.tipo, ext.nombre, 'w-10 h-10 text-emerald-500')}
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                          {renderIconoPlato(ext.tipo, ext.nombre, 'w-10 h-10 text-zinc-400')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                             {ext.tipo}
                           </span>
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                      <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                         {ext.tipo}
                       </span>
-                      <span className="absolute top-2 right-2 bg-white/95 backdrop-blur-xs text-emerald-800 text-[11px] font-black px-2 py-0.5 rounded-lg border border-emerald-200 shadow-xs">
+                      <span className="absolute top-2 right-2 bg-white/95 backdrop-blur-xs text-zinc-900 text-[11px] font-bold px-2 py-0.5 rounded-md border border-zinc-200 shadow-2xs">
                         S/ {ext.precio.toFixed(2)}
                       </span>
                     </div>
                     <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div>
-                        <h4 className="text-xs sm:text-sm font-bold text-slate-900">{ext.nombre}</h4>
+                        <h4 className="text-xs sm:text-sm font-bold text-zinc-900">{ext.nombre}</h4>
                         {ext.descripcion && (
-                          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ext.descripcion}</p>
+                          <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{ext.descripcion}</p>
                         )}
                       </div>
                     </div>
@@ -1191,28 +1190,28 @@ function PedidoContent() {
           )}
 
           {/* BANNER CTA PARA PEDIR */}
-          <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl p-6 text-white text-center shadow-lg shadow-orange-500/20">
-            <Sparkles className="w-8 h-8 mx-auto mb-2 text-amber-200" />
-            <h3 className="text-lg font-black tracking-tight">¿Deseas pedir el almuerzo para tu hijo?</h3>
-            <p className="text-xs text-orange-100 mt-1.5 max-w-sm mx-auto leading-relaxed">
+          <div className="bg-zinc-950 text-white rounded-xl p-6 text-center border border-zinc-800 shadow-xs">
+            <Sparkles className="w-6 h-6 mx-auto mb-2 text-zinc-400" />
+            <h3 className="text-base sm:text-lg font-bold tracking-tight text-white">¿Deseas pedir el almuerzo para tu hijo?</h3>
+            <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto leading-relaxed">
               Inicia sesión o regístrate en la plataforma para asociar a tus hijos y programar sus almuerzos escolares con entrega directa.
             </p>
-            <div className="mt-5 flex flex-col sm:flex-row gap-2 justify-center">
+            <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
               <Link
                 href="/login"
-                className="px-6 py-3 bg-white text-orange-600 font-bold rounded-2xl text-xs sm:text-sm hover:bg-orange-50 transition shadow-xs flex items-center justify-center gap-2"
+                className="px-5 py-2.5 bg-white text-zinc-950 font-semibold rounded-lg text-xs sm:text-sm hover:bg-zinc-100 transition shadow-2xs flex items-center justify-center gap-2"
               >
-                <LogIn className="w-4 h-4" />
+                <LogIn className="w-4 h-4 text-zinc-950" />
                 Iniciar Sesión / Registrarme
               </Link>
             </div>
           </div>
 
           {/* ENLACE A POLÍTICA DE PRIVACIDAD */}
-          <div className="mt-6 text-center pb-4">
+          <div className="mt-5 text-center pb-4">
             <Link
               href="/padres/privacidad"
-              className="text-[11px] text-slate-400 hover:text-slate-600 font-medium inline-flex items-center gap-1.5 transition"
+              className="text-[11px] text-zinc-400 hover:text-zinc-600 font-medium inline-flex items-center gap-1.5 transition"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               Política de Privacidad y Protección de Datos (Ley N° 29733)
@@ -1221,17 +1220,17 @@ function PedidoContent() {
         </div>
 
         {/* BARRA FLOTANTE FIJA INFERIOR */}
-        <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-xl z-30">
+        <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-zinc-200/90 shadow-lg z-30">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
             <div>
-              <span className="text-xs font-bold text-slate-900 block">Menú Escolar Completo</span>
-              <span className="text-[11px] text-emerald-600 font-bold">
+              <span className="text-xs font-bold text-zinc-900 block">Menú Escolar Completo</span>
+              <span className="text-[11px] text-emerald-700 font-semibold">
                 S/ {precioMenuBase.toFixed(2)} • Sopa o ensalada + Segundo
               </span>
             </div>
             <Link
               href="/login"
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center gap-1.5 shrink-0"
+              className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0"
             >
               <LogIn className="w-3.5 h-3.5" /> Iniciar Sesión para Pedir
             </Link>
@@ -1247,19 +1246,19 @@ function PedidoContent() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28 sm:pb-24">
       {/* Encabezado con horario de cierre y enlace a Mis Pedidos */}
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-200">
         <div>
           <h1 className="sr-only">Menú Escolar</h1>
-          <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-orange-500" /> Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}
+          <span className="text-[11px] font-medium text-zinc-500 flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-zinc-500" /> Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}
           </span>
         </div>
 
         <Link
           href="/padres/pedidos"
-          className="text-xs font-bold px-3 py-1.5 bg-orange-50 text-orange-800 border border-orange-200 rounded-xl hover:bg-orange-100 transition flex items-center gap-1.5 shadow-xs"
+          className="text-xs font-semibold px-3 py-1.5 bg-zinc-100 text-zinc-900 border border-zinc-200 rounded-lg hover:bg-zinc-200 transition flex items-center gap-1.5 shadow-2xs"
         >
-          <ShoppingBag className="w-3.5 h-3.5 text-orange-600" />
+          <ShoppingBag className="w-3.5 h-3.5 text-zinc-700" />
           <span>Mis Pedidos</span>
         </Link>
       </div>
@@ -1267,40 +1266,40 @@ function PedidoContent() {
       {/* CTA ABOVE THE FOLD SI EL PADRE NO TIENE HIJOS AÚN */}
       {usuario && usuario.rol !== 'ADMIN' && (!usuario.hijos || usuario.hijos.length === 0) && (
         <>
-          <div className="mb-5 bg-gradient-to-r from-orange-50 to-amber-50 rounded-3xl p-5 border border-orange-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/20">
-                <GraduationCap className="w-6 h-6" />
+          <div className="mb-4 bg-zinc-50 rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-zinc-900 text-white flex items-center justify-center shrink-0">
+                <GraduationCap className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-slate-900">Registra a tu primer hijo</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Asocia el colegio y grado escolar para comenzar a pedir sus almuerzos.</p>
+                <h3 className="text-sm font-bold text-zinc-950">Registra a tu primer hijo</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">Asocia el colegio y grado escolar para comenzar a pedir sus almuerzos.</p>
               </div>
             </div>
             <Link
               href="/padres/hijos"
-              className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 shrink-0"
+              className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 active:scale-[0.98] text-white text-xs font-semibold rounded-lg shadow-2xs transition flex items-center justify-center gap-1.5 shrink-0"
             >
               <Plus className="w-4 h-4" /> Agregar Hijo
             </Link>
           </div>
 
           {/* FILTRO DE COLEGIO PARA EXPLORAR LA CARTA SI NO TIENE HIJOS REGISTRADOS */}
-          <div className="mb-5 bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 shrink-0">
-              <Building2 className="w-4 h-4 text-orange-500" />
+          <div className="mb-4 bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5 shrink-0">
+              <Building2 className="w-4 h-4 text-zinc-500" />
               <span>Ver carta del colegio:</span>
             </label>
             <div className="flex-1 sm:max-w-xs">
               {cargandoColegios ? (
-                <div className="text-xs text-slate-400 py-1.5">Cargando colegios...</div>
+                <div className="text-xs text-zinc-400 py-1.5">Cargando colegios...</div>
               ) : listaColegios.length === 0 ? (
-                <div className="text-xs text-slate-400 py-1.5">No hay colegios disponibles</div>
+                <div className="text-xs text-zinc-400 py-1.5">No hay colegios disponibles</div>
               ) : (
                 <select
                   value={colegio}
                   onChange={(e) => setColegio(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer"
+                  className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-zinc-900 focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 focus:outline-hidden cursor-pointer"
                 >
                   {listaColegios.map((col) => (
                     <option key={col} value={col}>
@@ -1316,14 +1315,14 @@ function PedidoContent() {
 
       {/* SELECTOR DE HIJOS VINCULADOS (SI TIENE HIJOS REGISTRADOS) */}
       {usuario && usuario.rol !== 'ADMIN' && usuario.hijos && usuario.hijos.length > 0 && (
-        <div className="mb-5 bg-white rounded-3xl p-4 border border-slate-200 shadow-xs">
+        <div className="mb-4 bg-white rounded-xl p-4 border border-zinc-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <GraduationCap className="w-4 h-4 text-orange-500" /> Hijo:
+            <span className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
+              <GraduationCap className="w-4 h-4 text-zinc-500" /> Hijo:
             </span>
             <Link
               href="/padres/hijos"
-              className="text-[11px] font-bold text-orange-600 hover:underline flex items-center gap-1"
+              className="text-[11px] font-semibold text-zinc-900 hover:underline flex items-center gap-1"
             >
               <Plus className="w-3 h-3" /> Agregar hijo
             </Link>
@@ -1337,19 +1336,19 @@ function PedidoContent() {
                   key={hijo.id}
                   type="button"
                   onClick={() => seleccionarHijo(hijo)}
-                  className={`p-2.5 rounded-2xl border text-left flex items-center justify-between transition ${
+                  className={`p-2.5 rounded-lg border text-left flex items-center justify-between transition ${
                     activo
-                      ? 'border-orange-500 bg-orange-50/70 shadow-xs ring-1 ring-orange-500'
-                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                      ? 'border-zinc-950 bg-zinc-50/80 shadow-2xs ring-1 ring-zinc-950'
+                      : 'border-zinc-200 bg-zinc-50/40 hover:bg-zinc-100/70 hover:border-zinc-300'
                   }`}
                 >
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">{hijo.nombreCompleto}</h4>
-                    <p className="text-[11px] text-slate-500">
+                    <h4 className="text-xs font-bold text-zinc-950">{hijo.nombreCompleto}</h4>
+                    <p className="text-[11px] text-zinc-500">
                       {hijo.colegioNombre} • {hijo.gradoSeccion}
                     </p>
                   </div>
-                  {activo && <CheckCircle2 className="w-4 h-4 text-orange-600 shrink-0" />}
+                  {activo && <CheckCircle2 className="w-4 h-4 text-zinc-950 shrink-0" />}
                 </button>
               );
             })}
@@ -1358,8 +1357,8 @@ function PedidoContent() {
       )}
 
       {/* SELECTOR DE DÍAS (LUNES A VIERNES) */}
-      <div className="mb-5">
-        <div className="grid grid-cols-5 gap-1.5 bg-slate-200/80 p-1 rounded-2xl">
+      <div className="mb-4">
+        <div className="grid grid-cols-5 gap-1 bg-zinc-100 p-1 rounded-lg border border-zinc-200/80">
           {DIAS_SEMANA.map((dia) => {
             const activo = diaSeleccionado === dia.key;
             const esHoy = diaActual === dia.key;
@@ -1368,15 +1367,15 @@ function PedidoContent() {
                 key={dia.key}
                 type="button"
                 onClick={() => setDiaSeleccionado(dia.key)}
-                className={`py-2 px-1 rounded-xl text-center transition ${
+                className={`py-1.5 px-1 rounded-md text-center transition ${
                   activo
-                    ? 'bg-white text-orange-600 font-bold shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 font-medium'
+                    ? 'bg-white text-zinc-950 font-bold shadow-2xs'
+                    : 'text-zinc-600 hover:text-zinc-900 font-medium'
                 }`}
               >
                 <span className="block text-xs">{dia.short}</span>
                 {esHoy && (
-                  <span className="inline-block text-[9px] font-bold px-1.5 bg-orange-100 text-orange-700 rounded-md">
+                  <span className="inline-block text-[9px] font-bold px-1.5 bg-zinc-200 text-zinc-800 rounded">
                     Hoy
                   </span>
                 )}
@@ -1388,11 +1387,11 @@ function PedidoContent() {
 
       {/* Aviso informativo si el pedido es para hoy y ha pasado la hora límite */}
       {fueraDeHorarioHoy && (
-        <div className="mb-5 p-4 bg-amber-50 border border-amber-200/90 rounded-3xl text-xs text-amber-900 flex items-start gap-3 shadow-xs animate-in fade-in">
-          <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="mb-4 p-3.5 bg-amber-50/80 border border-amber-200/90 rounded-xl text-xs text-amber-950 flex items-start gap-2.5 shadow-2xs animate-in fade-in">
+          <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <span className="font-bold text-amber-950 block">Aviso de Horario de Pedidos:</span>
-            <p className="text-[11px] text-amber-800 leading-relaxed">
+            <p className="text-[11px] text-amber-900 leading-relaxed">
               La hora límite oficial para pedidos de hoy ({formatearHoraLimiteLegible(horaLimite)}) ya ha culminado. Aún puedes enviar tu pedido normalmente; la cocina lo preparará según disponibilidad.
             </p>
           </div>
@@ -1400,53 +1399,53 @@ function PedidoContent() {
       )}
 
       {/* FORMULARIO */}
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* 1. ENTRADA (SOPA, FRUTA, ETC.) */}
-        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Soup className="w-4 h-4 text-orange-500" />
+            <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Soup className="w-4 h-4 text-zinc-600" />
               1. Entrada ({diaSeleccionado})
             </h2>
-            <span className="text-[11px] font-semibold text-slate-500">Sopa o fruta • Incluida</span>
+            <span className="text-[11px] font-medium text-zinc-500">Sopa o fruta • Incluida</span>
           </div>
           <span className="sr-only">1. Sopa o Ensalada ({diaSeleccionado})</span>
 
           {cargandoPlatos ? (
-            <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
+            <div className="py-6 text-center text-xs text-zinc-400 font-medium">Cargando opciones...</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* OPCIÓN: SIN ENTRADA / SOPA */}
               <button
                 type="button"
                 onClick={() => setEntradaSeleccionada('Sin entrada')}
-                className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative cursor-pointer ${
+                className={`rounded-lg border text-left flex flex-col overflow-hidden transition-all relative cursor-pointer ${
                   entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa'
-                    ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-md'
-                    : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-xs'
+                    ? 'border-zinc-950 bg-zinc-50/70 ring-1 ring-zinc-950 shadow-2xs'
+                    : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-2xs'
                 }`}
               >
-                <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
-                  <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
-                    <Utensils className="w-10 h-10 text-slate-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="h-40 sm:h-48 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
+                  <div className="flex flex-col items-center justify-center gap-2 text-zinc-400">
+                    <Utensils className="w-9 h-9 text-zinc-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
                       Solo Segundo
                     </span>
                   </div>
-                  <span className="absolute top-2 left-2 bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                  <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                     Sin Entrada / Sopa
                   </span>
                   {(entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa') && (
-                    <span className="absolute top-2 right-2 bg-orange-500 text-white p-1 rounded-full shadow-md">
-                      <CheckCircle2 className="w-4 h-4" />
+                    <span className="absolute top-2 right-2 bg-zinc-950 text-white p-1 rounded-full shadow-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
                     </span>
                   )}
                 </div>
                 <div className="p-3.5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">Sin entrada / sopa</h3>
-                    <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                    <h3 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug">Sin entrada / sopa</h3>
+                    <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
                       Prefiero no incluir entrada en este menú. Servir únicamente el plato de fondo.
                     </p>
                   </div>
@@ -1467,40 +1466,40 @@ function PedidoContent() {
                     type="button"
                     onClick={() => plato.disponible && setEntradaSeleccionada(plato.nombre)}
                     disabled={!plato.disponible}
-                    className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative ${
+                    className={`rounded-lg border text-left flex flex-col overflow-hidden transition-all relative ${
                       !plato.disponible
-                        ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
+                        ? 'opacity-40 border-zinc-200 bg-zinc-50 cursor-not-allowed'
                         : seleccionado
-                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-md'
-                        : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-xs'
+                        ? 'border-zinc-950 bg-zinc-50/70 ring-1 ring-zinc-950 shadow-2xs'
+                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-2xs'
                     }`}
                   >
-                    <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                    <div className="h-40 sm:h-48 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
                       {plato.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-orange-400')}
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-zinc-400')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                             Entrada
                           </span>
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                      <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                         Entrada
                       </span>
                       {seleccionado && (
-                        <span className="absolute top-2 right-2 bg-orange-500 text-white p-1 rounded-full shadow-md">
-                          <CheckCircle2 className="w-4 h-4" />
+                        <span className="absolute top-2 right-2 bg-zinc-950 text-white p-1 rounded-full shadow-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
                         </span>
                       )}
                     </div>
                     <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div>
-                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{plato.nombre}</h3>
+                        <h3 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug">{plato.nombre}</h3>
                         {descLimpia && (
-                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">{descLimpia}</p>
+                          <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">{descLimpia}</p>
                         )}
                       </div>
                     </div>
@@ -1512,21 +1511,21 @@ function PedidoContent() {
         </div>
 
         {/* 2. SEGUNDOS */}
-        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Utensils className="w-4 h-4 text-orange-500" />
+            <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Utensils className="w-4 h-4 text-zinc-600" />
               2. Segundo ({diaSeleccionado})
             </h2>
-            <span className="text-xs font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+            <span className="text-xs font-semibold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md border border-zinc-200">
               Menú: S/ {precioMenuBase.toFixed(2)} (Un solo precio)
             </span>
           </div>
 
           {cargandoPlatos ? (
-            <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
+            <div className="py-6 text-center text-xs text-zinc-400 font-medium">Cargando opciones...</div>
           ) : segundos.length === 0 ? (
-            <p className="text-xs text-slate-400 py-3 text-center">No hay segundos registrados para este día.</p>
+            <p className="text-xs text-zinc-400 py-3 text-center font-medium">No hay segundos registrados para este día.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {segundos.map((plato) => {
@@ -1537,40 +1536,40 @@ function PedidoContent() {
                     type="button"
                     onClick={() => plato.disponible && setSegundoSeleccionado(plato.nombre)}
                     disabled={!plato.disponible}
-                    className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative ${
+                    className={`rounded-lg border text-left flex flex-col overflow-hidden transition-all relative ${
                       !plato.disponible
-                        ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
+                        ? 'opacity-40 border-zinc-200 bg-zinc-50 cursor-not-allowed'
                         : seleccionado
-                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-md'
-                        : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-xs'
+                        ? 'border-zinc-950 bg-zinc-50/70 ring-1 ring-zinc-950 shadow-2xs'
+                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-2xs'
                     }`}
                   >
-                    <div className="h-44 sm:h-52 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                    <div className="h-44 sm:h-52 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
                       {plato.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-orange-500')}
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-zinc-400')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                             Plato de Fondo
                           </span>
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                      <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                         Segundo
                       </span>
                       {seleccionado && (
-                        <span className="absolute top-2 right-2 bg-orange-500 text-white p-1 rounded-full shadow-md">
-                          <CheckCircle2 className="w-4 h-4" />
+                        <span className="absolute top-2 right-2 bg-zinc-950 text-white p-1 rounded-full shadow-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
                         </span>
                       )}
                     </div>
                     <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div>
-                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{plato.nombre}</h3>
+                        <h3 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug">{plato.nombre}</h3>
                         {plato.descripcion && (
-                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">{plato.descripcion}</p>
+                          <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">{plato.descripcion}</p>
                         )}
                       </div>
                     </div>
@@ -1582,51 +1581,51 @@ function PedidoContent() {
         </div>
 
         {/* 3. ENSALADA */}
-        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Salad className="w-4 h-4 text-emerald-600" />
+            <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Salad className="w-4 h-4 text-zinc-600" />
               3. Ensalada ({diaSeleccionado})
             </h2>
-            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+            <span className="text-[11px] font-medium text-zinc-700 bg-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200">
               Incluida en el menú
             </span>
           </div>
 
           {cargandoPlatos ? (
-            <div className="py-6 text-center text-xs text-slate-400 font-medium">Cargando opciones...</div>
+            <div className="py-6 text-center text-xs text-zinc-400 font-medium">Cargando opciones...</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* OPCIÓN: SIN ENSALADA */}
               <button
                 type="button"
                 onClick={() => setEnsaladaSeleccionada('Sin ensalada')}
-                className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative cursor-pointer ${
+                className={`rounded-lg border text-left flex flex-col overflow-hidden transition-all relative cursor-pointer ${
                   ensaladaSeleccionada === 'Sin ensalada'
-                    ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-md'
-                    : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-xs'
+                    ? 'border-zinc-950 bg-zinc-50/70 ring-1 ring-zinc-950 shadow-2xs'
+                    : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-2xs'
                 }`}
               >
-                <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
-                  <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
-                    <Salad className="w-10 h-10 text-slate-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="h-40 sm:h-48 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
+                  <div className="flex flex-col items-center justify-center gap-2 text-zinc-400">
+                    <Salad className="w-9 h-9 text-zinc-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
                       Omitir Ensalada
                     </span>
                   </div>
-                  <span className="absolute top-2 left-2 bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                  <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                     Sin Ensalada
                   </span>
                   {ensaladaSeleccionada === 'Sin ensalada' && (
-                    <span className="absolute top-2 right-2 bg-emerald-600 text-white p-1 rounded-full shadow-md">
-                      <CheckCircle2 className="w-4 h-4" />
+                    <span className="absolute top-2 right-2 bg-zinc-950 text-white p-1 rounded-full shadow-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
                     </span>
                   )}
                 </div>
                 <div className="p-3.5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">Sin ensalada</h3>
-                    <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                    <h3 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug">Sin ensalada</h3>
+                    <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
                       Prefiero no incluir ensalada en este menú escolar.
                     </p>
                   </div>
@@ -1647,40 +1646,40 @@ function PedidoContent() {
                     type="button"
                     onClick={() => plato.disponible && setEnsaladaSeleccionada(plato.nombre)}
                     disabled={!plato.disponible}
-                    className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative ${
+                    className={`rounded-lg border text-left flex flex-col overflow-hidden transition-all relative ${
                       !plato.disponible
-                        ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
+                        ? 'opacity-40 border-zinc-200 bg-zinc-50 cursor-not-allowed'
                         : seleccionado
-                        ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-md'
-                        : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-xs'
+                        ? 'border-zinc-950 bg-zinc-50/70 ring-1 ring-zinc-950 shadow-2xs'
+                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-2xs'
                     }`}
                   >
-                    <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                    <div className="h-40 sm:h-48 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
                       {plato.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-emerald-500')}
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                          {renderIconoPlato(plato.tipo, plato.nombre, 'w-10 h-10 text-zinc-400')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                             Ensalada
                           </span>
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                      <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                         Ensalada
                       </span>
                       {seleccionado && (
-                        <span className="absolute top-2 right-2 bg-emerald-600 text-white p-1 rounded-full shadow-md">
-                          <CheckCircle2 className="w-4 h-4" />
+                        <span className="absolute top-2 right-2 bg-zinc-950 text-white p-1 rounded-full shadow-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
                         </span>
                       )}
                     </div>
                     <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div>
-                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{plato.nombre}</h3>
+                        <h3 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug">{plato.nombre}</h3>
                         {descLimpia && (
-                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">{descLimpia}</p>
+                          <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">{descLimpia}</p>
                         )}
                       </div>
                     </div>
@@ -1693,19 +1692,19 @@ function PedidoContent() {
 
         {/* 4. EXTRAS Y ADICIONALES (OPCIONAL) */}
         {extras.length > 0 && (
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
             <div className="flex items-center justify-between mb-1.5">
-              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Apple className="w-4 h-4 text-emerald-600" />
+              <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Apple className="w-4 h-4 text-zinc-600" />
                 3. Extras y Adicionales (Opcional)
               </h2>
               {totalExtras > 0 && (
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                   + S/ {totalExtras.toFixed(2)}
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-500 mb-3">
+            <p className="text-[11px] text-zinc-500 mb-3">
               Selecciona las bebidas, postres o snacks que desees agregar a la orden de tu hijo.
             </p>
 
@@ -1718,43 +1717,43 @@ function PedidoContent() {
                     type="button"
                     onClick={() => extra.disponible && toggleExtra(extra.id)}
                     disabled={!extra.disponible}
-                    className={`rounded-2xl border text-left flex flex-col overflow-hidden transition-all relative ${
+                    className={`rounded-lg border text-left flex flex-col overflow-hidden transition-all relative ${
                       !extra.disponible
-                        ? 'opacity-40 border-slate-200 bg-slate-50 cursor-not-allowed'
+                        ? 'opacity-40 border-zinc-200 bg-zinc-50 cursor-not-allowed'
                         : seleccionado
-                        ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-md'
-                        : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-xs'
+                        ? 'border-zinc-950 bg-zinc-50/70 ring-1 ring-zinc-950 shadow-2xs'
+                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-2xs'
                     }`}
                   >
-                    <div className="h-40 sm:h-48 w-full bg-slate-50 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                    <div className="h-40 sm:h-48 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
                       {extra.imagenUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={extra.imagenUrl} alt={extra.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                          {renderIconoPlato(extra.tipo, extra.nombre, 'w-10 h-10 text-emerald-500')}
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                          {renderIconoPlato(extra.tipo, extra.nombre, 'w-10 h-10 text-zinc-400')}
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                             {extra.tipo}
                           </span>
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-xs">
+                      <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
                         {extra.tipo}
                       </span>
-                      <span className="absolute top-2 right-2 bg-white/95 backdrop-blur-xs text-emerald-800 text-[11px] font-black px-2 py-0.5 rounded-lg border border-emerald-200 shadow-xs">
+                      <span className="absolute top-2 right-2 bg-white/95 backdrop-blur-xs text-zinc-900 text-[11px] font-bold px-2 py-0.5 rounded-md border border-zinc-200 shadow-2xs">
                         S/ {extra.precio.toFixed(2)}
                       </span>
                       {seleccionado && (
-                        <span className="absolute bottom-2 right-2 bg-emerald-600 text-white p-1 rounded-full shadow-md">
+                        <span className="absolute bottom-2 right-2 bg-zinc-950 text-white p-1 rounded-full shadow-xs">
                           <Check className="w-3.5 h-3.5 stroke-[3]" />
                         </span>
                       )}
                     </div>
                     <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div>
-                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{extra.nombre}</h3>
+                        <h3 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug">{extra.nombre}</h3>
                         {extra.descripcion && (
-                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">{extra.descripcion}</p>
+                          <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">{extra.descripcion}</p>
                         )}
                       </div>
                     </div>
@@ -1766,8 +1765,8 @@ function PedidoContent() {
         )}
 
         {/* OBSERVACIONES */}
-        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
+          <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
             Observaciones o Restricciones (Opcional)
           </label>
 
@@ -1777,7 +1776,7 @@ function PedidoContent() {
                 key={tag}
                 type="button"
                 onClick={() => agregarTagObservacion(tag)}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 hover:bg-orange-100 hover:text-orange-700 text-slate-600 font-medium transition"
+                className="text-[11px] px-2.5 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-900 text-zinc-700 font-medium transition"
               >
                 + {tag}
               </button>
@@ -1789,90 +1788,89 @@ function PedidoContent() {
             placeholder="Especifica cualquier detalle del pedido..."
             value={observacion}
             onChange={(e) => setObservacion(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-base sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+            className="w-full bg-zinc-50/50 border border-zinc-200 rounded-lg p-3 text-base sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 focus:bg-white focus:outline-hidden transition"
           />
         </div>
 
         {/* PAGO */}
-        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Forma de Pago</span>
-            <span className="text-sm font-bold text-emerald-700">Total: S/ {precioTotalPedido.toFixed(2)}</span>
+            <span className="text-xs font-bold text-zinc-700 uppercase tracking-wider">Forma de Pago</span>
+            <span className="text-sm font-bold text-zinc-950">Total: S/ {precioTotalPedido.toFixed(2)}</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-3">
-            {(['Yape', 'Plin', 'Pagar luego'] as MetodoPago[]).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMetodoPago(m)}
-                className={`py-2 px-1 rounded-xl text-xs font-bold border transition text-center ${
-                  metodoPago === m
-                    ? m === 'Pagar luego'
-                      ? 'border-yellow-500 bg-yellow-50 text-yellow-950 shadow-xs'
-                      : m === 'Plin'
-                      ? 'border-sky-500 bg-sky-50 text-sky-950 shadow-xs'
-                      : 'border-purple-600 bg-purple-50 text-purple-950 shadow-xs'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {m}
-              </button>
-            ))}
+            {(['Yape', 'Plin', 'Pagar luego'] as MetodoPago[]).map((m) => {
+              const activo = metodoPago === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMetodoPago(m)}
+                  className={`py-2 px-1 rounded-lg text-xs font-semibold border transition text-center ${
+                    activo
+                      ? 'border-zinc-950 bg-zinc-950 text-white shadow-2xs'
+                      : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                  }`}
+                >
+                  {m}
+                </button>
+              );
+            })}
           </div>
 
           {metodoPago === 'Yape' && (
-            <div className="bg-purple-50/60 border border-purple-100 rounded-xl p-3 mb-3 text-xs text-purple-950">
+            <div className="bg-zinc-50 border border-zinc-200/90 rounded-lg p-3.5 mb-3 text-xs text-zinc-900">
               <p className="font-bold">Número de Yape: {configPagos.numeroYape}</p>
-              <p className="text-[11px] text-purple-700">{configPagos.titularYape}</p>
+              <p className="text-[11px] text-zinc-500 mt-0.5">{configPagos.titularYape}</p>
             </div>
           )}
 
           {metodoPago === 'Plin' && (
-            <div className="bg-sky-50/60 border border-sky-100 rounded-xl p-3 mb-3 text-xs text-sky-950">
+            <div className="bg-zinc-50 border border-zinc-200/90 rounded-lg p-3.5 mb-3 text-xs text-zinc-900">
               <p className="font-bold">Número de Plin: {configPagos.numeroPlin}</p>
-              <p className="text-[11px] text-sky-700">{configPagos.titularPlin}</p>
+              <p className="text-[11px] text-zinc-500 mt-0.5">{configPagos.titularPlin}</p>
             </div>
           )}
 
           {metodoPago === 'Pagar luego' && (
-            <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3 mb-3 text-xs text-amber-950">
-              <p className="font-bold flex items-center gap-1.5 text-amber-900">
+            <div className="bg-amber-50/80 border border-amber-200/90 rounded-lg p-3.5 mb-3 text-xs text-amber-950">
+              <p className="font-bold flex items-center gap-1.5 text-amber-950">
                 <Clock className="w-4 h-4 text-amber-600" /> Paga al recibir el almuerzo o en fiado
               </p>
-              <p className="text-[11px] text-amber-800 mt-1">
+              <p className="text-[11px] text-amber-900 mt-1">
                 Tu hijo recibirá su almuerzo sin necesidad de comprobante previo. Se registrará en la cuenta de fiados para cancelar luego.
               </p>
             </div>
           )}
 
           {metodoPago !== 'Pagar luego' && (
-            <div className="p-3.5 bg-orange-50/60 rounded-2xl border border-orange-200/80 space-y-2">
+            <div className="p-3.5 bg-zinc-50 rounded-lg border border-zinc-200/90 space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <FileImage className="w-4 h-4 text-orange-600" /> Captura de comprobante *
+                <label className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5">
+                  <FileImage className="w-4 h-4 text-zinc-600" /> Captura de comprobante *
                 </label>
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-100 text-orange-800 border border-orange-200">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-800 border border-zinc-300">
                   Obligatorio ({metodoPago})
                 </span>
               </div>
-              <p className="text-[11px] text-slate-600">
+              <p className="text-[11px] text-zinc-500">
                 Adjunta la captura de tu transferencia de {metodoPago} por S/ {precioTotalPedido.toFixed(2)} para poder confirmar tu pedido.
               </p>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white hover:file:bg-orange-600 cursor-pointer"
+                className="w-full text-xs text-zinc-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-zinc-900 file:text-white hover:file:bg-zinc-800 cursor-pointer"
                 required
               />
               {subiendoComprobante && (
-                <p className="text-xs text-orange-600 mt-1 animate-pulse">
+                <p className="text-xs text-zinc-600 mt-1 animate-pulse">
                   Optimizando y guardando comprobante en la nube...
                 </p>
               )}
               {!subiendoComprobante && (cloudinaryUrl || comprimidoInfo) && (
-                <p className="text-[11px] text-emerald-700 mt-1 font-bold flex items-center gap-1.5">
+                <p className="text-[11px] text-emerald-700 mt-1 font-semibold flex items-center gap-1.5">
                   <span>✓ Comprobante listo</span>
                   {cloudinaryUrl && cloudinaryUrl.includes('cloudinary') && (
                     <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-md font-semibold">
@@ -1880,7 +1878,7 @@ function PedidoContent() {
                     </span>
                   )}
                   {comprimidoInfo && (
-                    <span className="text-slate-500 font-normal">
+                    <span className="text-zinc-500 font-normal">
                       ({comprimidoInfo.compressedSizeKb} KB)
                     </span>
                   )}
@@ -1891,7 +1889,7 @@ function PedidoContent() {
         </div>
 
         {errorValidacion && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-bold flex items-center gap-2">
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-semibold flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorValidacion}</span>
           </div>
@@ -1900,7 +1898,7 @@ function PedidoContent() {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full py-3.5 px-6 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold text-sm rounded-2xl shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition disabled:opacity-50"
+          className="w-full py-3 px-6 bg-zinc-950 hover:bg-zinc-800 active:scale-[0.99] text-white font-semibold text-sm rounded-lg shadow-2xs flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
         >
           {isPending ? (
             <span className="animate-pulse">Registrando...</span>
@@ -1914,22 +1912,22 @@ function PedidoContent() {
 
       {/* MODAL PARA AGREGAR ESTUDIANTE SI EL PADRE NO TIENE NINGUNO REGISTRADO */}
       {mostrarModalAgregarHijo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-md rounded-xl p-6 shadow-xl border border-zinc-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 flex items-center justify-center shrink-0">
                   <GraduationCap className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Agrega a tu Hijo</h3>
-                  <p className="text-xs text-slate-500">Requerido para confirmar el pedido</p>
+                  <h3 className="text-base font-bold text-zinc-950">Agrega a tu Hijo</h3>
+                  <p className="text-xs text-zinc-500">Requerido para confirmar el pedido</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setMostrarModalAgregarHijo(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition"
+                className="text-zinc-400 hover:text-zinc-600 p-1 rounded-md hover:bg-zinc-100 transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1937,7 +1935,7 @@ function PedidoContent() {
 
             <form onSubmit={handleGuardarHijoYConfirmar} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Nombre y Apellidos del Hijo *
                 </label>
                 <input
@@ -1946,17 +1944,17 @@ function PedidoContent() {
                   placeholder="Ej. DHANA QUISPE CRISTOBAL"
                   value={nombreNuevoHijo}
                   onChange={(e) => setNombreNuevoHijo(e.target.value.toUpperCase())}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm uppercase font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm uppercase font-medium text-zinc-900 focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 focus:outline-hidden"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
                     Colegio *
                   </label>
                   {cargandoColegios ? (
-                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-400">
+                    <div className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-400">
                       Cargando colegios...
                     </div>
                   ) : (
@@ -1964,7 +1962,7 @@ function PedidoContent() {
                       required
                       value={colegioNuevoHijo || listaColegios[0] || ''}
                       onChange={(e) => setColegioNuevoHijo(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 focus:outline-hidden"
                     >
                       {listaColegios.map((col) => (
                         <option key={col} value={col}>
@@ -1976,11 +1974,11 @@ function PedidoContent() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
                     Grado / Sección *
                   </label>
                   {cargandoColegios ? (
-                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-400">
+                    <div className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-400">
                       Cargando grados...
                     </div>
                   ) : (
@@ -1988,7 +1986,7 @@ function PedidoContent() {
                       required
                       value={gradoNuevoHijo || listaGrados[0] || ''}
                       onChange={(e) => setGradoNuevoHijo(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 focus:outline-hidden"
                     >
                       {listaGrados.map((gr) => (
                         <option key={gr} value={gr}>
@@ -2001,7 +1999,7 @@ function PedidoContent() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-xs font-medium text-zinc-600 mb-1">
                   Alergias o notas médicas (opcional)
                 </label>
                 <input
@@ -2009,12 +2007,12 @@ function PedidoContent() {
                   placeholder="Ej. Alérgico al maní, sin ensalada..."
                   value={alergiasNuevoHijo}
                   onChange={(e) => setAlergiasNuevoHijo(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-900 focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 focus:outline-hidden"
                 />
               </div>
 
               {errorModalHijo && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-center gap-2">
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-semibold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorModalHijo}</span>
                 </div>
@@ -2024,7 +2022,7 @@ function PedidoContent() {
                 <button
                   type="submit"
                   disabled={guardandoNuevoHijo}
-                  className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-orange-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs sm:text-sm rounded-lg shadow-2xs transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {guardandoNuevoHijo ? (
                     <span className="animate-pulse">Guardando hijo...</span>
@@ -2039,7 +2037,7 @@ function PedidoContent() {
                 <button
                   type="button"
                   onClick={() => setMostrarModalAgregarHijo(false)}
-                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition"
+                  className="w-full py-2 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-semibold text-xs rounded-lg transition cursor-pointer"
                 >
                   Cancelar y Volver al Menú
                 </button>
@@ -2055,7 +2053,7 @@ function PedidoContent() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-confirmacion-pedido-titulo"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
             if (e.target === e.currentTarget && !isPending) {
               setMostrarModalConfirmacionPedido(false);
@@ -2063,23 +2061,23 @@ function PedidoContent() {
           }}
         >
           <div
-            className="bg-white w-full max-w-md sm:max-w-lg rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto animate-in zoom-in-95 duration-150"
+            className="bg-white w-full max-w-md sm:max-w-lg rounded-xl p-5 sm:p-6 shadow-xl border border-zinc-200 space-y-4 max-h-[92vh] overflow-y-auto animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Cabecera */}
-            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-start justify-between pb-3 border-b border-zinc-100">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 shadow-xs ring-4 ring-orange-50">
-                  <ClipboardCheck className="w-6 h-6 stroke-[2.2]" />
+                <div className="w-10 h-10 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 flex items-center justify-center shrink-0">
+                  <ClipboardCheck className="w-5 h-5 stroke-[2.2]" />
                 </div>
                 <div>
                   <h3
                     id="modal-confirmacion-pedido-titulo"
-                    className="text-base sm:text-lg font-black text-slate-900 leading-snug"
+                    className="text-base sm:text-lg font-bold text-zinc-950 leading-snug"
                   >
                     Corrobora tu Pedido
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-xs text-zinc-500 font-medium">
                     Revisa que los datos y los platos sean correctos
                   </p>
                 </div>
@@ -2088,7 +2086,7 @@ function PedidoContent() {
                 type="button"
                 onClick={() => setMostrarModalConfirmacionPedido(false)}
                 disabled={isPending}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer disabled:opacity-50"
+                className="text-zinc-400 hover:text-zinc-600 p-1 rounded-md hover:bg-zinc-100 transition cursor-pointer disabled:opacity-50"
                 aria-label="Cerrar corroboración"
               >
                 <X className="w-5 h-5" />
@@ -2098,65 +2096,65 @@ function PedidoContent() {
             {/* Contenido de la Corroboración */}
             <div className="space-y-3 text-xs sm:text-sm">
               {/* Estudiante y Colegio */}
-              <div className="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              <div className="bg-zinc-50 p-3.5 sm:p-4 rounded-lg border border-zinc-200/80 space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
                   Hijo y Destino
                 </span>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-slate-500">Hijo:</span>
-                  <span className="font-black text-slate-900 text-sm text-right">
+                  <span className="font-bold text-zinc-950 text-sm text-right">
                     {hijoParaConfirmar?.nombreCompleto || estudiante || 'Hijo'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-slate-500">Colegio:</span>
-                  <span className="font-bold text-slate-800 text-right">
+                  <span className="font-semibold text-zinc-800 text-right">
                     {hijoParaConfirmar?.colegioNombre || colegio || 'No especificado'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-slate-500">Grado y Sección:</span>
-                  <span className="font-bold text-slate-800 text-right">
+                  <span className="font-semibold text-zinc-800 text-right">
                     {hijoParaConfirmar?.gradoSeccion || grado || 'No especificado'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-slate-500">Teléfono:</span>
-                  <span className="font-semibold text-slate-700 text-right">
+                  <span className="font-medium text-zinc-700 text-right">
                     {telefono.trim() || usuario?.telefono || 'No especificado'}
                   </span>
                 </div>
               </div>
 
               {/* Día y Menú Seleccionado */}
-              <div className="bg-orange-50/70 p-3.5 sm:p-4 rounded-2xl border border-orange-200/80 space-y-2.5">
-                <div className="flex items-center justify-between pb-2 border-b border-orange-200/60">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-orange-800 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-orange-600" /> Día Programado:
+              <div className="bg-zinc-50 p-3.5 sm:p-4 rounded-lg border border-zinc-200/80 space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-zinc-200">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-700 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-zinc-500" /> Día Programado:
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-lg bg-orange-500 text-white font-black text-xs uppercase tracking-wide">
+                  <span className="px-2.5 py-0.5 rounded-md bg-zinc-950 text-white font-bold text-xs uppercase tracking-wide">
                     {diaSeleccionado}
                   </span>
                 </div>
 
                 <div className="space-y-2 pt-0.5">
                   <div>
-                    <span className="text-[11px] font-bold text-orange-800 block">1. Entrada (Sopa o Fruta):</span>
-                    <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
+                    <span className="text-[11px] font-bold text-zinc-700 block">1. Entrada (Sopa o Fruta):</span>
+                    <p className="font-bold text-zinc-950 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-2 border-zinc-950">
                       {entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa'
                         ? 'Sin entrada / sopa (Solo segundo)'
                         : entradaSeleccionada}
                     </p>
                   </div>
                   <div>
-                    <span className="text-[11px] font-bold text-orange-800 block">2. Plato de fondo (Segundo):</span>
-                    <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-orange-500">
+                    <span className="text-[11px] font-bold text-zinc-700 block">2. Plato de fondo (Segundo):</span>
+                    <p className="font-bold text-zinc-950 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-2 border-zinc-950">
                       {segundoSeleccionado}
                     </p>
                   </div>
                   <div>
-                    <span className="text-[11px] font-bold text-emerald-800 block">3. Ensalada:</span>
-                    <p className="font-bold text-slate-900 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-3 border-emerald-500">
+                    <span className="text-[11px] font-bold text-zinc-700 block">3. Ensalada:</span>
+                    <p className="font-bold text-zinc-950 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-2 border-zinc-950">
                       {ensaladaSeleccionada === 'Sin ensalada'
                         ? 'Sin ensalada'
                         : ensaladaSeleccionada}
@@ -2164,10 +2162,10 @@ function PedidoContent() {
                   </div>
                   {platosExtrasSeleccionados.length > 0 && (
                     <div>
-                      <span className="text-[11px] font-bold text-emerald-800 block">3. Extras y Adicionales:</span>
-                      <div className="pl-2.5 mt-0.5 border-l-3 border-emerald-500 space-y-1">
+                      <span className="text-[11px] font-bold text-zinc-700 block">3. Extras y Adicionales:</span>
+                      <div className="pl-2.5 mt-0.5 border-l-2 border-zinc-950 space-y-1">
                         {platosExtrasSeleccionados.map((ext) => (
-                          <div key={ext.id} className="flex items-center justify-between text-xs text-slate-800 font-semibold">
+                          <div key={ext.id} className="flex items-center justify-between text-xs text-zinc-800 font-semibold">
                             <span>{ext.nombre} ({ext.tipo})</span>
                             <span className="text-emerald-700 font-bold">+ S/ {ext.precio.toFixed(2)}</span>
                           </div>
@@ -2180,17 +2178,17 @@ function PedidoContent() {
 
               {/* Observaciones / Alergias */}
               {((observacion && observacion.trim().length > 0) || (hijoParaConfirmar?.alergiasNotas)) ? (
-                <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                <div className="bg-amber-50/80 p-3.5 rounded-lg border border-amber-200/90 text-xs text-amber-950 flex items-start gap-2.5">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold block">Observaciones especiales / Alergias:</span>
-                    <span className="text-amber-800 font-medium">
+                    <span className="text-amber-900 font-medium">
                       {observacion.trim() || (hijoParaConfirmar?.alergiasNotas ? `Alergias: ${hijoParaConfirmar.alergiasNotas}` : '')}
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="px-3.5 py-2.5 bg-slate-50 rounded-2xl border border-slate-200/60 text-xs text-slate-500 flex items-center gap-2">
+                <div className="px-3.5 py-2.5 bg-zinc-50 rounded-lg border border-zinc-200/80 text-xs text-zinc-500 flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>Sin observaciones especiales (Menú regular).</span>
                 </div>
@@ -2198,11 +2196,11 @@ function PedidoContent() {
 
               {/* Aviso si es para hoy y ha pasado la hora límite */}
               {fueraDeHorarioHoy && (
-                <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                <div className="bg-amber-50/80 p-3.5 rounded-lg border border-amber-200/90 text-xs text-amber-950 flex items-start gap-2.5">
                   <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold block">Aviso de Horario:</span>
-                    <span className="text-[11px] text-amber-800 leading-tight block mt-0.5">
+                    <span className="text-[11px] text-amber-900 leading-tight block mt-0.5">
                       Este pedido se registrará después de las {formatearHoraLimiteLegible(horaLimite)}. Será atendido según disponibilidad de cocina.
                     </span>
                   </div>
@@ -2210,21 +2208,21 @@ function PedidoContent() {
               )}
 
               {/* Método de Pago y Monto Total */}
-              <div className="bg-slate-900 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs space-y-2">
-                <div className="flex items-center justify-between text-xs text-slate-300">
+              <div className="bg-zinc-950 text-white p-3.5 sm:p-4 rounded-lg shadow-2xs space-y-2">
+                <div className="flex items-center justify-between text-xs text-zinc-300">
                   <span>Método de Pago:</span>
                   <span className="font-bold text-white flex items-center gap-1.5">
                     {metodoPago}
                     {comprimidoInfo && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md font-bold">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-zinc-800 text-zinc-200 border border-zinc-700 rounded font-semibold">
                         Comprobante adjunto
                       </span>
                     )}
                   </span>
                 </div>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                  <span className="text-xs sm:text-sm font-bold text-slate-300">Total a Pagar:</span>
-                  <span className="text-lg sm:text-xl font-black text-emerald-400">
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+                  <span className="text-xs sm:text-sm font-semibold text-zinc-300">Total a Pagar:</span>
+                  <span className="text-lg sm:text-xl font-bold text-emerald-400">
                     S/ {precioTotalPedido.toFixed(2)}
                   </span>
                 </div>
@@ -2232,34 +2230,34 @@ function PedidoContent() {
 
               {/* Previsualización del Comprobante Adjunto para Verificación */}
               {(cloudinaryUrl || comprimidoInfo?.compressedDataUrl) ? (
-                <div className="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 space-y-2.5">
+                <div className="bg-zinc-50 p-3.5 sm:p-4 rounded-lg border border-zinc-200/90 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                      <Receipt className="w-3.5 h-3.5 text-orange-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-700 flex items-center gap-1.5">
+                      <Receipt className="w-3.5 h-3.5 text-zinc-600" />
                       Captura del Comprobante de Pago
                     </span>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                       Adjunto
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-500 font-medium">
+                  <p className="text-[11px] text-zinc-500 font-medium">
                     Por favor verifica que la captura corresponda a tu pago ({metodoPago} por S/ {precioTotalPedido.toFixed(2)}):
                   </p>
 
-                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-900/5 p-2 flex flex-col items-center justify-center">
+                  <div className="rounded-lg overflow-hidden border border-zinc-200 bg-white p-2 flex flex-col items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={cloudinaryUrl || comprimidoInfo?.compressedDataUrl}
                       alt="Comprobante de pago a verificar"
-                      className="max-h-56 sm:max-h-64 w-auto max-w-full rounded-xl object-contain shadow-xs bg-white"
+                      className="max-h-56 sm:max-h-64 w-auto max-w-full rounded object-contain bg-white"
                     />
                   </div>
                 </div>
               ) : metodoPago !== 'Pagar luego' ? (
-                <div className="bg-rose-50 p-3.5 rounded-2xl border border-rose-200 text-xs text-rose-900 flex items-start gap-2.5">
-                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="bg-rose-50 p-3.5 rounded-lg border border-rose-200 text-xs text-rose-900 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold block text-rose-800">Falta adjuntar el comprobante</span>
                     <span className="text-rose-700">
@@ -2268,8 +2266,8 @@ function PedidoContent() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="bg-emerald-50 p-3.5 rounded-lg border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold block text-emerald-900">Modalidad: Pagar luego</span>
                     <span className="text-emerald-800">
@@ -2281,12 +2279,12 @@ function PedidoContent() {
             </div>
 
             {/* Botones de Acción */}
-            <div className="pt-2 flex flex-col-reverse sm:flex-row items-center gap-2.5 sm:justify-end">
+            <div className="pt-2 flex flex-col-reverse sm:flex-row items-center gap-2 sm:justify-end">
               <button
                 type="button"
                 onClick={() => setMostrarModalConfirmacionPedido(false)}
                 disabled={isPending}
-                className="w-full sm:w-auto px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-2xl transition cursor-pointer text-center disabled:opacity-50"
+                className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-semibold text-zinc-700 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition cursor-pointer text-center disabled:opacity-50"
               >
                 Modificar Pedido
               </button>
@@ -2295,7 +2293,7 @@ function PedidoContent() {
                 type="button"
                 onClick={handleConfirmarPedidoFinal}
                 disabled={isPending || ((metodoPago === 'Yape' || metodoPago === 'Plin') && !cloudinaryUrl && !comprimidoInfo)}
-                className="w-full sm:w-auto px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-black text-white bg-orange-500 hover:bg-orange-600 active:scale-95 rounded-2xl shadow-md shadow-orange-500/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-zinc-950 hover:bg-zinc-800 active:scale-95 rounded-lg shadow-2xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? (
                   <span className="animate-pulse">Registrando pedido...</span>

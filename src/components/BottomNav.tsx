@@ -65,15 +65,15 @@ export default function BottomNav() {
           <Link
             href="/"
             aria-label="Pedir Menú"
-            className={`-mt-6 w-13 h-13 rounded-full bg-zinc-950 text-white flex flex-col items-center justify-center shadow-lg border-4 border-white active:scale-95 hover:scale-105 transition-all ${
-              pathname === '/' || pathname === '/padres' ? 'ring-2 ring-zinc-900 ring-offset-2' : ''
+            className={`-mt-6 w-13 h-13 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-white flex flex-col items-center justify-center shadow-lg shadow-orange-500/25 border-4 border-white active:scale-95 hover:scale-105 transition-all ${
+              pathname === '/' || pathname === '/padres' ? 'ring-2 ring-orange-500 ring-offset-2' : ''
             }`}
           >
             <UtensilsCrossed className="w-6 h-6" />
           </Link>
           <span
             className={`text-[10px] mt-1 tracking-tight font-bold ${
-              pathname === '/' || pathname === '/padres' ? 'text-zinc-950' : 'text-zinc-500'
+              pathname === '/' || pathname === '/padres' ? 'text-orange-600' : 'text-zinc-500'
             }`}
           >
             Pedir Menú

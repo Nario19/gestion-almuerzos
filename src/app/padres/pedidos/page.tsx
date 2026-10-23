@@ -666,9 +666,15 @@ function PedidosContent() {
                     {/* Línea conectora base */}
                     <div className="absolute left-8 right-8 top-4.5 -translate-y-1/2 h-1 bg-zinc-200 rounded-full z-0" />
 
-                    {/* Línea conectora activa */}
+                    {/* Línea conectora activa con gradiente de colores */}
                     <div
-                      className="absolute left-8 top-4.5 -translate-y-1/2 h-1 rounded-full z-0 transition-all duration-700 bg-zinc-900"
+                      className={`absolute left-8 top-4.5 -translate-y-1/2 h-1 rounded-full z-0 transition-all duration-700 ${
+                        entregado
+                          ? 'bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-500'
+                          : (pagadoOAceptado || fiadoPendiente)
+                          ? 'bg-gradient-to-r from-emerald-500 to-blue-500'
+                          : 'bg-emerald-500'
+                      }`}
                       style={{
                         width: entregado
                           ? 'calc(100% - 4rem)'
@@ -685,11 +691,11 @@ function PedidosContent() {
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                               etapa.completado
-                                ? 'bg-zinc-950 text-white shadow-xs'
+                                ? 'bg-emerald-600 text-white shadow-xs ring-4 ring-emerald-100'
                                 : etapa.enCurso
-                                ? 'bg-zinc-900 text-white ring-4 ring-zinc-200 shadow-xs'
+                                ? 'bg-blue-600 text-white ring-4 ring-blue-100 shadow-xs animate-pulse'
                                 : etapa.alerta
-                                ? 'bg-amber-100 text-amber-800 border-2 border-amber-300'
+                                ? 'bg-amber-500 text-white ring-4 ring-amber-100 shadow-xs'
                                 : 'bg-white text-zinc-300 border-2 border-zinc-200'
                             }`}
                             title={etapa.titulo}
@@ -703,11 +709,11 @@ function PedidosContent() {
                           <span
                             className={`text-[10px] sm:text-xs font-semibold mt-1.5 whitespace-nowrap ${
                               etapa.completado
-                                ? 'text-zinc-950'
+                                ? 'text-emerald-700 font-bold'
                                 : etapa.enCurso
-                                ? 'text-zinc-950 font-bold'
+                                ? 'text-blue-700 font-bold'
                                 : etapa.alerta
-                                ? 'text-amber-800'
+                                ? 'text-amber-700 font-bold'
                                 : 'text-zinc-400'
                             }`}
                           >
@@ -721,12 +727,52 @@ function PedidosContent() {
                     })}
                   </div>
 
-                  {/* Tarjeta de estado en vivo explicativo */}
-                  <div className="p-2.5 rounded-lg border border-zinc-200 bg-white flex items-start gap-2.5 text-xs">
-                    <EstadoIcono className="w-4 h-4 shrink-0 mt-0.5 text-zinc-700" />
+                  {/* Tarjeta de estado en vivo explicativo con colores */}
+                  <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 text-xs ${
+                    estadoVivo.color === 'emerald'
+                      ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                      : estadoVivo.color === 'blue'
+                      ? 'bg-blue-50/80 border-blue-200 text-blue-950'
+                      : estadoVivo.color === 'amber'
+                      ? 'bg-amber-50/80 border-amber-200 text-amber-950'
+                      : estadoVivo.color === 'rose'
+                      ? 'bg-rose-50/80 border-rose-200 text-rose-950'
+                      : 'bg-zinc-50 border-zinc-200 text-zinc-950'
+                  }`}>
+                    <EstadoIcono className={`w-4 h-4 shrink-0 mt-0.5 ${
+                      estadoVivo.color === 'emerald'
+                        ? 'text-emerald-600'
+                        : estadoVivo.color === 'blue'
+                        ? 'text-blue-600'
+                        : estadoVivo.color === 'amber'
+                        ? 'text-amber-600'
+                        : estadoVivo.color === 'rose'
+                        ? 'text-rose-600'
+                        : 'text-zinc-700'
+                    }`} />
                     <div className="space-y-0.5">
-                      <p className="font-semibold text-zinc-900 text-[11px] sm:text-xs">{estadoVivo.titulo}</p>
-                      <p className="text-[10px] sm:text-[11px] text-zinc-500 leading-relaxed">
+                      <p className={`font-bold text-[11px] sm:text-xs ${
+                        estadoVivo.color === 'emerald'
+                          ? 'text-emerald-900'
+                          : estadoVivo.color === 'blue'
+                          ? 'text-blue-900'
+                          : estadoVivo.color === 'amber'
+                          ? 'text-amber-900'
+                          : estadoVivo.color === 'rose'
+                          ? 'text-rose-900'
+                          : 'text-zinc-900'
+                      }`}>{estadoVivo.titulo}</p>
+                      <p className={`text-[10px] sm:text-[11px] leading-relaxed ${
+                        estadoVivo.color === 'emerald'
+                          ? 'text-emerald-800'
+                          : estadoVivo.color === 'blue'
+                          ? 'text-blue-800'
+                          : estadoVivo.color === 'amber'
+                          ? 'text-amber-800'
+                          : estadoVivo.color === 'rose'
+                          ? 'text-rose-800'
+                          : 'text-zinc-500'
+                      }`}>
                         {estadoVivo.descripcion}
                       </p>
                     </div>
