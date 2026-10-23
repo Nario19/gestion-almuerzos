@@ -31,6 +31,7 @@ import {
   formatearFechaLegiblePeru,
   formatearFechaCortaPeru,
   calcularOffsetFechaPeru,
+  formatearHoraPeru,
 } from '@/lib/dateUtils';
 import { Pedido, EstadoPedido, EstadoPago } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -156,7 +157,7 @@ function PedidosContent() {
     );
   }
 
-  const badgeEstadoPedido = (estado: EstadoPedido) => {
+  const badgeEstadoPedido = (estado: EstadoPedido, horaEntrega?: string) => {
     switch (estado) {
       case 'CANCELADO':
         return (
@@ -167,7 +168,7 @@ function PedidosContent() {
       case 'ENTREGADO':
         return (
           <Badge variant="success" className="text-[11px] flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Entregado
+            <CheckCircle2 className="w-3 h-3" /> Entregado{horaEntrega ? ` (${horaEntrega})` : ''}
           </Badge>
         );
       case 'REGISTRADO':
@@ -301,7 +302,7 @@ function PedidosContent() {
         id: 3,
         titulo: 'Entregado',
         descripcion: entregado
-          ? (pedido.horaEntrega ? `Entregado (${pedido.horaEntrega})` : 'Entregado en colegio')
+          ? (pedido.horaEntrega ? `Entregado a las ${pedido.horaEntrega}` : 'Entregado en colegio')
           : (esFiado
               ? 'Programado para entrega'
               : pagadoOAceptado ? 'Programado para entrega' : 'Pendiente de pago'),
@@ -375,6 +376,12 @@ function PedidosContent() {
 
   const formatearFechaCorta = (fechaStr?: string, diaSemana?: string) => {
     return formatearFechaCortaPeru(fechaStr?.slice(0, 10), diaSemana);
+  };
+
+  const formatearHoraPedido = (createdAt?: string) => {
+    if (!createdAt) return '';
+    const formateada = formatearHoraPeru(createdAt);
+    return formateada || createdAt;
   };
 
   const cambiarDia = (offset: number) => {
@@ -629,14 +636,26 @@ function PedidosContent() {
                     <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md font-mono">
                       #{pedido.codigoPedido}
                     </span>
-                    <span className="text-xs font-medium text-zinc-700 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-md flex items-center gap-1.5">
+                    <span
+                      className="text-xs font-medium text-zinc-700 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-md flex items-center gap-1.5"
+                      title="Fecha del almuerzo"
+                    >
                       <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                       <span>{formatearFechaCorta(pedido.fecha, pedido.diaSemana)}</span>
                     </span>
+                    {formatearHoraPedido(pedido.createdAt) ? (
+                      <span
+                        className="text-xs font-medium text-zinc-700 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-md flex items-center gap-1.5"
+                        title="Hora en la que se realizó el pedido"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                        <span>{formatearHoraPedido(pedido.createdAt)}</span>
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    {badgeEstadoPedido(pedido.estadoPedido)}
+                    {badgeEstadoPedido(pedido.estadoPedido, pedido.horaEntrega)}
                     {badgeEstadoPago(pedido.estadoPago, pedido.metodoPago)}
                   </div>
                 </div>
@@ -686,8 +705,11 @@ function PedidosContent() {
 
                     {etapas.map((etapa) => {
                       const IconComponent = etapa.icono;
+                      const esEtapaEntregado = etapa.id === 3;
+                      const mostrarHoraEntrega = esEtapaEntregado && entregado && pedido.horaEntrega;
+
                       return (
-                        <div key={etapa.id} className="relative z-10 flex flex-col items-center">
+                        <div key={etapa.id} className="relative z-10 flex flex-col items-center text-center">
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                               etapa.completado
@@ -719,9 +741,20 @@ function PedidosContent() {
                           >
                             {etapa.titulo}
                           </span>
-                          <span className="text-[9px] text-zinc-500 hidden sm:block">
-                            {etapa.descripcion}
-                          </span>
+
+                          {mostrarHoraEntrega ? (
+                            <span
+                              className="text-[10px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-1.5 py-0.5 rounded-md mt-0.5 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap"
+                              title={`Hora en la que se marcó como entregado: ${pedido.horaEntrega}`}
+                            >
+                              <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-700 shrink-0" />
+                              <span>{pedido.horaEntrega}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[9px] text-zinc-500 hidden sm:block">
+                              {etapa.descripcion}
+                            </span>
+                          )}
                         </div>
                       );
                     })}

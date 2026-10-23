@@ -1674,6 +1674,23 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/fiado-tabla-desglose-pedido-despacho.test.mjs`
   - `MEMORY.md`
 
+### D-056 — 2026-10-23 — Visualización de Hora de Pedido y Hora de Entrega en Pedidos de Padres
+
+- Decisión: En la vista de pedidos de los padres (`/padres/pedidos` y `/padres/deudas`), mostrar con máxima claridad las horas exactas de creación y entrega:
+  1. Hora de Registro del Pedido:
+     - Al costado del badge de fecha (`[Calendar] Vie, 23/10`), se renderiza un badge con icono Clock que muestra la hora en que se realizó el pedido (`formatearHoraPeru(pedido.createdAt)`), formateada en la zona horaria oficial `America/Lima` (ej. `01:49 p. m.`).
+  2. Hora de Entrega en la Línea de Tiempo (Stepper):
+     - En el paso 3 ("Entregado") del stepper de etapas del pedido (`Orden recibida` -> `Pago aceptado` -> `Entregado`), cuando el pedido ha sido marcado como entregado y existe `pedido.horaEntrega`, se visualiza un badge destacado con icono Clock y la hora exacta de entrega (ej. `[Clock] 01:49 p. m.`), visible de forma prominente tanto en teléfonos móviles como en pantallas de escritorio.
+     - En `badgeEstadoPedido` y en `/padres/deudas`, el badge de estado muestra `Entregado (01:49 p. m.)`.
+  3. Suite de Pruebas:
+     - Creada la suite `tests/padres-pedidos-hora-registro-y-entrega.test.mjs` con 6 pruebas automatizadas.
+- Fuente: Instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/app/padres/deudas/page.tsx`
+  - `tests/padres-pedidos-hora-registro-y-entrega.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

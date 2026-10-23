@@ -31,6 +31,7 @@ import {
   obtenerFechaHoyPeru,
   formatearFechaLegiblePeru,
   formatearFechaCortaPeru,
+  formatearHoraPeru,
 } from '@/lib/dateUtils';
 import { Pedido, PadreFiadoResumen, ConfiguracionPagos } from '@/types';
 import { descargarComprobanteFiadoPdf } from '@/lib/pdfComprobanteGenerator';
@@ -588,17 +589,29 @@ export default function DeudasPage() {
                     <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md font-mono">
                       #{pedido.codigoPedido}
                     </span>
-                    <span className="text-xs font-medium text-zinc-700 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-md flex items-center gap-1.5">
+                    <span
+                      className="text-xs font-medium text-zinc-700 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-md flex items-center gap-1.5"
+                      title="Fecha del almuerzo"
+                    >
                       <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                       <span>{formatearFechaCortaPeru(pedido.fecha?.slice(0, 10), pedido.diaSemana)}</span>
                     </span>
+                    {pedido.createdAt ? (
+                      <span
+                        className="text-xs font-medium text-zinc-700 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-md flex items-center gap-1.5"
+                        title="Hora en la que se realizó el pedido"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                        <span>{formatearHoraPeru(pedido.createdAt) || pedido.createdAt}</span>
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {/* Badge Entrega */}
                     {entregado ? (
                       <Badge variant="success" className="text-[11px] flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Entregado
+                        <CheckCircle2 className="w-3 h-3" /> Entregado{pedido.horaEntrega ? ` (${pedido.horaEntrega})` : ''}
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="text-[11px] flex items-center gap-1">
