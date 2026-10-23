@@ -64,6 +64,11 @@ export default function HeaderNav() {
     return null;
   }
 
+  // Suprimir el navbar en la vista pública de almuerzos para visitantes
+  if (!usuario && (pathname === '/' || pathname === '/padres')) {
+    return null;
+  }
+
   const prefix = esSuperAdmin && pathname.startsWith('/superadmin') ? '/superadmin' : '/admin';
   const adminNavItems = [
     ...(esSuperAdmin ? [{ href: '/superadmin', label: 'Colegios', icon: Building2 }] : []),

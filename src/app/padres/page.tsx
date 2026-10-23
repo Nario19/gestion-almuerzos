@@ -33,6 +33,8 @@ import {
   Coffee,
   Apple,
   Check,
+  UserPlus,
+  UtensilsCrossed,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
@@ -848,34 +850,41 @@ function PedidoContent() {
   // ----------------------------------------------------
   if (!usuario) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28">
+      <div className="max-w-2xl mx-auto px-4 py-4 sm:py-6 pb-12">
         {/* HERO BANNER CON CTA ABOVE THE FOLD (VISITANTES) */}
-        <div className="mb-5 bg-zinc-950 text-white rounded-xl p-5 sm:p-6 border border-zinc-800 shadow-xs relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-zinc-800 text-zinc-300 rounded-full text-[11px] font-semibold mb-2.5 border border-zinc-700">
-              <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-              Almuerzos Escolares Nutritivos
+        {/* CABECERA PRINCIPAL Y ACCESO EXCLUSIVO DE VISITANTES */}
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/20">
+                <UtensilsCrossed className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-zinc-950 tracking-tight leading-tight">
+                  Placeres Culinarios
+                </h2>
+                <p className="text-xs text-zinc-500 font-medium">
+                  Almuerzos escolares saludables y nutritivos
+                </p>
+              </div>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight">
-              Pide el menú escolar de hoy para tus hijos
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1 leading-relaxed max-w-lg">
-              Comida fresca, balanceada y preparada con altos estándares de higiene para cada día escolar.
-            </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            {/* BOTONES ÚNICOS DE ACCESO EN TODO EL SITIO PÚBLICO */}
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 pt-1 sm:pt-0">
               <Link
                 href="/login"
-                className="px-4 py-2 bg-white hover:bg-zinc-100 active:scale-[0.98] text-zinc-950 font-semibold rounded-lg text-xs sm:text-sm shadow-2xs transition flex items-center gap-2"
+                className="w-full sm:w-auto px-4 py-2.5 bg-zinc-950 hover:bg-zinc-800 active:scale-[0.98] text-white font-semibold rounded-lg text-xs sm:text-sm shadow-2xs transition flex items-center justify-center gap-1.5"
               >
-                <LogIn className="w-4 h-4 text-zinc-950" />
-                Iniciar Sesión para Pedir
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Iniciar Sesión para Pedir</span>
+                <span className="sr-only">Iniciar Sesión</span>
               </Link>
               <Link
                 href="/login?modo=registro"
-                className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-zinc-200 font-semibold rounded-lg text-xs sm:text-sm border border-zinc-700 transition flex items-center gap-1.5"
+                className="w-full sm:w-auto px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 active:scale-[0.98] text-zinc-900 border border-zinc-200 font-semibold rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5"
               >
-                Crear Cuenta
+                <UserPlus className="w-3.5 h-3.5 text-zinc-700" />
+                <span>Registrarme</span>
               </Link>
             </div>
           </div>
@@ -1189,50 +1198,25 @@ function PedidoContent() {
             </div>
           )}
 
-          {/* BANNER CTA PARA PEDIR */}
-          <div className="bg-zinc-950 text-white rounded-xl p-6 text-center border border-zinc-800 shadow-xs">
-            <Sparkles className="w-6 h-6 mx-auto mb-2 text-zinc-400" />
-            <h3 className="text-base sm:text-lg font-bold tracking-tight text-white">¿Deseas pedir el almuerzo para tu hijo?</h3>
-            <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto leading-relaxed">
-              Inicia sesión o regístrate en la plataforma para asociar a tus hijos y programar sus almuerzos escolares con entrega directa.
+          {/* INFORMACIÓN DE SERVICIO (SIN BOTONES DUPLICADOS) */}
+          <div className="bg-zinc-50 rounded-xl p-4 sm:p-5 border border-zinc-200/90 text-center">
+            <Sparkles className="w-5 h-5 mx-auto mb-2 text-zinc-400" />
+            <h3 className="text-sm sm:text-base font-bold text-zinc-900 tracking-tight">
+              ¿Cómo funciona Placeres Culinarios?
+            </h3>
+            <p className="text-xs text-zinc-500 mt-1 max-w-md mx-auto leading-relaxed">
+              Explora la carta semanal por día, inicia sesión o regístrate para asociar a tus hijos y su almuerzo llegará fresco y balanceado a la hora de comedor.
             </p>
-            <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
-              <Link
-                href="/login"
-                className="px-5 py-2.5 bg-white text-zinc-950 font-semibold rounded-lg text-xs sm:text-sm hover:bg-zinc-100 transition shadow-2xs flex items-center justify-center gap-2"
-              >
-                <LogIn className="w-4 h-4 text-zinc-950" />
-                Iniciar Sesión / Registrarme
-              </Link>
-            </div>
           </div>
 
           {/* ENLACE A POLÍTICA DE PRIVACIDAD */}
-          <div className="mt-5 text-center pb-4">
+          <div className="mt-4 text-center pb-2">
             <Link
               href="/padres/privacidad"
               className="text-[11px] text-zinc-400 hover:text-zinc-600 font-medium inline-flex items-center gap-1.5 transition"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               Política de Privacidad y Protección de Datos (Ley N° 29733)
-            </Link>
-          </div>
-        </div>
-
-        {/* BARRA FLOTANTE FIJA INFERIOR */}
-        <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-zinc-200/90 shadow-lg z-30">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
-            <div>
-              <span className="text-xs font-bold text-zinc-900 block">Menú Escolar Completo</span>
-              <span className="text-[11px] text-emerald-700 font-semibold">
-                S/ {precioMenuBase.toFixed(2)} • Sopa o ensalada + Segundo
-              </span>
-            </div>
-            <Link
-              href="/login"
-              className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0"
-            >
-              <LogIn className="w-3.5 h-3.5" /> Iniciar Sesión para Pedir
             </Link>
           </div>
         </div>

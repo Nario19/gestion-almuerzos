@@ -1018,6 +1018,18 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/padres/page.tsx`
   - `MEMORY.md`
 
+### D-014 — 2026-10-22 — Supresión de navbar en carta pública y eliminación de botones de login duplicados
+- Decisión: En la vista pública del menú de almuerzos (`/` y `/padres` sin sesión iniciada):
+  1. Suprimir el navbar superior (`HeaderNav`) para no consumir espacio vertical en dispositivos móviles y brindar una experiencia limpia y despejada.
+  2. Unificar los botones de "Iniciar Sesión" y "Registrarme" en un único bloque de cabecera superior móvil (`grid grid-cols-2`), eliminando las repeticiones en banner hero, banner inferior y barra flotante.
+  3. Eliminar la barra flotante fija inferior para permitir una navegación 100% fluida de los platos y extras en teléfonos inteligentes.
+- Fuente: Instrucción explícita del usuario ("en la pagina publica donde se muestran los almuerzos que no haya un navbar arriba eso borralo y todo organizalo mejor que sea responsive porque la mayoria entrara aahi y pedira por telefono que sea una buena experiecnid y que esten los botones de iniciair sesion y registrarme perosolo una vez porque esta como repetido 3 veces").
+- Impacto:
+  - `src/components/HeaderNav.tsx`
+  - `src/app/padres/page.tsx`
+  - `MEMORY.md`
+
+
   - `tests/cron-limpiar-comprobantes-cloudinary.test.mjs` (7 pruebas nuevas, 299 pruebas totales en la suite, 293 pasadas, 0 fallos).
 
 ### D-048 — 2026-10-21 — Optimización Integral de Rendimiento: Compresión Dinámica Cloudinary, Caché en Memoria y Prefetch de la Carta
@@ -1343,6 +1355,18 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/padres/page.tsx`
   - `MEMORY.md`
 
+### D-014 — 2026-10-22 — Supresión de navbar en carta pública y eliminación de botones de login duplicados
+- Decisión: En la vista pública del menú de almuerzos (`/` y `/padres` sin sesión iniciada):
+  1. Suprimir el navbar superior (`HeaderNav`) para no consumir espacio vertical en dispositivos móviles y brindar una experiencia limpia y despejada.
+  2. Unificar los botones de "Iniciar Sesión" y "Registrarme" en un único bloque de cabecera superior móvil (`grid grid-cols-2`), eliminando las repeticiones en banner hero, banner inferior y barra flotante.
+  3. Eliminar la barra flotante fija inferior para permitir una navegación 100% fluida de los platos y extras en teléfonos inteligentes.
+- Fuente: Instrucción explícita del usuario ("en la pagina publica donde se muestran los almuerzos que no haya un navbar arriba eso borralo y todo organizalo mejor que sea responsive porque la mayoria entrara aahi y pedira por telefono que sea una buena experiecnid y que esten los botones de iniciair sesion y registrarme perosolo una vez porque esta como repetido 3 veces").
+- Impacto:
+  - `src/components/HeaderNav.tsx`
+  - `src/app/padres/page.tsx`
+  - `MEMORY.md`
+
+
 
 ### D-059 — 2026-10-22 — Expansión Integral de shadcn/ui a Toda la Aplicación y Portal de Padres
 
@@ -1417,6 +1441,18 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/components/BottomNav.tsx`
   - `src/app/padres/page.tsx`
   - `MEMORY.md`
+
+### D-014 — 2026-10-22 — Supresión de navbar en carta pública y eliminación de botones de login duplicados
+- Decisión: En la vista pública del menú de almuerzos (`/` y `/padres` sin sesión iniciada):
+  1. Suprimir el navbar superior (`HeaderNav`) para no consumir espacio vertical en dispositivos móviles y brindar una experiencia limpia y despejada.
+  2. Unificar los botones de "Iniciar Sesión" y "Registrarme" en un único bloque de cabecera superior móvil (`grid grid-cols-2`), eliminando las repeticiones en banner hero, banner inferior y barra flotante.
+  3. Eliminar la barra flotante fija inferior para permitir una navegación 100% fluida de los platos y extras en teléfonos inteligentes.
+- Fuente: Instrucción explícita del usuario ("en la pagina publica donde se muestran los almuerzos que no haya un navbar arriba eso borralo y todo organizalo mejor que sea responsive porque la mayoria entrara aahi y pedira por telefono que sea una buena experiecnid y que esten los botones de iniciair sesion y registrarme perosolo una vez porque esta como repetido 3 veces").
+- Impacto:
+  - `src/components/HeaderNav.tsx`
+  - `src/app/padres/page.tsx`
+  - `MEMORY.md`
+
 
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
