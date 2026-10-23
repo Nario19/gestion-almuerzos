@@ -536,7 +536,7 @@ export default function DespachoPage() {
           value={`${pagados} / ${pendientesPago}`}
           subtext="Confirmados vs pendientes"
           icon={DollarSign}
-          variant="default"
+          variant="purple"
           onClick={() => {
             setFiltroEstado((prev) =>
               prev === 'NO_PAGADOS' ? 'PAGADOS' : prev === 'PAGADOS' ? 'TODOS' : 'NO_PAGADOS'

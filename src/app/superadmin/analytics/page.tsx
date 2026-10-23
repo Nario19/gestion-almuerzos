@@ -280,80 +280,80 @@ export default function SuperadminAnalyticsPage() {
           {/* 1. CUATRO KPIS PRINCIPALES */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Ventas Totales */}
-            <Card>
+            <Card className="bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 border-emerald-200/80 hover:border-emerald-300 shadow-xs">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
                     Ventas Totales
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200/60 shadow-2xs flex items-center justify-center">
                     <DollarSign className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-zinc-950 font-mono tracking-tight">
+                <div className="text-xl sm:text-2xl font-bold text-emerald-950 font-mono tracking-tight">
                   S/ {metricas.ventasTotales.toFixed(2)}
                 </div>
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="text-xs text-emerald-700/80 font-medium mt-1">
                   {metricas.totalPedidos} almuerzos activos
                 </p>
               </CardContent>
             </Card>
 
             {/* Total Raciones */}
-            <Card>
+            <Card className="bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/30 border-blue-200/80 hover:border-blue-300 shadow-xs">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
                     Raciones Totales
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 border border-blue-200/60 shadow-2xs flex items-center justify-center">
                     <UtensilsCrossed className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
+                <div className="text-xl sm:text-2xl font-bold text-blue-950 tracking-tight">
                   {metricas.totalPedidos}
                 </div>
-                <p className="text-xs text-emerald-600 font-medium mt-1">
+                <p className="text-xs text-blue-700/80 font-medium mt-1">
                   {metricas.pedidosEntregados} entregadas ({metricas.totalPedidos > 0 ? Math.round((metricas.pedidosEntregados / metricas.totalPedidos) * 100) : 0}%)
                 </p>
               </CardContent>
             </Card>
 
             {/* Tasa de Cobranza */}
-            <Card>
+            <Card className="bg-gradient-to-br from-amber-50/70 via-white to-yellow-50/30 border-amber-200/80 hover:border-amber-300 shadow-xs">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
                     Tasa de Cobranza
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 border border-amber-200/60 shadow-2xs flex items-center justify-center">
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
+                <div className="text-xl sm:text-2xl font-bold text-amber-950 tracking-tight">
                   {metricas.tasaCobranzaPorcentaje}%
                 </div>
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="text-xs text-amber-800/80 font-medium mt-1">
                   {metricas.pedidosPagados} pagados • {metricas.pedidosPendientesPago} por cobrar
                 </p>
               </CardContent>
             </Card>
 
             {/* Ticket Promedio */}
-            <Card>
+            <Card className="bg-gradient-to-br from-purple-50/70 via-white to-fuchsia-50/30 border-purple-200/80 hover:border-purple-300 shadow-xs">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
                     Ticket Promedio
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 border border-purple-200/60 shadow-2xs flex items-center justify-center">
                     <Receipt className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-zinc-950 font-mono tracking-tight">
+                <div className="text-xl sm:text-2xl font-bold text-purple-950 font-mono tracking-tight">
                   S/ {metricas.ticketPromedio.toFixed(2)}
                 </div>
-                <p className="text-xs text-zinc-500 mt-1">Por ración de almuerzo</p>
+                <p className="text-xs text-purple-700/80 font-medium mt-1">Por ración de almuerzo</p>
               </CardContent>
             </Card>
           </div>
@@ -361,38 +361,40 @@ export default function SuperadminAnalyticsPage() {
           {/* 2. PREFERENCIAS GASTRONÓMICAS: TOP PLATOS & MENOR DEMANDA */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Platos Más Solicitados (Platos Estrella) */}
-            <Card>
-              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <Card className="border-amber-200/80 bg-gradient-to-b from-amber-50/30 via-white to-white">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-amber-100/60">
                 <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
-                  <Award className="w-4 h-4 text-zinc-700" />
+                  <div className="w-7 h-7 rounded-md bg-amber-100 text-amber-800 border border-amber-200/60 flex items-center justify-center">
+                    <Award className="w-4 h-4 text-amber-700" />
+                  </div>
                   Platos Estrella (Mayor Demanda)
                 </CardTitle>
-                <Badge variant="outline" className="text-xs">Top 5</Badge>
+                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-800 border-amber-200 font-semibold">Top 5</Badge>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 {metricas.platosTop.length === 0 ? (
                   <p className="text-xs text-zinc-400 py-6 text-center">Sin pedidos registrados en este período.</p>
                 ) : (
                   <div className="space-y-3">
                     {metricas.platosTop.map((plato, idx) => {
                       return (
-                        <div key={plato.nombre} className="p-3 bg-zinc-50 rounded-lg border border-zinc-100">
+                        <div key={plato.nombre} className="p-3 bg-amber-50/40 rounded-lg border border-amber-200/60">
                           <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="w-5 h-5 rounded-md font-bold text-xs flex items-center justify-center shrink-0 bg-zinc-200 text-zinc-800">
+                              <span className="w-5 h-5 rounded-md font-bold text-xs flex items-center justify-center shrink-0 bg-amber-200 text-amber-900">
                                 {idx + 1}
                               </span>
                               <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
                                 {plato.nombre}
                               </span>
                             </div>
-                            <span className="text-xs font-bold text-zinc-950 shrink-0 ml-2">
+                            <span className="text-xs font-bold text-amber-950 shrink-0 ml-2">
                               {plato.pedidos} pedidos ({plato.porcentaje}%)
                             </span>
                           </div>
-                          <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+                          <div className="w-full bg-amber-100 rounded-full h-1.5 overflow-hidden">
                             <div
-                              className="bg-zinc-900 h-1.5 rounded-full transition-all duration-500"
+                              className="bg-amber-500 h-1.5 rounded-full transition-all duration-500"
                               style={{ width: `${Math.min(100, Math.max(5, plato.porcentaje))}%` }}
                             />
                           </div>
@@ -405,15 +407,17 @@ export default function SuperadminAnalyticsPage() {
             </Card>
 
             {/* Platos con Menor Demanda (Optimización de Menús) */}
-            <Card>
-              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <Card className="border-rose-200/80 bg-gradient-to-b from-rose-50/30 via-white to-white">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-rose-100/60">
                 <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
-                  <ChefHat className="w-4 h-4 text-zinc-700" />
+                  <div className="w-7 h-7 rounded-md bg-rose-100 text-rose-700 border border-rose-200/60 flex items-center justify-center">
+                    <ChefHat className="w-4 h-4 text-rose-700" />
+                  </div>
                   Optimización de Menú (Menor Salida)
                 </CardTitle>
-                <Badge variant="outline" className="text-xs">Evaluar reemplazo</Badge>
+                <Badge variant="outline" className="text-xs bg-rose-50 text-rose-800 border-rose-200 font-semibold">Evaluar reemplazo</Badge>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 {metricas.platosMenorDemanda.length === 0 ? (
                   <p className="text-xs text-zinc-400 py-6 text-center">Sin datos suficientes.</p>
                 ) : (
@@ -421,13 +425,13 @@ export default function SuperadminAnalyticsPage() {
                     {metricas.platosMenorDemanda.map((plato) => (
                       <div
                         key={plato.nombre}
-                        className="p-3 bg-zinc-50 rounded-lg border border-zinc-100 flex items-center justify-between"
+                        className="p-3 bg-rose-50/40 rounded-lg border border-rose-200/60 flex items-center justify-between"
                       >
                         <div className="min-w-0 pr-2">
                           <h4 className="text-xs font-semibold text-zinc-900 truncate">{plato.nombre}</h4>
                           <span className="text-[11px] text-zinc-500">Baja rotación en el período</span>
                         </div>
-                        <Badge variant="secondary" className="text-xs shrink-0 font-medium">
+                        <Badge variant="secondary" className="text-xs shrink-0 font-medium bg-rose-100 text-rose-800 border-rose-200">
                           {plato.pedidos} pedidos
                         </Badge>
                       </div>
@@ -444,33 +448,35 @@ export default function SuperadminAnalyticsPage() {
           {/* 3. MÉTODOS DE PAGO Y DEMANDA SEMANAL */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Desglose por Método de Pago */}
-            <Card>
-              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <Card className="border-indigo-200/80 bg-gradient-to-b from-indigo-50/30 via-white to-white">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-indigo-100/60">
                 <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-zinc-700" />
+                  <div className="w-7 h-7 rounded-md bg-indigo-100 text-indigo-700 border border-indigo-200/60 flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-indigo-700" />
+                  </div>
                   Métodos de Pago Utilizados
                 </CardTitle>
-                <Badge variant="outline" className="text-xs">Participación</Badge>
+                <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-800 border-indigo-200 font-semibold">Participación</Badge>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 <div className="space-y-3">
                   {Object.entries(metricas.metodosPago).map(([metodo, data]) => {
                     return (
-                      <div key={metodo} className="p-3 bg-zinc-50 rounded-lg border border-zinc-100">
+                      <div key={metodo} className="p-3 bg-indigo-50/40 rounded-lg border border-indigo-200/60">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-semibold text-zinc-900">{metodo}</span>
                           <div className="text-right">
-                            <span className="text-xs font-bold text-zinc-950">
+                            <span className="text-xs font-bold text-indigo-950">
                               {data.cantidad} ({data.porcentaje}%)
                             </span>
-                            <span className="text-[11px] text-zinc-500 ml-1.5 font-mono">
+                            <span className="text-[11px] text-indigo-700 ml-1.5 font-mono font-medium">
                               S/ {data.totalMonto.toFixed(2)}
                             </span>
                           </div>
                         </div>
-                        <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-indigo-100 rounded-full h-1.5 overflow-hidden">
                           <div
-                            className="bg-zinc-900 h-1.5 rounded-full transition-all duration-500"
+                            className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, data.porcentaje)}%` }}
                           />
                         </div>
@@ -482,31 +488,33 @@ export default function SuperadminAnalyticsPage() {
             </Card>
 
             {/* Demanda por Día de la Semana */}
-            <Card>
-              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <Card className="border-sky-200/80 bg-gradient-to-b from-sky-50/30 via-white to-white">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-sky-100/60">
                 <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-zinc-700" />
+                  <div className="w-7 h-7 rounded-md bg-sky-100 text-sky-700 border border-sky-200/60 flex items-center justify-center">
+                    <BarChart3 className="w-4 h-4 text-sky-700" />
+                  </div>
                   Demanda por Día de la Semana
                 </CardTitle>
-                <Badge variant="outline" className="text-xs">Planificación de compras</Badge>
+                <Badge variant="outline" className="text-xs bg-sky-50 text-sky-800 border-sky-200 font-semibold">Planificación de compras</Badge>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 <div className="space-y-3">
                   {Object.entries(metricas.demandaPorDiaSemana).map(([dia, cantidad]) => {
                     const maxDemanda = Math.max(...Object.values(metricas.demandaPorDiaSemana), 1);
                     const pct = Math.round((cantidad / maxDemanda) * 100);
 
                     return (
-                      <div key={dia} className="p-3 bg-zinc-50 rounded-lg border border-zinc-100">
+                      <div key={dia} className="p-3 bg-sky-50/40 rounded-lg border border-sky-200/60">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-semibold text-zinc-900">{dia}</span>
-                          <span className="text-xs font-bold text-zinc-950">
+                          <span className="text-xs font-bold text-sky-950">
                             {cantidad} almuerzos
                           </span>
                         </div>
-                        <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-sky-100 rounded-full h-1.5 overflow-hidden">
                           <div
-                            className="bg-zinc-900 h-1.5 rounded-full transition-all duration-500"
+                            className="bg-sky-500 h-1.5 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, Math.max(cantidad > 0 ? 8 : 0, pct))}%` }}
                           />
                         </div>
@@ -522,13 +530,15 @@ export default function SuperadminAnalyticsPage() {
           </div>
 
           {/* 4. COMPARATIVA POR COLEGIO */}
-          <Card>
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <Card className="border-purple-200/80 bg-gradient-to-b from-purple-50/20 via-white to-white">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-purple-100/60">
               <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-zinc-700" />
+                <div className="w-7 h-7 rounded-md bg-purple-100 text-purple-700 border border-purple-200/60 flex items-center justify-center">
+                  <Building2 className="w-4 h-4 text-purple-700" />
+                </div>
                 Desglose y Comparativa por Colegio
               </CardTitle>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-800 border-purple-200 font-semibold">
                 {metricas.metricasPorColegio.length} colegios
               </Badge>
             </CardHeader>

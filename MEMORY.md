@@ -1537,6 +1537,33 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/padres/perfil/page.tsx`
   - `MEMORY.md`
 
+### D-019 — 2026-10-22 — Corrección de Analítica en Cero y Tarjetas con Color Semántico Profesional
+- Decisión:
+  1. **Corrección de conteo en 0 en Analítica Superadmin (`/superadmin/analytics`):**
+     - Se diagnosticó que la consulta de analítica en `src/lib/dataService.ts` intentaba seleccionar y filtrar por `colegio_id` sobre la tabla `pedidos`.
+     - Dado que la tabla `pedidos` en PostgreSQL/Supabase no posee la columna `colegio_id` (sino `colegio_nombre`), PostgREST fallaba retornando un error de esquema y datos vacíos.
+     - Se eliminaron las referencias a `colegio_id` en las consultas de `pedidos`, indexando y filtrando únicamente por `colegio_nombre` de forma case-insensitive y consolidando dinámicamente los colegios con actividad.
+  2. **Tarjetas con Color Semántico Profesional:**
+     - Se rediseñó el componente maestro `StatCard` (`src/components/shared/StatCard.tsx`) incorporando variantes de color elegantes con gradientes sutiles (`from-[color]-50/70 via-white to-[color]-50/30`), bordes temáticos (`border-[color]-200/80`), contenedores de iconos destacados con fondo y borde a juego, y tipografía en tonos oscuros armonizados.
+     - Se aplicó la paleta semántica coordinada a las tarjetas de todas las pantallas administrativas:
+       - **Verde Esmeralda (`success`):** Ventas totales, pedidos entregados, pagos verificados.
+       - **Azul Profesional (`default`):** Raciones totales, total almuerzos a cocinar, pedidos activos.
+       - **Ámbar / Oro (`warning`):** Tasa de cobranza, saldos por cobrar, platos estrella con mayor demanda, alertas/observaciones críticas.
+       - **Púrpura / Violeta (`purple`):** Ticket promedio, cobranza recaudada, métodos de pago, familias deudoras.
+       - **Cian / Sky (`sky`):** Demanda semanal por día, almuerzos fiados.
+       - **Rosa / Carmesí (`destructive`):** Menús de baja rotación / merma, pedidos pendientes de pago.
+- Fuente: Instrucción explícita del usuario ("toda la analitica esta en 0, no esta contando o que esta pasanado verifica. y a los cards de todas las pantallas dale color.").
+- Impacto:
+  - `src/lib/dataService.ts`
+  - `src/components/shared/StatCard.tsx`
+  - `src/app/superadmin/analytics/page.tsx`
+  - `src/app/superadmin/page.tsx`
+  - `src/app/admin/components/AdminDashboardTab.tsx`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `MEMORY.md`
+
 
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)

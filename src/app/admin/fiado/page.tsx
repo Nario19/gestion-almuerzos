@@ -764,7 +764,7 @@ export default function FiadoPage() {
           value={totalFamiliasConDeuda}
           subtext="Familias con saldo pendiente"
           icon={Users}
-          variant="default"
+          variant="purple"
         />
 
         <StatCard
@@ -772,7 +772,7 @@ export default function FiadoPage() {
           value={totalAlmuerzosFiados}
           subtext="Platos consumidos"
           icon={Utensils}
-          variant="default"
+          variant="sky"
         />
 
         <StatCard

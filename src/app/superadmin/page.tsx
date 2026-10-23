@@ -656,36 +656,36 @@ export default function SuperAdminPage() {
 
       {/* TARJETAS DE KPIS DEL SUPER ADMIN */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <Card className="p-4 sm:p-5 border-zinc-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
+        <Card className="p-4 sm:p-5 bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/30 border-blue-200/80 hover:border-blue-300 shadow-xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider block mb-1">
             Total de Colegios
           </span>
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{totalColegios}</div>
-          <p className="text-[11px] text-zinc-500 mt-1">Colegios registrados en el sistema</p>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-blue-950">{totalColegios}</div>
+          <p className="text-[11px] text-blue-700/80 font-medium mt-1">Colegios registrados en el sistema</p>
         </Card>
 
-        <Card className="p-4 sm:p-5 border-zinc-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
+        <Card className="p-4 sm:p-5 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 border-emerald-200/80 hover:border-emerald-300 shadow-xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block mb-1">
             Colegios Activos
           </span>
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{colegiosActivos}</div>
-          <p className="text-[11px] text-zinc-500 mt-1">Disponibles para pedidos de padres</p>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-emerald-950">{colegiosActivos}</div>
+          <p className="text-[11px] text-emerald-700/80 font-medium mt-1">Disponibles para pedidos de padres</p>
         </Card>
 
-        <Card className="p-4 sm:p-5 border-zinc-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
+        <Card className="p-4 sm:p-5 bg-gradient-to-br from-purple-50/70 via-white to-fuchsia-50/30 border-purple-200/80 hover:border-purple-300 shadow-xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider block mb-1">
             Admins Asignados
           </span>
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{adminsAsignados}</div>
-          <p className="text-[11px] text-zinc-500 mt-1">Cuentas con acceso a su colegio</p>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-purple-950">{adminsAsignados}</div>
+          <p className="text-[11px] text-purple-700/80 font-medium mt-1">Cuentas con acceso a su colegio</p>
         </Card>
 
-        <Card className="p-4 sm:p-5 border-zinc-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
+        <Card className="p-4 sm:p-5 bg-gradient-to-br from-amber-50/70 via-white to-yellow-50/30 border-amber-200/80 hover:border-amber-300 shadow-xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider block mb-1">
             Almuerzos Atendidos
           </span>
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{totalPedidosSistema}</div>
-          <p className="text-[11px] text-zinc-500 mt-1">Raciones globales solicitadas</p>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-amber-950">{totalPedidosSistema}</div>
+          <p className="text-[11px] text-amber-800/80 font-medium mt-1">Raciones globales solicitadas</p>
         </Card>
       </div>
 

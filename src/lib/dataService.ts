@@ -868,7 +868,7 @@ export const dataService = {
 
         if (opciones?.colegioNombre && opciones.colegioNombre.trim().toLowerCase() !== 'todos') {
           const colLimpio = opciones.colegioNombre.trim();
-          query = query.or(`colegio_nombre.eq.${colLimpio},colegio_id.eq.${colLimpio}`);
+          query = query.ilike('colegio_nombre', colLimpio);
         }
 
         if (typeof opciones?.limit === 'number' && opciones.limit > 0) {
@@ -1745,14 +1745,13 @@ export const dataService = {
         const pedidosPorColegio: Record<string, number> = {};
         const { data: pedData } = await supabase
           .from('pedidos')
-          .select('colegio_id, colegio_nombre')
+          .select('colegio_nombre')
           .neq('estado_pedido', 'CANCELADO');
         if (pedData) {
           pedData.forEach((p) => {
             const colMatch = colegiosBase.find(
               (c) =>
-                (p.colegio_id && c.id === p.colegio_id) ||
-                (p.colegio_nombre && c.nombre.trim().toLowerCase() === p.colegio_nombre.trim().toLowerCase())
+                p.colegio_nombre && c.nombre.trim().toLowerCase() === p.colegio_nombre.trim().toLowerCase()
             );
             if (colMatch) {
               pedidosPorColegio[colMatch.id] = (pedidosPorColegio[colMatch.id] || 0) + 1;
@@ -3328,7 +3327,7 @@ export const dataService = {
       try {
         let query = supabase
           .from('pedidos')
-          .select('id, fecha, dia_semana, colegio_nombre, colegio_id, monto, metodo_pago, estado_pago, estado_pedido, entrada_nombre, segundo_nombre');
+          .select('id, fecha, dia_semana, colegio_nombre, monto, metodo_pago, estado_pago, estado_pedido, entrada_nombre, segundo_nombre');
 
         if (periodo === 'HOY') {
           query = query.eq('fecha', hoyStr);
@@ -3340,7 +3339,7 @@ export const dataService = {
 
         if (filtro?.colegioNombre && filtro.colegioNombre.trim().toLowerCase() !== 'todos') {
           const colLimpio = filtro.colegioNombre.trim();
-          query = query.or(`colegio_nombre.eq.${colLimpio},colegio_id.eq.${colLimpio}`);
+          query = query.ilike('colegio_nombre', colLimpio);
         }
 
         const { data, error } = await query;
@@ -3350,7 +3349,7 @@ export const dataService = {
             fecha: d.fecha || '',
             diaSemana: d.dia_semana || '',
             colegioNombre: d.colegio_nombre || '',
-            colegioId: d.colegio_id || '',
+            colegioId: d.colegio_nombre || '',
             monto: Number(d.monto) || 12,
             metodoPago: d.metodo_pago || '',
             estadoPago: d.estado_pago || '',
@@ -3358,6 +3357,8 @@ export const dataService = {
             entradaNombre: d.entrada_nombre || '',
             segundoNombre: d.segundo_nombre || '',
           }));
+        } else if (error) {
+          console.warn('Error en consulta de analítica Supabase:', error);
         }
       } catch (err) {
         console.warn('Error leyendo analítica de Supabase con proyección optimizada:', err);
@@ -3468,12 +3469,23 @@ export const dataService = {
       else if (d.includes('VIE')) demandaPorDiaSemana.Viernes++;
     });
 
-    // Métricas por colegio
-    const metricasPorColegio = colegios.map((col) => {
+    // Métricas por colegio (unificando catálogo registrado y colegios presentes en pedidos activos)
+    const todosColegiosSet = new Set(colegios.map((c) => c.trim()));
+    pedidosActivos.forEach((p) => {
+      if (p.colegioNombre && p.colegioNombre.trim()) {
+        const existe = Array.from(todosColegiosSet).some(
+          (c) => c.toLowerCase() === p.colegioNombre!.trim().toLowerCase()
+        );
+        if (!existe) {
+          todosColegiosSet.add(p.colegioNombre.trim());
+        }
+      }
+    });
+
+    const metricasPorColegio = Array.from(todosColegiosSet).map((col) => {
       const pCol = pedidosActivos.filter(
         (p) =>
-          (p.colegioNombre && p.colegioNombre.trim().toLowerCase() === col.trim().toLowerCase()) ||
-          (p.colegioId && p.colegioId.trim().toLowerCase() === col.trim().toLowerCase())
+          p.colegioNombre && p.colegioNombre.trim().toLowerCase() === col.trim().toLowerCase()
       );
       const totalCol = pCol.length;
       const ventasCol = pCol.reduce((acc, p) => acc + (Number(p.monto) || 12), 0);

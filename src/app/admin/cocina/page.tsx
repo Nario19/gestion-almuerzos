@@ -332,11 +332,11 @@ export default function CocinaPage() {
       {/* SECCIÓN 1: CONSOLIDADO DE ENTRADAS Y SEGUNDOS */}
       <div className={`grid grid-cols-1 ${resumen.ensaladas && resumen.ensaladas.length > 0 ? 'lg:grid-cols-3 md:grid-cols-2' : 'md:grid-cols-2'} gap-6 mb-8`}>
         {/* PANEL ENTRADAS */}
-        <Card className="flex flex-col justify-between">
+        <Card className="flex flex-col justify-between border-amber-200/80 bg-gradient-to-b from-amber-50/25 via-white to-white shadow-xs">
           <div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-zinc-100">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-amber-100/60">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 border border-orange-200/60 flex items-center justify-center">
                   <Utensils className="w-4 h-4" />
                 </div>
                 <div>
@@ -348,7 +348,7 @@ export default function CocinaPage() {
                   </CardDescription>
                 </div>
               </div>
-              <Badge variant="secondary" className="font-semibold text-xs">
+              <Badge variant="secondary" className="font-semibold text-xs bg-amber-100 text-amber-800 border-amber-200">
                 {resumen.entradas.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
               </Badge>
             </CardHeader>
@@ -389,11 +389,11 @@ export default function CocinaPage() {
         </Card>
 
         {/* PANEL SEGUNDOS / PLATOS DE FONDO */}
-        <Card className="flex flex-col justify-between">
+        <Card className="flex flex-col justify-between border-rose-200/80 bg-gradient-to-b from-rose-50/25 via-white to-white shadow-xs">
           <div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-zinc-100">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-rose-100/60">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 border border-rose-200/60 flex items-center justify-center">
                   <Flame className="w-4 h-4" />
                 </div>
                 <div>
@@ -405,7 +405,7 @@ export default function CocinaPage() {
                   </CardDescription>
                 </div>
               </div>
-              <Badge variant="secondary" className="font-semibold text-xs">
+              <Badge variant="secondary" className="font-semibold text-xs bg-rose-100 text-rose-800 border-rose-200">
                 {resumen.segundos.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
               </Badge>
             </CardHeader>
@@ -447,11 +447,11 @@ export default function CocinaPage() {
 
         {/* PANEL ENSALADAS */}
         {resumen.ensaladas && resumen.ensaladas.length > 0 && (
-          <Card className="flex flex-col justify-between">
+          <Card className="flex flex-col justify-between border-emerald-200/80 bg-gradient-to-b from-emerald-50/25 via-white to-white shadow-xs">
             <div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-zinc-100">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-emerald-100/60">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200/60 flex items-center justify-center">
                     <Salad className="w-4 h-4" />
                   </div>
                   <div>
@@ -463,7 +463,7 @@ export default function CocinaPage() {
                     </CardDescription>
                   </div>
                 </div>
-                <Badge variant="secondary" className="font-semibold text-xs">
+                <Badge variant="secondary" className="font-semibold text-xs bg-emerald-100 text-emerald-800 border-emerald-200">
                   {resumen.ensaladas.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
                 </Badge>
               </CardHeader>
@@ -577,10 +577,10 @@ export default function CocinaPage() {
       )}
 
       {/* SECCIÓN 2: ALERTA DE OBSERVACIONES CRÍTICAS (NO MÁS FONDOS AMARILLOS GIGANTES) */}
-      <Card className="mb-8">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-100">
+      <Card className="mb-8 border-amber-200/80 bg-gradient-to-b from-amber-50/20 via-white to-white shadow-xs">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-amber-100/60">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 border border-amber-200/60 flex items-center justify-center">
               <AlertTriangle className="w-4 h-4" />
             </div>
             <div>

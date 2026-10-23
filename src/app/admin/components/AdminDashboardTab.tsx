@@ -155,37 +155,37 @@ export default function AdminDashboardTab({
       {/* Tarjetas Principales de KPIs Financieros y Volumen */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* KPI 1: Ventas Generadas */}
-        <div className="bg-white p-5 sm:p-6 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-zinc-300 transition-all">
+        <div className="bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 p-5 sm:p-6 rounded-xl border border-emerald-200/80 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-emerald-300 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">
               Ventas Generadas
             </span>
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200/60 shadow-2xs flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-emerald-950 font-mono">
             S/ {ventasTotales.toFixed(2)}
           </div>
-          <p className="text-[11px] text-zinc-500 mt-1">
+          <p className="text-[11px] text-emerald-700/80 font-medium mt-1">
             Ticket promedio: S/ {ticketPromedio}
           </p>
         </div>
 
         {/* KPI 2: Total Almuerzos */}
-        <div className="bg-white p-5 sm:p-6 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-zinc-300 transition-all">
+        <div className="bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/30 p-5 sm:p-6 rounded-xl border border-blue-200/80 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-blue-300 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">
               Total Almuerzos
             </span>
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 border border-blue-200/60 shadow-2xs flex items-center justify-center">
               <Utensils className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
-            {totalAlmuerzos} <span className="text-xs text-zinc-400 font-normal">raciones</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-blue-950">
+            {totalAlmuerzos} <span className="text-xs text-blue-600/70 font-normal">raciones</span>
           </div>
-          <p className="text-[11px] text-zinc-500 mt-1">
+          <p className="text-[11px] text-blue-700/80 font-medium mt-1">
             {esSuperAdmin
               ? `${rankingColegios.length} colegios atendidos`
               : usuario?.colegioNombre
@@ -195,40 +195,40 @@ export default function AdminDashboardTab({
         </div>
 
         {/* KPI 3: Pagos Recaudados */}
-        <div className="bg-white p-5 sm:p-6 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-zinc-300 transition-all">
+        <div className="bg-gradient-to-br from-purple-50/70 via-white to-fuchsia-50/30 p-5 sm:p-6 rounded-xl border border-purple-200/80 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-purple-300 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">
               Cobrado ({porcentajeCobrado}%)
             </span>
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 border border-purple-200/60 shadow-2xs flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-purple-950">
             S/ {ingresosRecaudados.toFixed(2)}
           </div>
-          <div className="w-full bg-zinc-100 rounded-full h-1.5 mt-2 overflow-hidden">
+          <div className="w-full bg-purple-100 rounded-full h-1.5 mt-2 overflow-hidden">
             <div
-              className="bg-zinc-950 h-1.5 rounded-full transition-all duration-500"
+              className="bg-purple-600 h-1.5 rounded-full transition-all duration-500"
               style={{ width: `${porcentajeCobrado}%` }}
             />
           </div>
         </div>
 
         {/* KPI 4: Por Cobrar */}
-        <div className="bg-white p-5 sm:p-6 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-zinc-300 transition-all">
+        <div className="bg-gradient-to-br from-amber-50/70 via-white to-yellow-50/30 p-5 sm:p-6 rounded-xl border border-amber-200/80 shadow-xs relative overflow-hidden flex flex-col justify-between hover:border-amber-300 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">
               Por Cobrar
             </span>
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 border border-amber-200/60 shadow-2xs flex items-center justify-center">
               <AlertCircle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-amber-950">
             S/ {montoPorCobrar.toFixed(2)}
           </div>
-          <p className="text-[11px] text-zinc-500 mt-1 font-medium">
+          <p className="text-[11px] text-amber-800/80 mt-1 font-medium">
             {pedidosPendientes.length} pedidos sin confirmar
           </p>
         </div>
@@ -253,36 +253,36 @@ export default function AdminDashboardTab({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div className="p-4 sm:p-5 bg-zinc-50/70 rounded-xl border border-zinc-200 flex items-center justify-between">
+          <div className="p-4 sm:p-5 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 rounded-xl border border-emerald-200/80 flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">
                 Entregados
               </span>
-              <span className="text-2xl sm:text-3xl font-bold text-zinc-950 mt-1 block">
+              <span className="text-2xl sm:text-3xl font-bold text-emerald-950 mt-1 block">
                 {entregados}
               </span>
-              <p className="text-[11px] text-zinc-500 mt-0.5">
+              <p className="text-[11px] text-emerald-700/80 font-medium mt-0.5">
                 Almuerzos entregados en colegios
               </p>
             </div>
-            <div className="w-10 h-10 rounded-lg bg-zinc-950 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
               <CheckCircle className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="p-4 sm:p-5 bg-zinc-50/70 rounded-xl border border-zinc-200 flex items-center justify-between">
+          <div className="p-4 sm:p-5 bg-gradient-to-br from-amber-50/70 via-white to-yellow-50/30 rounded-xl border border-amber-200/80 flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider block">
                 Falta Entregar
               </span>
-              <span className="text-2xl sm:text-3xl font-bold text-zinc-950 mt-1 block">
+              <span className="text-2xl sm:text-3xl font-bold text-amber-950 mt-1 block">
                 {faltaEntregar}
               </span>
-              <p className="text-[11px] text-zinc-500 mt-0.5">
+              <p className="text-[11px] text-amber-800/80 font-medium mt-0.5">
                 Pago aceptado y preparados por entregar
               </p>
             </div>
-            <div className="w-10 h-10 rounded-lg bg-zinc-100 text-zinc-700 border border-zinc-200 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
               <Clock className="w-5 h-5" />
             </div>
           </div>
