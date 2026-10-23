@@ -1651,14 +1651,14 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
 
 - Decisión: Alinear la tabla principal de fiados y su desglose desplegable a la estructura visual y organización de despacho:
   1. Tabla Principal (`/fiado`):
-     - Estructurada en las 7 columnas: `Almuerzos`, `Grado y Estudiante`, `Nombre (Padre y Teléfono)`, `Detalle de Pedidos`, `Fecha y Hora`, `Deuda / Pago`, `Acciones`.
-     - Columna `Detalle de Pedidos`: Despliega Entrada, Segundo y Ensalada juntos con etiquetas semánticas y colores idénticos a Despacho (`Entrada:` en naranja, `Segundo:` en zinc-900, `Ensalada:` en esmeralda).
+     - Estructurada en las 7 columnas: `Almuerzos`, `Grado y Estudiante`, `Nombre (Padre y Teléfono)`, `Estado de Entrega`, `Fecha y Hora`, `Deuda / Pago`, `Acciones`.
+     - Columna `Estado de Entrega`: Reemplaza la repetición innecesaria de platos en la fila familiar general. Muestra insignias claras de entrega (`Almuerzos entregados`, `X de Y entregados` o `Pendiente de entrega`), códigos correlativos de pedido (`#ALM-...`), alertas de observaciones/alergias y un enlace directo interactivo `Ver platos en desglose (X) ↓`.
      - Columna `Fecha y Hora`: Formato limpio idéntico a Despacho con icono Calendar, fecha legible, badge compacto de `Consumo de HOY` si aplica, e icono Clock con hora en formato Perú.
      - Columna `Grado y Estudiante`: Estudiantes en negrita acompañados de badges de grado.
   2. Desglose Expandible ("Pagar luego"):
      - Cabecera: `Fecha y Hora`, `Estudiante`, `Pedido`, `Entrega`, `Monto`, `Estado Pago`, `Acción`.
      - Erradicación total de textos residuales o concatenaciones anómalas (`EntradaSopa o postre`).
-     - Columna `Pedido`: Despliega el bloque completo de Entrada, Segundo, Ensalada, Extras y Observaciones.
+     - Columna `Pedido`: Despliega de forma exclusiva y ordenada el desglose de platos: Entrada, Segundo, Ensalada, Extras y Observaciones con colores semánticos.
   3. Modal de Reporte Familiar:
      - Cabecera de platos renombrada a `Pedido` con desglose visual de Entrada, Segundo, Ensalada y Extras.
   4. Tipos e Integridad de Datos:
