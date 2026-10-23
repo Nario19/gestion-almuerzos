@@ -18,9 +18,14 @@ export async function POST(request: NextRequest) {
       process.env.CLOUDINARY_UPLOAD_PRESET ||
       process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
       CLOUDINARY_DEFAULT_UPLOAD_PRESET;
+    const rawPlatosPreset =
+      process.env.CLOUDINARY_PLATOS_PRESET ||
+      process.env.NEXT_PUBLIC_CLOUDINARY_PLATOS_PRESET ||
+      'platos_almuerzos';
 
     const cloudName = (rawCloudName || CLOUDINARY_DEFAULT_CLOUD_NAME).replace(/^["']|["']$/g, '').trim();
-    const uploadPreset = (rawUploadPreset || CLOUDINARY_DEFAULT_UPLOAD_PRESET).replace(/^["']|["']$/g, '').trim();
+    const uploadPresetComprobantes = (rawUploadPreset || CLOUDINARY_DEFAULT_UPLOAD_PRESET).replace(/^["']|["']$/g, '').trim();
+    const uploadPresetPlatos = (rawPlatosPreset || 'platos_almuerzos').replace(/^["']|["']$/g, '').trim();
 
     const contentType = request.headers.get('content-type') || '';
     let fileContent: string | Blob | null = null;
@@ -50,25 +55,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cloudinaryFormData = new FormData();
-    cloudinaryFormData.append('file', fileContent);
-    cloudinaryFormData.append('upload_preset', uploadPreset);
-    if (folder) {
+    const presetPrincipal = folder === 'platos' ? uploadPresetPlatos : uploadPresetComprobantes;
+
+    const intentarSubida = async (presetNombre: string) => {
+      const cloudinaryFormData = new FormData();
+      cloudinaryFormData.append('file', fileContent as Blob | string);
+      cloudinaryFormData.append('upload_preset', presetNombre);
       cloudinaryFormData.append('folder', folder);
+      cloudinaryFormData.append('asset_folder', folder);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: cloudinaryFormData,
+      });
+
+      const resJson = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, data: resJson };
+    };
+
+    let intento = await intentarSubida(presetPrincipal);
+
+    // Fallback a comprobantes_almuerzos si platos_almuerzos no está creado aún en Cloudinary
+    if (!intento.ok && folder === 'platos' && intento.data?.error?.message?.toLowerCase().includes('not found')) {
+      intento = await intentarSubida(uploadPresetComprobantes);
     }
 
-    const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-      method: 'POST',
-      body: cloudinaryFormData,
-    });
-
-    const data = await cloudinaryRes.json().catch(() => ({}));
-
-    if (!cloudinaryRes.ok || !data.secure_url) {
-      const errorMsg = data.error?.message || `Error HTTP ${cloudinaryRes.status} al subir a Cloudinary`;
+    if (!intento.ok || !intento.data?.secure_url) {
+      const errorMsg = intento.data?.error?.message || `Error HTTP ${intento.status} al subir a Cloudinary`;
       console.error('[API upload-cloudinary] Error en Cloudinary:', errorMsg);
-      return NextResponse.json({ error: errorMsg }, { status: cloudinaryRes.status || 500 });
+      return NextResponse.json({ error: errorMsg }, { status: intento.status || 500 });
     }
+
+    const data = intento.data;
 
     return NextResponse.json({
       success: true,

@@ -25,6 +25,7 @@ export interface CloudinaryErrorResponse {
 /** Configuración predeterminada verificada para Cloudinary */
 export const CLOUDINARY_DEFAULT_CLOUD_NAME = 'qeqjhqpv';
 export const CLOUDINARY_DEFAULT_UPLOAD_PRESET = 'comprobantes_almuerzos';
+export const CLOUDINARY_PLATOS_UPLOAD_PRESET = 'platos_almuerzos';
 
 /**
  * Retorna la carpeta designada en Cloudinary para almacenar fotos de platos.
@@ -87,34 +88,54 @@ export async function subirImagenACloudinary(
     process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
     process.env.CLOUDINARY_UPLOAD_PRESET ||
     CLOUDINARY_DEFAULT_UPLOAD_PRESET;
+  const rawPlatosPreset =
+    process.env.NEXT_PUBLIC_CLOUDINARY_PLATOS_PRESET ||
+    process.env.CLOUDINARY_PLATOS_PRESET ||
+    CLOUDINARY_PLATOS_UPLOAD_PRESET;
 
   const cloudName = (rawCloudName || CLOUDINARY_DEFAULT_CLOUD_NAME).replace(/^["']|["']$/g, '').trim();
-  const uploadPreset = (rawUploadPreset || CLOUDINARY_DEFAULT_UPLOAD_PRESET).replace(/^["']|["']$/g, '').trim();
+  const uploadPresetComprobantes = (rawUploadPreset || CLOUDINARY_DEFAULT_UPLOAD_PRESET).replace(/^["']|["']$/g, '').trim();
+  const uploadPresetPlatos = (rawPlatosPreset || CLOUDINARY_PLATOS_UPLOAD_PRESET).replace(/^["']|["']$/g, '').trim();
 
   // Normalizar estrictamente a dos únicas carpetas raíz en Cloudinary: 'platos' o 'comprobantes'
   const carpetaDestino = (carpeta && carpeta.toLowerCase().startsWith('plato'))
     ? 'platos'
     : 'comprobantes';
 
+  const presetPrincipal = carpetaDestino === 'platos' ? uploadPresetPlatos : uploadPresetComprobantes;
+
   // Intento 1: Subida directa a Cloudinary
   const subirDirecto = async (): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', fileODataUrl);
-    formData.append('upload_preset', uploadPreset);
-    formData.append('folder', carpetaDestino);
+    const intentarConPreset = async (presetNombre: string) => {
+      const formData = new FormData();
+      formData.append('file', fileODataUrl);
+      formData.append('upload_preset', presetNombre);
+      formData.append('folder', carpetaDestino);
+      formData.append('asset_folder', carpetaDestino);
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-      method: 'POST',
-      body: formData,
-    });
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
 
-    if (!res.ok) {
-      const errorJson: CloudinaryErrorResponse = await res.json().catch(() => ({}));
-      const msg = errorJson.error?.message || `Error HTTP ${res.status}: ${res.statusText}`;
+      const json = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, statusText: res.statusText, data: json };
+    };
+
+    let intento = await intentarConPreset(presetPrincipal);
+
+    // Si falló con platos_almuerzos porque aún no existe en Cloudinary, fallback a comprobantes_almuerzos
+    if (!intento.ok && carpetaDestino === 'platos' && intento.data?.error?.message?.toLowerCase().includes('not found')) {
+      console.warn('[Cloudinary] Preset platos_almuerzos no registrado en Cloudinary, usando fallback con folder=platos');
+      intento = await intentarConPreset(uploadPresetComprobantes);
+    }
+
+    if (!intento.ok) {
+      const msg = intento.data?.error?.message || `Error HTTP ${intento.status}: ${intento.statusText}`;
       throw new Error(msg);
     }
 
-    const data: CloudinaryUploadResponse = await res.json();
+    const data: CloudinaryUploadResponse = intento.data;
     if (!data.secure_url) {
       throw new Error('Cloudinary no retornó una URL segura válida.');
     }
