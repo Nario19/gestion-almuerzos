@@ -10,28 +10,26 @@ describe('Almacenamiento de Imágenes del Menú en Cloudinary por Colegio y Día
   const adminPagePath = path.resolve(process.cwd(), 'src/app/admin/page.tsx');
   const adminMenuTabPath = path.resolve(process.cwd(), 'src/app/admin/components/AdminMenuSemanalTab.tsx');
 
-  test('1. obtenerCarpetaCloudinaryPlato genera rutas estructuradas por colegio y día sin caracteres inválidos', () => {
-    // Caso con colegio y día con tildes y mayúsculas
+  test('1. obtenerCarpetaCloudinaryPlato asigna estrictamente la carpeta "platos" para organización de dos carpetas', () => {
+    // Cumplimiento estricto de la directiva del usuario: dos carpetas únicas ('comprobantes' y 'platos')
     const carpeta1 = obtenerCarpetaCloudinaryPlato('Colegio San Martín', 'MIÉRCOLES');
-    assert.equal(carpeta1, 'platos/colegio_san_martin/miercoles');
+    assert.equal(carpeta1, 'platos');
 
-    // Caso con caracteres especiales y espacios
     const carpeta2 = obtenerCarpetaCloudinaryPlato('Inmaculada Concepción & Sede Central', 'LUNES');
-    assert.equal(carpeta2, 'platos/inmaculada_concepcion_sede_central/lunes');
+    assert.equal(carpeta2, 'platos');
 
-    // Caso general sin colegio o con valor TODOS
     const carpeta3 = obtenerCarpetaCloudinaryPlato(undefined, 'VIERNES');
-    assert.equal(carpeta3, 'platos/general/viernes');
+    assert.equal(carpeta3, 'platos');
 
     const carpeta4 = obtenerCarpetaCloudinaryPlato('TODOS', 'JUEVES');
-    assert.equal(carpeta4, 'platos/general/jueves');
+    assert.equal(carpeta4, 'platos');
   });
 
-  test('2. subirImagenACloudinary acepta carpeta de destino y sube a la subcarpeta adecuada', () => {
+  test('2. subirImagenACloudinary normaliza estrictamente a las carpetas raíz "platos" o "comprobantes"', () => {
     const contenido = fs.readFileSync(cloudinaryServicePath, 'utf-8');
     assert.ok(
-      contenido.includes("formData.append('folder', carpeta)"),
-      'subirImagenACloudinary debe adjuntar el parámetro folder con la carpeta solicitada'
+      contenido.includes("formData.append('folder', carpetaDestino)"),
+      'subirImagenACloudinary debe adjuntar el parámetro folder con carpetaDestino normalizada'
     );
     assert.ok(
       contenido.includes('obtenerCarpetaCloudinaryPlato'),

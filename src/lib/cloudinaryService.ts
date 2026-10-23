@@ -27,31 +27,17 @@ export const CLOUDINARY_DEFAULT_CLOUD_NAME = 'qeqjhqpv';
 export const CLOUDINARY_DEFAULT_UPLOAD_PRESET = 'comprobantes_almuerzos';
 
 /**
- * Genera la ruta de carpeta estructurada en Cloudinary para un plato según colegio y día de la semana.
- * Ejemplo: 'platos/colegio_san_martin/lunes' o 'platos/general/lunes'
+ * Retorna la carpeta designada en Cloudinary para almacenar fotos de platos.
+ * En cumplimiento estricto con la directiva de organización del usuario:
+ * Se mantienen únicamente dos carpetas principales en la raíz de Cloudinary:
+ * 1. 'comprobantes' -> para los vouchers y comprobantes de pago de los padres.
+ * 2. 'platos' -> para todas las fotografías de platos y menús escolares.
  *
- * @param colegio Nombre del colegio (o undefined para platos generales)
- * @param dia Día de la semana (LUNES, MARTES, etc.)
+ * @param _colegio (opcional, reservado para compatibilidad de firma)
+ * @param _dia (opcional, reservado para compatibilidad de firma)
  */
-export function obtenerCarpetaCloudinaryPlato(colegio?: string, dia?: string): string {
-  const colValido = (colegio && colegio !== 'TODOS' && colegio.trim().length > 0)
-    ? colegio
-    : 'general';
-
-  const slugCol = colValido
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-
-  const slugDia = (dia || 'general')
-    .toLowerCase()
-    .trim()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-
-  return `platos/${slugCol || 'general'}/${slugDia || 'menu'}`;
+export function obtenerCarpetaCloudinaryPlato(_colegio?: string, _dia?: string): string {
+  return 'platos';
 }
 
 /**
@@ -105,14 +91,17 @@ export async function subirImagenACloudinary(
   const cloudName = (rawCloudName || CLOUDINARY_DEFAULT_CLOUD_NAME).replace(/^["']|["']$/g, '').trim();
   const uploadPreset = (rawUploadPreset || CLOUDINARY_DEFAULT_UPLOAD_PRESET).replace(/^["']|["']$/g, '').trim();
 
+  // Normalizar estrictamente a dos únicas carpetas raíz en Cloudinary: 'platos' o 'comprobantes'
+  const carpetaDestino = (carpeta && carpeta.toLowerCase().startsWith('plato'))
+    ? 'platos'
+    : 'comprobantes';
+
   // Intento 1: Subida directa a Cloudinary
   const subirDirecto = async (): Promise<string> => {
     const formData = new FormData();
     formData.append('file', fileODataUrl);
     formData.append('upload_preset', uploadPreset);
-    if (carpeta) {
-      formData.append('folder', carpeta);
-    }
+    formData.append('folder', carpetaDestino);
 
     const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
       method: 'POST',
@@ -140,9 +129,7 @@ export async function subirImagenACloudinary(
 
     const formData = new FormData();
     formData.append('file', fileODataUrl);
-    if (carpeta) {
-      formData.append('folder', carpeta);
-    }
+    formData.append('folder', carpetaDestino);
 
     const res = await fetch('/api/upload-cloudinary', {
       method: 'POST',

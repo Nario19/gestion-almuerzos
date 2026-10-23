@@ -24,20 +24,22 @@ export async function POST(request: NextRequest) {
 
     const contentType = request.headers.get('content-type') || '';
     let fileContent: string | Blob | null = null;
-    let folder: string = 'comprobantes';
+    let folder: 'comprobantes' | 'platos' = 'comprobantes';
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       fileContent = formData.get('file') as Blob | string | null;
       const folderParam = formData.get('folder');
       if (typeof folderParam === 'string' && folderParam.trim()) {
-        folder = folderParam.trim();
+        const norm = folderParam.trim().toLowerCase();
+        folder = norm.startsWith('plato') ? 'platos' : 'comprobantes';
       }
     } else if (contentType.includes('application/json')) {
       const body = await request.json().catch(() => ({}));
       fileContent = body.file || null;
       if (typeof body.folder === 'string' && body.folder.trim()) {
-        folder = body.folder.trim();
+        const norm = body.folder.trim().toLowerCase();
+        folder = norm.startsWith('plato') ? 'platos' : 'comprobantes';
       }
     }
 

@@ -51,4 +51,13 @@ test('Robustez de Subida de Fotos de Platos a Cloudinary y Visualización Transv
     assert.match(content, /platoSegundoObj\?\.imagenUrl/);
     assert.match(content, /Fotografía del Segundo/);
   });
+
+  await t.test('7. Cloudinary mantiene estrictamente dos carpetas raíz ("comprobantes" y "platos")', () => {
+    const cloudContent = fs.readFileSync(CLOUDINARY_SERVICE_PATH, 'utf8');
+    assert.match(cloudContent, /return 'platos'/);
+    assert.match(cloudContent, /carpetaDestino/);
+
+    const routeContent = fs.readFileSync(ROUTE_UPLOAD_PATH, 'utf8');
+    assert.match(routeContent, /norm\.startsWith\('plato'\)\s*\?\s*'platos'\s*:\s*'comprobantes'/);
+  });
 });
