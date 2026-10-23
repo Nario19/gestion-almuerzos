@@ -12,19 +12,16 @@ describe('Estructura de Tabla y Desglose de Fiados organizada igual que Despacho
     assert.ok(fiadoContent.includes('>Almuerzos</TableHead>'), 'Debe incluir columna Almuerzos');
     assert.ok(fiadoContent.includes('>Grado y Estudiante</TableHead>'), 'Debe incluir columna Grado y Estudiante');
     assert.ok(fiadoContent.includes('>Nombre (Padre y Teléfono)</TableHead>'), 'Debe incluir columna Nombre (Padre y Teléfono)');
-    assert.ok(fiadoContent.includes('>Detalle de Pedidos</TableHead>'), 'Debe incluir columna Detalle de Pedidos');
+    assert.ok(fiadoContent.includes('>Estado de Entrega</TableHead>'), 'Debe incluir columna Estado de Entrega');
     assert.ok(fiadoContent.includes('>Fecha y Hora</TableHead>'), 'Debe incluir columna Fecha y Hora');
     assert.ok(fiadoContent.includes('>Deuda / Pago</TableHead>'), 'Debe incluir columna Deuda / Pago');
     assert.ok(fiadoContent.includes('>Acciones</TableHead>'), 'Debe incluir columna Acciones');
   });
 
-  test('2. Columna "Detalle de Pedidos" en la tabla principal muestra Entrada, Segundo y Ensalada juntos con etiquetas y colores claros', () => {
-    // Debe incluir etiquetas ordenadas Entrada, Segundo y Ensalada
-    assert.ok(fiadoContent.includes('Entrada:'), 'Debe incluir etiqueta Entrada:');
-    assert.ok(fiadoContent.includes('Segundo:'), 'Debe incluir etiqueta Segundo:');
-    assert.ok(fiadoContent.includes('Ensalada:'), 'Debe incluir etiqueta Ensalada:');
-    assert.ok(fiadoContent.includes('text-orange-700'), 'Debe usar clase text-orange-700 para Entrada');
-    assert.ok(fiadoContent.includes('text-emerald-700'), 'Debe usar clase text-emerald-700 para Ensalada');
+  test('2. Fila general de familia muestra Estado de Entrega, Códigos y botón para ver platos en desglose', () => {
+    assert.ok(fiadoContent.includes('Pendiente de entrega') || fiadoContent.includes('almuerzos entregados'), 'Debe indicar estado de entrega');
+    assert.ok(fiadoContent.includes('codigoPedido'), 'Debe mostrar códigos de pedido');
+    assert.ok(fiadoContent.includes('Ver platos en desglose'), 'Debe incluir enlace Ver platos en desglose');
   });
 
   test('3. Columna "Fecha y Hora" en la tabla principal está organizada idéntica a Despacho', () => {
@@ -33,9 +30,14 @@ describe('Estructura de Tabla y Desglose de Fiados organizada igual que Despacho
     assert.ok(fiadoContent.includes('Consumo de HOY'), 'Debe incluir badge Consumo de HOY');
   });
 
-  test('4. Desglose de Almuerzos cuenta con columna "Pedido" que integra Entrada, Segundo y Ensalada juntos', () => {
+  test('4. Desglose de Almuerzos cuenta con columna "Pedido" que integra Entrada, Segundo y Ensalada juntos con etiquetas y colores claros', () => {
     // En la tabla interna desplegable
     assert.ok(fiadoContent.includes('<th className="py-2.5 px-3">Pedido</th>'), 'Desglose debe tener encabezado Pedido');
+    assert.ok(fiadoContent.includes('Entrada:'), 'Debe incluir etiqueta Entrada:');
+    assert.ok(fiadoContent.includes('Segundo:'), 'Debe incluir etiqueta Segundo:');
+    assert.ok(fiadoContent.includes('Ensalada:'), 'Debe incluir etiqueta Ensalada:');
+    assert.ok(fiadoContent.includes('text-orange-700'), 'Debe usar clase text-orange-700 para Entrada');
+    assert.ok(fiadoContent.includes('text-emerald-700'), 'Debe usar clase text-emerald-700 para Ensalada');
     assert.ok(!fiadoContent.includes('EntradaSopa o postre'), 'No debe concatenar Entrada con Sopa o postre');
     assert.ok(!fiadoContent.includes('<span className="sr-only">Sopa o postre</span>'), 'No debe tener Sopa o postre en la tabla desplegable');
   });
