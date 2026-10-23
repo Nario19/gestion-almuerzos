@@ -825,9 +825,26 @@ function PedidosContent() {
                 {/* Pie de tarjeta con monto y acciones */}
                 <div className="flex items-center justify-between gap-3 pt-1">
                   <div>
-                    <span className="text-[11px] text-zinc-500 block">
-                      Pago: {pedido.metodoPago}
-                    </span>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[11px] text-zinc-500">Pago:</span>
+                      {pedido.metodoPago === 'Yape' ? (
+                        <Badge className="text-[10px] font-bold bg-purple-600 text-white border-0 py-0 px-1.5 shadow-2xs">
+                          Yape
+                        </Badge>
+                      ) : pedido.metodoPago === 'Plin' ? (
+                        <Badge className="text-[10px] font-bold bg-sky-500 text-white border-0 py-0 px-1.5 shadow-2xs">
+                          Plin
+                        </Badge>
+                      ) : pedido.metodoPago === 'Pagar luego' ? (
+                        <Badge className="text-[10px] font-bold bg-yellow-400 text-slate-950 border-0 py-0 px-1.5 shadow-2xs">
+                          Pagar luego
+                        </Badge>
+                      ) : (
+                        <span className="text-[11px] font-medium text-zinc-700">
+                          {pedido.metodoPago}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-sm font-bold text-zinc-950 font-mono">
                       S/ {pedido.monto.toFixed(2)}
                     </span>

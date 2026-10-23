@@ -193,7 +193,7 @@ export default function SuperadminAnalyticsPage() {
             disabled={!metricas}
             variant="default"
             size="sm"
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs"
             title="Descargar informe completo en Excel/CSV"
           >
             <Download className="w-3.5 h-3.5" />

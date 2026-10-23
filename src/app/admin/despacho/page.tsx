@@ -469,10 +469,10 @@ export default function DespachoPage() {
             variant="default"
             size="sm"
             onClick={exportarExcel}
-            className="gap-2 h-8 text-xs font-semibold"
+            className="gap-2 h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs"
             title="Descarga el listado en formato Excel con N°, Grado y Sección, Nombres, Pedido y Pago"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
             <span>Imprimir Lista (Excel)</span>
           </Button>
 

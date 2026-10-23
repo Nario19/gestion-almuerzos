@@ -1161,6 +1161,15 @@ export default function PedidoManualPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {(['Efectivo', 'Yape', 'Plin', 'Pagar luego'] as MetodoPago[]).map((metodo) => {
                     const activo = metodoPago === metodo;
+                    const estiloActivo =
+                      metodo === 'Yape'
+                        ? 'bg-purple-600 text-white border-purple-600 shadow-xs font-bold'
+                        : metodo === 'Plin'
+                        ? 'bg-sky-500 text-white border-sky-500 shadow-xs font-bold'
+                        : metodo === 'Pagar luego'
+                        ? 'bg-yellow-400 text-slate-950 border-yellow-400 shadow-xs font-bold'
+                        : 'bg-emerald-600 text-white border-emerald-600 shadow-xs font-bold';
+
                     return (
                       <button
                         key={metodo}
@@ -1168,12 +1177,12 @@ export default function PedidoManualPage() {
                         onClick={() => setMetodoPago(metodo)}
                         className={`p-3 rounded-lg border text-center transition cursor-pointer ${
                           activo
-                            ? 'bg-zinc-950 text-white border-zinc-950 shadow-xs font-bold'
+                            ? estiloActivo
                             : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100 font-medium text-xs'
                         }`}
                       >
                         <div className="text-xs sm:text-sm">{metodo}</div>
-                        <div className={`text-[10px] mt-0.5 ${activo ? 'text-zinc-300' : 'text-zinc-400'}`}>
+                        <div className={`text-[10px] mt-0.5 ${activo ? (metodo === 'Pagar luego' ? 'text-slate-800' : 'text-white/80') : 'text-zinc-400'}`}>
                           {metodo === 'Pagar luego' ? 'Fiado' : 'Cobro inmediato'}
                         </div>
                       </button>

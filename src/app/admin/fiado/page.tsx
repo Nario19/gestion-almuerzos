@@ -557,10 +557,10 @@ export default function FiadoPage() {
             variant="default"
             size="sm"
             onClick={() => setMostrarReporteGlobal(true)}
-            className="gap-1.5 h-8 text-xs font-semibold"
+            className="gap-1.5 h-8 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white border-blue-600 shadow-xs"
             title="Ver e imprimir el reporte general de todas las familias y fiados"
           >
-            <FileText className="w-3.5 h-3.5" />
+            <FileText className="w-3.5 h-3.5 text-white" />
             <span>Reporte Global</span>
           </Button>
           <Button
@@ -568,10 +568,10 @@ export default function FiadoPage() {
             variant="outline"
             size="sm"
             onClick={exportarReporteGlobalExcel}
-            className="gap-1.5 h-8 text-xs font-semibold"
+            className="gap-1.5 h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs"
             title="Descargar listado global de fiados en Excel"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-zinc-500" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
             <span>Excel</span>
           </Button>
         </div>
@@ -898,17 +898,29 @@ export default function FiadoPage() {
                             </div>
                           </TableCell>
 
-                          {/* Columna: Fecha y Hora juntadas */}
+                          {/* Columna: Fecha y Hora juntadas (Mismo diseño que en Despacho) */}
                           <TableCell className="py-3.5 px-4">
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-1 text-xs">
                               {padre.tieneConsumoHoy && (
-                                <Badge variant="warning" className="gap-1 text-[10px] font-bold py-0 px-2 uppercase tracking-wider w-fit">
+                                <Badge variant="warning" className="gap-1 text-[10px] font-bold py-0.5 px-2 uppercase tracking-wider w-fit bg-amber-100 text-amber-900 border-amber-300">
                                   <Clock className="w-3 h-3 text-amber-700" />
                                   Consumo de HOY ({padre.horaConsumoHoy || fechaHoy})
                                 </Badge>
                               )}
-                              {padre.fechasUnicas && padre.fechasUnicas.length > 0 && (
-                                <div className="flex items-center gap-1 flex-wrap">
+
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-semibold text-zinc-900 flex items-center gap-1.5 whitespace-nowrap">
+                                  <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                  {padre.fechasUnicas && padre.fechasUnicas.includes(fechaHoy) ? 'Hoy' : (padre.fechasUnicas?.[0] || 'Hoy')}
+                                </span>
+                                <span className="text-[11px] text-zinc-500 flex items-center gap-1.5 font-medium whitespace-nowrap">
+                                  <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                  {padre.horaConsumoHoy || (padre.pedidos[0]?.createdAt ? formatearHoraPeru(padre.pedidos[0].createdAt) : '--:--')}
+                                </span>
+                              </div>
+
+                              {padre.fechasUnicas && padre.fechasUnicas.length > 1 && (
+                                <div className="flex items-center gap-1 flex-wrap mt-0.5">
                                   {padre.fechasUnicas.slice(0, 3).map((f) => (
                                     <button
                                       key={f}
@@ -923,7 +935,7 @@ export default function FiadoPage() {
                                       }`}
                                       title={`Filtrar por fecha ${f}`}
                                     >
-                                      {f === fechaHoy ? (padre.horaConsumoHoy || 'Hoy') : f}
+                                      {f === fechaHoy ? 'HOY' : f}
                                     </button>
                                   ))}
                                   {padre.fechasUnicas.length > 3 && (
@@ -960,10 +972,10 @@ export default function FiadoPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setPadreReporteModal(padre)}
-                                className="h-7 text-xs font-semibold px-2"
+                                className="h-7 text-xs font-semibold px-2 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                                 title="Ver e imprimir reporte detallado por fecha de cada hijo"
                               >
-                                <FileText className="w-3.5 h-3.5" />
+                                <FileText className="w-3.5 h-3.5 text-blue-600" />
                                 <span className="hidden sm:inline ml-1">Reporte</span>
                               </Button>
 
@@ -973,7 +985,7 @@ export default function FiadoPage() {
                                   variant="default"
                                   size="sm"
                                   onClick={() => handleSolicitarLiquidarTotal(padre)}
-                                  className="h-7 text-xs font-semibold px-2 bg-amber-600 hover:bg-amber-700 text-white"
+                                  className="h-7 text-xs font-semibold px-2 bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs"
                                   title="Marcar todos los pedidos como pagados"
                                 >
                                   <CreditCard className="w-3.5 h-3.5" />
@@ -1035,25 +1047,25 @@ export default function FiadoPage() {
                                         return (
                                           <tr key={ped.id} className="hover:bg-zinc-50 transition">
                                             <td className="py-2.5 px-3 font-semibold text-zinc-800 whitespace-nowrap">
-                                              {ped.fecha === fechaHoy ? (
-                                                <div className="flex items-center gap-1.5">
-                                                  <Badge variant="success" className="px-1.5 py-0 text-[10px] font-bold">
-                                                    HOY
-                                                  </Badge>
-                                                  <span className="font-bold text-zinc-950">
-                                                    {ped.createdAt ? formatearHoraPeru(ped.createdAt) : ped.fecha}
-                                                  </span>
-                                                </div>
-                                              ) : (
-                                                <div className="flex flex-col">
-                                                  <span className="font-bold text-zinc-800">{ped.fecha}</span>
-                                                  {ped.createdAt && (
-                                                    <span className="text-[10px] text-zinc-400 font-normal">
-                                                      {formatearHoraPeru(ped.createdAt)}
+                                              <div className="flex flex-col gap-1 text-xs">
+                                                <span className="font-semibold text-zinc-900 flex items-center gap-1.5 whitespace-nowrap">
+                                                  <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                                  {ped.fecha === fechaHoy ? (
+                                                    <span className="flex items-center gap-1.5">
+                                                      <Badge variant="success" className="px-1.5 py-0 text-[10px] font-bold">
+                                                        HOY
+                                                      </Badge>
+                                                      <span>{ped.fecha}</span>
                                                     </span>
+                                                  ) : (
+                                                    ped.fecha
                                                   )}
-                                                </div>
-                                              )}
+                                                </span>
+                                                <span className="text-[11px] text-zinc-500 flex items-center gap-1.5 font-medium whitespace-nowrap">
+                                                  <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                                  {ped.createdAt ? formatearHoraPeru(ped.createdAt) : '--:--'}
+                                                </span>
+                                              </div>
                                               <span className="text-[10px] font-medium text-zinc-500 block mt-0.5">
                                                 {ped.colegioNombre || padre.colegioNombre || nombreColegioActivo}
                                               </span>
@@ -1579,7 +1591,7 @@ export default function FiadoPage() {
                 <button
                   type="button"
                   onClick={() => descargarComprobanteFiadoPdf(padreReporteModal, configPagos)}
-                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
                   title="Descargar comprobante detallado en PDF auténtico"
                 >
                   <FileText className="w-4 h-4" />

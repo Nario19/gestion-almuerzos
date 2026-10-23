@@ -1489,6 +1489,31 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/admin/fiado/page.tsx`
   - `MEMORY.md`
 
+### D-017 — 2026-10-22 — Diseño Unificado de Fecha/Hora en Fiados y Estandarización de Colores de Marca en Botones y Etiquetas
+- Decisión:
+  1. **Fecha y Hora en Fiados (`/admin/fiado`):**
+     - Mostrar la fecha y la hora tanto en la fila principal de la tabla como en el desglose desplegable con el **mismo diseño exacto que en Despacho**:
+       - Icono de calendario (`Calendar`) con la fecha y badge `HOY` cuando corresponda.
+       - Icono de reloj (`Clock`) con la hora exacta en zona horaria Perú (`formatearHoraPeru`).
+       - Preservación estricta de variables de negocio y tokens de prueba (`tieneConsumoHoy`, `Consumo de HOY`, `fechasUnicas`, `HOY`).
+  2. **Estandarización de Colores en Botones, Etiquetas y Métodos de Pago:**
+     - **Excel / Exportar:** Verde esmeralda de marca (`bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600`) en Despacho, Fiados y Analítica Superadmin.
+     - **Reportes / PDF:** Azul profesional (`bg-blue-600 hover:bg-blue-700 text-white`) para "Reporte Global" y "Descargar PDF", y acento azul para botón de fila "Reporte".
+     - **Yape:** Púrpura oficial (`bg-purple-600 text-white`) en insignias y botones de selección de método de pago.
+     - **Plin:** Celeste / Sky oficial (`bg-sky-500 text-white`) en insignias y botones de selección.
+     - **Pagar luego / Fiado:** Amarillo / Ámbar oficial (`bg-yellow-400 text-slate-950 font-bold`) en insignias y botones de selección.
+     - **Liquidar Deuda:** Ámbar cálido (`bg-amber-600 hover:bg-amber-700 text-white`).
+     - **WhatsApp:** Verde WhatsApp (`bg-emerald-600 hover:bg-emerald-700 text-white`).
+- Fuente: Instrucción explícita del usuario ("en fiados debed mostrarse la fecha con el mismo diseño que en despacho. y a los botones o letras o labels quenecesiten colores como plin yape etc a todos los que necesiten algun color en particular, como el boton de excel reportes etc. ponle el color.").
+- Impacto:
+  - `src/app/admin/fiado/page.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/app/padres/page.tsx`
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/app/superadmin/analytics/page.tsx`
+  - `MEMORY.md`
+
 
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)

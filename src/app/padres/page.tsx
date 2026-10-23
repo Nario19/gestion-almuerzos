@@ -1786,6 +1786,13 @@ function PedidoContent() {
           <div className="grid grid-cols-3 gap-2 mb-3">
             {(['Yape', 'Plin', 'Pagar luego'] as MetodoPago[]).map((m) => {
               const activo = metodoPago === m;
+              const estiloActivo =
+                m === 'Yape'
+                  ? 'border-purple-600 bg-purple-600 text-white shadow-xs font-bold'
+                  : m === 'Plin'
+                  ? 'border-sky-500 bg-sky-500 text-white shadow-xs font-bold'
+                  : 'border-yellow-400 bg-yellow-400 text-slate-950 shadow-xs font-bold';
+
               return (
                 <button
                   key={m}
@@ -1793,7 +1800,7 @@ function PedidoContent() {
                   onClick={() => setMetodoPago(m)}
                   className={`py-2 px-1 rounded-lg text-xs font-semibold border transition text-center ${
                     activo
-                      ? 'border-zinc-950 bg-zinc-950 text-white shadow-2xs'
+                      ? estiloActivo
                       : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
                   }`}
                 >
