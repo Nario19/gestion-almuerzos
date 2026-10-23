@@ -1,9 +1,9 @@
 ---
 name: design-system
-description: Sistema de diseño maestro y directivas UI/UX para Placeres Culinarios basado en la plantilla admin-dashboard v0
+description: Sistema de diseño maestro oficial de Placeres Culinarios basado en shadcn/ui y v0 Admin Dashboard
 ---
 
-# Design System Skill — Placeres Culinarios
+# Design System Skill — Placeres Culinarios (shadcn/ui Oficial)
 
 Esta Skill es de **consulta obligatoria** antes y durante cualquier cambio en interfaces de usuario, componentes visuales, layouts o pantallas del sistema.
 

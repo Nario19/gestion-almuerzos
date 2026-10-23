@@ -414,42 +414,42 @@ export default function HeaderNav() {
                     <div className="hidden sm:flex items-center gap-1 sm:gap-1.5">
                       <Link
                         href="/padres/pedidos"
-                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                           pathname === '/padres/pedidos' || pathname === '/pedidos'
-                            ? 'bg-orange-100 text-orange-800 border border-orange-200'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            ? 'bg-zinc-950 text-white shadow-xs'
+                            : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                         }`}
                         title="Historial de Pedidos"
                       >
-                        <ShoppingBag className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                        <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
                         <span className="hidden sm:inline">Mis Pedidos</span>
                       </Link>
 
                       <Link
                         href="/padres/deudas"
-                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                           pathname === '/padres/deudas' || pathname === '/deudas'
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            ? 'bg-zinc-950 text-white shadow-xs'
+                            : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                         }`}
                         title="Mis Deudas y Fiados"
                       >
-                        <Receipt className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <Receipt className="w-3.5 h-3.5 shrink-0" />
                         <span className="hidden sm:inline">Mis Deudas</span>
                       </Link>
 
                       <Link
                         href="/padres/hijos"
-                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                           pathname === '/padres/hijos' || pathname === '/hijos'
-                            ? 'bg-orange-100 text-orange-800 border border-orange-200'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            ? 'bg-zinc-950 text-white shadow-xs'
+                            : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                         }`}
                         title="Gestionar mis hijos"
                       >
-                        <GraduationCap className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                        <GraduationCap className="w-3.5 h-3.5 shrink-0" />
                         <span className="hidden sm:inline">Hijos</span>
-                        <span className="px-1.5 py-0.2 rounded-full bg-orange-500 text-white text-[10px] font-black">
+                        <span className="px-1.5 py-0.2 rounded-full bg-zinc-900 text-white text-[10px] font-bold">
                           {usuario.hijos.length}
                         </span>
                       </Link>
@@ -470,7 +470,7 @@ export default function HeaderNav() {
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <Link
                     href="/login"
-                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs transition"
                     title="Ingresar a la plataforma"
                   >
                     <LogIn className="w-3.5 h-3.5" />
@@ -480,7 +480,7 @@ export default function HeaderNav() {
 
                   <Link
                     href="/login?modo=registro"
-                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-200 text-xs font-semibold rounded-lg shadow-xs transition"
                     title="Registrarme en la plataforma"
                   >
                     <UserPlus className="w-3.5 h-3.5" />

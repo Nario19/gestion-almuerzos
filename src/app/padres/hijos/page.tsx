@@ -19,6 +19,10 @@ import { useAuth } from '@/lib/authContext';
 import { dataService } from '@/lib/dataService';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
 import { SkeletonHijosPage } from '@/components/Skeleton';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 function HijosContent() {
   const router = useRouter();
@@ -107,21 +111,21 @@ function HijosContent() {
   if (!usuario) {
     return (
       <div className="max-w-md mx-auto px-4 py-12 text-center">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
-          <GraduationCap className="w-12 h-12 text-slate-300 mx-auto" />
-          <h2 className="text-lg font-black text-slate-900">
+        <Card className="p-6 text-center space-y-4">
+          <GraduationCap className="w-12 h-12 text-zinc-300 mx-auto" />
+          <h2 className="text-lg font-bold text-zinc-950">
             Inicia sesión para gestionar a tus hijos
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-zinc-500">
             Regístrate o ingresa a tu cuenta para asociar a tus hijos y pedir sus menús escolares.
           </p>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 py-3 px-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs transition"
+            className="inline-flex items-center gap-2 py-2 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-medium rounded-lg text-xs transition"
           >
             Iniciar Sesión / Registrarse
           </Link>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -129,21 +133,21 @@ function HijosContent() {
   if (usuario.rol === 'ADMIN' || usuario.rol === 'SUPER_ADMIN') {
     return (
       <div className="max-w-md mx-auto px-4 py-12 text-center">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
-          <GraduationCap className="w-12 h-12 text-orange-500 mx-auto" />
-          <h2 className="text-lg font-black text-slate-900">
+        <Card className="p-6 text-center space-y-4">
+          <GraduationCap className="w-12 h-12 text-zinc-900 mx-auto" />
+          <h2 className="text-lg font-bold text-zinc-950">
             Sesión de Administrador
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-zinc-500">
             Esta sección es para que los padres gestionen a sus hijos estudiantes. Como administrador, puedes gestionar los menús, la cocina y los despachos.
           </p>
           <Link
             href="/admin"
-            className="inline-flex items-center gap-2 py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition"
+            className="inline-flex items-center gap-2 py-2 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-medium rounded-lg text-xs transition"
           >
             Ir a Gestión de Menú
           </Link>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -184,163 +188,162 @@ function HijosContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="sr-only">Mis Hijos</h1>
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-zinc-500 font-medium">
             Padre: {usuario.nombreCompleto} (DNI: {usuario.dni})
           </p>
         </div>
 
         <Link
           href="/"
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-2xl shadow-sm transition self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition self-start sm:self-auto"
         >
-          <UtensilsCrossed className="w-4 h-4" />
+          <UtensilsCrossed className="w-3.5 h-3.5" />
           Ir al Menú Escolar
         </Link>
       </div>
 
       {primeraVez && (
-        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-xs sm:text-sm flex items-center gap-2.5">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="mb-6 p-3.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-900 text-xs sm:text-sm flex items-center gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>¡Cuenta creada con éxito! Ahora agrega a tu primer hijo para comenzar.</span>
         </div>
       )}
 
       {mensajeExito && (
-        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-xs sm:text-sm flex items-center gap-2.5 animate-in fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="mb-6 p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-xs sm:text-sm flex items-center gap-2.5 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{mensajeExito}</span>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* COLUMNA 1: FORMULARIO PARA AGREGAR HIJO */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs h-fit">
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-            <div className="w-7 h-7 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs">
+        <Card className="h-fit">
+          <CardHeader className="pb-3 border-b border-zinc-100 flex flex-row items-center gap-2">
+            <div className="w-7 h-7 rounded-md bg-zinc-100 text-zinc-900 flex items-center justify-center font-bold text-xs">
               <Plus className="w-4 h-4" />
             </div>
-            <h2 className="text-base font-black text-slate-900">
+            <CardTitle className="text-sm font-bold text-zinc-950">
               Registrar Nuevo Hijo
-            </h2>
-          </div>
+            </CardTitle>
+          </CardHeader>
 
-          <form onSubmit={handleCrearHijo} className="space-y-3.5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Nombres y Apellidos *
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. DHANA QUISPE CRISTOBAL"
-                value={nombreHijo}
-                onChange={(e) => setNombreHijo(e.target.value.toUpperCase())}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden uppercase font-medium"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" /> Colegio *
-              </label>
-              {cargandoConfig ? (
-                <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-400 animate-pulse flex items-center gap-2">
-                  <div className="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                  Cargando colegios disponibles...
-                </div>
-              ) : listaColegios.length === 0 ? (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-                  No hay colegios disponibles configurados por el administrador.
-                </div>
-              ) : (
-                <select
-                  value={colegio}
-                  onChange={(e) => setColegio(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+          <CardContent className="pt-4">
+            <form onSubmit={handleCrearHijo} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Nombres y Apellidos *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. DHANA QUISPE CRISTOBAL"
+                  value={nombreHijo}
+                  onChange={(e) => setNombreHijo(e.target.value.toUpperCase())}
+                  className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-zinc-950 uppercase font-medium"
                   required
-                >
-                  {listaColegios.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              )}
-            </div>
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Grado y Sección *
-              </label>
-              {cargandoConfig ? (
-                <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-400 animate-pulse flex items-center gap-2">
-                  <div className="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                  Cargando grados...
-                </div>
-              ) : listaGrados.length === 0 ? (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-                  No hay grados configurados.
-                </div>
-              ) : (
-                <select
-                  value={grado}
-                  onChange={(e) => setGrado(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                  required
-                >
-                  {listaGrados.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
-              )}
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1 flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5 text-zinc-500" /> Colegio *
+                </label>
+                {cargandoConfig ? (
+                  <div className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-500 animate-pulse flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+                    Cargando colegios disponibles...
+                  </div>
+                ) : listaColegios.length === 0 ? (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                    No hay colegios disponibles configurados por el administrador.
+                  </div>
+                ) : (
+                  <select
+                    value={colegio}
+                    onChange={(e) => setColegio(e.target.value)}
+                    className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-zinc-950"
+                    required
+                  >
+                    {listaColegios.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
 
-            <button
-              type="submit"
-              disabled={guardando || cargandoConfig || listaColegios.length === 0}
-              className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-orange-500/20 transition disabled:opacity-50"
-            >
-              {guardando ? 'Guardando...' : '+ Agregar Hijo'}
-            </button>
-          </form>
-        </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                  Grado y Sección *
+                </label>
+                {cargandoConfig ? (
+                  <div className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-500 animate-pulse flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+                    Cargando grados...
+                  </div>
+                ) : listaGrados.length === 0 ? (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                    No hay grados configurados.
+                  </div>
+                ) : (
+                  <select
+                    value={grado}
+                    onChange={(e) => setGrado(e.target.value)}
+                    className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-zinc-950"
+                    required
+                  >
+                    {listaGrados.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                disabled={guardando || cargandoConfig || listaColegios.length === 0}
+                className="w-full"
+              >
+                {guardando ? 'Guardando...' : '+ Agregar Hijo'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* COLUMNA 2: LISTA DE HIJOS REGISTRADOS */}
         <div className="space-y-3">
           <div className="flex items-center justify-between pb-1">
-            <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
               Hijos Registrados ({usuario.hijos.length})
             </h2>
           </div>
 
           {usuario.hijos.length === 0 ? (
-            <div className="bg-white rounded-3xl p-8 text-center border border-slate-200">
-              <User className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-xs font-bold text-slate-700">Aún no has registrado a tus hijos</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+            <Card className="p-8 text-center">
+              <User className="w-10 h-10 text-zinc-300 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-zinc-800">Aún no has registrado a tus hijos</p>
+              <p className="text-[11px] text-zinc-500 mt-0.5">
                 Usa el formulario de la izquierda para agregar a tu primer hijo.
               </p>
-            </div>
+            </Card>
           ) : (
             usuario.hijos.map((hijo) => (
-              <div
-                key={hijo.id}
-                className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3 relative group"
-              >
+              <Card key={hijo.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center font-black text-sm">
+                    <div className="w-9 h-9 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center font-bold text-sm">
                       {hijo.nombreCompleto.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-slate-900">{hijo.nombreCompleto}</h3>
-                      <p className="text-xs text-slate-500 font-medium">
-                        {hijo.colegioNombre} • <span className="text-orange-600 font-bold">{hijo.gradoSeccion}</span>
+                      <h3 className="text-sm font-bold text-zinc-950">{hijo.nombreCompleto}</h3>
+                      <p className="text-xs text-zinc-500 font-medium">
+                        {hijo.colegioNombre} • <span className="text-zinc-900 font-semibold">{hijo.gradoSeccion}</span>
                       </p>
                     </div>
                   </div>
 
                   <button
                     onClick={() => setHijoAEliminar({ id: hijo.id, nombre: hijo.nombreCompleto })}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                    className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-zinc-100 rounded-lg transition cursor-pointer"
                     title="Eliminar hijo"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -349,12 +352,12 @@ function HijosContent() {
 
                 <Link
                   href={`/?hijoId=${hijo.id}`}
-                  className="w-full py-2 px-3 bg-slate-50 hover:bg-orange-50 border border-slate-200 hover:border-orange-200 text-slate-700 hover:text-orange-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition"
+                  className="w-full py-1.5 px-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-800 font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition"
                 >
                   <span>Pedir almuerzo para {hijo.nombreCompleto.split(' ')[0]}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
-              </div>
+              </Card>
             ))
           )}
         </div>

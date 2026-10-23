@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { SkeletonPerfilPage } from '@/components/Skeleton';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export default function PerfilPage() {
   const router = useRouter();
@@ -80,13 +83,13 @@ export default function PerfilPage() {
   if (!usuario) {
     return (
       <div className="max-w-md mx-auto px-4 py-10 space-y-6">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mx-auto">
-            <User className="w-8 h-8" />
+        <Card className="p-6 text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center mx-auto">
+            <User className="w-7 h-7" />
           </div>
           <div>
             <h1 className="sr-only">Mi Perfil</h1>
-            <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+            <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
               Inicia sesión o regístrate para acceder al historial de pedidos, registrar a tus hijos y disfrutar de una experiencia ágil.
             </p>
           </div>
@@ -94,37 +97,37 @@ export default function PerfilPage() {
           <div className="pt-2">
             <Link
               href="/login"
-              className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-sm shadow-md shadow-orange-500/20 transition flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs shadow-xs transition flex items-center justify-center gap-2"
             >
               <LogIn className="w-4 h-4" />
               <span>Iniciar Sesión / Registrarme</span>
             </Link>
           </div>
-        </div>
+        </Card>
 
         {/* Accesos rápidos */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-3">
-          <h2 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+        <Card className="p-4 space-y-3">
+          <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
             Accesos directos
           </h2>
           <div className="space-y-2">
             <Link
               href="/"
-              className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition"
+              className="flex items-center justify-between p-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-zinc-200 text-zinc-900 flex items-center justify-center">
                   <UtensilsCrossed className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-slate-800">Ver Menú del Día</h3>
-                  <p className="text-[11px] text-slate-400">Revisa los platos escolares de hoy</p>
+                  <h3 className="text-xs font-semibold text-zinc-900">Ver Menú del Día</h3>
+                  <p className="text-[11px] text-zinc-500">Revisa los platos escolares de hoy</p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <ChevronRight className="w-4 h-4 text-zinc-400" />
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -133,20 +136,20 @@ export default function PerfilPage() {
   if (esAdmin || esSuperAdmin) {
     return (
       <div className="max-w-md mx-auto px-4 py-10 space-y-6">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center mx-auto">
-            <ShieldCheck className="w-8 h-8" />
+        <Card className="p-6 text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-7 h-7" />
           </div>
           <div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
+            <Badge variant="outline" className="text-[10px] font-semibold text-zinc-800 bg-zinc-100 border-zinc-200">
               {esSuperAdmin ? 'Super Administrador' : 'Administrador de Colegio'}
-            </span>
-            <h1 className="text-lg font-black text-slate-900 mt-2">
+            </Badge>
+            <h1 className="text-lg font-bold text-zinc-950 mt-2">
               {usuario.nombreCompleto}
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">DNI: {usuario.dni}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">DNI: {usuario.dni}</p>
             {usuario.colegioNombre && (
-              <p className="text-xs font-bold text-slate-700 mt-1">
+              <p className="text-xs font-semibold text-zinc-800 mt-1">
                 Colegio: {usuario.colegioNombre}
               </p>
             )}
@@ -155,19 +158,20 @@ export default function PerfilPage() {
           <div className="pt-2 flex flex-col gap-2">
             <Link
               href="/admin"
-              className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs transition flex items-center justify-center gap-2"
             >
               Panel de Administración
             </Link>
-            <button
+            <Button
+              variant="outline"
               onClick={handleCerrarSesion}
-              className="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-2xl text-xs transition flex items-center justify-center gap-2"
+              className="w-full text-zinc-700 hover:text-rose-600 hover:bg-zinc-50"
             >
               <LogOut className="w-4 h-4" />
-              Cerrar Sesión
-            </button>
+              <span>Cerrar Sesión</span>
+            </Button>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -184,38 +188,40 @@ export default function PerfilPage() {
   const cantidadHijos = usuario.hijos?.length || 0;
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8 space-y-5 animate-in fade-in duration-200">
+    <div className="max-w-md mx-auto px-4 py-6 space-y-5 animate-in fade-in duration-200">
+      <h1 className="sr-only">Mi Perfil</h1>
+
       {/* Banner de Éxito al actualizar */}
       {mensajeExito && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-xs animate-in fade-in">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-lg text-xs font-semibold flex items-center gap-2.5 shadow-xs animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{mensajeExito}</span>
         </div>
       )}
 
       {/* TARJETA PRINCIPAL DEL APODERADO */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-orange-100/60 to-transparent rounded-bl-full pointer-events-none" />
-
-        <div className="flex items-start justify-between gap-3 relative">
+      <Card className="p-5 relative overflow-hidden">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-orange-500/20 shrink-0">
-              {iniciales || <User className="w-7 h-7" />}
+            <div className="w-12 h-12 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
+              {iniciales || <User className="w-6 h-6" />}
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
+              <Badge variant="outline" className="text-[10px] font-semibold text-zinc-700 bg-zinc-100 border-zinc-200">
                 Apoderado
-              </span>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 truncate mt-1">
+              </Badge>
+              <h2 className="text-base font-bold text-zinc-950 truncate mt-1">
                 {usuario.nombreCompleto}
               </h2>
-              <p className="text-xs text-slate-500">Cuenta de Padre de Familia</p>
+              <p className="text-xs text-zinc-500">Cuenta de Padre de Familia</p>
             </div>
           </div>
 
           {/* Botón Editar Datos */}
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => {
               setNombreForm(usuario.nombreCompleto || '');
               setTelefonoForm(usuario.telefono || '');
@@ -223,62 +229,62 @@ export default function PerfilPage() {
               setMensajeError(null);
               setModalEditar(true);
             }}
-            className="px-3 py-1.5 bg-orange-50 hover:bg-orange-100 active:scale-95 text-orange-700 border border-orange-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
             title="Editar mis datos"
+            className="shrink-0"
           >
-            <Pencil className="w-3.5 h-3.5 text-orange-600" />
+            <Pencil className="w-3.5 h-3.5 mr-1" />
             <span>Editar</span>
-          </button>
+          </Button>
         </div>
 
         {/* Datos de contacto */}
-        <div className="mt-5 grid grid-cols-2 gap-2.5 pt-4 border-t border-slate-100 text-xs">
-          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex items-center gap-2.5">
-            <CreditCard className="w-4 h-4 text-slate-400 shrink-0" />
+        <div className="mt-4 grid grid-cols-2 gap-2.5 pt-4 border-t border-zinc-100 text-xs">
+          <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-100 flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-zinc-400 shrink-0" />
             <div className="min-w-0">
-              <span className="text-[10px] font-semibold text-slate-400 block">DNI</span>
-              <span className="font-bold text-slate-800 truncate block">
+              <span className="text-[10px] font-medium text-zinc-500 block">DNI</span>
+              <span className="font-semibold text-zinc-900 truncate block">
                 {usuario.dni || 'No registrado'}
               </span>
             </div>
           </div>
-          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex items-center gap-2.5">
-            <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-100 flex items-center gap-2">
+            <Phone className="w-4 h-4 text-zinc-400 shrink-0" />
             <div className="min-w-0">
-              <span className="text-[10px] font-semibold text-slate-400 block">Teléfono</span>
-              <span className="font-bold text-slate-800 truncate block">
+              <span className="text-[10px] font-medium text-zinc-500 block">Teléfono</span>
+              <span className="font-semibold text-zinc-900 truncate block">
                 {usuario.telefono || 'No registrado'}
               </span>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* SECCIÓN: MIS HIJOS */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-3.5">
+      <Card className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-orange-500" />
-            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+            <GraduationCap className="w-4 h-4 text-zinc-700" />
+            <h2 className="text-xs font-bold text-zinc-950 uppercase tracking-wider">
               Mis Hijos ({cantidadHijos})
             </h2>
           </div>
           <Link
             href="/padres/hijos"
-            className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-0.5"
+            className="text-xs font-semibold text-zinc-700 hover:text-zinc-950 flex items-center gap-0.5"
           >
             Gestionar <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {cantidadHijos === 0 ? (
-          <div className="bg-slate-50 rounded-2xl p-4 text-center border border-dashed border-slate-200 space-y-2">
-            <p className="text-xs font-medium text-slate-600">
+          <div className="bg-zinc-50 rounded-lg p-4 text-center border border-dashed border-zinc-200 space-y-2">
+            <p className="text-xs font-medium text-zinc-600">
               Aún no tienes hijos registrados en tu cuenta.
             </p>
             <Link
               href="/padres/hijos"
-              className="inline-flex items-center gap-1.5 py-2 px-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition"
+              className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs transition"
             >
               <Plus className="w-3.5 h-3.5" />
               Agregar Hijo
@@ -289,16 +295,16 @@ export default function PerfilPage() {
             {usuario.hijos.map((hijo) => (
               <div
                 key={hijo.id}
-                className="p-3 bg-slate-50 hover:bg-orange-50/50 rounded-2xl border border-slate-200/80 transition flex items-center justify-between gap-3"
+                className="p-2.5 bg-zinc-50 hover:bg-zinc-100/70 rounded-lg border border-zinc-200/80 transition flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
-                  <h3 className="text-xs font-black text-slate-900 truncate">
+                  <h3 className="text-xs font-bold text-zinc-950 truncate">
                     {hijo.nombreCompleto}
                   </h3>
-                  <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                    <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                  <p className="text-[11px] text-zinc-500 flex items-center gap-1 mt-0.5">
+                    <Building2 className="w-3 h-3 text-zinc-400 shrink-0" />
                     <span className="truncate">{hijo.colegioNombre}</span> •{' '}
-                    <span className="text-orange-600 font-bold">{hijo.gradoSeccion}</span>
+                    <span className="text-zinc-900 font-semibold">{hijo.gradoSeccion}</span>
                   </p>
                   {hijo.alergiasNotas && (
                     <p className="text-[10px] text-rose-600 font-medium mt-0.5 truncate">
@@ -306,137 +312,138 @@ export default function PerfilPage() {
                     </p>
                   )}
                 </div>
-                <div className="w-7 h-7 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="w-7 h-7 rounded-md bg-white border border-zinc-200 text-zinc-700 flex items-center justify-center font-bold text-xs shrink-0">
                   {hijo.nombreCompleto.charAt(0)}
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* SECCIÓN: ACCESOS RÁPIDOS MÓVILES */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-2.5">
-        <h2 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1">
+      <Card className="p-4 space-y-2">
+        <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">
           Navegación Rápida
         </h2>
 
         <Link
           href="/"
-          className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition"
+          className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-200 text-zinc-900 flex items-center justify-center">
               <UtensilsCrossed className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-slate-800">Pedir Menú del Día</h3>
-              <p className="text-[11px] text-slate-400">Ver platos disponibles y pedir almuerzo</p>
+              <h3 className="text-xs font-semibold text-zinc-900">Pedir Menú del Día</h3>
+              <p className="text-[11px] text-zinc-500">Ver platos disponibles y pedir almuerzo</p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+          <ChevronRight className="w-4 h-4 text-zinc-400" />
         </Link>
 
         <Link
           href="/padres/pedidos"
-          className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition"
+          className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-200 text-zinc-900 flex items-center justify-center">
               <ShoppingBag className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-slate-800">Mis Pedidos</h3>
-              <p className="text-[11px] text-slate-400">Historial y estado de entrega de almuerzos</p>
+              <h3 className="text-xs font-semibold text-zinc-900">Mis Pedidos</h3>
+              <p className="text-[11px] text-zinc-500">Historial y estado de entrega de almuerzos</p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+          <ChevronRight className="w-4 h-4 text-zinc-400" />
         </Link>
 
         <Link
           href="/padres/deudas"
-          className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition"
+          className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-200 text-zinc-900 flex items-center justify-center">
               <Receipt className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-slate-800">Mis Deudas y Fiados</h3>
-              <p className="text-[11px] text-slate-400">Consulta saldos pendientes y estados de liquidación</p>
+              <h3 className="text-xs font-semibold text-zinc-900">Mis Deudas y Fiados</h3>
+              <p className="text-[11px] text-zinc-500">Consulta saldos pendientes y estados de liquidación</p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+          <ChevronRight className="w-4 h-4 text-zinc-400" />
         </Link>
 
         <Link
           href="/padres/hijos"
-          className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition"
+          className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-200 text-zinc-900 flex items-center justify-center">
               <GraduationCap className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-slate-800">Mis Hijos</h3>
-              <p className="text-[11px] text-slate-400">Registrar y actualizar datos de tus hijos</p>
+              <h3 className="text-xs font-semibold text-zinc-900">Mis Hijos</h3>
+              <p className="text-[11px] text-zinc-500">Registrar y actualizar datos de tus hijos</p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+          <ChevronRight className="w-4 h-4 text-zinc-400" />
         </Link>
 
         <Link
           href="/padres/privacidad"
-          className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition"
+          className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-200 text-zinc-900 flex items-center justify-center">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-slate-800">Política de Privacidad</h3>
-              <p className="text-[11px] text-slate-400">Protección de datos personales de menores</p>
+              <h3 className="text-xs font-semibold text-zinc-900">Política de Privacidad</h3>
+              <p className="text-[11px] text-zinc-500">Protección de datos personales de menores</p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+          <ChevronRight className="w-4 h-4 text-zinc-400" />
         </Link>
-      </div>
+      </Card>
 
       {/* CERRAR SESIÓN */}
       <div className="pt-2">
-        <button
+        <Button
+          variant="outline"
           onClick={handleCerrarSesion}
-          className="w-full py-3.5 px-4 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-rose-600 font-bold rounded-2xl text-xs sm:text-sm shadow-xs transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+          className="w-full text-zinc-700 hover:text-rose-600 hover:bg-zinc-50 flex items-center justify-center gap-2"
         >
           <LogOut className="w-4 h-4" />
           <span>Cerrar Sesión</span>
-        </button>
+        </Button>
       </div>
 
       {/* MODAL PARA EDITAR DATOS DEL PERFIL */}
       {modalEditar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <Card className="w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-md bg-zinc-100 text-zinc-900 flex items-center justify-center">
                   <Pencil className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-black text-slate-900">
+                <h3 className="text-sm font-bold text-zinc-950">
                   Editar Mis Datos
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setModalEditar(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl"
+                className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-lg"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {mensajeError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium flex items-center gap-2">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-medium flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{mensajeError}</span>
               </div>
@@ -444,7 +451,7 @@ export default function PerfilPage() {
 
             <form onSubmit={handleGuardarPerfil} className="space-y-3.5">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-zinc-700 block mb-1">
                   Nombres y Apellidos *
                 </label>
                 <input
@@ -453,12 +460,12 @@ export default function PerfilPage() {
                   onChange={(e) => setNombreForm(e.target.value)}
                   required
                   placeholder="Tu nombre completo"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-zinc-950"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-zinc-700 block mb-1">
                   Teléfono / WhatsApp *
                 </label>
                 <input
@@ -467,12 +474,12 @@ export default function PerfilPage() {
                   onChange={(e) => setTelefonoForm(e.target.value)}
                   required
                   placeholder="Ej. 999888777"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-zinc-950"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-zinc-700 block mb-1">
                   DNI *
                 </label>
                 <input
@@ -482,22 +489,24 @@ export default function PerfilPage() {
                   required
                   maxLength={8}
                   placeholder="DNI de 8 dígitos"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                  className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-zinc-950"
                 />
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setModalEditar(false)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={guardando}
-                  className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
+                  size="sm"
+                  className="flex items-center gap-1.5"
                 >
                   {guardando ? (
                     <>
@@ -507,10 +516,10 @@ export default function PerfilPage() {
                   ) : (
                     <span>Guardar Cambios</span>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
     </div>

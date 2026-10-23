@@ -34,6 +34,9 @@ import {
 } from '@/lib/dateUtils';
 import { Pedido, PadreFiadoResumen, ConfiguracionPagos } from '@/types';
 import { descargarComprobanteFiadoPdf } from '@/lib/pdfComprobanteGenerator';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export default function DeudasPage() {
   const { usuario, cargando: cargandoAuth } = useAuth();
@@ -97,31 +100,31 @@ export default function DeudasPage() {
   if (!usuario) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
-          <div className="w-16 h-16 bg-amber-50 text-amber-700 rounded-2xl flex items-center justify-center mx-auto">
-            <Receipt className="w-8 h-8" />
+        <Card className="p-6 sm:p-8 space-y-4">
+          <div className="w-14 h-14 bg-zinc-100 text-zinc-900 rounded-lg flex items-center justify-center mx-auto">
+            <Receipt className="w-7 h-7" />
           </div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-lg font-bold text-zinc-950 tracking-tight">
             Inicia sesión para ver tus deudas
           </h2>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-zinc-500 leading-relaxed">
             Ingresa con tu cuenta de apoderado para consultar el estado de tus almuerzos bajo modalidad fiado o pagar luego.
           </p>
           <div className="pt-2 flex flex-col gap-2">
             <Link
               href="/login?redirigir=/padres/deudas"
-              className="py-3 px-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl text-xs sm:text-sm transition shadow-xs"
+              className="py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs transition shadow-xs"
             >
               Iniciar Sesión / Registrarme
             </Link>
             <Link
               href="/"
-              className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-xs transition"
+              className="py-2 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-medium rounded-lg text-xs transition"
             >
               Ver Carta Semanal
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -130,29 +133,29 @@ export default function DeudasPage() {
   if (usuario.rol === 'ADMIN' || usuario.rol === 'SUPER_ADMIN') {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xs space-y-4">
-          <ShieldAlert className="w-12 h-12 text-amber-500 mx-auto" />
-          <h2 className="text-xl font-black text-slate-900">
+        <Card className="p-8 space-y-4">
+          <ShieldAlert className="w-12 h-12 text-zinc-900 mx-auto" />
+          <h2 className="text-lg font-bold text-zinc-950">
             Módulo de Administración de Fiados
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-zinc-500">
             Como administrador o super administrador, puedes gestionar las deudas de todos los colegios y liquidarlas en el panel central de fiados.
           </p>
           <div className="pt-2 flex flex-col gap-2">
             <Link
               href="/admin/fiado"
-              className="py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-2xl text-xs transition text-center shadow-xs"
+              className="py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs transition text-center shadow-xs"
             >
               Ir a Control de Fiados (Admin)
             </Link>
             <Link
               href="/admin"
-              className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition text-center"
+              className="py-2 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-medium rounded-lg text-xs transition text-center"
             >
               Ir al Dashboard
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -255,25 +258,25 @@ export default function DeudasPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6 pb-28 space-y-5">
       {/* Barra de cabecera con navegación */}
-      <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-200">
         <div className="flex items-center gap-2">
           <Link
             href="/padres/pedidos"
-            className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-bold"
+            className="p-1.5 -ml-1 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5 text-xs font-semibold"
             title="Ir a mis pedidos"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Mis Pedidos</span>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
               <Receipt className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+              <h1 className="text-sm sm:text-base font-bold text-zinc-950 leading-tight">
                 Mis Deudas y Fiados
               </h1>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-zinc-500">
                 Almuerzos bajo modalidad pagar luego y estados de liquidación
               </p>
             </div>
@@ -281,61 +284,54 @@ export default function DeudasPage() {
         </div>
 
         {todosLosFiados.length > 0 && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={handleDescargarPdf}
             disabled={descargandoPdf}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition shadow-2xs disabled:opacity-50"
+            className="flex items-center gap-1.5"
             title="Descargar estado de cuenta en PDF"
           >
-            <Download className="w-3.5 h-3.5 text-orange-600" />
+            <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">
               {descargandoPdf ? 'Generando...' : 'Descargar PDF'}
             </span>
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Banner Principal de Estado de Cuenta */}
-      <div
-        className={`rounded-3xl p-4 sm:p-5 border transition-all ${
-          totalDeudaPendiente === 0
-            ? 'bg-gradient-to-br from-emerald-500/10 via-emerald-50 to-white border-emerald-200 text-emerald-950'
-            : 'bg-gradient-to-br from-amber-500/15 via-amber-50 to-white border-amber-300 text-amber-950 shadow-xs'
-        }`}
-      >
+      <Card className="p-4 sm:p-5">
         <div className="flex items-start gap-3.5">
           <div
-            className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${
+            className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
               totalDeudaPendiente === 0
-                ? 'bg-emerald-500 text-white'
-                : 'bg-amber-500 text-white'
+                ? 'bg-zinc-100 text-emerald-600'
+                : 'bg-zinc-100 text-amber-600'
             }`}
           >
             {totalDeudaPendiente === 0 ? (
-              <CheckCircle2 className="w-6 h-6" />
+              <CheckCircle2 className="w-5 h-5" />
             ) : (
-              <Clock className="w-6 h-6" />
+              <Clock className="w-5 h-5" />
             )}
           </div>
 
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <span
-                className={`text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border ${
-                  totalDeudaPendiente === 0
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                    : 'bg-amber-100 text-amber-800 border-amber-300'
-                }`}
+              <Badge
+                variant={totalDeudaPendiente === 0 ? 'success' : 'warning'}
+                className="text-[10px] font-semibold"
               >
                 {totalDeudaPendiente === 0 ? 'Al Día • Sin Deudas' : 'Deuda Pendiente de Liquidación'}
-              </span>
-              <span className="text-xl sm:text-2xl font-black font-mono">
+              </Badge>
+              <span className="text-xl sm:text-2xl font-bold font-mono text-zinc-950">
                 S/ {totalDeudaPendiente.toFixed(2)}
               </span>
             </div>
 
-            <p className="text-xs sm:text-sm font-bold text-slate-800 pt-0.5">
+            <p className="text-xs sm:text-sm font-semibold text-zinc-900 pt-0.5">
               {totalDeudaPendiente === 0
                 ? '¡Felicitaciones! No tienes deudas de almuerzos escolares pendientes con la administración.'
                 : `Tienes ${fiadosPendientes.length} ${
@@ -343,156 +339,156 @@ export default function DeudasPage() {
                   } por pagar.`}
             </p>
 
-            <p className="text-[11px] text-slate-500 leading-relaxed">
+            <p className="text-[11px] text-zinc-500 leading-relaxed">
               {totalDeudaPendiente === 0
                 ? 'Todos tus almuerzos con modalidad fiado o pagar luego han sido liquidados y regularizados satisfactoriamente.'
                 : 'Una vez transferido el monto a los medios oficiales, la administración de tu colegio confirmará la liquidación y tu saldo se actualizará automáticamente.'}
             </p>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Tarjetas KPI de Resumen */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-        <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs space-y-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+        <Card className="p-3 sm:p-4 space-y-1">
+          <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider block">
             Deuda Pendiente
           </span>
           <span
-            className={`text-base sm:text-lg font-black font-mono block ${
+            className={`text-base sm:text-lg font-bold font-mono block ${
               totalDeudaPendiente > 0 ? 'text-amber-600' : 'text-emerald-600'
             }`}
           >
             S/ {totalDeudaPendiente.toFixed(2)}
           </span>
-          <span className="text-[10px] text-slate-500 font-medium block">
+          <span className="text-[10px] text-zinc-500 font-medium block">
             {fiadosPendientes.length} por liquidar
           </span>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs space-y-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+        <Card className="p-3 sm:p-4 space-y-1">
+          <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider block">
             Almuerzos Fiados
           </span>
-          <span className="text-base sm:text-lg font-black text-slate-800 font-mono block">
+          <span className="text-base sm:text-lg font-bold text-zinc-950 font-mono block">
             {todosLosFiados.length}
           </span>
-          <span className="text-[10px] text-slate-500 font-medium block">
+          <span className="text-[10px] text-zinc-500 font-medium block">
             Total histórico
           </span>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs space-y-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+        <Card className="p-3 sm:p-4 space-y-1">
+          <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider block">
             Total Liquidado
           </span>
-          <span className="text-base sm:text-lg font-black text-emerald-700 font-mono block">
+          <span className="text-base sm:text-lg font-bold text-zinc-950 font-mono block">
             S/ {totalHistoricoLiquidado.toFixed(2)}
           </span>
-          <span className="text-[10px] text-slate-500 font-medium block">
+          <span className="text-[10px] text-zinc-500 font-medium block">
             {fiadosLiquidados.length} regularizados
           </span>
-        </div>
+        </Card>
       </div>
 
       {/* Desglose de Deuda por Hijo (si hay más de 1 o hay deuda activa) */}
       {deudaPorEstudiante.length > 0 && totalDeudaPendiente > 0 && (
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-2.5">
-          <span className="text-xs font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
-            <GraduationCap className="w-3.5 h-3.5 text-orange-500" />
+        <Card className="p-4 space-y-2.5">
+          <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5 uppercase tracking-wider">
+            <GraduationCap className="w-3.5 h-3.5 text-zinc-500" />
             Saldos por Estudiante
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {deudaPorEstudiante.map((hijo) => (
               <div
                 key={hijo.nombre}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100"
+                className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 border border-zinc-100"
               >
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">{hijo.nombre}</h4>
-                  <p className="text-[10px] text-slate-500">
+                  <h4 className="text-xs font-semibold text-zinc-900">{hijo.nombre}</h4>
+                  <p className="text-[10px] text-zinc-500">
                     {hijo.colegioNombre} {hijo.gradoSeccion && `• ${hijo.gradoSeccion}`}
                   </p>
                 </div>
                 <div className="text-right">
                   <span
-                    className={`text-xs font-black font-mono block ${
-                      hijo.totalPendiente > 0 ? 'text-amber-700' : 'text-emerald-700'
+                    className={`text-xs font-bold font-mono block ${
+                      hijo.totalPendiente > 0 ? 'text-amber-600' : 'text-emerald-600'
                     }`}
                   >
                     S/ {hijo.totalPendiente.toFixed(2)}
                   </span>
-                  <span className="text-[9px] text-slate-400">
+                  <span className="text-[10px] text-zinc-500">
                     {hijo.cantidadPendientes} {hijo.cantidadPendientes === 1 ? 'almuerzo' : 'almuerzos'}
                   </span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Instrucciones de Pago y Medios Oficiales (Yape / Plin) */}
       {totalDeudaPendiente > 0 && (
-        <div className="bg-amber-50/70 rounded-2xl p-4 border border-amber-200/90 space-y-3">
-          <div className="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
-            <CreditCard className="w-4 h-4 text-amber-600" />
+        <Card className="p-4 space-y-3 bg-zinc-50/50">
+          <div className="flex items-center gap-2 text-zinc-900 font-bold text-xs uppercase tracking-wider">
+            <CreditCard className="w-4 h-4 text-zinc-600" />
             <span>Medios de Pago para Liquidación</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <div className="p-2.5 bg-white rounded-xl border border-amber-200 flex items-center justify-between">
+            <div className="p-2.5 bg-white rounded-lg border border-zinc-200 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 block uppercase">
+                <span className="text-[10px] font-semibold text-zinc-500 block uppercase">
                   Yape
                 </span>
-                <span className="font-mono font-black text-slate-900 text-sm">
+                <span className="font-mono font-bold text-zinc-950 text-sm">
                   {configPagos.numeroYape || '999-999-999'}
                 </span>
-                <span className="text-[10px] text-slate-500 block">
+                <span className="text-[10px] text-zinc-500 block">
                   Titular: {configPagos.titularYape || 'Placeres Culinarios'}
                 </span>
               </div>
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-bold rounded-md">
+              <Badge variant="outline" className="text-[10px]">
                 Yape
-              </span>
+              </Badge>
             </div>
 
-            <div className="p-2.5 bg-white rounded-xl border border-amber-200 flex items-center justify-between">
+            <div className="p-2.5 bg-white rounded-lg border border-zinc-200 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 block uppercase">
+                <span className="text-[10px] font-semibold text-zinc-500 block uppercase">
                   Plin
                 </span>
-                <span className="font-mono font-black text-slate-900 text-sm">
+                <span className="font-mono font-bold text-zinc-950 text-sm">
                   {configPagos.numeroPlin || configPagos.numeroYape || '999-999-999'}
                 </span>
-                <span className="text-[10px] text-slate-500 block">
+                <span className="text-[10px] text-zinc-500 block">
                   Titular: {configPagos.titularPlin || configPagos.titularYape || 'Placeres Culinarios'}
                 </span>
               </div>
-              <span className="px-2 py-0.5 bg-cyan-100 text-cyan-800 text-[10px] font-bold rounded-md">
+              <Badge variant="outline" className="text-[10px]">
                 Plin
-              </span>
+              </Badge>
             </div>
           </div>
 
-          <p className="text-[11px] text-amber-900/80 leading-relaxed">
-            <Info className="w-3.5 h-3.5 inline mr-1 text-amber-600" />
+          <p className="text-[11px] text-zinc-600 leading-relaxed">
+            <Info className="w-3.5 h-3.5 inline mr-1 text-zinc-500" />
             Luego de realizar la transferencia por el total adeudado (<strong>S/ {totalDeudaPendiente.toFixed(2)}</strong>), comunica o envía tu comprobante al administrador del colegio para que marque tu cuenta como liquidada.
           </p>
-        </div>
+        </Card>
       )}
 
       {/* Pestañas de Filtro: Pendientes vs Liquidados vs Todos */}
       <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200/80">
+        <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg">
           <button
             type="button"
             onClick={() => setFiltroEstado('PENDIENTES')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
               filtroEstado === 'PENDIENTES'
-                ? 'bg-amber-500 text-white shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -502,10 +498,10 @@ export default function DeudasPage() {
           <button
             type="button"
             onClick={() => setFiltroEstado('LIQUIDADOS')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
               filtroEstado === 'LIQUIDADOS'
-                ? 'bg-emerald-600 text-white shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -515,10 +511,10 @@ export default function DeudasPage() {
           <button
             type="button"
             onClick={() => setFiltroEstado('TODOS')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
               filtroEstado === 'TODOS'
-                ? 'bg-slate-800 text-white shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
             <span>Todos ({todosLosFiados.length})</span>
@@ -530,7 +526,7 @@ export default function DeudasPage() {
           <select
             value={hijoFiltro}
             onChange={(e) => setHijoFiltro(e.target.value)}
-            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-amber-400"
+            className="text-xs font-medium text-zinc-900 bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-zinc-950"
           >
             <option value="TODOS">Todos los hijos</option>
             {nombresEstudiantes.map((nombre) => (
@@ -544,22 +540,22 @@ export default function DeudasPage() {
 
       {/* Lista de Pedidos Fiados */}
       {cargando ? (
-        <div className="py-12 text-center text-xs text-slate-400">
+        <div className="py-12 text-center text-xs text-zinc-400">
           Cargando registros de deudas...
         </div>
       ) : fiadosFiltrados.length === 0 ? (
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center space-y-3">
-          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
+        <Card className="p-8 text-center space-y-3">
+          <div className="w-12 h-12 bg-zinc-100 text-zinc-900 rounded-lg flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-6 h-6" />
           </div>
-          <h3 className="text-sm font-bold text-slate-800">
+          <h3 className="text-sm font-bold text-zinc-950">
             {filtroEstado === 'PENDIENTES'
               ? 'No tienes almuerzos fiados pendientes de liquidación'
               : filtroEstado === 'LIQUIDADOS'
               ? 'No tienes almuerzos fiados liquidados'
               : 'No hay pedidos registrados bajo modalidad pagar luego'}
           </h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+          <p className="text-xs text-zinc-500 max-w-sm mx-auto">
             {filtroEstado === 'PENDIENTES'
               ? 'Tu cuenta está 100% al día. Puedes solicitar nuevos almuerzos desde la carta semanal.'
               : 'Los almuerzos fiados que solicites o liquides se listarán aquí para tu control.'}
@@ -567,32 +563,32 @@ export default function DeudasPage() {
           <div className="pt-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition shadow-2xs"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs transition shadow-xs"
             >
               <Utensils className="w-3.5 h-3.5" />
               Ver Carta Semanal
             </Link>
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className="space-y-3.5">
+        <div className="space-y-3">
           {fiadosFiltrados.map((pedido) => {
             const liquidado = pedido.estadoPago === 'PAGADO';
             const entregado = pedido.estadoPedido === 'ENTREGADO';
 
             return (
-              <div
+              <Card
                 key={pedido.id}
-                className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-2xs hover:border-amber-200 transition space-y-3"
+                className="p-4 space-y-3"
               >
                 {/* Encabezado del Pedido Fiado */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-zinc-100">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-xl font-mono">
+                    <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md font-mono">
                       #{pedido.codigoPedido}
                     </span>
-                    <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200/60 px-2.5 py-1 rounded-xl flex items-center gap-1.5 uppercase">
-                      <Calendar className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                    <span className="text-xs font-medium text-zinc-700 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-md flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                       <span>{formatearFechaCortaPeru(pedido.fecha?.slice(0, 10), pedido.diaSemana)}</span>
                     </span>
                   </div>
@@ -600,24 +596,24 @@ export default function DeudasPage() {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {/* Badge Entrega */}
                     {entregado ? (
-                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
+                      <Badge variant="success" className="text-[11px] flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" /> Entregado
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-500" /> En preparación
-                      </span>
+                      <Badge variant="secondary" className="text-[11px] flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-zinc-500" /> En preparación
+                      </Badge>
                     )}
 
                     {/* Badge Estado de Liquidación */}
                     {liquidado ? (
-                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
+                      <Badge variant="success" className="text-[11px] flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" /> Pago aceptado
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-300 text-[11px] font-bold rounded-xl flex items-center gap-1">
+                      <Badge variant="warning" className="text-[11px] flex items-center gap-1">
                         <Clock className="w-3 h-3 text-amber-600" /> Pagar luego (Fiado)
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -625,39 +621,35 @@ export default function DeudasPage() {
                 {/* Datos del Estudiante y Colegio */}
                 <div className="flex items-start justify-between gap-3 text-xs">
                   <div>
-                    <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <GraduationCap className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                    <h4 className="font-bold text-zinc-950 flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                       <span>{pedido.estudianteNombre}</span>
                     </h4>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-zinc-500">
                       {pedido.colegioNombre} {pedido.gradoSeccion && `• ${pedido.gradoSeccion}`}
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                    <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider block">
                       Monto
                     </span>
-                    <span
-                      className={`text-base font-black font-mono block ${
-                        liquidado ? 'text-emerald-700' : 'text-amber-700'
-                      }`}
-                    >
+                    <span className="text-base font-bold font-mono text-zinc-950 block">
                       S/ {(Number(pedido.monto) || 12.0).toFixed(2)}
                     </span>
                   </div>
                 </div>
 
                 {/* Detalle del Plato */}
-                <div className="bg-slate-50 rounded-2xl p-2.5 text-xs text-slate-700 border border-slate-100 space-y-1">
+                <div className="bg-zinc-50 rounded-lg p-2.5 text-xs text-zinc-700 border border-zinc-100 space-y-1">
                   <div className="flex items-center gap-1.5">
-                    <Utensils className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-                    <span className="font-bold text-slate-900">
+                    <Utensils className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                    <span className="font-semibold text-zinc-900">
                       {pedido.segundoNombre || 'Segundo del día'}
                     </span>
                   </div>
                   {pedido.entradaNombre && (
-                    <p className="text-[11px] text-slate-500 pl-5">
+                    <p className="text-[11px] text-zinc-500 pl-5">
                       Entrada: {pedido.entradaNombre}
                     </p>
                   )}
@@ -665,13 +657,13 @@ export default function DeudasPage() {
 
                 {/* Mini Línea de Tiempo del Fiado */}
                 <div className="pt-1 flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5 text-slate-600">
+                  <div className="flex items-center gap-1.5 text-zinc-600">
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        liquidado ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+                        liquidado ? 'bg-emerald-500' : 'bg-amber-500'
                       }`}
                     />
-                    <span className="font-bold">
+                    <span className="font-semibold">
                       {liquidado
                         ? 'Liquidado por administración'
                         : 'Pendiente de liquidación'}
@@ -679,12 +671,12 @@ export default function DeudasPage() {
                   </div>
 
                   {pedido.horaEntrega && (
-                    <span className="text-slate-400 text-[10px]">
+                    <span className="text-zinc-400 text-[10px]">
                       Entregado a las {pedido.horaEntrega}
                     </span>
                   )}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>

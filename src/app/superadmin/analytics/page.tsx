@@ -26,6 +26,10 @@ import {
 } from 'lucide-react';
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 type PeriodoFiltro = 'HOY' | 'SEMANA' | 'MES' | 'HISTORICO';
 
@@ -157,7 +161,7 @@ export default function SuperadminAnalyticsPage() {
 
   if (cargandoAuth || !esSuperAdmin) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-12 text-center text-xs text-slate-400">
+      <div className="max-w-6xl mx-auto px-4 py-12 text-center text-xs text-zinc-400">
         Verificando permisos de Super Administrador...
       </div>
     );
@@ -166,422 +170,419 @@ export default function SuperadminAnalyticsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-28">
       {/* CABECERA SUPERIOR */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-200">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full border border-purple-200">
+            <Badge variant="outline" className="text-[11px] font-semibold text-zinc-700 bg-zinc-100 border-zinc-200">
               Super Admin • Business Intelligence
-            </span>
+            </Badge>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <TrendingUp className="w-6 h-6 text-purple-600" />
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2.5">
+            <TrendingUp className="w-5 h-5 text-zinc-900" />
             Analítica y Toma de Decisiones
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-zinc-500 mt-0.5">
             Métricas estratégicas consolidadas para planificar compras de insumos, rotación de menús y cobranza.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start md:self-auto">
-          <button
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button
             type="button"
             onClick={exportarReporteCSV}
             disabled={!metricas}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
+            variant="default"
+            size="sm"
+            className="flex items-center gap-1.5"
             title="Descargar informe completo en Excel/CSV"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Exportar CSV</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             onClick={cargarMetricas}
-            className="p-2 bg-white hover:bg-slate-100 text-slate-600 rounded-xl border border-slate-200 shadow-xs transition cursor-pointer"
+            variant="outline"
+            size="icon"
             title="Refrescar métricas"
           >
-            <RotateCcw className="w-4 h-4" />
-          </button>
+            <RotateCcw className="w-4 h-4 text-zinc-600" />
+          </Button>
         </div>
       </div>
 
       {/* BARRA DE FILTROS: PERÍODO Y COLEGIOS */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Selector de Período */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-          <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1 shrink-0">
-            <Calendar className="w-3.5 h-3.5 text-purple-600" /> Período:
-          </span>
-          {(
-            [
-              { key: 'HOY', label: 'Hoy' },
-              { key: 'SEMANA', label: 'Últimos 7 días' },
-              { key: 'MES', label: 'Últimos 30 días' },
-              { key: 'HISTORICO', label: 'Histórico Total' },
-            ] as const
-          ).map((item) => {
-            const activo = periodo === item.key;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setPeriodo(item.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 ${
-                  activo
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
+      <Card className="mb-6">
+        <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Selector de Período */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+            <span className="text-xs font-semibold text-zinc-500 mr-1 flex items-center gap-1 shrink-0">
+              <Calendar className="w-3.5 h-3.5 text-zinc-700" /> Período:
+            </span>
+            {(
+              [
+                { key: 'HOY', label: 'Hoy' },
+                { key: 'SEMANA', label: 'Últimos 7 días' },
+                { key: 'MES', label: 'Últimos 30 días' },
+                { key: 'HISTORICO', label: 'Histórico Total' },
+              ] as const
+            ).map((item) => {
+              const activo = periodo === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setPeriodo(item.key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer ${
+                    activo
+                      ? 'bg-zinc-950 text-white shadow-xs'
+                      : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Selector de Colegio */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-bold text-slate-600 flex items-center gap-1 shrink-0">
-            <Building2 className="w-4 h-4 text-purple-600" />
-            Colegio:
-          </label>
-          <select
-            value={colegioSeleccionado}
-            onChange={(e) => setColegioSeleccionado(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden max-w-xs truncate"
-          >
-            <option value="todos">Todos los Colegios (Consolidado)</option>
-            {listaColegios.map((col) => (
-              <option key={col} value={col}>
-                {col}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+          {/* Selector de Colegio */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1 shrink-0">
+              <Building2 className="w-4 h-4 text-zinc-500" />
+              Colegio:
+            </label>
+            <select
+              value={colegioSeleccionado}
+              onChange={(e) => setColegioSeleccionado(e.target.value)}
+              className="bg-white border border-zinc-200 rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-zinc-950 max-w-xs truncate"
+            >
+              <option value="todos">Todos los Colegios (Consolidado)</option>
+              {listaColegios.map((col) => (
+                <option key={col} value={col}>
+                  {col}
+                </option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
 
       {cargando ? (
         <div className="py-20 text-center">
-          <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs text-slate-400 font-medium">Analizando datos y métricas del sistema...</p>
+          <div className="w-8 h-8 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs text-zinc-500 font-medium">Analizando datos y métricas del sistema...</p>
         </div>
       ) : !metricas ? (
-        <div className="py-16 text-center text-xs text-slate-400">No se pudieron cargar las métricas.</div>
+        <div className="py-16 text-center text-xs text-zinc-500">No se pudieron cargar las métricas.</div>
       ) : (
         <div className="space-y-6">
           {/* 1. CUATRO KPIS PRINCIPALES */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Ventas Totales */}
-            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Ventas Totales
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                  <DollarSign className="w-4 h-4" />
+            <Card>
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                    Ventas Totales
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-emerald-700 font-mono tracking-tight">
-                S/ {metricas.ventasTotales.toFixed(2)}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                {metricas.totalPedidos} almuerzos activos
-              </p>
-            </div>
+                <div className="text-xl sm:text-2xl font-bold text-zinc-950 font-mono tracking-tight">
+                  S/ {metricas.ventasTotales.toFixed(2)}
+                </div>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {metricas.totalPedidos} almuerzos activos
+                </p>
+              </CardContent>
+            </Card>
 
             {/* Total Raciones */}
-            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Raciones Totales
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
-                  <UtensilsCrossed className="w-4 h-4" />
+            <Card>
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                    Raciones Totales
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
+                    <UtensilsCrossed className="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                {metricas.totalPedidos}
-              </div>
-              <p className="text-[11px] text-emerald-600 font-semibold mt-1">
-                {metricas.pedidosEntregados} entregadas ({metricas.totalPedidos > 0 ? Math.round((metricas.pedidosEntregados / metricas.totalPedidos) * 100) : 0}%)
-              </p>
-            </div>
+                <div className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
+                  {metricas.totalPedidos}
+                </div>
+                <p className="text-xs text-emerald-600 font-medium mt-1">
+                  {metricas.pedidosEntregados} entregadas ({metricas.totalPedidos > 0 ? Math.round((metricas.pedidosEntregados / metricas.totalPedidos) * 100) : 0}%)
+                </p>
+              </CardContent>
+            </Card>
 
             {/* Tasa de Cobranza */}
-            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Tasa de Cobranza
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4" />
+            <Card>
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                    Tasa de Cobranza
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-purple-700 tracking-tight">
-                {metricas.tasaCobranzaPorcentaje}%
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                {metricas.pedidosPagados} pagados • {metricas.pedidosPendientesPago} por cobrar
-              </p>
-            </div>
+                <div className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
+                  {metricas.tasaCobranzaPorcentaje}%
+                </div>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {metricas.pedidosPagados} pagados • {metricas.pedidosPendientesPago} por cobrar
+                </p>
+              </CardContent>
+            </Card>
 
             {/* Ticket Promedio */}
-            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Ticket Promedio
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
-                  <Receipt className="w-4 h-4" />
+            <Card>
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                    Ticket Promedio
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center">
+                    <Receipt className="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900 font-mono tracking-tight">
-                S/ {metricas.ticketPromedio.toFixed(2)}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">Por ración de almuerzo</p>
-            </div>
+                <div className="text-xl sm:text-2xl font-bold text-zinc-950 font-mono tracking-tight">
+                  S/ {metricas.ticketPromedio.toFixed(2)}
+                </div>
+                <p className="text-xs text-zinc-500 mt-1">Por ración de almuerzo</p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* 2. PREFERENCIAS GASTRONÓMICAS: TOP PLATOS & MENOR DEMANDA */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Platos Más Solicitados (Platos Estrella) */}
-            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-500" />
+            <Card>
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+                  <Award className="w-4 h-4 text-zinc-700" />
                   Platos Estrella (Mayor Demanda)
-                </h3>
-                <span className="text-[11px] font-bold text-slate-400">Top 5</span>
-              </div>
-
-              {metricas.platosTop.length === 0 ? (
-                <p className="text-xs text-slate-400 py-6 text-center">Sin pedidos registrados en este período.</p>
-              ) : (
-                <div className="space-y-3">
-                  {metricas.platosTop.map((plato, idx) => {
-                    const coloresMedalla = [
-                      'from-amber-400 to-yellow-500 text-white',
-                      'from-slate-300 to-slate-400 text-slate-800',
-                      'from-amber-700 to-orange-800 text-white',
-                    ];
-                    return (
-                      <div key={plato.nombre} className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span
-                              className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0 ${
-                                idx < 3
-                                  ? `bg-gradient-to-tr ${coloresMedalla[idx]} shadow-xs`
-                                  : 'bg-slate-200 text-slate-600'
-                              }`}
-                            >
-                              {idx + 1}
-                            </span>
-                            <span className="text-xs sm:text-sm font-black text-slate-800 truncate">
-                              {plato.nombre}
+                </CardTitle>
+                <Badge variant="outline" className="text-xs">Top 5</Badge>
+              </CardHeader>
+              <CardContent>
+                {metricas.platosTop.length === 0 ? (
+                  <p className="text-xs text-zinc-400 py-6 text-center">Sin pedidos registrados en este período.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {metricas.platosTop.map((plato, idx) => {
+                      return (
+                        <div key={plato.nombre} className="p-3 bg-zinc-50 rounded-lg border border-zinc-100">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="w-5 h-5 rounded-md font-bold text-xs flex items-center justify-center shrink-0 bg-zinc-200 text-zinc-800">
+                                {idx + 1}
+                              </span>
+                              <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
+                                {plato.nombre}
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold text-zinc-950 shrink-0 ml-2">
+                              {plato.pedidos} pedidos ({plato.porcentaje}%)
                             </span>
                           </div>
-                          <span className="text-xs font-black text-purple-700 shrink-0 ml-2">
-                            {plato.pedidos} pedidos ({plato.porcentaje}%)
-                          </span>
+                          <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-zinc-900 h-1.5 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(100, Math.max(5, plato.porcentaje))}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Platos con Menor Demanda (Optimización de Menús) */}
+            <Card>
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+                  <ChefHat className="w-4 h-4 text-zinc-700" />
+                  Optimización de Menú (Menor Salida)
+                </CardTitle>
+                <Badge variant="outline" className="text-xs">Evaluar reemplazo</Badge>
+              </CardHeader>
+              <CardContent>
+                {metricas.platosMenorDemanda.length === 0 ? (
+                  <p className="text-xs text-zinc-400 py-6 text-center">Sin datos suficientes.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {metricas.platosMenorDemanda.map((plato) => (
+                      <div
+                        key={plato.nombre}
+                        className="p-3 bg-zinc-50 rounded-lg border border-zinc-100 flex items-center justify-between"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <h4 className="text-xs font-semibold text-zinc-900 truncate">{plato.nombre}</h4>
+                          <span className="text-[11px] text-zinc-500">Baja rotación en el período</span>
+                        </div>
+                        <Badge variant="secondary" className="text-xs shrink-0 font-medium">
+                          {plato.pedidos} pedidos
+                        </Badge>
+                      </div>
+                    ))}
+                    <p className="text-[11px] text-zinc-500 pt-2 leading-relaxed italic">
+                      💡 Sugerencia: Reformular ingredientes o sustituir estas opciones en la carta escolar semanal para reducir mermas en cocina.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 3. MÉTODOS DE PAGO Y DEMANDA SEMANAL */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Desglose por Método de Pago */}
+            <Card>
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-zinc-700" />
+                  Métodos de Pago Utilizados
+                </CardTitle>
+                <Badge variant="outline" className="text-xs">Participación</Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Object.entries(metricas.metodosPago).map(([metodo, data]) => {
+                    return (
+                      <div key={metodo} className="p-3 bg-zinc-50 rounded-lg border border-zinc-100">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-zinc-900">{metodo}</span>
+                          <div className="text-right">
+                            <span className="text-xs font-bold text-zinc-950">
+                              {data.cantidad} ({data.porcentaje}%)
+                            </span>
+                            <span className="text-[11px] text-zinc-500 ml-1.5 font-mono">
+                              S/ {data.totalMonto.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
                           <div
-                            className="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${Math.min(100, Math.max(5, plato.porcentaje))}%` }}
+                            className="bg-zinc-900 h-1.5 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, data.porcentaje)}%` }}
                           />
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              )}
-            </div>
-
-            {/* Platos con Menor Demanda (Optimización de Menús) */}
-            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <ChefHat className="w-4 h-4 text-orange-500" />
-                  Optimización de Menú (Menor Salida)
-                </h3>
-                <span className="text-[11px] font-bold text-slate-400">Evaluar reemplazo</span>
-              </div>
-
-              {metricas.platosMenorDemanda.length === 0 ? (
-                <p className="text-xs text-slate-400 py-6 text-center">Sin datos suficientes.</p>
-              ) : (
-                <div className="space-y-2.5">
-                  {metricas.platosMenorDemanda.map((plato) => (
-                    <div
-                      key={plato.nombre}
-                      className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 flex items-center justify-between"
-                    >
-                      <div className="min-w-0 pr-2">
-                        <h4 className="text-xs font-bold text-slate-800 truncate">{plato.nombre}</h4>
-                        <span className="text-[10px] text-slate-400">Baja rotación en el período</span>
-                      </div>
-                      <span className="text-xs font-bold text-slate-600 px-2.5 py-1 bg-white rounded-xl border border-slate-200 shrink-0">
-                        {plato.pedidos} pedidos
-                      </span>
-                    </div>
-                  ))}
-                  <p className="text-[11px] text-slate-400 pt-2 leading-relaxed italic">
-                    💡 Sugerencia: Reformular ingredientes o sustituir estas opciones en la carta escolar semanal para reducir mermas en cocina.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 3. MÉTODOS DE PAGO Y DEMANDA SEMANAL */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Desglose por Método de Pago */}
-            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-indigo-500" />
-                  Métodos de Pago Utilizados
-                </h3>
-                <span className="text-[11px] font-bold text-slate-400">Participación</span>
-              </div>
-
-              <div className="space-y-3">
-                {Object.entries(metricas.metodosPago).map(([metodo, data]) => {
-                  const estilos = {
-                    Yape: 'bg-purple-50 border-purple-200 text-purple-900 bar:from-purple-500 bar:to-purple-600',
-                    Plin: 'bg-sky-50 border-sky-200 text-sky-900 bar:from-sky-500 bar:to-sky-600',
-                    'Pagar luego': 'bg-amber-50 border-amber-200 text-amber-900 bar:from-amber-500 bar:to-amber-600',
-                    Efectivo: 'bg-emerald-50 border-emerald-200 text-emerald-900 bar:from-emerald-500 bar:to-emerald-600',
-                  }[metodo] || 'bg-slate-50 border-slate-200 text-slate-900';
-
-                  return (
-                    <div key={metodo} className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-black text-slate-800">{metodo}</span>
-                        <div className="text-right">
-                          <span className="text-xs font-black text-slate-900">
-                            {data.cantidad} ({data.porcentaje}%)
-                          </span>
-                          <span className="text-[11px] text-slate-400 ml-1.5 font-mono">
-                            S/ {data.totalMonto.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, data.porcentaje)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Demanda por Día de la Semana */}
-            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-emerald-500" />
+            <Card>
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-zinc-700" />
                   Demanda por Día de la Semana
-                </h3>
-                <span className="text-[11px] font-bold text-slate-400">Planificación de compras</span>
-              </div>
+                </CardTitle>
+                <Badge variant="outline" className="text-xs">Planificación de compras</Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Object.entries(metricas.demandaPorDiaSemana).map(([dia, cantidad]) => {
+                    const maxDemanda = Math.max(...Object.values(metricas.demandaPorDiaSemana), 1);
+                    const pct = Math.round((cantidad / maxDemanda) * 100);
 
-              <div className="space-y-3">
-                {Object.entries(metricas.demandaPorDiaSemana).map(([dia, cantidad]) => {
-                  const maxDemanda = Math.max(...Object.values(metricas.demandaPorDiaSemana), 1);
-                  const pct = Math.round((cantidad / maxDemanda) * 100);
-
-                  return (
-                    <div key={dia} className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-black text-slate-800">{dia}</span>
-                        <span className="text-xs font-black text-emerald-700">
-                          {cantidad} almuerzos
-                        </span>
+                    return (
+                      <div key={dia} className="p-3 bg-zinc-50 rounded-lg border border-zinc-100">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-zinc-900">{dia}</span>
+                          <span className="text-xs font-bold text-zinc-950">
+                            {cantidad} almuerzos
+                          </span>
+                        </div>
+                        <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="bg-zinc-900 h-1.5 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, Math.max(cantidad > 0 ? 8 : 0, pct))}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-emerald-500 to-teal-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, Math.max(cantidad > 0 ? 8 : 0, pct))}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-                <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">
-                  Permite predecir la carga de trabajo en cocina y adquirir insumos perecibles en el mercado mayorista en las cantidades exactas.
-                </p>
-              </div>
-            </div>
+                    );
+                  })}
+                  <p className="text-[11px] text-zinc-500 pt-1 leading-relaxed">
+                    Permite predecir la carga de trabajo en cocina y adquirir insumos perecibles en el mercado mayorista en las cantidades exactas.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* 4. COMPARATIVA POR COLEGIO */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-purple-600" />
+          <Card>
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-zinc-700" />
                 Desglose y Comparativa por Colegio
-              </h3>
-              <span className="text-[11px] font-bold text-slate-400">
+              </CardTitle>
+              <Badge variant="outline" className="text-xs">
                 {metricas.metricasPorColegio.length} colegios
-              </span>
-            </div>
-
-            {metricas.metricasPorColegio.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">No hay colegios registrados.</p>
-            ) : (
-              <div className="overflow-x-auto -mx-5 sm:mx-0">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 text-[11px] uppercase tracking-wider bg-slate-50/50">
-                      <th className="py-2.5 px-4 font-bold">Institución Educativa</th>
-                      <th className="py-2.5 px-4 font-bold text-center">Raciones</th>
-                      <th className="py-2.5 px-4 font-bold text-right">Facturado (S/.)</th>
-                      <th className="py-2.5 px-4 font-bold text-center">Entregados</th>
-                      <th className="py-2.5 px-4 font-bold text-center">Cobranza</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {metricas.metricasPorColegio.map((col) => {
-                      const pctCobranza =
-                        col.totalPedidos > 0 ? Math.round((col.pagados / col.totalPedidos) * 100) : 100;
-                      return (
-                        <tr key={col.colegioNombre} className="hover:bg-slate-50/80 transition">
-                          <td className="py-3 px-4 font-bold text-slate-900 flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                            {col.colegioNombre}
-                          </td>
-                          <td className="py-3 px-4 text-center font-bold text-slate-800">
-                            {col.totalPedidos}
-                          </td>
-                          <td className="py-3 px-4 text-right font-black text-emerald-700 font-mono">
-                            S/ {col.totalVentas.toFixed(2)}
-                          </td>
-                          <td className="py-3 px-4 text-center font-semibold text-slate-600">
-                            {col.entregados} / {col.totalPedidos}
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <span
-                              className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                pctCobranza >= 85
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : 'bg-amber-100 text-amber-800'
-                              }`}
-                            >
-                              {pctCobranza}% al día
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+              </Badge>
+            </CardHeader>
+            <CardContent>
+              {metricas.metricasPorColegio.length === 0 ? (
+                <p className="text-xs text-zinc-400 py-6 text-center">No hay colegios registrados.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Institución Educativa</TableHead>
+                        <TableHead className="text-center">Raciones</TableHead>
+                        <TableHead className="text-right">Facturado (S/.)</TableHead>
+                        <TableHead className="text-center">Entregados</TableHead>
+                        <TableHead className="text-center">Cobranza</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {metricas.metricasPorColegio.map((col) => {
+                        const pctCobranza =
+                          col.totalPedidos > 0 ? Math.round((col.pagados / col.totalPedidos) * 100) : 100;
+                        return (
+                          <TableRow key={col.colegioNombre}>
+                            <TableCell className="font-semibold text-zinc-900 flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-zinc-900 shrink-0" />
+                              {col.colegioNombre}
+                            </TableCell>
+                            <TableCell className="text-center font-medium text-zinc-800">
+                              {col.totalPedidos}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-zinc-950 font-mono">
+                              S/ {col.totalVentas.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-center text-zinc-600">
+                              {col.entregados} / {col.totalPedidos}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge
+                                variant={pctCobranza >= 85 ? 'success' : 'warning'}
+                                className="text-[11px]"
+                              >
+                                {pctCobranza}% al día
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

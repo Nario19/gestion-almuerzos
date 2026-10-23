@@ -27,7 +27,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Navegación Móvil para Padres"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom,0px)]"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-200/90 shadow-lg pb-[env(safe-area-inset-bottom,0px)]"
     >
       <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-between relative">
         {/* Pestaña: Pedidos */}
@@ -35,8 +35,8 @@ export default function BottomNav() {
           href="/padres/pedidos"
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
             pathname === '/padres/pedidos' || pathname === '/pedidos'
-              ? 'text-orange-600 font-bold scale-105'
-              : 'text-slate-500 hover:text-slate-800 font-medium'
+              ? 'text-zinc-950 font-bold scale-105'
+              : 'text-zinc-500 hover:text-zinc-900 font-medium'
           }`}
         >
           <div className="relative">
@@ -50,8 +50,8 @@ export default function BottomNav() {
           href="/padres/deudas"
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
             pathname === '/padres/deudas' || pathname === '/deudas'
-              ? 'text-amber-600 font-bold scale-105'
-              : 'text-slate-500 hover:text-slate-800 font-medium'
+              ? 'text-zinc-950 font-bold scale-105'
+              : 'text-zinc-500 hover:text-zinc-900 font-medium'
           }`}
         >
           <div className="relative">
@@ -65,15 +65,15 @@ export default function BottomNav() {
           <Link
             href="/"
             aria-label="Pedir Menú"
-            className={`-mt-6 w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-orange-600 text-white flex flex-col items-center justify-center shadow-lg shadow-orange-500/40 border-4 border-white active:scale-95 hover:scale-105 transition-all ${
-              pathname === '/' || pathname === '/padres' ? 'ring-2 ring-orange-400 ring-offset-2' : ''
+            className={`-mt-6 w-13 h-13 rounded-full bg-zinc-950 text-white flex flex-col items-center justify-center shadow-lg border-4 border-white active:scale-95 hover:scale-105 transition-all ${
+              pathname === '/' || pathname === '/padres' ? 'ring-2 ring-zinc-900 ring-offset-2' : ''
             }`}
           >
-            <UtensilsCrossed className="w-6 h-6 drop-shadow-xs" />
+            <UtensilsCrossed className="w-6 h-6" />
           </Link>
           <span
-            className={`text-[10px] mt-1 tracking-tight font-black ${
-              pathname === '/' || pathname === '/padres' ? 'text-orange-600' : 'text-slate-600'
+            className={`text-[10px] mt-1 tracking-tight font-bold ${
+              pathname === '/' || pathname === '/padres' ? 'text-zinc-950' : 'text-zinc-500'
             }`}
           >
             Pedir Menú
@@ -85,14 +85,14 @@ export default function BottomNav() {
           href="/padres/hijos"
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
             pathname === '/padres/hijos' || pathname === '/hijos'
-              ? 'text-orange-600 font-bold scale-105'
-              : 'text-slate-500 hover:text-slate-800 font-medium'
+              ? 'text-zinc-950 font-bold scale-105'
+              : 'text-zinc-500 hover:text-zinc-900 font-medium'
           }`}
         >
           <div className="relative">
             <GraduationCap className="w-5 h-5" />
             {cantidadHijos > 0 && (
-              <span className="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
+              <span className="absolute -top-1 -right-2 bg-zinc-900 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
                 {cantidadHijos}
               </span>
             )}
@@ -105,8 +105,8 @@ export default function BottomNav() {
           href="/padres/perfil"
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${
             pathname === '/padres/perfil' || pathname === '/perfil'
-              ? 'text-orange-600 font-bold scale-105'
-              : 'text-slate-500 hover:text-slate-800 font-medium'
+              ? 'text-zinc-950 font-bold scale-105'
+              : 'text-zinc-500 hover:text-zinc-900 font-medium'
           }`}
         >
           <div className="relative">

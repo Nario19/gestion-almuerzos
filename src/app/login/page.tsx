@@ -287,30 +287,30 @@ function LoginContent() {
       )}
 
       <div className="text-center mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center mx-auto shadow-md shadow-orange-500/20 mb-3">
+        <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center mx-auto shadow-xs mb-3">
           <UtensilsCrossed className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+        <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">
           {esRegistro ? 'Registro de Padre de Familia' : 'Acceso a la Plataforma'}
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-zinc-500 mt-1">
           {esRegistro
             ? 'Crea tu cuenta con tu DNI para vincular a tus hijos y pedir almuerzos.'
             : 'Ingresa con tu DNI para pedir almuerzos escolares.'}
         </p>
       </div>
 
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
+      <div className="bg-white rounded-xl p-6 border border-zinc-200/90 shadow-xs">
         {/* Pestañas: Login vs Registro */}
-        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl mb-5 text-xs font-bold">
+        <div className="grid grid-cols-2 p-1 bg-zinc-100 rounded-lg mb-5 text-xs font-semibold">
           <button
             type="button"
             onClick={() => {
               setEsRegistro(false);
               setErrorMsg(null);
             }}
-            className={`py-2 rounded-xl transition ${
-              !esRegistro ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+            className={`py-1.5 rounded-md transition cursor-pointer ${
+              !esRegistro ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             Iniciar Sesión
@@ -321,8 +321,8 @@ function LoginContent() {
               setEsRegistro(true);
               setErrorMsg(null);
             }}
-            className={`py-2 rounded-xl transition ${
-              esRegistro ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+            className={`py-1.5 rounded-md transition cursor-pointer ${
+              esRegistro ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             Registrarse
@@ -330,7 +330,7 @@ function LoginContent() {
         </div>
 
         {errorMsg && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-medium flex items-center gap-2">
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-medium flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
@@ -341,28 +341,28 @@ function LoginContent() {
             /* CAMPOS DE REGISTRO EXCLUSIVOS */
             <>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Nombres y Apellidos completos del Padre *
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <User className="w-4 h-4 text-zinc-400 absolute left-3.5 top-2.5" />
                   <input
                     type="text"
                     placeholder="EJ. JUAN PÉREZ QUISPE"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value.toUpperCase())}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden uppercase"
+                    className="w-full bg-white border border-zinc-200 rounded-lg pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-950/20 focus-visible:border-zinc-950 uppercase shadow-2xs transition"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Número de DNI (8 dígitos) *
                 </label>
                 <div className="relative">
-                  <CreditCard className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <CreditCard className="w-4 h-4 text-zinc-400 absolute left-3.5 top-2.5" />
                   <input
                     type="tel"
                     inputMode="numeric"
@@ -371,18 +371,18 @@ function LoginContent() {
                     placeholder="Ej. 72345678"
                     value={dni}
                     onChange={(e) => setDni(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-mono"
+                    className="w-full bg-white border border-zinc-200 rounded-lg pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-950/20 focus-visible:border-zinc-950 font-mono shadow-2xs transition"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Teléfono Celular (9 dígitos) *
                 </label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <Phone className="w-4 h-4 text-zinc-400 absolute left-3.5 top-2.5" />
                   <input
                     type="tel"
                     inputMode="numeric"
@@ -391,31 +391,31 @@ function LoginContent() {
                     placeholder="Ej. 987654321"
                     value={telefono}
                     onChange={(e) => setTelefono(e.target.value.replace(/\D/g, '').slice(0, 9))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-mono"
+                    className="w-full bg-white border border-zinc-200 rounded-lg pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-950/20 focus-visible:border-zinc-950 font-mono shadow-2xs transition"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Contraseña (mínimo 6 caracteres) *
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-2.5" />
                   <input
                     type={verPasswordRegistro ? 'text' : 'password'}
                     minLength={6}
                     placeholder="Mínimo 6 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    className="w-full bg-white border border-zinc-200 rounded-lg pl-10 pr-10 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-950/20 focus-visible:border-zinc-950 shadow-2xs transition"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setVerPasswordRegistro(!verPasswordRegistro)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-lg transition"
+                    className="absolute right-3 top-2 text-zinc-400 hover:text-zinc-600 p-0.5 rounded-lg transition"
                     title={verPasswordRegistro ? 'Ocultar contraseña' : 'Ver contraseña'}
                   >
                     {verPasswordRegistro ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -427,40 +427,40 @@ function LoginContent() {
             /* CAMPOS DE INICIO DE SESIÓN */
             <>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Número de DNI
                 </label>
                 <div className="relative">
-                  <CreditCard className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <CreditCard className="w-4 h-4 text-zinc-400 absolute left-3.5 top-2.5" />
                   <input
                     type="text"
                     placeholder="Ingresa tu DNI"
                     value={identificadorLogin}
                     onChange={(e) => setIdentificadorLogin(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-mono"
+                    className="w-full bg-white border border-zinc-200 rounded-lg pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-950/20 focus-visible:border-zinc-950 font-mono shadow-2xs transition"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Contraseña
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-2.5" />
                   <input
                     type={verPasswordLogin ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={passwordLogin}
                     onChange={(e) => setPasswordLogin(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    className="w-full bg-white border border-zinc-200 rounded-lg pl-10 pr-10 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-950/20 focus-visible:border-zinc-950 shadow-2xs transition"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setVerPasswordLogin(!verPasswordLogin)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-lg transition"
+                    className="absolute right-3 top-2 text-zinc-400 hover:text-zinc-600 p-0.5 rounded-lg transition"
                     title={verPasswordLogin ? 'Ocultar contraseña' : 'Ver contraseña'}
                   >
                     {verPasswordLogin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -473,7 +473,7 @@ function LoginContent() {
           <button
             type="submit"
             disabled={cargando}
-            className="w-full py-3.5 px-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition disabled:opacity-50 mt-2"
+            className="w-full py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 active:scale-[0.99] text-white font-semibold rounded-lg text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition disabled:opacity-50 mt-2 cursor-pointer"
           >
             {cargando ? (
               <span className="animate-pulse">Verificando...</span>
@@ -491,9 +491,9 @@ function LoginContent() {
       <div className="mt-5 text-center">
         <Link
           href="/"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200/90 shadow-xs hover:shadow-md font-bold text-xs sm:text-sm transition-all active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200 shadow-2xs font-semibold text-xs sm:text-sm transition-all cursor-pointer"
         >
-          <UtensilsCrossed className="w-4 h-4 text-orange-500" />
+          <UtensilsCrossed className="w-4 h-4 text-zinc-700" />
           <span>Ver Menú</span>
         </Link>
       </div>
