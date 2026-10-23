@@ -1752,6 +1752,26 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/cloudinary-platos-upload-robustez.test.mjs`
   - `MEMORY.md`
 
+### D-061 — 2026-10-23 — Eliminación de Enlaces a /admin en SuperAdmin y Blindaje Bidireccional de Middleware
+
+- Decisión: En la pantalla `/superadmin`, suprimir completamente los botones "Panel Operativo" y "Despacho" de la cabecera que redirigían indebidamente hacia `/admin` y `/admin/despacho`. Blindar de forma bidireccional el middleware y la navegación de la plataforma:
+  1. `src/app/superadmin/page.tsx`: Eliminada la prop `actions` de `PageHeader`, retirando los botones y enlaces hacia `/admin`.
+  2. `src/components/HeaderNav.tsx`: Segregación estricta de `adminNavItems`:
+     - Para `esSuperAdmin`: Rutas exclusivas `/superadmin` (Colegios), `/superadmin/cocina`, `/superadmin/fiado`, `/superadmin/despacho`, `/superadmin/pedido-manual` y `/superadmin/analytics`. Sin ítems duplicados hacia `/admin`.
+     - Para `esAdmin` de colegio: Rutas `/admin`, `/admin/cocina`, `/admin/fiado`, `/admin/despacho`, `/admin/pedido-manual`.
+  3. `src/middleware.ts`: Si un Super Administrador autenticado accede a cualquier ruta bajo `/admin/*`, el middleware lo redirige automáticamente a la ruta homóloga en `/superadmin/*` (`/admin` -> `/superadmin`, `/admin/despacho` -> `/superadmin/despacho`, etc.).
+  4. Protección de roles en `src/middleware.ts`: Usuarios sin rol `SUPER_ADMIN` (incluidos administradores de colegio y padres) son bloqueados de `/superadmin/*` y redirigidos con `error=no_acceso`.
+  5. `src/app/admin/pedido-manual/page.tsx`: Los enlaces de éxito hacia Despacho y Cocina son dinámicos según `esSuperAdmin` (`/superadmin/despacho` vs `/admin/despacho`).
+- Fuente: Solicitud explícita del usuario ("aca hay dos botones que esta el de Panel Operativa, Despacho que no deben ir porque si le doy a cualqueira de los botones me lleva a admin y admin/despacho de admin cuando estamos en el superadmin. corrige eso elimina esos dos botones yasegurate que el middleware de todas las pantallas funcione correctamente").
+- Impacto:
+  - `src/app/superadmin/page.tsx`
+  - `src/components/HeaderNav.tsx`
+  - `src/middleware.ts`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/app/login/page.tsx`
+  - `tests/superadmin-botones-eliminados-y-middleware.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
