@@ -1029,7 +1029,6 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/padres/page.tsx`
   - `MEMORY.md`
 
-
   - `tests/cron-limpiar-comprobantes-cloudinary.test.mjs` (7 pruebas nuevas, 299 pruebas totales en la suite, 293 pasadas, 0 fallos).
 
 ### D-048 — 2026-10-21 — Optimización Integral de Rendimiento: Compresión Dinámica Cloudinary, Caché en Memoria y Prefetch de la Carta
@@ -1451,6 +1450,16 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
 - Impacto:
   - `src/components/HeaderNav.tsx`
   - `src/app/padres/page.tsx`
+  - `MEMORY.md`
+
+### D-015 — 2026-10-22 — Supresión de títulos redundantes en Cocina y depuración de logo/toggle en navbar superior admin
+- Decisión: En las vistas de administración:
+  1. En `/admin/cocina` (`src/app/admin/cocina/page.tsx`): suprimir los títulos y descripciones redundantes en el cuerpo de la página ("Control de Cocina" / "Consolidado de raciones a preparar..."), dado que el título canónico y el colegio asignado ya se muestran en la barra blanca superior (`HeaderNav`). Se preserva una barra compacta de utilidades para el indicador de actualización en tiempo real y el botón Refrescar.
+  2. En la barra superior (`HeaderNav.tsx`): eliminar el botón desktop de alternar barra lateral (`toggleSidebarColapsado`) y el logo corporativo (`UtensilsCrossed`) en rutas administrativas (`esRutaAdmin`), ya que ambos elementos están contenidos de forma canónica en el Sidebar lateral. La barra superior administrativa ahora muestra de manera limpia e inmediata el título de la pantalla activa y el badge del colegio.
+- Fuente: Instrucción explícita del usuario ("Control de Cocina / Consolidado de raciones a preparar, platos de fondo, dietas especiales y observaciones. estos titulos ya no los muestres ya que ya se muestran la barra de arriba en la pagina ya no.y arriba estas repitiendo el logo y el boton q desgloza el sidebar").
+- Impacto:
+  - `src/app/admin/cocina/page.tsx`
+  - `src/components/HeaderNav.tsx`
   - `MEMORY.md`
 
 

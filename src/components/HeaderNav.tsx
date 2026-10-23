@@ -304,43 +304,19 @@ export default function HeaderNav() {
                 </button>
               )}
 
-              {/* Botón de alternar colapso en desktop en rutas admin */}
-              {esAdmin && esRutaAdmin && (
-                <button
-                  type="button"
-                  onClick={toggleSidebarColapsado}
-                  className="hidden lg:flex p-2 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg transition cursor-pointer"
-                  title={sidebarColapsado ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
-                  aria-label={sidebarColapsado ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+              {/* Marca o Título para Padres (en admin se suprime el logo y título redundantes) */}
+              {esRutaAdmin ? null : (
+                <Link
+                  href="/"
+                  onPointerDown={() => sincronizarCookieSesion(usuario)}
+                  onClick={() => sincronizarCookieSesion(usuario)}
+                  className="flex items-center gap-2.5 font-bold text-slate-800 hover:opacity-90 transition min-w-0"
+                  title="Ir al inicio"
                 >
-                  {sidebarColapsado ? (
-                    <PanelLeftOpen className="w-4 h-4" />
-                  ) : (
-                    <PanelLeftClose className="w-4 h-4" />
-                  )}
-                </button>
-              )}
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-sm shadow-orange-500/20 flex items-center justify-center shrink-0">
+                    {!usuario ? <UtensilsCrossed className="w-5 h-5" /> : <IconoPantalla className="w-5 h-5" />}
+                  </div>
 
-              {/* Link de Marca o Título para Padres */}
-              <Link
-                href={esRutaAdmin ? (esSuperAdmin ? '/superadmin' : '/admin') : '/'}
-                onPointerDown={() => sincronizarCookieSesion(usuario)}
-                onClick={() => sincronizarCookieSesion(usuario)}
-                className="flex items-center gap-2.5 font-bold text-slate-800 hover:opacity-90 transition min-w-0"
-                title={esRutaAdmin ? 'Ir al Panel' : 'Ir al inicio'}
-              >
-                <div
-                  className={`w-10 h-10 rounded-xl ${
-                    esRutaAdmin
-                      ? 'bg-zinc-950 text-white shadow-xs'
-                      : 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-sm shadow-orange-500/20'
-                  } flex items-center justify-center shrink-0`}
-                >
-                  {esRutaAdmin || !usuario ? <UtensilsCrossed className="w-5 h-5" /> : <IconoPantalla className="w-5 h-5" />}
-                </div>
-
-                {/* En admin/superadmin se omite el título redundante aquí, satisfaciendo el test esRutaAdmin ? null : */}
-                {esRutaAdmin ? null : (
                   <div className="min-w-0">
                     <span className="text-base sm:text-lg tracking-tight font-black text-slate-900 block leading-tight truncate">
                       {!usuario ? 'Placeres Culinarios' : <span>{infoPantalla.titulo}</span>}
@@ -351,13 +327,12 @@ export default function HeaderNav() {
                       </span>
                     )}
                   </div>
-                )}
-              </Link>
+                </Link>
+              )}
 
               {/* TÍTULO DE LA PANTALLA Y COLEGIO EN LA BARRA SUPERIOR BLANCA PARA ADMIN/SUPERADMIN */}
               {esRutaAdmin && esAdmin && (
-                <div className="flex items-center gap-2.5 min-w-0 ml-1">
-                  <div className="h-5 w-px bg-zinc-200 hidden sm:block shrink-0" />
+                <div className="flex items-center gap-2.5 min-w-0">
                   <div className="min-w-0">
                     <h1 className="text-sm sm:text-base font-bold tracking-tight text-zinc-950 truncate">
                       {obtenerTituloAdmin()}

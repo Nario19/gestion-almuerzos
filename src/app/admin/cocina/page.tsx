@@ -29,7 +29,6 @@ import {
   obtenerHoraActualPeru,
 } from '@/lib/dateUtils';
 import { Pedido, ResumenCocina } from '@/types';
-import { PageHeader } from '@/components/shared/PageHeader';
 import { StatCard } from '@/components/shared/StatCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
@@ -148,37 +147,33 @@ export default function CocinaPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
-      {/* Encabezado Principal */}
-      <PageHeader
-        title="Control de Cocina"
-        description="Consolidado de raciones a preparar, platos de fondo, dietas especiales y observaciones."
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="gap-1.5 py-1 px-2.5 font-medium border-emerald-200 bg-emerald-50/50 text-emerald-800">
-              <Radio className="w-3 h-3 text-emerald-600 animate-pulse" />
-              <span>TIEMPO REAL ACTIVO</span>
-              <span className="text-zinc-400 font-normal">| {ultimaActualizacion || '--:--'}</span>
-            </Badge>
+      {/* Barra de Estado y Sincronización (el título ya se muestra en la barra superior blanca del navbar) */}
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1.5 py-1 px-2.5 font-medium border-emerald-200 bg-emerald-50/50 text-emerald-800">
+            <Radio className="w-3 h-3 text-emerald-600 animate-pulse" />
+            <span>TIEMPO REAL ACTIVO</span>
+            <span className="text-zinc-400 font-normal">| {ultimaActualizacion || '--:--'}</span>
+          </Badge>
 
-            {!esSuperAdmin && usuario?.colegioNombre && (
-              <span className="hidden">
-                🏫 Colegio: {usuario.colegioNombre}
-              </span>
-            )}
+          {!esSuperAdmin && usuario?.colegioNombre && (
+            <span className="hidden">
+              🏫 Colegio: {usuario.colegioNombre}
+            </span>
+          )}
+        </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={cargarDatos}
-              disabled={cargando}
-              className="gap-1.5 h-8 text-xs font-semibold"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin' : ''}`} />
-              Refrescar
-            </Button>
-          </div>
-        }
-      />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={cargarDatos}
+          disabled={cargando}
+          className="gap-1.5 h-8 text-xs font-semibold"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin' : ''}`} />
+          Refrescar
+        </Button>
+      </div>
 
       {/* Barra de Filtros y Navegación de Fechas Unificada */}
       <Card className="mb-6">
