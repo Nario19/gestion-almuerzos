@@ -1718,6 +1718,26 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `.env.local`
   - `MEMORY.md`
 
+### D-059 — 2026-10-23 — Subida de Fotos de Platos a Cloudinary con Canal Dual, Proxy Servidor y Visualización Transversal
+
+- Decisión: Corregir y blindar la subida de fotografías de platos en la carta del administrador y garantizar su visualización consistente en todas las interfaces:
+  1. Valores predeterminados seguros (`CLOUDINARY_DEFAULT_CLOUD_NAME = 'qeqjhqpv'`, `CLOUDINARY_DEFAULT_UPLOAD_PRESET = 'comprobantes_almuerzos'`) para evitar caídas en producción si las variables de cliente no se inyectan en tiempo de compilación.
+  2. Estrategia de doble canal en `subirImagenACloudinary`: Intento directo hacia la API pública de Cloudinary, con respaldo automático vía route handler `/api/upload-cloudinary` si ad-blockers o restricciones de red bloquean la petición en el navegador.
+  3. En `dataService.ts`: Obligatoriedad de URL remota HTTPS. Si la subida a Cloudinary de un plato falla, se aborta la creación/actualización con error explícito al usuario en lugar de degradar silenciosamente a `null`.
+  4. En `AdminMenuSemanalTab.tsx`: Bloqueo de los botones de publicación y edición mientras la imagen está en proceso de compresión y subida a Cloudinary, con indicador visual animado.
+  5. En `ModalPedidoManual.tsx`: Integración de tarjetas con previsualización fotográfica al seleccionar Segundo, Entrada o Ensalada.
+  6. En `src/app/padres/page.tsx`, `/` y `/admin`: Verificación de renderizado de imágenes de platos con etiquetas de Cloudinary.
+- Fuente: Solicitud e instrucción explícita del usuario.
+- Impacto:
+  - `src/lib/cloudinaryService.ts`
+  - `src/app/api/upload-cloudinary/route.ts`
+  - `src/lib/dataService.ts`
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/components/ModalPedidoManual.tsx`
+  - `tests/cloudinary-platos-upload-robustez.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
