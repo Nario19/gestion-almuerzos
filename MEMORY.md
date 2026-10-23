@@ -1318,6 +1318,33 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/superadmin/page.tsx`
   - `MEMORY.md`
 
+### D-059 — 2026-10-22 — Expansión Integral de shadcn/ui a Toda la Aplicación y Portal de Padres
+
+- Decisión: aplicar de forma transversal e integral los componentes y estándares oficiales de `shadcn/ui` (zinc monocromático, cards, tablas, badges, inputs y modales limpios) en la totalidad de módulos del sistema:
+  1. **Superadmin Analítica (`/superadmin/analytics`):** Integración de `Card`, `Badge`, `Button` y `Table` shadcn/ui, sustituyendo colores saturados por una paleta monocromática zinc limpia con métricas de ventas, raciones y comparativa de colegios.
+  2. **Portal de Padres (`/padres/hijos`, `/padres/perfil`, `/padres/deudas`, `/padres/pedidos`, `/padres/privacidad`):**
+     - Modernización de tarjetas de historial de pedidos, línea de tiempo (stepper) de 3 etapas (`Orden recibida` -> `Pago aceptado` / `Pagar luego` -> `Entregado`).
+     - Armonización de la gestión de hijos, estado de deudas y perfil de apoderado.
+     - Preservación estricta de títulos accesibles (`h1.sr-only`), inputs validados en mayúsculas y filtros por fecha sin desfasajes.
+  3. **Navegación Móvil y Header (`HeaderNav` y `BottomNav`):**
+     - Header con badges zinc refinados y soporte dinámico de títulos.
+     - BottomNav adaptado a tokens monocromáticos con botón central destacado y badges de hijos.
+  4. **Verificación de Calidad y Cero Regresiones:**
+     - 334 tests ejecutados (328 aprobados, 0 fallos, 6 omitidos).
+     - Compilación limpia con Next.js 16 y TypeScript estricto.
+     - Despliegue en producción verificado en vivo (`https://gestion-almuerzos-six.vercel.app`).
+- Fuente: instrucción explícita del usuario mediante el prompt maestro definitivo de diseño frontend.
+- Impacto:
+  - `src/app/superadmin/analytics/page.tsx`
+  - `src/app/padres/hijos/page.tsx`
+  - `src/app/padres/perfil/page.tsx`
+  - `src/app/padres/deudas/page.tsx`
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/app/padres/privacidad/page.tsx`
+  - `src/components/BottomNav.tsx`
+  - `src/components/HeaderNav.tsx`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
