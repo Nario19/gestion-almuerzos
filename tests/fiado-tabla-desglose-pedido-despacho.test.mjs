@@ -8,20 +8,20 @@ describe('Estructura de Tabla y Desglose de Fiados organizada igual que Despacho
   const fiadoPath = path.join(rootDir, 'src/app/admin/fiado/page.tsx');
   const fiadoContent = fs.readFileSync(fiadoPath, 'utf-8');
 
-  test('1. Cabecera de la tabla principal de fiados cuenta con las 7 columnas requeridas', () => {
+  test('1. Cabecera de la tabla principal de fiados cuenta con las 6 columnas (sin Estado de Entrega en cabecera)', () => {
     assert.ok(fiadoContent.includes('>Almuerzos</TableHead>'), 'Debe incluir columna Almuerzos');
     assert.ok(fiadoContent.includes('>Grado y Estudiante</TableHead>'), 'Debe incluir columna Grado y Estudiante');
     assert.ok(fiadoContent.includes('>Nombre (Padre y Teléfono)</TableHead>'), 'Debe incluir columna Nombre (Padre y Teléfono)');
-    assert.ok(fiadoContent.includes('>Estado de Entrega</TableHead>'), 'Debe incluir columna Estado de Entrega');
+    assert.ok(!fiadoContent.includes('>Estado de Entrega</TableHead>'), 'NO debe incluir columna Estado de Entrega en la tabla principal');
     assert.ok(fiadoContent.includes('>Fecha y Hora</TableHead>'), 'Debe incluir columna Fecha y Hora');
     assert.ok(fiadoContent.includes('>Deuda / Pago</TableHead>'), 'Debe incluir columna Deuda / Pago');
     assert.ok(fiadoContent.includes('>Acciones</TableHead>'), 'Debe incluir columna Acciones');
   });
 
-  test('2. Fila general de familia muestra Estado de Entrega, Códigos y botón para ver platos en desglose', () => {
-    assert.ok(fiadoContent.includes('Pendiente de entrega') || fiadoContent.includes('almuerzos entregados'), 'Debe indicar estado de entrega');
-    assert.ok(fiadoContent.includes('codigoPedido'), 'Debe mostrar códigos de pedido');
-    assert.ok(fiadoContent.includes('Ver platos en desglose'), 'Debe incluir enlace Ver platos en desglose');
+  test('2. Fila general de familia tiene acceso directo al desglose y desglose conserva la columna Entrega intacta', () => {
+    assert.ok(fiadoContent.includes('toggleExpandir'), 'Debe permitir alternar el desglose');
+    assert.ok(fiadoContent.includes('colSpan={6}'), 'La fila expandible debe tener colSpan={6}');
+    assert.ok(fiadoContent.includes('<th className="py-2.5 px-3 text-center">Entrega</th>'), 'El desglose debe conservar su columna Entrega intacta');
   });
 
   test('3. Columna "Fecha y Hora" en la tabla principal está organizada idéntica a Despacho', () => {

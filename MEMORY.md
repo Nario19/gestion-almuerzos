@@ -1691,6 +1691,20 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/padres-pedidos-hora-registro-y-entrega.test.mjs`
   - `MEMORY.md`
 
+### D-057 — 2026-10-23 — Simplificación de la Tabla Principal de Fiados (Retiro de Columna Estado de Entrega en Fila Familiar)
+
+- Decisión: En la tabla principal de fiados (`/admin/fiado` y `/superadmin/fiado`):
+  1. Se retira la columna `Estado de Entrega` de la fila general de familias en la cabecera (`<TableHead>`) y en las celdas principales (`<TableCell>`).
+  2. La tabla principal queda con 6 columnas limpias y enfocadas: `Almuerzos`, `Grado y Estudiante`, `Nombre (Padre y Teléfono)`, `Fecha y Hora`, `Deuda / Pago` y `Acciones`.
+  3. El desglose desplegable ("Pagar luego") permanece intacto y completo, conservando su columna `Entrega` individual por cada orden y la columna `Pedido` con Entrada, Segundo y Ensalada.
+  4. La columna `Almuerzos` permite alternar y desplegar el desglose de forma interactiva con un clic directo.
+  5. Ajustado `colSpan={6}` en la fila expandible.
+- Fuente: Instrucción explícita del usuario ("de aqui quita esta columna Estado de Entrega SOLO DE AHI QUITA ESO DEL DESGLOSE DEJALO COMO ESTA").
+- Impacto:
+  - `src/app/admin/fiado/page.tsx`
+  - `tests/fiado-tabla-desglose-pedido-despacho.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.
