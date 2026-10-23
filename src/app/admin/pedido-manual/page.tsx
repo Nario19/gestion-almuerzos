@@ -34,7 +34,7 @@ import confetti from 'canvas-confetti';
 import { dataService, DIAS_SEMANA } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
-import { SkeletonDashboardPage } from '@/components/Skeleton';
+import { SkeletonDashboardPage, Skeleton } from '@/components/Skeleton';
 import {
   obtenerFechaHoyPeru,
   obtenerDiaActualSemanaPeru,
@@ -799,7 +799,10 @@ export default function PedidoManualPage() {
                   </div>
 
                   {cargandoDatos ? (
-                    <div className="text-xs text-zinc-400 py-3 text-center">Cargando opciones de entrada...</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                      <Skeleton className="h-16 rounded-lg" />
+                      <Skeleton className="h-16 rounded-lg" />
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                       {/* Opción Sin Entrada */}
@@ -910,7 +913,10 @@ export default function PedidoManualPage() {
                       </div>
                     </div>
                   ) : cargandoDatos ? (
-                    <div className="text-xs text-zinc-400 py-4 text-center">Cargando platos de fondo...</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                      <Skeleton className="h-20 rounded-lg" />
+                      <Skeleton className="h-20 rounded-lg" />
+                    </div>
                   ) : platosSegundos.length === 0 ? (
                     <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 text-zinc-700 text-xs">
                       No hay platos de fondo configurados para el {diaSemanaCalculado.toLowerCase()} en {colegioSeleccionado}. Puedes escribir uno personalizado con el botón superior.
@@ -988,7 +994,10 @@ export default function PedidoManualPage() {
                   </div>
 
                   {cargandoDatos ? (
-                    <div className="text-xs text-zinc-400 py-3 text-center">Cargando opciones de ensalada...</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                      <Skeleton className="h-16 rounded-lg" />
+                      <Skeleton className="h-16 rounded-lg" />
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                       {/* Opción Sin Ensalada */}

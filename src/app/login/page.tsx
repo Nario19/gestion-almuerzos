@@ -78,8 +78,8 @@ function LoginContent() {
     // Por defecto redirige de forma fluida y muestra un loader minimalista sin el flash de la tarjeta
     if (!cambiarCuenta) {
       return (
-        <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-100">
-          <div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin mb-3 shadow-xs" />
+        <div className="relative">
+          <SkeletonLoginPage />
           {/* Elementos accesibles y de compatibilidad con suites de pruebas */}
           <div className="sr-only">
             <h2>
@@ -287,30 +287,30 @@ function LoginContent() {
       )}
 
       <div className="text-center mb-6">
-        <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center mx-auto shadow-xs mb-3">
-          <UtensilsCrossed className="w-6 h-6" />
+        <div className="w-14 h-14 rounded-2xl bg-yellow-400 text-zinc-950 flex items-center justify-center mx-auto shadow-xs mb-3 border border-yellow-500/40">
+          <UtensilsCrossed className="w-7 h-7 stroke-[2.5]" />
         </div>
-        <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">
+        <h1 className="text-2xl font-black text-zinc-950 tracking-tight">
           {esRegistro ? 'Registro de Padre de Familia' : 'Acceso a la Plataforma'}
         </h1>
-        <p className="text-xs text-zinc-500 mt-1">
+        <p className="text-xs text-zinc-600 mt-1 font-medium">
           {esRegistro
             ? 'Crea tu cuenta con tu DNI para vincular a tus hijos y pedir almuerzos.'
             : 'Ingresa con tu DNI para pedir almuerzos escolares.'}
         </p>
       </div>
 
-      <div className="bg-white rounded-xl p-6 border border-zinc-200/90 shadow-xs">
+      <div className="bg-white rounded-2xl p-6 sm:p-7 border border-zinc-200/90 shadow-xs">
         {/* Pestañas: Login vs Registro */}
-        <div className="grid grid-cols-2 p-1 bg-zinc-100 rounded-lg mb-5 text-xs font-semibold">
+        <div className="grid grid-cols-2 p-1 bg-zinc-100 rounded-xl mb-5 text-xs font-bold">
           <button
             type="button"
             onClick={() => {
               setEsRegistro(false);
               setErrorMsg(null);
             }}
-            className={`py-1.5 rounded-md transition cursor-pointer ${
-              !esRegistro ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'
+            className={`py-2 rounded-lg transition cursor-pointer font-bold ${
+              !esRegistro ? 'bg-zinc-950 text-yellow-400 shadow-xs' : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
             Iniciar Sesión
@@ -321,8 +321,8 @@ function LoginContent() {
               setEsRegistro(true);
               setErrorMsg(null);
             }}
-            className={`py-1.5 rounded-md transition cursor-pointer ${
-              esRegistro ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'
+            className={`py-2 rounded-lg transition cursor-pointer font-bold ${
+              esRegistro ? 'bg-zinc-950 text-yellow-400 shadow-xs' : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
             Registrarse
@@ -473,14 +473,14 @@ function LoginContent() {
           <button
             type="submit"
             disabled={cargando}
-            className="w-full py-2.5 px-4 bg-zinc-950 hover:bg-zinc-800 active:scale-[0.99] text-white font-semibold rounded-lg text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition disabled:opacity-50 mt-2 cursor-pointer"
+            className="w-full py-3 px-4 bg-yellow-400 hover:bg-yellow-500 active:scale-[0.99] text-zinc-950 font-bold rounded-xl text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition disabled:opacity-50 mt-3 cursor-pointer border border-yellow-500/40"
           >
             {cargando ? (
               <span className="animate-pulse">Verificando...</span>
             ) : (
               <>
                 <span>{esRegistro ? 'Registrarme' : 'Ingresar'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 stroke-[2.5]" />
               </>
             )}
           </button>
@@ -491,9 +491,9 @@ function LoginContent() {
       <div className="mt-5 text-center">
         <Link
           href="/"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200 shadow-2xs font-semibold text-xs sm:text-sm transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-yellow-400 shadow-2xs font-bold text-xs sm:text-sm transition-all cursor-pointer"
         >
-          <UtensilsCrossed className="w-4 h-4 text-zinc-700" />
+          <UtensilsCrossed className="w-4 h-4 text-yellow-400" />
           <span>Ver Menú</span>
         </Link>
       </div>

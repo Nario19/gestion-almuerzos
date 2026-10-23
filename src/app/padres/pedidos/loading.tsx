@@ -1,0 +1,6 @@
+import React from 'react';
+import { SkeletonPedidosPage } from '@/components/Skeleton';
+
+export default function PedidosLoading() {
+  return <SkeletonPedidosPage />;
+}

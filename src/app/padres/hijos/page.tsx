@@ -18,7 +18,7 @@ import {
 import { useAuth } from '@/lib/authContext';
 import { dataService } from '@/lib/dataService';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
-import { SkeletonHijosPage } from '@/components/Skeleton';
+import { SkeletonHijosPage, Skeleton } from '@/components/Skeleton';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -249,10 +249,7 @@ function HijosContent() {
                   <Building2 className="w-3.5 h-3.5 text-zinc-500" /> Colegio *
                 </label>
                 {cargandoConfig ? (
-                  <div className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-500 animate-pulse flex items-center gap-2">
-                    <div className="w-3 h-3 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
-                    Cargando colegios disponibles...
-                  </div>
+                  <Skeleton className="h-9 w-full rounded-lg" />
                 ) : listaColegios.length === 0 ? (
                   <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
                     No hay colegios disponibles configurados por el administrador.
@@ -276,10 +273,7 @@ function HijosContent() {
                   Grado y Sección *
                 </label>
                 {cargandoConfig ? (
-                  <div className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-500 animate-pulse flex items-center gap-2">
-                    <div className="w-3 h-3 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
-                    Cargando grados...
-                  </div>
+                  <Skeleton className="h-9 w-full rounded-lg" />
                 ) : listaGrados.length === 0 ? (
                   <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
                     No hay grados configurados.

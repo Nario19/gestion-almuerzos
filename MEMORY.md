@@ -1564,6 +1564,50 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/admin/fiado/page.tsx`
   - `MEMORY.md`
 
+### D-020 — 2026-10-23 — Adopción Universal de Skeletons en Todos los Módulos y Rediseño Visual de Login (#010101, Blanco y Amarillo)
+- Decisión:
+  1. **Adopción Universal de Skeletons en Absolutamente Todos los Módulos:**
+     - Erradicación de spinners (`animate-spin`) y textos planos durante la carga en todas las pantallas y diálogos del sistema.
+     - Creación de archivos `loading.tsx` en cada segmento del App Router (`/admin`, `/admin/cocina`, `/admin/despacho`, `/admin/fiado`, `/admin/pedido-manual`, `/superadmin`, `/superadmin/analytics`, `/superadmin/cocina`, `/superadmin/despacho`, `/superadmin/fiado`, `/superadmin/pedido-manual`, `/login`, `/padres`, `/padres/pedidos`, `/padres/deudas`, `/padres/hijos`, `/padres/perfil`).
+     - Creación del nuevo componente `SkeletonAnalyticsPage` en `src/components/Skeleton.tsx` para `/superadmin/analytics`.
+     - Reemplazo de spinners en cargas internas de datos en Control de Fiados, Superadmin (colegios y modal de estudiantes), opciones de menú en Pedido Manual y Carta Semanal, y listados de Deudas e Hijos de Padres.
+  2. **Rediseño Visual de Login con la Paleta de Padres (#010101, Blanco y Amarillo):**
+     - Botón principal de autenticación en amarillo vibrante (`bg-yellow-400 hover:bg-yellow-500 text-zinc-950 font-bold border border-yellow-500/40`).
+     - Icono de marca superior en amarillo con borde coordinado.
+     - Pestañas de selector activo en negro profundo `#010101` con tipografía amarilla `text-yellow-400`.
+     - Botón "Ver Menú" en negro `#010101` con texto e icono en amarillo `text-yellow-400`.
+     - Eliminación del spinner naranja en el desvío de usuario con sesión activa, mostrando de forma instantánea y elegante `<SkeletonLoginPage />`.
+- Fuente: Instrucción explícita del usuario ("todas las pantallas de carga de todos los modulos deben tener el skeleton. ABSOLUTAMENTE TODAS. Y AL LOGIN TMB PONLE LOS COLORES QUE TE DIJE Q LE PONGAS A LOS PADRES. EL BOTON PUEDE SER AMARILLO CON LETRA NEGRA NOSE YA TU VE").
+- Impacto:
+  - `src/components/Skeleton.tsx`
+  - `src/app/login/page.tsx`
+  - `src/app/login/loading.tsx`
+  - `src/app/superadmin/analytics/page.tsx`
+  - `src/app/superadmin/analytics/loading.tsx`
+  - `src/app/superadmin/page.tsx`
+  - `src/app/superadmin/loading.tsx`
+  - `src/app/superadmin/cocina/loading.tsx`
+  - `src/app/superadmin/despacho/loading.tsx`
+  - `src/app/superadmin/fiado/loading.tsx`
+  - `src/app/superadmin/pedido-manual/loading.tsx`
+  - `src/app/admin/loading.tsx`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/cocina/loading.tsx`
+  - `src/app/admin/despacho/loading.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/app/admin/fiado/loading.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/app/admin/pedido-manual/loading.tsx`
+  - `src/app/padres/loading.tsx`
+  - `src/app/padres/page.tsx`
+  - `src/app/padres/pedidos/loading.tsx`
+  - `src/app/padres/deudas/page.tsx`
+  - `src/app/padres/deudas/loading.tsx`
+  - `src/app/padres/hijos/page.tsx`
+  - `src/app/padres/hijos/loading.tsx`
+  - `src/app/padres/perfil/loading.tsx`
+  - `MEMORY.md`
+
 
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)

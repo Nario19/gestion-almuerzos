@@ -25,7 +25,7 @@ import {
   User,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { SkeletonPedidosPage } from '@/components/Skeleton';
+import { SkeletonPedidosPage, Skeleton } from '@/components/Skeleton';
 import { dataService, CONFIG_PAGOS_DEFAULT } from '@/lib/dataService';
 import {
   obtenerFechaHoyPeru,
@@ -530,8 +530,19 @@ export default function DeudasPage() {
 
       {/* Lista de Pedidos Fiados */}
       {cargando ? (
-        <div className="py-12 text-center text-xs text-zinc-400">
-          Cargando registros de deudas...
+        <div className="space-y-3.5 animate-pulse" aria-busy="true" aria-label="Cargando deudas...">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-4 space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-100">
+                <Skeleton className="h-4 w-28 rounded-md" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4 rounded-md" />
+                <Skeleton className="h-3 w-1/2 rounded-md" />
+              </div>
+            </Card>
+          ))}
         </div>
       ) : fiadosFiltrados.length === 0 ? (
         <Card className="p-8 text-center space-y-3">

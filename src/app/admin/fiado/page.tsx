@@ -30,7 +30,7 @@ import { dataService, CONFIG_PAGOS_DEFAULT } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
-import { SkeletonDashboardPage } from '@/components/Skeleton';
+import { SkeletonDashboardPage, Skeleton } from '@/components/Skeleton';
 import {
   obtenerFechaHoyPeru,
   formatearFechaLegiblePeru,
@@ -786,10 +786,17 @@ export default function FiadoPage() {
 
       {/* LISTADO DE PADRES Y ALMUERZOS FIADOS */}
       {cargando ? (
-        <div className="py-20 text-center bg-white rounded-3xl border border-slate-200">
-          <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs font-semibold text-slate-500">Cargando estado de fiados...</p>
-        </div>
+        <Card className="p-6 space-y-4 shadow-xs" aria-busy="true" aria-label="Cargando estado de fiados...">
+          <div className="flex justify-between items-center pb-3 border-b border-zinc-100">
+            <Skeleton className="h-5 w-48 rounded-md" />
+            <Skeleton className="h-5 w-24 rounded-md" />
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
+          </div>
+        </Card>
       ) : fiadosFiltrados.length === 0 ? (
         <Card className="p-8 sm:p-12 text-center">
           <EmptyState

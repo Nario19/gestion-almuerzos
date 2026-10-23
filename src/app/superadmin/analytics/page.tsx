@@ -30,6 +30,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { SkeletonAnalyticsPage } from '@/components/Skeleton';
 
 type PeriodoFiltro = 'HOY' | 'SEMANA' | 'MES' | 'HISTORICO';
 
@@ -159,7 +160,11 @@ export default function SuperadminAnalyticsPage() {
     URL.revokeObjectURL(url);
   };
 
-  if (cargandoAuth || !esSuperAdmin) {
+  if (cargandoAuth) {
+    return <SkeletonAnalyticsPage />;
+  }
+
+  if (!esSuperAdmin) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-12 text-center text-xs text-zinc-400">
         Verificando permisos de Super Administrador...
@@ -269,10 +274,7 @@ export default function SuperadminAnalyticsPage() {
       </Card>
 
       {cargando ? (
-        <div className="py-20 text-center">
-          <div className="w-8 h-8 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs text-zinc-500 font-medium">Analizando datos y métricas del sistema...</p>
-        </div>
+        <SkeletonAnalyticsPage />
       ) : !metricas ? (
         <div className="py-16 text-center text-xs text-zinc-500">No se pudieron cargar las métricas.</div>
       ) : (

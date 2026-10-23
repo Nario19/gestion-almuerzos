@@ -39,7 +39,7 @@ import {
 import confetti from 'canvas-confetti';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';
 import { subirImagenACloudinary } from '@/lib/cloudinaryService';
-import { SkeletonHomePage } from '@/components/Skeleton';
+import { SkeletonHomePage, Skeleton } from '@/components/Skeleton';
 import {
   dataService,
   OBSERVACIONES_DEFAULT,
@@ -988,7 +988,10 @@ function PedidoContent() {
             </div>
 
             {cargandoPlatos ? (
-              <p className="text-xs text-zinc-400 py-6 text-center font-medium">Cargando opciones...</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2 animate-pulse">
+                <Skeleton className="h-44 w-full rounded-lg" />
+                <Skeleton className="h-44 w-full rounded-lg" />
+              </div>
             ) : sopas.length === 0 ? (
               <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin opciones de sopa para este día.</p>
             ) : (
@@ -1048,7 +1051,10 @@ function PedidoContent() {
             </div>
 
             {cargandoPlatos ? (
-              <p className="text-xs text-zinc-400 py-6 text-center font-medium">Cargando opciones...</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2 animate-pulse">
+                <Skeleton className="h-44 w-full rounded-lg" />
+                <Skeleton className="h-44 w-full rounded-lg" />
+              </div>
             ) : ensaladas.length === 0 ? (
               <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin opciones de ensalada para este día.</p>
             ) : (
@@ -1108,7 +1114,10 @@ function PedidoContent() {
             </div>
 
             {cargandoPlatos ? (
-              <p className="text-xs text-zinc-400 py-6 text-center font-medium">Cargando opciones...</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2 animate-pulse">
+                <Skeleton className="h-48 w-full rounded-lg" />
+                <Skeleton className="h-48 w-full rounded-lg" />
+              </div>
             ) : segundos.length === 0 ? (
               <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin platos de fondo para este día.</p>
             ) : (
@@ -1389,7 +1398,10 @@ function PedidoContent() {
           <span className="sr-only">1. Sopa o Ensalada ({diaSeleccionado})</span>
 
           {cargandoPlatos ? (
-            <div className="py-6 text-center text-xs text-zinc-400 font-medium">Cargando opciones...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 py-2 animate-pulse">
+              <Skeleton className="h-28 w-full rounded-lg" />
+              <Skeleton className="h-28 w-full rounded-lg" />
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* OPCIÓN: SIN ENTRADA / SOPA */}
@@ -1499,7 +1511,10 @@ function PedidoContent() {
           </div>
 
           {cargandoPlatos ? (
-            <div className="py-6 text-center text-xs text-zinc-400 font-medium">Cargando opciones...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 py-2 animate-pulse">
+              <Skeleton className="h-32 w-full rounded-lg" />
+              <Skeleton className="h-32 w-full rounded-lg" />
+            </div>
           ) : segundos.length === 0 ? (
             <p className="text-xs text-zinc-400 py-3 text-center font-medium">No hay segundos registrados para este día.</p>
           ) : (
@@ -1569,7 +1584,10 @@ function PedidoContent() {
           </div>
 
           {cargandoPlatos ? (
-            <div className="py-6 text-center text-xs text-zinc-400 font-medium">Cargando opciones...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 py-2 animate-pulse">
+              <Skeleton className="h-28 w-full rounded-lg" />
+              <Skeleton className="h-28 w-full rounded-lg" />
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* OPCIÓN: SIN ENSALADA */}

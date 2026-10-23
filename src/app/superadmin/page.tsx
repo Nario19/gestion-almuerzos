@@ -50,7 +50,7 @@ import {
 import { formatearHoraLimiteLegible } from '@/lib/dateUtils';
 import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
-import { SkeletonDashboardPage } from '@/components/Skeleton';
+import { SkeletonDashboardPage, Skeleton } from '@/components/Skeleton';
 import { ColegioDetallado, AdminColegioInfo, EstudianteColegioInfo, ConfiguracionPagos } from '@/types';
 import PageHeader from '@/components/shared/PageHeader';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -1032,9 +1032,16 @@ export default function SuperAdminPage() {
         </div>
 
         {cargandoDatos ? (
-          <Card className="p-12 text-center">
-            <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs font-semibold text-zinc-500">Cargando colegios y administradores...</p>
+          <Card className="p-6 space-y-4 shadow-xs" aria-busy="true" aria-label="Cargando colegios y administradores...">
+            <div className="flex justify-between items-center pb-3 border-b border-zinc-100">
+              <Skeleton className="h-5 w-40 rounded-md" />
+              <Skeleton className="h-5 w-24 rounded-md" />
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-xl" />
+              ))}
+            </div>
           </Card>
         ) : colegiosFiltrados.length === 0 ? (
           <Card className="p-12 text-center space-y-3">
@@ -1670,11 +1677,10 @@ export default function SuperAdminPage() {
             {/* Contenido / Listado con scroll */}
             <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               {modalEstudiantes.cargando ? (
-                <div className="py-16 text-center">
-                  <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                  <p className="text-xs font-semibold text-zinc-500">
-                    Consultando lista de hijos asociados a este colegio...
-                  </p>
+                <div className="space-y-3 py-4" aria-busy="true" aria-label="Consultando estudiantes...">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                  ))}
                 </div>
               ) : (() => {
                 const q = modalEstudiantes.busquedaEstudiante.toLowerCase().trim();

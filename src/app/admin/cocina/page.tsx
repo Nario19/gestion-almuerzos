@@ -133,7 +133,7 @@ export default function CocinaPage() {
     paginaValidaObs * obsPorPagina
   );
 
-  if (cargandoAuth) {
+  if (cargandoAuth || (cargando && pedidos.length === 0)) {
     return <SkeletonDashboardPage />;
   }
 

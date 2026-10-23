@@ -285,3 +285,79 @@ export function SkeletonLoginPage() {
     </div>
   );
 }
+
+/**
+ * Skeleton para la pantalla de Analítica y Business Intelligence (/superadmin/analytics).
+ */
+export function SkeletonAnalyticsPage() {
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-28 space-y-6 animate-in fade-in duration-200" aria-busy="true" aria-label="Cargando analítica...">
+      {/* Cabecera */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-48 rounded-md" />
+          <Skeleton className="h-7 w-64 rounded-lg" />
+          <Skeleton className="h-4 w-96 rounded-md" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-28 rounded-lg" />
+          <Skeleton className="h-9 w-9 rounded-lg" />
+        </div>
+      </div>
+
+      {/* Barra de Filtros */}
+      <div className="bg-white p-4 rounded-xl border border-zinc-200/90 shadow-xs flex flex-col md:flex-row justify-between gap-4">
+        <div className="flex gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-8 w-24 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-8 w-48 rounded-lg" />
+      </div>
+
+      {/* 4 KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs space-y-3">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-3 w-24 rounded-md" />
+              <Skeleton className="w-8 h-8 rounded-lg" />
+            </div>
+            <Skeleton className="h-8 w-32 rounded-md" />
+            <Skeleton className="h-3 w-28 rounded-md" />
+          </div>
+        ))}
+      </div>
+
+      {/* Grids de análisis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-zinc-100">
+              <Skeleton className="h-5 w-48 rounded-md" />
+              <Skeleton className="h-5 w-16 rounded-md" />
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((j) => (
+                <Skeleton key={j} className="h-12 w-full rounded-lg" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Comparativa por Colegio */}
+      <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs space-y-4">
+        <div className="flex justify-between items-center pb-3 border-b border-zinc-100">
+          <Skeleton className="h-5 w-56 rounded-md" />
+          <Skeleton className="h-5 w-20 rounded-md" />
+        </div>
+        <div className="space-y-2.5">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
