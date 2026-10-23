@@ -35,6 +35,13 @@ import {
   formatearFechaEmisionPeru,
 } from '@/lib/dateUtils';
 import { Pedido, EstadoPedido, EstadoPago, FiltroGrados } from '@/types';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { StatCard } from '@/components/shared/StatCard';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 export type FiltroEstadoPedido =
   | 'TODOS'
@@ -446,179 +453,156 @@ export default function DespachoPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-20">
-      {/* Barra de Herramientas de Despacho (Imprimir y Exportar) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 print:hidden">
-        <div className="flex items-center gap-2">
-          {!esSuperAdmin && usuario?.colegioNombre ? (
-            <span className="hidden">
-              🏫 Colegio: {usuario.colegioNombre}
-            </span>
-          ) : null}
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
+      {/* Encabezado Principal de Despacho */}
+      <PageHeader
+        title="Control de Despacho"
+        description="Empaque y entrega de almuerzos en colegios, validación de pagos y control de entrega en tiempo real."
+        actions={
+          <div className="flex items-center gap-2">
+            {!esSuperAdmin && usuario?.colegioNombre ? (
+              <span className="hidden">
+                🏫 Colegio: {usuario.colegioNombre}
+              </span>
+            ) : null}
 
-        <div className="flex items-center gap-2">
-          {/* Botón Imprimir Lista (Genera y descarga en Excel con las 5 columnas) */}
-          <button
-            onClick={exportarExcel}
-            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition cursor-pointer"
-            title="Descarga el listado en formato Excel con N°, Grado y Sección, Nombres, Pedido y Pago"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            Imprimir Lista (Excel)
-          </button>
+            {/* Botón Imprimir Lista (Genera y descarga en Excel con las 5 columnas) */}
+            <Button
+              variant="default"
+              size="sm"
+              onClick={exportarExcel}
+              className="gap-2 h-8 text-xs font-semibold"
+              title="Descarga el listado en formato Excel con N°, Grado y Sección, Nombres, Pedido y Pago"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Imprimir Lista (Excel)</span>
+            </Button>
 
-          {/* Botón secundario para imprimir a papel / PDF */}
-          <button
-            onClick={imprimir}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
-            title="Imprimir directamente en papel o PDF"
-          >
-            <Printer className="w-3.5 h-3.5 text-zinc-500" />
-            Imprimir
-          </button>
-        </div>
-      </div>
+            {/* Botón secundario para imprimir a papel / PDF */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={imprimir}
+              className="gap-1.5 h-8 text-xs font-semibold"
+              title="Imprimir directamente en papel o PDF"
+            >
+              <Printer className="w-3.5 h-3.5 text-zinc-500" />
+              <span>Imprimir</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Métricas Resumen - Interactivas como filtros rápidos */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 print:hidden">
-        <button
-          type="button"
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 print:hidden">
+        <StatCard
+          label="Total Pedidos"
+          value={pedidosActivos.length}
+          subtext={cancelados > 0 ? `(${cancelados} cancelado${cancelados > 1 ? 's' : ''})` : "Órdenes activas"}
+          icon={PackageCheck}
+          variant="default"
           onClick={() => {
             setFiltroEstado('TODOS');
             setPaginaActual(1);
           }}
-          className={`text-left p-3.5 sm:p-4 rounded-xl border transition cursor-pointer shadow-xs ${
-            filtroEstado === 'TODOS'
-              ? 'bg-zinc-50/70 border-zinc-950 ring-1 ring-zinc-950'
-              : 'bg-white border-zinc-200 hover:border-zinc-300'
-          }`}
-          title="Clic para ver todos los pedidos"
-        >
-          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Total Pedidos</span>
-          <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 mt-1 flex items-baseline gap-1.5">
-            <span>{pedidosActivos.length}</span>
-            {cancelados > 0 && (
-              <span className="text-xs font-semibold text-rose-600">
-                ({cancelados} cancelado{cancelados > 1 ? 's' : ''})
-              </span>
-            )}
-          </div>
-        </button>
+          active={filtroEstado === 'TODOS'}
+        />
 
-        <button
-          type="button"
+        <StatCard
+          label="Entregados"
+          value={entregados}
+          subtext="Almuerzos entregados"
+          icon={CheckCircle}
+          variant="success"
           onClick={() => {
             setFiltroEstado((prev) => (prev === 'ENTREGADOS' ? 'TODOS' : 'ENTREGADOS'));
             setPaginaActual(1);
           }}
-          className={`text-left p-3.5 sm:p-4 rounded-xl border transition cursor-pointer shadow-xs ${
-            filtroEstado === 'ENTREGADOS'
-              ? 'bg-emerald-50/70 border-emerald-600 ring-1 ring-emerald-600'
-              : 'bg-white border-zinc-200 hover:border-zinc-300'
-          }`}
-          title="Clic para filtrar por pedidos entregados"
-        >
-          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Entregados</span>
-          <div className="text-xl sm:text-2xl font-bold tracking-tight text-emerald-700 mt-1">{entregados}</div>
-        </button>
+          active={filtroEstado === 'ENTREGADOS'}
+        />
 
-        <button
-          type="button"
+        <StatCard
+          label="Falta Entregar"
+          value={faltaEntregar}
+          subtext="Listos por entregar"
+          icon={Clock}
+          variant="warning"
           onClick={() => {
             setFiltroEstado((prev) => (prev === 'PENDIENTES_ENTREGA' ? 'TODOS' : 'PENDIENTES_ENTREGA'));
             setPaginaActual(1);
           }}
-          className={`text-left p-3.5 sm:p-4 rounded-xl border transition cursor-pointer shadow-xs ${
-            filtroEstado === 'PENDIENTES_ENTREGA'
-              ? 'bg-amber-50/70 border-amber-600 ring-1 ring-amber-600'
-              : 'bg-white border-zinc-200 hover:border-zinc-300'
-          }`}
-          title="Clic para filtrar por pedidos que faltan entregar"
-        >
-          <span className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Falta Entregar</span>
-          <div className="text-xl sm:text-2xl font-bold tracking-tight text-amber-700 mt-1">{faltaEntregar}</div>
-        </button>
+          active={filtroEstado === 'PENDIENTES_ENTREGA'}
+        />
 
-        <button
-          type="button"
+        <StatCard
+          label="Pagados / Por Cobrar"
+          value={`${pagados} / ${pendientesPago}`}
+          subtext="Confirmados vs pendientes"
+          icon={DollarSign}
+          variant="default"
           onClick={() => {
             setFiltroEstado((prev) =>
               prev === 'NO_PAGADOS' ? 'PAGADOS' : prev === 'PAGADOS' ? 'TODOS' : 'NO_PAGADOS'
             );
             setPaginaActual(1);
           }}
-          className={`text-left p-3.5 sm:p-4 rounded-xl border transition cursor-pointer shadow-xs ${
-            filtroEstado === 'PAGADOS' || filtroEstado === 'NO_PAGADOS'
-              ? 'bg-zinc-100 border-zinc-950 ring-1 ring-zinc-950'
-              : 'bg-white border-zinc-200 hover:border-zinc-300'
-          }`}
-          title="Clic para alternar filtro entre No Pagados, Pagados y Todos"
-        >
-          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Pagados / Por Cobrar</span>
-          <div className="text-sm sm:text-base font-bold tracking-tight text-zinc-950 mt-1">
-            <span className={filtroEstado === 'PAGADOS' ? 'underline decoration-2 text-emerald-600' : 'text-emerald-600'}>
-              {pagados}
-            </span>
-            <span className="text-zinc-400 mx-1">/</span>
-            <span className={filtroEstado === 'NO_PAGADOS' ? 'underline decoration-2 text-rose-600' : 'text-rose-600'}>
-              {pendientesPago}
-            </span>
-          </div>
-        </button>
+          active={filtroEstado === 'PAGADOS' || filtroEstado === 'NO_PAGADOS'}
+        />
       </div>
 
-      {/* Barra de Filtros y Buscador */}
-      <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-xs mb-6 space-y-3.5 print:hidden">
-        {/* Buscador */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
-          <input
-            type="text"
-            placeholder="Buscar por estudiante, grado o código (#ALM)..."
-            value={busqueda}
-            onChange={(e) => {
-              setBusqueda(e.target.value);
-              setPaginaActual(1);
-            }}
-            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 focus:outline-hidden transition"
-          />
-        </div>
-
-        {/* Filtro de Calendario / Fecha */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-              <CalendarIcon className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                Filtrar por Fecha (Calendario)
-              </span>
-              <span className="text-xs sm:text-sm font-black text-slate-800 capitalize">
-                {formatearFechaLegible(fechaFiltro)}
-                {fechaFiltro === fechaHoy && (
-                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider">
-                    Hoy
-                  </span>
-                )}
-              </span>
-            </div>
+      {/* Barra de Filtros y Buscador Unificada */}
+      <Card className="mb-6 print:hidden">
+        <CardContent className="p-4 sm:p-5 space-y-4">
+          {/* Buscador */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              placeholder="Buscar por estudiante, grado o código (#ALM)..."
+              value={busqueda}
+              onChange={(e) => {
+                setBusqueda(e.target.value);
+                setPaginaActual(1);
+              }}
+              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden transition"
+            />
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* Navegación Día Anterior */}
-            <button
-              type="button"
-              onClick={() => cambiarDia(-1)}
-              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
-              title="Día anterior"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+          {/* Filtro de Calendario / Fecha */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-zinc-50/70 p-3 rounded-xl border border-zinc-200/80">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center shrink-0">
+                <CalendarIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block">
+                  Filtrar por Fecha (Calendario)
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-zinc-950 capitalize">
+                  {formatearFechaLegible(fechaFiltro)}
+                  {fechaFiltro === fechaHoy && (
+                    <Badge variant="success" className="ml-2 text-[10px] uppercase tracking-wider py-0 px-2 font-bold">
+                      Hoy
+                    </Badge>
+                  )}
+                </span>
+              </div>
+            </div>
 
-            {/* Input nativo de Calendario */}
-            <div className="relative flex items-center">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Navegación Día Anterior */}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => cambiarDia(-1)}
+                title="Día anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+
+              {/* Input nativo de Calendario */}
               <input
                 type="date"
                 value={fechaFiltro === 'TODAS' ? '' : fechaFiltro}
@@ -626,188 +610,162 @@ export default function DespachoPage() {
                   setFechaFiltro(e.target.value || fechaHoy);
                   setPaginaActual(1);
                 }}
-                className="bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                className="h-8 bg-white border border-zinc-200 text-zinc-800 text-xs font-medium rounded-md px-2.5 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden cursor-pointer shadow-2xs"
                 title="Haz clic para seleccionar cualquier fecha en el calendario"
               />
-            </div>
 
-            {/* Navegación Día Siguiente */}
-            <button
-              type="button"
-              onClick={() => cambiarDia(1)}
-              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer shadow-2xs"
-              title="Día siguiente"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-
-            {/* Botón rápido HOY */}
-            <button
-              type="button"
-              onClick={() => {
-                setFechaFiltro(fechaHoy);
-                setPaginaActual(1);
-              }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                fechaFiltro === fechaHoy
-                  ? 'bg-orange-500 text-white shadow-xs'
-                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Hoy
-            </button>
-
-            {/* Botón Ver Todas las Fechas */}
-            <button
-              type="button"
-              onClick={() => {
-                setFechaFiltro('TODAS');
-                setPaginaActual(1);
-              }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                fechaFiltro === 'TODAS'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Todas las Fechas
-            </button>
-          </div>
-        </div>
-
-        {/* Filtro Dinámico de Colegios: Exclusivo para Super Administrador */}
-        {esSuperAdmin && (
-          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
-            <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
-              <Filter className="w-3.5 h-3.5 text-emerald-600" /> Colegio:
-            </span>
-            {['TODOS', ...colegios].map((c) => (
-              <button
-                key={c}
+              {/* Navegación Día Siguiente */}
+              <Button
                 type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => cambiarDia(1)}
+                title="Día siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+
+              {/* Botón rápido HOY */}
+              <Button
+                type="button"
+                variant={fechaFiltro === fechaHoy ? "default" : "outline"}
+                size="sm"
+                className="h-8 px-3 text-xs"
                 onClick={() => {
-                  setColegioFiltro(c);
+                  setFechaFiltro(fechaHoy);
                   setPaginaActual(1);
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer ${
-                  colegioActivo === c
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
               >
-                {c}
-              </button>
-            ))}
-          </div>
-        )}
+                Hoy
+              </Button>
 
-        {/* Filtro Dinámico de Grupos de Grados (Personalizados por Colegio) */}
-        {filtrosGrados.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
-            <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
-              <GraduationCap className="w-3.5 h-3.5 text-indigo-600" /> Filtro de Grados:
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setFiltroGradosSeleccionado('TODOS');
-                setPaginaActual(1);
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
-                filtroGradosSeleccionado === 'TODOS'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <span>Todos los Grados</span>
-            </button>
-            {filtrosGrados.map((fg) => {
-              const activo = filtroGradosSeleccionado === fg.id;
-              const conteo = conteoPorFiltroGrado[fg.id] ?? 0;
-              return (
-                <button
-                  key={fg.id}
+              {/* Botón Ver Todas las Fechas */}
+              <Button
+                type="button"
+                variant={fechaFiltro === 'TODAS' ? "default" : "outline"}
+                size="sm"
+                className="h-8 px-3 text-xs"
+                onClick={() => {
+                  setFechaFiltro('TODAS');
+                  setPaginaActual(1);
+                }}
+              >
+                Todas las Fechas
+              </Button>
+            </div>
+          </div>
+
+          {/* Filtro Dinámico de Colegios: Exclusivo para Super Administrador */}
+          {esSuperAdmin && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-zinc-100">
+              <span className="text-xs text-zinc-500 font-semibold px-1 flex items-center gap-1.5 shrink-0">
+                <Filter className="w-3.5 h-3.5 text-zinc-600" /> Colegio:
+              </span>
+              {['TODOS', ...colegios].map((c) => (
+                <Button
+                  key={c}
                   type="button"
+                  variant={colegioActivo === c ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 text-xs px-2.5"
                   onClick={() => {
-                    setFiltroGradosSeleccionado((prev) => (prev === fg.id ? 'TODOS' : fg.id));
+                    setColegioFiltro(c);
                     setPaginaActual(1);
                   }}
-                  title={`Grados incluidos: ${fg.grados.join(', ')}`}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
-                    activo
-                      ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-600/30'
-                      : 'bg-indigo-50/80 text-indigo-800 hover:bg-indigo-100 border border-indigo-200/60'
-                  }`}
                 >
-                  <span>{fg.nombre}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                      activo
-                        ? 'bg-white/20 text-white'
-                        : 'bg-indigo-100 text-indigo-900 border border-indigo-200'
-                    }`}
+                  {c}
+                </Button>
+              ))}
+            </div>
+          )}
+
+          {/* Filtro Dinámico de Grupos de Grados (Personalizados por Colegio) */}
+          {filtrosGrados.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-zinc-100">
+              <span className="text-xs text-zinc-500 font-semibold px-1 flex items-center gap-1.5 shrink-0">
+                <GraduationCap className="w-3.5 h-3.5 text-zinc-700" /> Filtro de Grados:
+              </span>
+              <Button
+                type="button"
+                variant={filtroGradosSeleccionado === 'TODOS' ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs px-2.5"
+                onClick={() => {
+                  setFiltroGradosSeleccionado('TODOS');
+                  setPaginaActual(1);
+                }}
+              >
+                <span>Todos los Grados</span>
+              </Button>
+              {filtrosGrados.map((fg) => {
+                const activo = filtroGradosSeleccionado === fg.id;
+                const conteo = conteoPorFiltroGrado[fg.id] ?? 0;
+                return (
+                  <Button
+                    key={fg.id}
+                    type="button"
+                    variant={activo ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs px-2.5 gap-1.5"
+                    onClick={() => {
+                      setFiltroGradosSeleccionado((prev) => (prev === fg.id ? 'TODOS' : fg.id));
+                      setPaginaActual(1);
+                    }}
+                    title={`Grados incluidos: ${fg.grados.join(', ')}`}
                   >
-                    {conteo}
-                  </span>
-                </button>
+                    <span>{fg.nombre}</span>
+                    <Badge
+                      variant={activo ? "secondary" : "outline"}
+                      className="text-[10px] py-0 px-1.5 font-bold"
+                    >
+                      {conteo}
+                    </Badge>
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Filtro Dinámico por Estado del Pedido (Para Administradores y Super Administrador) */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-zinc-100">
+            <span className="text-xs text-zinc-500 font-semibold px-1 flex items-center gap-1.5 shrink-0">
+              <Filter className="w-3.5 h-3.5 text-zinc-600" /> Estado:
+            </span>
+            {[
+              { id: 'TODOS', label: 'Todos', count: total },
+              { id: 'ENTREGADOS', label: 'Entregados', count: entregados },
+              { id: 'PENDIENTES_ENTREGA', label: 'Falta Entregar', count: faltaEntregar },
+              { id: 'PAGADOS', label: 'Pagados', count: pagados },
+              { id: 'NO_PAGADOS', label: 'No Pagados', count: pendientesPago },
+              { id: 'CANCELADOS', label: 'Cancelados', count: cancelados },
+            ].map((item) => {
+              const activo = filtroEstado === item.id;
+              return (
+                <Button
+                  key={item.id}
+                  type="button"
+                  variant={activo ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 text-xs px-2.5 gap-1.5"
+                  onClick={() => {
+                    setFiltroEstado(item.id as FiltroEstadoPedido);
+                    setPaginaActual(1);
+                  }}
+                >
+                  <span>{item.label}</span>
+                  <Badge
+                    variant={activo ? "secondary" : "outline"}
+                    className="text-[10px] py-0 px-1.5 font-bold"
+                  >
+                    {item.count}
+                  </Badge>
+                </Button>
               );
             })}
           </div>
-        )}
-
-        {/* Filtro Dinámico por Estado del Pedido (Para Administradores y Super Administrador) */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
-          <span className="text-xs text-slate-500 font-bold px-1 flex items-center gap-1.5 shrink-0">
-            <Filter className="w-3.5 h-3.5 text-orange-500" /> Estado:
-          </span>
-          {[
-            { id: 'TODOS', label: 'Todos', count: total },
-            { id: 'ENTREGADOS', label: 'Entregados', count: entregados },
-            { id: 'PENDIENTES_ENTREGA', label: 'Falta Entregar', count: faltaEntregar },
-            { id: 'PAGADOS', label: 'Pagados', count: pagados },
-            { id: 'NO_PAGADOS', label: 'No Pagados', count: pendientesPago },
-            { id: 'CANCELADOS', label: 'Cancelados', count: cancelados },
-          ].map((item) => {
-            const activo = filtroEstado === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setFiltroEstado(item.id as FiltroEstadoPedido);
-                  setPaginaActual(1);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
-                  activo
-                    ? item.id === 'CANCELADOS'
-                      ? 'bg-rose-600 text-white shadow-xs'
-                      : item.id === 'NO_PAGADOS'
-                      ? 'bg-rose-600 text-white shadow-xs'
-                      : item.id === 'PENDIENTES_ENTREGA'
-                      ? 'bg-amber-600 text-white shadow-xs'
-                      : item.id === 'ENTREGADOS'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : item.id === 'PAGADOS'
-                      ? 'bg-purple-600 text-white shadow-xs'
-                      : 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                <span>{item.label}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                    activo
-                      ? 'bg-white/20 text-white'
-                      : 'bg-white text-slate-600 border border-slate-200'
-                  }`}
-                >
-                  {item.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Encabezado para impresión física */}
       <div className="hidden print:block mb-4">
@@ -819,85 +777,87 @@ export default function DespachoPage() {
 
       {/* Lista / Reporte con estructura de columnas solicitada: N°, Grado y Sección, Nombres, Pedido, Pago */}
       {Object.keys(gruposColegio).length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs">
-          <PackageCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm font-bold text-slate-800">
-            No se encontraron pedidos {filtroEstado !== 'TODOS' ? `en estado "${filtroEstado.toLowerCase().replace('_', ' ')}"` : ''} para el {formatearFechaLegible(fechaFiltro)}
-          </p>
-          <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-            {fechaFiltro === fechaHoy
-              ? 'No hay almuerzos registrados con los filtros seleccionados actualmente.'
-              : 'No hay pedidos programados para esta fecha con los filtros seleccionados.'}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-            {filtroEstado !== 'TODOS' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFiltroEstado('TODOS');
-                  setPaginaActual(1);
-                }}
-                className="px-3.5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition cursor-pointer shadow-xs"
-              >
-                Ver Todos los Estados
-              </button>
-            )}
-            {fechaFiltro !== fechaHoy && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFechaFiltro(fechaHoy);
-                  setPaginaActual(1);
-                }}
-                className="px-3.5 py-2 text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition cursor-pointer shadow-xs"
-              >
-                Ver Pedidos de Hoy
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                setFechaFiltro('TODAS');
-                setPaginaActual(1);
-              }}
-              className="px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer"
-            >
-              Ver Todas las Fechas
-            </button>
-          </div>
-        </div>
+        <Card className="p-8 sm:p-12 text-center">
+          <EmptyState
+            icon={PackageCheck}
+            title={`No se encontraron pedidos ${filtroEstado !== 'TODOS' ? `en estado "${filtroEstado.toLowerCase().replace('_', ' ')}"` : ''}`}
+            description={`No hay almuerzos registrados para el ${formatearFechaLegible(fechaFiltro)} con los filtros seleccionados.`}
+            className="border-none p-0"
+            action={
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                {filtroEstado !== 'TODOS' && (
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      setFiltroEstado('TODOS');
+                      setPaginaActual(1);
+                    }}
+                  >
+                    Ver Todos los Estados
+                  </Button>
+                )}
+                {fechaFiltro !== fechaHoy && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFechaFiltro(fechaHoy);
+                      setPaginaActual(1);
+                    }}
+                  >
+                    Ver Pedidos de Hoy
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFechaFiltro('TODAS');
+                    setPaginaActual(1);
+                  }}
+                >
+                  Ver Todas las Fechas
+                </Button>
+              </div>
+            }
+          />
+        </Card>
       ) : (
         <div className="space-y-6">
           {Object.entries(gruposColegio).map(([colegioNombre, listaPedidos]) => (
-            <div
+            <Card
               key={colegioNombre}
-              className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden"
+              className="overflow-hidden"
             >
               {/* Encabezado del Colegio */}
-              <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+              <CardHeader className="bg-zinc-50/70 px-5 py-3.5 border-b border-zinc-100 flex flex-row items-center justify-between space-y-0">
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
-                  <h2 className="text-sm sm:text-base font-black text-slate-900">{colegioNombre}</h2>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                  <CardTitle className="text-sm sm:text-base font-bold text-zinc-950">{colegioNombre}</CardTitle>
                 </div>
-                <span className="text-xs font-bold px-2.5 py-1 bg-white border border-slate-200 text-slate-700 rounded-xl">
+                <Badge variant="secondary" className="font-semibold text-xs">
                   {listaPedidos.length} alumnos
-                </span>
-              </div>
+                </Badge>
+              </CardHeader>
 
               {/* Tabla con la estructura de reporte solicitada: N°, Grado y Sección, Nombres, Pedido, Pago (+ Acción Empaque) */}
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[700px]">
-                  <thead>
-                    <tr className="bg-slate-100/75 text-slate-600 uppercase text-[11px] font-black tracking-wider border-b border-slate-200">
-                      <th className="py-3 px-4 text-center w-28">N° Almuerzo / Hora</th>
-                      <th className="py-3 px-4 w-40">Grado y Sección</th>
-                      <th className="py-3 px-4 w-48">Nombres</th>
-                      <th className="py-3 px-4">Pedido</th>
-                      <th className="py-3 px-4 w-44">Pago</th>
-                      <th className="py-3 px-4 text-left w-44 print:hidden">Entrega</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
+                <Table className="min-w-[700px]">
+                  <TableHeader>
+                    <TableRow className="border-b border-zinc-100 hover:bg-transparent">
+                      <TableHead className="py-3 px-4 text-center w-28 text-xs font-semibold text-zinc-500">N° Almuerzo / Hora</TableHead>
+                      <TableHead className="py-3 px-4 w-40 text-xs font-semibold text-zinc-500">Grado y Sección</TableHead>
+                      <TableHead className="py-3 px-4 w-48 text-xs font-semibold text-zinc-500">Nombres</TableHead>
+                      <TableHead className="py-3 px-4 text-xs font-semibold text-zinc-500">Pedido</TableHead>
+                      <TableHead className="py-3 px-4 w-44 text-xs font-semibold text-zinc-500">Pago</TableHead>
+                      <TableHead className="py-3 px-4 text-left w-44 print:hidden text-xs font-semibold text-zinc-500">Entrega</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="text-xs sm:text-sm">
                     {listaPedidos.map((p, idx) => {
                       const cancelado = p.estadoPedido === 'CANCELADO';
                       const entregado = p.estadoPedido === 'ENTREGADO';
@@ -906,409 +866,436 @@ export default function DespachoPage() {
                       const numeroAlmuerzo = matchNum ? parseInt(matchNum[1], 10) : (idx + 1);
 
                       return (
-                        <tr
+                        <TableRow
                           key={p.id}
-                          className={`transition-colors ${
+                          className={`transition-colors border-b border-zinc-100/70 ${
                             cancelado
                               ? 'bg-rose-50/40 opacity-80'
                               : entregado
                               ? 'bg-emerald-50/30'
-                              : 'hover:bg-slate-50/50'
+                              : 'hover:bg-zinc-50/50'
                           }`}
                         >
                           {/* Columna: N° y Hora del Pedido */}
-                          <td className="py-3.5 px-4 text-center">
+                          <TableCell className="py-3.5 px-4 text-center">
                             <div className="flex flex-col items-center justify-center">
-                              <span className={`font-mono font-black text-xs sm:text-sm block ${cancelado ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                              <span className={`font-mono font-bold text-xs sm:text-sm block ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-950'}`}>
                                 Almuerzo #{numeroAlmuerzo}
                               </span>
-                              <span className="inline-block text-[10px] font-mono font-black px-2 py-0.5 rounded-md bg-orange-100 text-orange-900 border border-orange-200 mt-0.5">
+                              <Badge variant="outline" className="font-mono font-bold text-[10px] px-1.5 py-0 mt-0.5 border-zinc-200 bg-zinc-50">
                                 #{p.codigoPedido}
-                              </span>
+                              </Badge>
                               {cancelado && (
-                                <span className="inline-block text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-200 mt-1">
+                                <Badge variant="destructive" className="text-[10px] font-bold px-1.5 py-0 mt-1">
                                   CANCELADO
-                                </span>
+                                </Badge>
                               )}
                               <span
-                                className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md mt-1"
+                                className="inline-flex items-center gap-1 text-[10px] font-medium text-zinc-500 mt-1"
                                 title="Hora en que se registró el pedido"
                               >
-                                <Clock className="w-2.5 h-2.5 text-orange-500" />
+                                <Clock className="w-2.5 h-2.5 text-zinc-400" />
                                 {formatearHora(p.createdAt)}
                               </span>
                             </div>
-                          </td>
+                          </TableCell>
 
                           {/* Columna: Grado y Sección */}
-                          <td className="py-3.5 px-4">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700">
+                          <TableCell className="py-3.5 px-4">
+                            <Badge variant="outline" className="px-2 py-0.5 text-xs font-semibold bg-zinc-50 border-zinc-200 text-zinc-700">
                               {p.gradoSeccion}
-                            </span>
-                          </td>
+                            </Badge>
+                          </TableCell>
 
                           {/* Columna: Nombres */}
-                          <td className="py-3.5 px-4">
-                            <div className={`font-black text-xs sm:text-sm ${cancelado ? 'text-slate-500' : 'text-slate-900'}`}>
+                          <TableCell className="py-3.5 px-4">
+                            <div className={`font-bold text-xs sm:text-sm ${cancelado ? 'text-zinc-500' : 'text-zinc-950'}`}>
                               {p.estudianteNombre}
                             </div>
                             {p.padreNombre && (
-                              <div className="text-[11px] text-slate-700 font-bold mt-0.5 flex items-center gap-1">
-                                <span className="text-slate-400 font-normal">Padre:</span> {p.padreNombre}
+                              <div className="text-[11px] text-zinc-600 font-medium mt-0.5 flex items-center gap-1">
+                                <span className="text-zinc-400">Padre:</span> {p.padreNombre}
                               </div>
                             )}
                             {p.telefonoContacto && (
-                              <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                              <div className="text-[11px] text-zinc-400 font-medium mt-0.5">
                                 Tel: {p.telefonoContacto}
                               </div>
                             )}
-                          </td>
+                          </TableCell>
 
                           {/* Columna: Pedido */}
-                          <td className="py-3.5 px-4">
+                          <TableCell className="py-3.5 px-4">
                             <div className="space-y-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
                                   📅 {p.fecha ? p.fecha.slice(0, 10) : p.diaSemana || 'Hoy'}
                                 </span>
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200">
-                                  <Clock className="w-2.5 h-2.5 text-orange-500" />
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
+                                  <Clock className="w-2.5 h-2.5 text-zinc-400" />
                                   {formatearHora(p.createdAt)}
                                 </span>
                               </div>
                               {p.entradaNombre && (
-                                <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                                <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>
                                   <span className="font-semibold text-orange-700">Entrada:</span>{' '}
                                   {p.entradaNombre}
                                 </div>
                               )}
-                              <div className={`text-xs font-medium ${cancelado ? 'line-through text-slate-400' : 'text-slate-800'}`}>
-                                <span className="font-bold text-amber-800">Segundo:</span>{' '}
+                              <div className={`text-xs font-medium ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>
+                                <span className="font-bold text-zinc-900">Segundo:</span>{' '}
                                 {p.segundoNombre}
                               </div>
                               {p.ensaladaNombre && (
-                                <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                                <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>
                                   <span className="font-semibold text-emerald-700">Ensalada:</span>{' '}
                                   {p.ensaladaNombre}
                                 </div>
                               )}
                               {p.refrigerioNombre && (
-                                <div className={`text-xs ${cancelado ? 'line-through text-slate-400' : 'text-emerald-700 font-semibold'}`}>
+                                <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-emerald-700 font-semibold'}`}>
                                   <span className="font-bold text-emerald-800">Extras:</span>{' '}
                                   {p.refrigerioNombre}
                                 </div>
                               )}
                               {p.observacion && (
-                                <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold rounded-md mt-0.5">
-                                  <AlertCircle className="w-3 h-3 shrink-0" />
+                                <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium rounded-md mt-0.5">
+                                  <AlertCircle className="w-3 h-3 text-amber-600 shrink-0" />
                                   <span>Obs: {p.observacion}</span>
                                 </div>
                               )}
                             </div>
-                          </td>
+                          </TableCell>
 
                           {/* Columna: Pago y Aceptación */}
-                          <td className="py-3.5 px-4">
+                          <TableCell className="py-3.5 px-4">
                             <div className="flex flex-col gap-1.5 items-start">
                               {/* Insignia del Método de Pago */}
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 {p.metodoPago === 'Yape' && (
-                                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-purple-600 text-white shadow-xs">
+                                  <Badge className="text-[10px] font-bold bg-purple-600 text-white shadow-xs border-0">
                                     Yape
-                                  </span>
+                                  </Badge>
                                 )}
                                 {p.metodoPago === 'Plin' && (
-                                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-sky-500 text-white shadow-xs">
+                                  <Badge className="text-[10px] font-bold bg-sky-500 text-white shadow-xs border-0">
                                     Plin
-                                  </span>
+                                  </Badge>
                                 )}
                                 {(p.metodoPago === 'Pagar luego' || p.metodoPago === 'Efectivo') && (
-                                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-yellow-400 text-slate-950 shadow-xs">
+                                  <Badge className="text-[10px] font-bold bg-yellow-400 text-slate-950 shadow-xs border-0">
                                     Pagar luego
-                                  </span>
+                                  </Badge>
                                 )}
                                 {!p.metodoPago && (
-                                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-600">
+                                  <Badge variant="secondary" className="text-[10px] font-medium">
                                     Pendiente
-                                  </span>
+                                  </Badge>
                                 )}
                                 {p.comprobanteUrl && (
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => setComprobanteModal(p.comprobanteUrl || null)}
-                                    className="text-[11px] font-bold text-purple-700 hover:underline flex items-center gap-0.5 print:hidden cursor-pointer"
+                                    className="h-6 px-1.5 text-[11px] font-medium text-purple-700 hover:text-purple-800 gap-1 print:hidden"
                                     title="Ver comprobante adjunto"
                                   >
                                     <FileImage className="w-3.5 h-3.5" />
                                     <span>Voucher</span>
-                                  </button>
+                                  </Button>
                                 )}
                               </div>
 
                               {cancelado ? (
-                                <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                <Badge variant="secondary" className="text-xs font-medium text-zinc-500">
                                   Pedido cancelado
-                                </span>
+                                </Badge>
                               ) : pagado ? (
                                 entregado ? (
-                                  <div
-                                    className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default select-none shadow-2xs"
-                                    title="Pago aceptado"
-                                  >
+                                  <Badge variant="success" className="text-xs font-medium gap-1 cursor-default select-none">
                                     <Check className="w-3.5 h-3.5 text-emerald-600" />
                                     <span>Pago aceptado</span>
-                                  </div>
+                                  </Badge>
                                 ) : (
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => handleCambiarPago(p.id, 'PENDIENTE')}
-                                    className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 shadow-2xs"
+                                    className="h-7 text-xs font-semibold gap-1.5 bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
                                     title="Pago aceptado (Clic para revertir si aún no se entregó)"
                                   >
                                     <Check className="w-3.5 h-3.5 text-emerald-700" />
                                     <span>Pago aceptado</span>
-                                  </button>
+                                  </Button>
                                 )
                               ) : p.metodoPago === 'Pagar luego' ? (
-                                <Link
-                                  href={esSuperAdmin ? '/superadmin/fiado' : '/admin/fiado'}
-                                  className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 shadow-2xs"
+                                <Button
+                                  asChild
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs font-semibold gap-1.5 bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100"
                                   title="Este pedido es fiado: se acepta y liquida en el módulo de Fiados"
                                 >
-                                  <Receipt className="w-3.5 h-3.5 text-amber-700" />
-                                  <span>Cobro en Fiado</span>
-                                </Link>
+                                  <Link href={esSuperAdmin ? '/superadmin/fiado' : '/admin/fiado'}>
+                                    <Receipt className="w-3.5 h-3.5 text-amber-700" />
+                                    <span>Cobro en Fiado</span>
+                                  </Link>
+                                </Button>
                               ) : (
-                                <button
+                                <Button
                                   type="button"
+                                  variant="default"
+                                  size="sm"
                                   onClick={() => handleCambiarPago(p.id, 'PAGADO')}
-                                  className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 bg-amber-500 hover:bg-amber-600 text-white shadow-xs"
+                                  className="h-7 text-xs font-semibold gap-1.5"
                                   title="Aceptar pago"
                                 >
                                   <CheckCircle className="w-3.5 h-3.5" />
                                   <span>Aceptar pago</span>
-                                </button>
+                                </Button>
                               )}
                             </div>
-                          </td>
+                          </TableCell>
 
                           {/* Columna: Entrega (al costado de Pago) */}
-                          <td className="py-3.5 px-4 text-left print:hidden">
+                          <TableCell className="py-3.5 px-4 text-left print:hidden">
                             <div className="flex flex-col gap-1 items-start">
                               {cancelado ? (
                                 <>
-                                  <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1">
+                                  <Badge variant="destructive" className="text-xs font-medium gap-1">
                                     <XCircle className="w-3.5 h-3.5" />
-                                    Cancelado
-                                  </span>
-                                  <button
+                                    <span>Cancelado</span>
+                                  </Badge>
+                                  <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => reactivarPedido(p.id)}
-                                    className="text-[11px] font-bold text-slate-600 hover:text-slate-900 underline flex items-center gap-1 mt-1 cursor-pointer transition"
+                                    className="h-6 px-1 text-[11px] font-medium text-zinc-600 hover:text-zinc-950 gap-1 mt-0.5"
                                     title="Reactivar pedido a estado registrado"
                                   >
-                                    <RotateCcw className="w-3 h-3 text-slate-500" />
-                                    Reactivar pedido
-                                  </button>
+                                    <RotateCcw className="w-3 h-3 text-zinc-500" />
+                                    <span>Reactivar pedido</span>
+                                  </Button>
                                 </>
                               ) : entregado ? (
                                 <>
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => handleCambiarEstado(p.id, 'REGISTRADO')}
-                                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
+                                    className="h-7 text-xs font-semibold bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100 gap-1.5"
                                     title="Pedido entregado (Clic para marcar como no entregado)"
                                   >
-                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                                     <span>✓ Entregado</span>
-                                  </button>
+                                  </Button>
                                   {p.horaEntrega ? (
-                                    <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                                    <span className="text-[11px] font-medium text-emerald-700 flex items-center gap-1">
                                       <Clock className="w-3 h-3 text-emerald-600" />
                                       Hora: {p.horaEntrega}
                                     </span>
                                   ) : (
-                                    <span className="text-[10px] text-slate-400">Entregado</span>
+                                    <span className="text-[10px] text-zinc-400">Entregado</span>
                                   )}
                                 </>
                               ) : (p.metodoPago === 'Yape' || p.metodoPago === 'Plin') && !pagado ? (
                                 <>
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() =>
                                       setAlertaBloqueoEntrega(
                                         `No se puede marcar como entregado el pedido #${p.codigoPedido} de ${p.estudianteNombre}: El pago por ${p.metodoPago} debe ser confirmado antes de realizar la entrega.`
                                       )
                                     }
-                                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-300 hover:border-rose-300 flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                                    className="h-7 text-xs font-medium text-zinc-400 hover:text-rose-600 border-zinc-200 hover:border-rose-200 gap-1.5"
                                     title="Bloqueado: Confirma el pago de Yape/Plin antes de entregar"
                                   >
                                     <Lock className="w-3.5 h-3.5 text-rose-500" />
                                     <span>Requiere Pago</span>
-                                  </button>
-                                  <button
+                                  </Button>
+                                  <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => {
                                       setPedidoACancelar(p);
                                       setMotivoCancelacion('');
                                     }}
-                                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1 mt-1 transition cursor-pointer"
+                                    className="h-6 px-1 text-[11px] font-medium text-rose-600 hover:text-rose-800 gap-1 mt-0.5"
                                     title="Cancelar pedido de almuerzo"
                                   >
                                     <XCircle className="w-3 h-3" />
-                                    Cancelar pedido
-                                  </button>
+                                    <span>Cancelar pedido</span>
+                                  </Button>
                                 </>
                               ) : (
                                 <>
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => handleCambiarEstado(p.id, 'ENTREGADO')}
-                                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-300 hover:border-emerald-300 flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
+                                    className="h-7 text-xs font-semibold gap-1.5 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300"
                                     title={
                                       p.metodoPago === 'Pagar luego'
                                         ? 'Marcar como entregado (se registrará en Fiado si aún no está cancelado)'
                                         : 'Marcar como entregado y registrar hora de entrega'
                                     }
                                   >
-                                    <PackageCheck className="w-3.5 h-3.5 text-slate-400" />
+                                    <PackageCheck className="w-3.5 h-3.5 text-zinc-400" />
                                     <span>Marcar Entregado</span>
-                                  </button>
-                                  <button
+                                  </Button>
+                                  <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => {
                                       setPedidoACancelar(p);
                                       setMotivoCancelacion('');
                                     }}
-                                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1 mt-1 transition cursor-pointer"
+                                    className="h-6 px-1 text-[11px] font-medium text-rose-600 hover:text-rose-800 gap-1 mt-0.5"
                                     title="Cancelar pedido de almuerzo"
                                   >
                                     <XCircle className="w-3 h-3" />
-                                    Cancelar pedido
-                                  </button>
+                                    <span>Cancelar pedido</span>
+                                  </Button>
                                 </>
                               )}
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
-            </div>
+            </Card>
           ))}
 
           {/* BARRA DE PAGINACIÓN */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 print:hidden">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-slate-500">
-                Mostrando <strong className="text-slate-800">{totalFiltrados > 0 ? indiceInicio + 1 : 0}</strong> a{' '}
-                <strong className="text-slate-800">{indiceFin}</strong> de{' '}
-                <strong className="text-slate-900">{totalFiltrados}</strong> pedidos
-                {filtroEstado !== 'TODOS' && <span className="text-slate-400 font-semibold ml-1">(filtrados)</span>}
-              </span>
-              <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
-              <label className="flex items-center gap-1.5 text-slate-500 font-medium">
-                <span>Por página:</span>
-                <select
-                  value={porPagina}
-                  onChange={(e) => {
-                    setPorPagina(Number(e.target.value));
-                    setPaginaActual(1);
-                  }}
-                  className="bg-slate-50 border border-slate-200 text-slate-800 font-bold rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </label>
-            </div>
-
-            {totalPaginas > 1 && (
-              <div className="flex items-center gap-1">
-                {/* Botón Primera Página */}
-                <button
-                  type="button"
-                  onClick={() => setPaginaActual(1)}
-                  disabled={paginaValida === 1}
-                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-bold cursor-pointer"
-                  title="Primera página"
-                >
-                  «
-                </button>
-
-                {/* Botón Anterior */}
-                <button
-                  type="button"
-                  onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
-                  disabled={paginaValida === 1}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 font-bold cursor-pointer"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Anterior</span>
-                </button>
-
-                {/* Números de página */}
-                <div className="flex items-center gap-1 mx-1">
-                  {Array.from({ length: totalPaginas }, (_, i) => i + 1)
-                    .filter((p) => {
-                      return (
-                        p === 1 ||
-                        p === totalPaginas ||
-                        Math.abs(p - paginaValida) <= 1
-                      );
-                    })
-                    .map((p, i, arr) => {
-                      const prev = arr[i - 1];
-                      const mostrarPuntos = prev && p - prev > 1;
-                      return (
-                        <React.Fragment key={p}>
-                          {mostrarPuntos && (
-                            <span className="px-1 text-slate-400 font-bold">...</span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setPaginaActual(p)}
-                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center ${
-                              p === paginaValida
-                                ? 'bg-orange-500 text-white shadow-xs'
-                                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        </React.Fragment>
-                      );
-                    })}
-                </div>
-
-                {/* Botón Siguiente */}
-                <button
-                  type="button"
-                  onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
-                  disabled={paginaValida === totalPaginas}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 font-bold cursor-pointer"
-                >
-                  <span className="hidden sm:inline">Siguiente</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-
-                {/* Botón Última Página */}
-                <button
-                  type="button"
-                  onClick={() => setPaginaActual(totalPaginas)}
-                  disabled={paginaValida === totalPaginas}
-                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-bold cursor-pointer"
-                  title="Última página"
-                >
-                  »
-                </button>
+          <Card className="p-3 sm:p-4 print:hidden">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-zinc-500">
+                  Mostrando <strong className="text-zinc-900">{totalFiltrados > 0 ? indiceInicio + 1 : 0}</strong> a{' '}
+                  <strong className="text-zinc-900">{indiceFin}</strong> de{' '}
+                  <strong className="text-zinc-950 font-bold">{totalFiltrados}</strong> pedidos
+                  {filtroEstado !== 'TODOS' && <span className="text-zinc-400 font-semibold ml-1">(filtrados)</span>}
+                </span>
+                <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-1" />
+                <label className="flex items-center gap-1.5 text-zinc-500 font-medium">
+                  <span>Por página:</span>
+                  <select
+                    value={porPagina}
+                    onChange={(e) => {
+                      setPorPagina(Number(e.target.value));
+                      setPaginaActual(1);
+                    }}
+                    className="h-7 bg-zinc-50 border border-zinc-200 text-zinc-800 font-medium rounded-md px-2 py-0.5 text-xs focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 cursor-pointer"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </label>
               </div>
-            )}
-          </div>
+
+              {totalPaginas > 1 && (
+                <div className="flex items-center gap-1">
+                  {/* Botón Primera Página */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 text-xs font-bold"
+                    onClick={() => setPaginaActual(1)}
+                    disabled={paginaValida === 1}
+                    title="Primera página"
+                  >
+                    «
+                  </Button>
+
+                  {/* Botón Anterior */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1 font-medium"
+                    onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+                    disabled={paginaValida === 1}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Anterior</span>
+                  </Button>
+
+                  {/* Números de página */}
+                  <div className="flex items-center gap-1 mx-1">
+                    {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                      .filter((p) => {
+                        return (
+                          p === 1 ||
+                          p === totalPaginas ||
+                          Math.abs(p - paginaValida) <= 1
+                        );
+                      })
+                      .map((p, i, arr) => {
+                        const prev = arr[i - 1];
+                        const mostrarPuntos = prev && p - prev > 1;
+                        return (
+                          <React.Fragment key={p}>
+                            {mostrarPuntos && (
+                              <span className="px-1 text-zinc-400 font-bold">...</span>
+                            )}
+                            <Button
+                              type="button"
+                              variant={p === paginaValida ? "default" : "outline"}
+                              size="icon"
+                              className="h-8 w-8 text-xs font-bold"
+                              onClick={() => setPaginaActual(p)}
+                            >
+                              {p}
+                            </Button>
+                          </React.Fragment>
+                        );
+                      })}
+                  </div>
+
+                  {/* Botón Siguiente */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1 font-medium"
+                    onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaValida === totalPaginas}
+                  >
+                    <span className="hidden sm:inline">Siguiente</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+
+                  {/* Botón Última Página */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 text-xs font-bold"
+                    onClick={() => setPaginaActual(totalPaginas)}
+                    disabled={paginaValida === totalPaginas}
+                    title="Última página"
+                  >
+                    »
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
       )}
 

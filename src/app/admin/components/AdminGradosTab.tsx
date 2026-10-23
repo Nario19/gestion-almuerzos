@@ -12,6 +12,10 @@ import {
   Pencil,
 } from 'lucide-react';
 import { FiltroGrados } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface AdminGradosTabProps {
   esSuperAdmin: boolean;
@@ -67,300 +71,341 @@ export default function AdminGradosTab({
   handleDeseleccionarTodosGrados,
 }: AdminGradosTabProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Header de colegio seleccionado (Exclusivo Superadmin) */}
       {esSuperAdmin && (
-        <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-orange-500" />
-            <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-              Colegio Activo:
-            </span>
+        <Card className="p-3.5 border-zinc-200/90 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-zinc-600" />
+              <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
+                Colegio Activo:
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {colegios.map((col) => (
+                <button
+                  key={col}
+                  type="button"
+                  onClick={() => setColegioMenuSeleccionado(col)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    colegioObjetivo === col
+                      ? 'bg-zinc-950 text-white shadow-xs'
+                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                  }`}
+                >
+                  {col}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {colegios.map((col) => (
-              <button
-                key={col}
-                type="button"
-                onClick={() => setColegioMenuSeleccionado(col)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  colegioObjetivo === col
-                    ? 'bg-orange-500 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {col}
-              </button>
-            ))}
-          </div>
-        </div>
+        </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Formulario nuevo grado */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs h-fit">
-          <h2 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-orange-500" />
-            Nuevo Grado / Sección
-          </h2>
-          <form onSubmit={handleAgregarGrado} className="space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Nombre del Grado / Sección *
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. 1.° Primaria B"
-                value={nuevoGrado}
-                onChange={(e) => setNuevoGrado(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> Agregar Grado / Sección
-            </button>
-          </form>
-        </div>
-
-        {/* Lista de grados */}
-        <div className="md:col-span-2 bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
-          <h2 className="text-sm font-black text-slate-900 mb-2">
-            Grados y Secciones Activas ({grados.length}) — {colegioObjetivo || 'General'}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {grados.map((g) => (
-              <div key={g} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-orange-500 shrink-0" />
-                  <span className="text-xs font-bold text-slate-800">{g}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleSolicitarEliminarGrado(g)}
-                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                  title="Eliminar grado"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+        <Card className="h-fit border-zinc-200/90 shadow-2xs">
+          <CardHeader className="p-4 sm:p-5 pb-3">
+            <CardTitle className="text-sm font-bold text-zinc-950 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-800 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-4 h-4" />
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* SECCIÓN: FILTROS DE GRADOS PARA DESPACHO */}
-        <div className="md:col-span-3 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                <Filter className="w-4 h-4" />
-              </div>
+              Nuevo Grado / Sección
+            </CardTitle>
+            <CardDescription className="text-xs text-zinc-500">
+              Registra un grado o aula para organizar las entregas en el comedor.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-5 pt-0">
+            <form onSubmit={handleAgregarGrado} className="space-y-3">
               <div>
-                <h3 className="text-base font-black text-slate-900 tracking-tight">
-                  Filtros de Grados para Despacho ({filtrosGrados.length}) — {colegioObjetivo || 'General'}
-                </h3>
-                <p className="text-xs text-slate-500 font-medium">
-                  Crea grupos personalizados de grados (ej. &quot;Primaria&quot;, &quot;Secundaria&quot;, &quot;1.° a 3.°&quot;). Estos filtros aparecerán en Despacho para entregas rápidas.
-                </p>
-              </div>
-            </div>
-
-            {filtroEditandoId && (
-              <button
-                type="button"
-                onClick={handleCancelarEditarFiltro}
-                className="text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition cursor-pointer self-start sm:self-auto"
-              >
-                Cancelar Edición
-              </button>
-            )}
-          </div>
-
-          {/* Formulario de Creación / Edición de Filtro */}
-          <form onSubmit={handleGuardarFiltroGrados} className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-slate-800 tracking-wider">
-                {filtroEditandoId ? '✏️ Editando Filtro de Grados' : '+ Crear Nuevo Filtro de Grados'}
-              </span>
-              {exitoFiltro && (
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 animate-in fade-in">
-                  ✓ ¡Filtro guardado con éxito!
-                </span>
-              )}
-            </div>
-
-            {errorFiltro && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                <span>{errorFiltro}</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-              <div className="md:col-span-2">
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  Nombre del Filtro *
+                <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
+                  Nombre del Grado / Sección *
                 </label>
-                <input
+                <Input
                   type="text"
+                  placeholder="Ej. 1.° Primaria B"
+                  value={nuevoGrado}
+                  onChange={(e) => setNuevoGrado(e.target.value)}
+                  className="bg-white border-zinc-200 rounded-lg text-xs sm:text-sm font-medium"
                   required
-                  placeholder="Ej. Primaria, Secundaria, 1.° a 3.° Primaria, Pabellón A..."
-                  value={nombreFiltroGrados}
-                  onChange={(e) => setNombreFiltroGrados(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition"
                 />
               </div>
-              <div>
-                <button
-                  type="submit"
-                  disabled={guardandoFiltro}
-                  className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-                >
-                  {guardandoFiltro ? (
-                    <span>Guardando...</span>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>{filtroEditandoId ? 'Actualizar Filtro' : 'Guardar Filtro'}</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <Button
+                type="submit"
+                className="w-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs py-2 rounded-lg transition shadow-xs cursor-pointer gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" /> Agregar Grado / Sección
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Lista de grados */}
+        <Card className="md:col-span-2 border-zinc-200/90 shadow-2xs">
+          <CardHeader className="p-4 sm:p-5 pb-3 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-bold text-zinc-950">
+                Grados y Secciones Activas ({grados.length}) — {colegioObjetivo || 'General'}
+              </CardTitle>
+              <CardDescription className="text-xs text-zinc-500">
+                Aulas disponibles para asignar a los alumnos en sus loncheras.
+              </CardDescription>
             </div>
-
-            {/* Selección de Grados para el Filtro */}
-            <div className="space-y-2 pt-1 border-t border-slate-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                <label className="text-[11px] font-bold text-slate-700">
-                  Selecciona los grados que incluirá este filtro ({gradosSeleccionadosFiltro.length} seleccionados):
-                </label>
-                <div className="flex items-center gap-2 text-[11px]">
-                  <button
-                    type="button"
-                    onClick={handleSeleccionarTodosGrados}
-                    className="font-bold text-orange-600 hover:underline cursor-pointer"
-                  >
-                    Marcar todos
-                  </button>
-                  <span className="text-slate-300">•</span>
-                  <button
-                    type="button"
-                    onClick={handleDeseleccionarTodosGrados}
-                    className="font-bold text-slate-500 hover:underline cursor-pointer"
-                  >
-                    Desmarcar todos
-                  </button>
-                </div>
-              </div>
-
-              {grados.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">
-                  No hay grados activos en este colegio. Registra grados arriba primero.
-                </p>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
-                  {grados.map((g) => {
-                    const seleccionado = gradosSeleccionadosFiltro.includes(g);
-                    return (
-                      <label
-                        key={g}
-                        className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-2 cursor-pointer transition select-none ${
-                          seleccionado
-                            ? 'bg-orange-50 text-orange-950 border-orange-300 font-bold shadow-2xs'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={seleccionado}
-                          onChange={() => toggleGradoEnFiltro(g)}
-                          className="rounded text-orange-500 focus:ring-orange-500 w-3.5 h-3.5 cursor-pointer"
-                        />
-                        <span className="truncate">{g}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </form>
-
-          {/* Lista de Filtros de Grados Creados */}
-          <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-              Filtros Disponibles para Despacho en {colegioObjetivo || 'este colegio'}:
-            </h4>
-
-            {filtrosGrados.length === 0 ? (
-              <div className="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300 text-center space-y-1.5">
-                <Filter className="w-6 h-6 text-slate-400 mx-auto" />
-                <p className="text-xs font-bold text-slate-700">Aún no hay filtros de grados creados</p>
-                <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
-                  Crea tu primer filtro arriba para agrupar los grados (ej. Primaria o Secundaria) y poder filtrar rápidamente los almuerzos en Despacho.
-                </p>
+            <Badge variant="outline" className="text-xs font-semibold">
+              {grados.length} {grados.length === 1 ? 'aula' : 'aulas'}
+            </Badge>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-5 pt-0">
+            {grados.length === 0 ? (
+              <div className="p-6 border border-dashed border-zinc-200 rounded-xl text-center space-y-1">
+                <GraduationCap className="w-6 h-6 text-zinc-400 mx-auto" />
+                <p className="text-xs font-semibold text-zinc-700">Sin grados registrados</p>
+                <p className="text-[11px] text-zinc-500">Agrega el primer grado o sección con el formulario lateral.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {filtrosGrados.map((f) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {grados.map((g) => (
                   <div
-                    key={f.id}
-                    className={`p-4 rounded-2xl border transition space-y-2.5 ${
-                      filtroEditandoId === f.id
-                        ? 'bg-orange-50/60 border-orange-300 ring-2 ring-orange-400/20'
-                        : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
-                    }`}
+                    key={g}
+                    className="p-3 bg-zinc-50/70 hover:bg-zinc-100/70 rounded-lg border border-zinc-200/80 flex items-center justify-between gap-2 transition"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0" />
-                        <h5 className="text-sm font-black text-slate-900 tracking-tight">
-                          {f.nombre}
-                        </h5>
-                        <span className="text-[10px] font-black uppercase text-orange-800 bg-orange-100 px-2 py-0.5 rounded-md">
-                          {f.grados.length} {f.grados.length === 1 ? 'grado' : 'grados'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleIniciarEditarFiltro(f)}
-                          className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition cursor-pointer"
-                          title="Editar filtro"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleSolicitarEliminarFiltro(f)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                          title="Eliminar filtro"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <GraduationCap className="w-4 h-4 text-zinc-500 shrink-0" />
+                      <span className="text-xs font-semibold text-zinc-900 truncate">{g}</span>
                     </div>
-
-                    {/* Chips de grados incluidos */}
-                    <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-100">
-                      {f.grados.map((g) => (
-                        <span
-                          key={g}
-                          className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold"
-                        >
-                          {g}
-                        </span>
-                      ))}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSolicitarEliminarGrado(g)}
+                      className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
+                      title="Eliminar grado"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+
+        {/* SECCIÓN: FILTROS DE GRADOS PARA DESPACHO */}
+        <Card className="md:col-span-3 border-zinc-200/90 shadow-2xs">
+          <CardHeader className="p-5 sm:p-6 pb-3 border-b border-zinc-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center shrink-0 border border-zinc-200">
+                  <Filter className="w-4 h-4" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-bold text-zinc-950 tracking-tight">
+                    Filtros de Grados para Despacho ({filtrosGrados.length}) — {colegioObjetivo || 'General'}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-zinc-500">
+                    Crea grupos personalizados de grados (ej. &quot;Primaria&quot;, &quot;Secundaria&quot;, &quot;1.° a 3.°&quot;). Estos filtros aparecerán en Despacho para entregas rápidas.
+                  </CardDescription>
+                </div>
+              </div>
+
+              {filtroEditandoId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelarEditarFiltro}
+                  className="text-xs font-semibold cursor-pointer self-start sm:self-auto"
+                >
+                  Cancelar Edición
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-5 sm:p-6 space-y-5">
+            {/* Formulario de Creación / Edición de Filtro */}
+            <form onSubmit={handleGuardarFiltroGrados} className="bg-zinc-50/70 p-4 sm:p-5 rounded-xl border border-zinc-200/90 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase text-zinc-900 tracking-wider">
+                  {filtroEditandoId ? '✏️ Editando Filtro de Grados' : '+ Crear Nuevo Filtro de Grados'}
+                </span>
+                {exitoFiltro && (
+                  <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 animate-in fade-in flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    ¡Filtro guardado con éxito!
+                  </span>
+                )}
+              </div>
+
+              {errorFiltro && (
+                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{errorFiltro}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
+                    Nombre del Filtro *
+                  </label>
+                  <Input
+                    type="text"
+                    required
+                    placeholder="Ej. Primaria, Secundaria, 1.° a 3.° Primaria, Pabellón A..."
+                    value={nombreFiltroGrados}
+                    onChange={(e) => setNombreFiltroGrados(e.target.value)}
+                    className="bg-white border-zinc-300 rounded-lg text-xs sm:text-sm font-medium"
+                  />
+                </div>
+                <div>
+                  <Button
+                    type="submit"
+                    disabled={guardandoFiltro}
+                    className="w-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs sm:text-sm h-10 transition shadow-xs cursor-pointer gap-1.5"
+                  >
+                    {guardandoFiltro ? (
+                      <span>Guardando...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{filtroEditandoId ? 'Actualizar Filtro' : 'Guardar Filtro'}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Selección de Grados para el Filtro */}
+              <div className="space-y-2 pt-2 border-t border-zinc-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="text-[11px] font-semibold text-zinc-700">
+                    Selecciona los grados que incluirá este filtro ({gradosSeleccionadosFiltro.length} seleccionados):
+                  </label>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={handleSeleccionarTodosGrados}
+                      className="font-semibold text-zinc-900 hover:underline cursor-pointer"
+                    >
+                      Marcar todos
+                    </button>
+                    <span className="text-zinc-300">•</span>
+                    <button
+                      type="button"
+                      onClick={handleDeseleccionarTodosGrados}
+                      className="font-semibold text-zinc-500 hover:text-zinc-900 hover:underline cursor-pointer"
+                    >
+                      Desmarcar todos
+                    </button>
+                  </div>
+                </div>
+
+                {grados.length === 0 ? (
+                  <p className="text-xs text-zinc-400 italic">
+                    No hay grados activos en este colegio. Registra grados arriba primero.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
+                    {grados.map((g) => {
+                      const seleccionado = gradosSeleccionadosFiltro.includes(g);
+                      return (
+                        <label
+                          key={g}
+                          className={`p-2.5 rounded-lg border text-xs font-semibold flex items-center gap-2 cursor-pointer transition select-none ${
+                            seleccionado
+                              ? 'bg-zinc-950 text-white border-zinc-950 shadow-2xs'
+                              : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100/70'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={seleccionado}
+                            onChange={() => toggleGradoEnFiltro(g)}
+                            className="rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950 w-3.5 h-3.5 cursor-pointer accent-zinc-950"
+                          />
+                          <span className="truncate">{g}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </form>
+
+            {/* Lista de Filtros de Grados Creados */}
+            <div className="space-y-3 pt-1">
+              <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
+                Filtros Disponibles para Despacho en {colegioObjetivo || 'este colegio'}:
+              </h4>
+
+              {filtrosGrados.length === 0 ? (
+                <div className="bg-zinc-50 p-6 rounded-xl border border-dashed border-zinc-200 text-center space-y-1.5">
+                  <Filter className="w-5 h-5 text-zinc-400 mx-auto" />
+                  <p className="text-xs font-bold text-zinc-800">Aún no hay filtros de grados creados</p>
+                  <p className="text-[11px] text-zinc-500 max-w-sm mx-auto">
+                    Crea tu primer filtro arriba para agrupar los grados (ej. Primaria o Secundaria) y poder filtrar rápidamente los almuerzos en Despacho.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {filtrosGrados.map((f) => (
+                    <div
+                      key={f.id}
+                      className={`p-4 rounded-xl border transition space-y-2.5 ${
+                        filtroEditandoId === f.id
+                          ? 'bg-zinc-50 border-zinc-950 ring-1 ring-zinc-950'
+                          : 'bg-white border-zinc-200 hover:border-zinc-300 shadow-2xs'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2 h-2 rounded-full bg-zinc-950 shrink-0" />
+                          <h5 className="text-sm font-bold text-zinc-950 tracking-tight truncate">
+                            {f.nombre}
+                          </h5>
+                          <Badge variant="secondary" className="text-[10px] font-semibold shrink-0">
+                            {f.grados.length} {f.grados.length === 1 ? 'grado' : 'grados'}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleIniciarEditarFiltro(f)}
+                            className="p-1.5 text-zinc-400 hover:text-zinc-950 hover:bg-zinc-100 rounded-md transition cursor-pointer"
+                            title="Editar filtro"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSolicitarEliminarFiltro(f)}
+                            className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
+                            title="Eliminar filtro"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Chips de grados incluidos */}
+                      <div className="flex flex-wrap gap-1 pt-1 border-t border-zinc-100">
+                        {f.grados.map((g) => (
+                          <span
+                            key={g}
+                            className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 text-[10px] font-medium"
+                          >
+                            {g}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

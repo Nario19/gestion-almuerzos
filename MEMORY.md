@@ -1345,6 +1345,41 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/components/HeaderNav.tsx`
   - `MEMORY.md`
 
+### D-012 — 2026-10-22 — Transformación Visual Integral a shadcn/ui y Estilo v0 Admin Dashboard
+
+- Decisión: culminar la transformación visual de todo el frontend de Placeres Culinarios adoptando el diseño minimalista monocromático basado en la plantilla oficial v0 Admin Dashboard (`https://v0.app/templates/admin-dashboard-yBomF3O9Yu3`) y componentes oficiales shadcn/ui.
+- Alcance implementado:
+  1. **Componente Compartido `PageHeader` (`src/components/shared/PageHeader.tsx`):**
+     - Encabezado unificado con soporte de títulos limpios, subtítulo descriptivo, badge de colegio para administradores de sede, y acciones contextuales (refrescar, exportar, acciones principales).
+  2. **Control de Cocina (`src/app/admin/cocina/page.tsx`):**
+     - Integración de `PageHeader`, 4 `StatCard` KPIs estandarizadas con borde sutil, barra de fechas unificada (`Calendar`, selector nativo, navegación de días y acceso a Hoy/Todas), y tablas shadcn para Consolidado de Sopas o Postres, Segundos y Ensaladas. Eliminación de botones redundantes "Ir a Despacho y Pagos".
+  3. **Despacho de Pedidos (`src/app/admin/despacho/page.tsx`):**
+     - Integración de `PageHeader`, 4 KPIs interactivos con filtros de estado (`TODOS`, `PENDIENTES`, `PAGADOS`, `ENTREGADOS`), barra unificada con buscador y selector de fechas, y tabla shadcn preservando estrictamente la identificación cromática de métodos de pago requerida por pruebas (`bg-purple-600` Yape, `bg-sky-500` Plin, `bg-yellow-400` Pagar luego).
+  4. **Registro de Fiados (`src/app/admin/fiado/page.tsx`):**
+     - Tarjetas de familias migradas a shadcn `Card`, badges monocromáticos zinc, barra de paginación refinada y eliminación de texto visual redundante, conservando íntegros los enlaces y reportes WhatsApp.
+  5. **Componentes Modulares de Administración (`AdminGradosTab`, `AdminObservacionesTab`, `AdminMenuSemanalTab`):**
+     - Erradicación de estilos heredados coloridos (`rounded-3xl`, fondos estridentes), adopción de selectores segmentados zinc, badges de estado Cloudinary y diálogos de edición shadcn.
+  6. **Pedido Manual (`src/app/admin/pedido-manual/page.tsx`):**
+     - Integración de `PageHeader`, `Card`, `Badge`, `Button` e `Input`, cuadrícula limpia de días de la semana y autocompletado de alumnos.
+  7. **Superadministrador (`src/app/superadmin/page.tsx`):**
+     - Tarjetas KPI y tarjetas de configuración centralizada (Yape/Plin, Hora Límite, Favicon, Cloudinary) migradas a shadcn `Card`. Listado de instituciones y modales (estudiantes, credenciales, configuración global) refactorizados a `Dialog`/`Card` con diseño zinc elegante.
+  8. **Garantía Innegociable de Cero Regresiones:**
+     - 334 pruebas automáticas ejecutadas y aprobadas (328 pass, 0 fail, 6 skipped).
+     - Verificación estricta de TypeScript con `npx tsc --noEmit` (0 errores).
+     - Compilación de producción con `npm run build` exitosa para todas las 22 rutas.
+- Fuente: instrucción explícita del usuario mediante la directiva correctiva de rediseño visual real de todo Placeres Culinarios.
+- Impacto:
+  - `src/components/shared/PageHeader.tsx`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/app/admin/components/AdminGradosTab.tsx`
+  - `src/app/admin/components/AdminObservacionesTab.tsx`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/app/superadmin/page.tsx`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

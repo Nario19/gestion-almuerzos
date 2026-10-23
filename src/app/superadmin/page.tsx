@@ -52,6 +52,11 @@ import AccesoRestringido from '@/components/AccesoRestringido';
 import ModalConfirmacion from '@/components/ModalConfirmacion';
 import { SkeletonDashboardPage } from '@/components/Skeleton';
 import { ColegioDetallado, AdminColegioInfo, EstudianteColegioInfo, ConfiguracionPagos } from '@/types';
+import PageHeader from '@/components/shared/PageHeader';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 export default function SuperAdminPage() {
   const { usuario, esSuperAdmin, cargando: cargandoAuth } = useAuth();
@@ -626,353 +631,348 @@ export default function SuperAdminPage() {
         </div>
       )}
 
-      {/* BANNER PRINCIPAL DE SUPER ADMIN */}
-      <div className="bg-white rounded-xl p-5 sm:p-6 shadow-xs mb-6 border border-zinc-200/90">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-zinc-950 text-white text-[11px] font-semibold shadow-2xs">
-                <ShieldCheck className="w-3.5 h-3.5" /> Super Administrador
-              </span>
-              <span className="text-xs text-zinc-500 font-medium">Control Central Multi-Colegios</span>
-            </div>
-            <p className="text-xs sm:text-sm text-zinc-600 max-w-xl mt-1">
-              Crea colegios con sus propios administradores independientes, administra
-              sus credenciales de acceso y supervisa el volumen operativo de cada colegio.
-            </p>
-          </div>
-
+      {/* CABECERA PRINCIPAL DE SUPER ADMIN */}
+      <PageHeader
+        title="Gestión de Colegios & Cuentas"
+        subtitle="Control central de instituciones educativas, administradores de sede y configuración global."
+        isSuperAdmin={true}
+        actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/admin"
-              className="px-3 py-1.5 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition flex items-center gap-1.5"
-              title="Ir al panel de menús y KPIs"
-            >
-              <BarChart3 className="w-3.5 h-3.5 text-zinc-500" />
-              <span>Panel Operativo</span>
-            </Link>
-            <Link
-              href="/admin/despacho"
-              className="px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center gap-1.5"
-              title="Ir al panel de despacho y empaque"
-            >
-              <PackageCheck className="w-3.5 h-3.5" />
-              <span>Despacho</span>
-            </Link>
+            <Button asChild variant="outline" size="sm" className="h-8 text-xs font-semibold">
+              <Link href="/admin">
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Panel Operativo</span>
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="h-8 text-xs font-semibold bg-zinc-950 text-white hover:bg-zinc-800">
+              <Link href="/admin/despacho">
+                <PackageCheck className="w-3.5 h-3.5" />
+                <span>Despacho</span>
+              </Link>
+            </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* TARJETAS DE KPIS DEL SUPER ADMIN */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between">
+        <Card className="p-4 sm:p-5 border-zinc-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
           <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
             Total de Colegios
           </span>
           <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{totalColegios}</div>
           <p className="text-[11px] text-zinc-500 mt-1">Colegios registrados en el sistema</p>
-        </div>
+        </Card>
 
-        <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block mb-1">
+        <Card className="p-4 sm:p-5 border-zinc-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
             Colegios Activos
           </span>
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-emerald-700">{colegiosActivos}</div>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{colegiosActivos}</div>
           <p className="text-[11px] text-zinc-500 mt-1">Disponibles para pedidos de padres</p>
-        </div>
+        </Card>
 
-        <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-zinc-700 uppercase tracking-wider block mb-1">
+        <Card className="p-4 sm:p-5 border-zinc-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
             Admins Asignados
           </span>
           <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{adminsAsignados}</div>
           <p className="text-[11px] text-zinc-500 mt-1">Cuentas con acceso a su colegio</p>
-        </div>
+        </Card>
 
-        <div className="bg-white p-5 rounded-xl border border-zinc-200/90 shadow-xs relative overflow-hidden flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-zinc-700 uppercase tracking-wider block mb-1">
+        <Card className="p-4 sm:p-5 border-zinc-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
             Almuerzos Atendidos
           </span>
-          <div className="text-2xl sm:text-3xl font-black text-orange-700">{totalPedidosSistema}</div>
-          <p className="text-[11px] text-orange-600 mt-0.5">Raciones globales solicitadas</p>
-        </div>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">{totalPedidosSistema}</div>
+          <p className="text-[11px] text-zinc-500 mt-1">Raciones globales solicitadas</p>
+        </Card>
       </div>
 
       {/* CONFIGURACIÓN CENTRAL DE MÉTODOS DE PAGO (YAPE & PLIN) */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs mb-6 relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <Card className="border-zinc-200/90 shadow-2xs mb-6 overflow-hidden">
+        <CardHeader className="p-4 sm:p-5 pb-3 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
-              <CreditCard className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center font-bold border border-zinc-200">
+              <CreditCard className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                <CardTitle className="text-sm sm:text-base font-bold text-zinc-950">
                   Métodos de Pago Globales (Yape & Plin)
-                </h2>
-                <span className="text-[10px] font-black uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
+                </CardTitle>
+                <Badge variant="outline" className="text-[10px] font-semibold">
                   Para Todos los Colegios
-                </span>
+                </Badge>
               </div>
-              <p className="text-xs text-slate-500">
+              <CardDescription className="text-xs text-zinc-500">
                 Estos números y nombres de titular se mostrarán en la pantalla de pedidos de los padres en todos los colegios.
-              </p>
+              </CardDescription>
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
+            size="sm"
             onClick={abrirEditarPagos}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto cursor-pointer active:scale-95"
+            className="bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold h-8 gap-1.5 cursor-pointer shadow-xs"
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>Editar Números de Pago</span>
-          </button>
-        </div>
+          </Button>
+        </CardHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
-          {/* Tarjeta Yape */}
-          <div className="p-3.5 rounded-2xl bg-purple-50/80 border border-purple-200 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 block">
-                Cuenta Yape
-              </span>
-              <div className="text-base sm:text-lg font-black text-purple-950 mt-0.5 font-mono">
-                {configPagos.numeroYape}
+        <CardContent className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Tarjeta Yape */}
+            <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+                  Cuenta Yape
+                </span>
+                <div className="text-base sm:text-lg font-bold text-zinc-950 mt-0.5 font-mono">
+                  {configPagos.numeroYape}
+                </div>
+                <p className="text-xs text-zinc-600 font-medium">
+                  Titular: {configPagos.titularYape}
+                </p>
               </div>
-              <p className="text-xs font-medium text-purple-700">
-                Titular: {configPagos.titularYape}
-              </p>
+              <div className="w-9 h-9 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+                Yape
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
-              Yape
+
+            {/* Tarjeta Plin */}
+            <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+                  Cuenta Plin
+                </span>
+                <div className="text-base sm:text-lg font-bold text-zinc-950 mt-0.5 font-mono">
+                  {configPagos.numeroPlin}
+                </div>
+                <p className="text-xs text-zinc-600 font-medium">
+                  Titular: {configPagos.titularPlin}
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-sky-500 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+                Plin
+              </div>
             </div>
           </div>
-
-          {/* Tarjeta Plin */}
-          <div className="p-3.5 rounded-2xl bg-sky-50/80 border border-sky-200 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-sky-700 block">
-                Cuenta Plin
-              </span>
-              <div className="text-base sm:text-lg font-black text-sky-950 mt-0.5 font-mono">
-                {configPagos.numeroPlin}
-              </div>
-              <p className="text-xs font-medium text-sky-700">
-                Titular: {configPagos.titularPlin}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-2xl bg-sky-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
-              Plin
-            </div>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* CONFIGURACIÓN GLOBAL: HORA LÍMITE DE PEDIDOS DEL DÍA */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <Card className="border-zinc-200/90 shadow-2xs mb-6 overflow-hidden">
+        <CardHeader className="p-4 sm:p-5 pb-3 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
-              <Clock className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center font-bold border border-zinc-200">
+              <Clock className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                <CardTitle className="text-sm sm:text-base font-bold text-zinc-950">
                   Hora Límite para Pedidos del Día
-                </h2>
-                <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                </CardTitle>
+                <Badge variant="outline" className="text-[10px] font-semibold">
                   Todos los Colegios
-                </span>
+                </Badge>
               </div>
-              <p className="text-xs text-slate-500">
+              <CardDescription className="text-xs text-zinc-500">
                 Horario de corte para pedir almuerzos escolares del mismo día. Después de esta hora los padres igual podrán pedir, pero recibirán una advertencia informativa.
-              </p>
+              </CardDescription>
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="outline"
             onClick={abrirEditarHoraLimite}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto cursor-pointer active:scale-95"
+            className="text-xs font-semibold h-8 gap-1.5 cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>Configurar Hora Límite</span>
-          </button>
-        </div>
+          </Button>
+        </CardHeader>
 
-        <div className="pt-3">
-          <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <CardContent className="p-4 sm:p-5">
+          <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
-                <Clock className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-sm shadow-2xs shrink-0">
+                <Clock className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
                   Horario Oficial Configurado
                 </span>
-                <div className="text-lg sm:text-xl font-black text-amber-950 font-mono">
+                <div className="text-base sm:text-lg font-bold text-zinc-950 font-mono">
                   {formatearHoraLimiteLegible(horaLimite)}
                 </div>
               </div>
             </div>
-            <span className="text-xs font-semibold text-amber-900/90 bg-white px-3 py-1.5 rounded-xl border border-amber-200 self-start sm:self-auto">
+            <span className="text-xs text-zinc-600 bg-white px-2.5 py-1 rounded-md border border-zinc-200 self-start sm:self-auto font-medium">
               Visible en carta: &quot;Pedidos hasta las {formatearHoraLimiteLegible(horaLimite)}&quot;
             </span>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* CONFIGURACIÓN GLOBAL: IDENTIDAD VISUAL Y FAVICON */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <Card className="border-zinc-200/90 shadow-2xs mb-6 overflow-hidden">
+        <CardHeader className="p-4 sm:p-5 pb-3 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center font-bold border border-zinc-200">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                <CardTitle className="text-sm sm:text-base font-bold text-zinc-950">
                   Favicon e Identidad Visual del Sistema
-                </h2>
-                <span className="text-[10px] font-black uppercase text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full border border-indigo-200">
+                </CardTitle>
+                <Badge variant="outline" className="text-[10px] font-semibold">
                   Global
-                </span>
+                </Badge>
               </div>
-              <p className="text-xs text-slate-500">
+              <CardDescription className="text-xs text-zinc-500">
                 Icono que se muestra en la pestaña del navegador de los apoderados, administradores y personal de cocina.
-              </p>
+              </CardDescription>
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="outline"
             onClick={abrirEditarFavicon}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto cursor-pointer active:scale-95"
+            className="text-xs font-semibold h-8 gap-1.5 cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>Editar Favicon</span>
-          </button>
-        </div>
+          </Button>
+        </CardHeader>
 
-        <div className="pt-3">
-          <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <CardContent className="p-4 sm:p-5">
+          <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white border border-indigo-200 flex items-center justify-center shadow-xs overflow-hidden shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-white border border-zinc-200 flex items-center justify-center shadow-2xs overflow-hidden shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={faviconUrl || FAVICON_DEFAULT}
                   alt="Favicon Actual"
-                  className="w-6 h-6 object-contain"
+                  className="w-5 h-5 object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = FAVICON_DEFAULT;
                   }}
                 />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-800 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
                   Vista Previa en Pestaña
                 </span>
-                <div className="text-xs sm:text-sm font-bold text-indigo-950 truncate max-w-md">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-900 truncate max-w-md">
                   {faviconUrl || FAVICON_DEFAULT}
                 </div>
               </div>
             </div>
-            <span className="text-xs font-semibold text-indigo-900/90 bg-white px-3 py-1.5 rounded-xl border border-indigo-200 self-start sm:self-auto">
+            <span className="text-xs text-zinc-600 bg-white px-2.5 py-1 rounded-md border border-zinc-200 self-start sm:self-auto font-medium">
               Actualizado dinámicamente en tiempo real
             </span>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* CONFIGURACIÓN Y MANTENIMIENTO: DEPURACIÓN DE COMPROBANTES CLOUDINARY */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <Card className="border-zinc-200/90 shadow-2xs mb-6 overflow-hidden">
+        <CardHeader className="p-4 sm:p-5 pb-3 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
-              <FileImage className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 flex items-center justify-center font-bold border border-zinc-200">
+              <FileImage className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                <CardTitle className="text-sm sm:text-base font-bold text-zinc-950">
                   Almacenamiento Cloudinary: Depuración de Comprobantes
-                </h2>
-                <span className="text-[10px] font-black uppercase text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full border border-teal-200">
+                </CardTitle>
+                <Badge variant="outline" className="text-[10px] font-semibold">
                   Automático &gt; 2 días
-                </span>
+                </Badge>
               </div>
-              <p className="text-xs text-slate-500">
+              <CardDescription className="text-xs text-zinc-500">
                 Purga las fotos de comprobantes de pago (Yape/Plin) con más de 48 horas de antigüedad para mantener Cloudinary libre de saturación y proteger la privacidad de los padres. Las ventas, pedidos e historial quedan 100% preservados.
-              </p>
+              </CardDescription>
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="outline"
             onClick={handleLimpiarComprobantesManualmente}
             disabled={ejecutandoLimpieza}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto cursor-pointer active:scale-95"
+            className="text-xs font-semibold h-8 gap-1.5 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${ejecutandoLimpieza ? 'animate-spin' : ''}`} />
             <span>{ejecutandoLimpieza ? 'Depurando Cloudinary...' : 'Ejecutar Limpieza Ahora (> 2 días)'}</span>
-          </button>
-        </div>
+          </Button>
+        </CardHeader>
 
-        <div className="pt-3">
-          <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <CardContent className="p-4 sm:p-5">
+          <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
-                <HardDrive className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-sm shadow-2xs shrink-0">
+                <HardDrive className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-teal-800 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
                   Estado de la Automatización
                 </span>
-                <div className="text-xs sm:text-sm font-bold text-teal-950">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-900">
                   Programado automáticamente todas las madrugadas (03:00 AM Perú) vía Vercel Cron
                 </div>
               </div>
             </div>
             {resumenLimpieza ? (
-              <span className="text-xs font-semibold text-teal-900 bg-white px-3 py-1.5 rounded-xl border border-teal-200 self-start sm:self-auto">
+              <span className="text-xs text-zinc-600 bg-white px-2.5 py-1 rounded-md border border-zinc-200 self-start sm:self-auto font-medium">
                 Última ejecución: {resumenLimpieza.comprobantesPurgadosCloudinary} liberados de {resumenLimpieza.pedidosEvaluados} pedidos evaluados
               </span>
             ) : (
-              <span className="text-xs font-semibold text-teal-900/90 bg-white px-3 py-1.5 rounded-xl border border-teal-200 self-start sm:self-auto">
+              <span className="text-xs text-zinc-600 bg-white px-2.5 py-1 rounded-md border border-zinc-200 self-start sm:self-auto font-medium">
                 Retención fijada en 48 horas (2 días)
               </span>
             )}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* BARRA DE ACCIÓN Y BÚSQUEDA */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs mb-6">
+      <Card className="p-3.5 sm:p-4 border-zinc-200/90 shadow-2xs mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Campo de búsqueda */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
+            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
               type="text"
               placeholder="Buscar colegio, admin o DNI..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-purple-500 focus:outline-hidden transition"
+              className="bg-white border-zinc-200 rounded-lg pl-9 text-xs sm:text-sm"
             />
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {/* Filtros de estado */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 text-xs font-bold">
+            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg border border-zinc-200/80 text-xs font-semibold">
               {(['TODOS', 'ACTIVOS', 'INACTIVOS'] as const).map((est) => (
                 <button
                   key={est}
                   type="button"
                   onClick={() => setFiltroEstado(est)}
-                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
                     filtroEstado === est
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-white text-zinc-950 shadow-xs'
+                      : 'text-zinc-600 hover:text-zinc-950'
                   }`}
                 >
                   {est === 'TODOS' ? 'Todos' : est === 'ACTIVOS' ? 'Activos' : 'Pausados'}
@@ -981,39 +981,44 @@ export default function SuperAdminPage() {
             </div>
 
             {/* Botón Refrescar */}
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon"
               onClick={cargarColegios}
               disabled={cargandoDatos}
-              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition cursor-pointer"
+              className="h-9 w-9 cursor-pointer"
               title="Refrescar lista"
             >
               <RefreshCw className={`w-4 h-4 ${cargandoDatos ? 'animate-spin' : ''}`} />
-            </button>
+            </Button>
 
             {/* Botón Configurar Yape / Plin */}
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={abrirEditarPagos}
-              className="flex items-center gap-2 px-3.5 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs sm:text-sm font-bold rounded-2xl border border-purple-200 transition cursor-pointer active:scale-95"
+              className="text-xs font-semibold h-9 gap-1.5 cursor-pointer"
               title="Configurar números de Yape y Plin para todos los colegios"
             >
-              <Smartphone className="w-4 h-4 text-purple-600" />
+              <Smartphone className="w-3.5 h-3.5 text-zinc-600" />
               <span>Editar Yape / Plin</span>
-            </button>
+            </Button>
 
             {/* BOTÓN PRINCIPAL: NUEVO COLEGIO & ADMINISTRADOR */}
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={abrirCrearColegio}
-              className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-black rounded-2xl shadow-sm shadow-purple-600/30 transition cursor-pointer active:scale-95"
+              className="bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold h-9 px-3.5 gap-1.5 cursor-pointer shadow-xs"
             >
               <Plus className="w-4 h-4" />
               <span>Nuevo Colegio & Admin</span>
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* LISTADO DE COLEGIOS Y ADMINISTRADORES */}
       <div className="space-y-3.5">
@@ -1027,99 +1032,101 @@ export default function SuperAdminPage() {
         </div>
 
         {cargandoDatos ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
-            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs font-semibold text-slate-500">Cargando colegios y administradores...</p>
-          </div>
+          <Card className="p-12 text-center">
+            <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-xs font-semibold text-zinc-500">Cargando colegios y administradores...</p>
+          </Card>
         ) : colegiosFiltrados.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs space-y-3">
-            <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto">
-              <Building2 className="w-6 h-6" />
+          <Card className="p-12 text-center space-y-3">
+            <div className="w-10 h-10 bg-zinc-100 text-zinc-700 rounded-lg flex items-center justify-center mx-auto border border-zinc-200">
+              <Building2 className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-bold text-slate-800">No se encontraron colegios</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <h3 className="text-sm font-bold text-zinc-950">No se encontraron colegios</h3>
+            <p className="text-xs text-zinc-500 max-w-sm mx-auto">
               {busqueda
                 ? 'Ningún colegio o administrador coincide con tu término de búsqueda.'
                 : 'Aún no has registrado ningún colegio. Haz clic en "Nuevo Colegio & Admin" para empezar.'}
             </p>
             {busqueda ? (
-              <button
+              <Button
                 type="button"
+                variant="link"
+                size="sm"
                 onClick={() => setBusqueda('')}
-                className="text-xs font-bold text-purple-600 hover:underline cursor-pointer"
+                className="text-xs font-semibold text-zinc-900"
               >
                 Limpiar búsqueda
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 type="button"
+                size="sm"
                 onClick={abrirCrearColegio}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                className="bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs"
               >
                 Registrar Primer Colegio
-              </button>
+              </Button>
             )}
-          </div>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 gap-3.5">
             {colegiosFiltrados.map((col) => (
-              <div
+              <Card
                 key={col.id}
-                className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all duration-200 shadow-xs hover:shadow-md ${
-                  col.activo
-                    ? 'border-slate-200 hover:border-purple-200'
-                    : 'border-slate-200/60 bg-slate-50/50 opacity-80'
+                className={`p-4 sm:p-5 transition hover:border-zinc-300 shadow-2xs ${
+                  col.activo ? '' : 'bg-zinc-50/50 opacity-80'
                 }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   {/* Columna 1: Información del Colegio */}
                   <div className="flex items-start gap-3.5">
                     <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 border ${
                         col.activo
-                          ? 'bg-gradient-to-tr from-purple-500 to-indigo-600 text-white'
-                          : 'bg-slate-200 text-slate-500'
+                          ? 'bg-zinc-950 text-white border-zinc-900'
+                          : 'bg-zinc-100 text-zinc-400 border-zinc-200'
                       }`}
                     >
-                      <Building2 className="w-6 h-6" />
+                      <Building2 className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => abrirModalEstudiantes(col)}
-                          className="text-base font-black text-slate-900 tracking-tight hover:text-purple-700 hover:underline text-left cursor-pointer transition"
+                          className="text-base font-bold text-zinc-950 tracking-tight hover:underline text-left cursor-pointer transition"
                           title="Clic para ver los hijos/estudiantes vinculados a este colegio"
                         >
                           {col.nombre}
                         </button>
-                        <span
-                          className="px-2 py-0.5 rounded-lg text-[10px] font-black font-mono bg-purple-100 text-purple-800 border border-purple-200"
+                        <Badge
+                          variant="secondary"
+                          className="font-mono text-[10px] font-bold"
                           title="Sigla escolar para códigos de pedidos (ej. #CLA-001)"
                         >
                           #{col.sigla || obtenerIdentificadorColegio(col.nombre)}
-                        </span>
+                        </Badge>
                         {col.activo ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <Badge variant="success" className="text-[10px] font-bold">
                             Activo
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-200 text-slate-600">
+                          <Badge variant="outline" className="text-[10px] text-zinc-500 font-medium">
                             Pausado
-                          </span>
+                          </Badge>
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mt-1.5">
                         <button
                           type="button"
                           onClick={() => abrirModalEstudiantes(col)}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-2.5 py-1 rounded-xl transition cursor-pointer"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-zinc-200/80 border border-zinc-200 px-2.5 py-0.5 rounded-md transition cursor-pointer"
                           title="Ver lista de estudiantes asociados a este colegio"
                         >
-                          <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
+                          <GraduationCap className="w-3.5 h-3.5 text-zinc-600" />
                           <span>{col.totalEstudiantes || 0} estudiantes</span>
                         </button>
-                        <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded-xl">
+                        <span className="text-xs text-zinc-500 font-medium bg-zinc-100 px-2 py-0.5 rounded-md border border-zinc-200">
                           {col.totalPedidos || 0} pedidos
                         </span>
                       </div>
@@ -1127,24 +1134,24 @@ export default function SuperAdminPage() {
                   </div>
 
                   {/* Columna 2: Administrador Asignado a este Colegio */}
-                  <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 min-w-[280px]">
-                    <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-200/60 text-[11px]">
-                      <span className="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                        <ShieldCheck className="w-3.5 h-3.5 text-purple-600" /> Admin Asignado
+                  <div className="bg-zinc-50/80 rounded-lg p-3 border border-zinc-200/80 min-w-[280px]">
+                    <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-zinc-200/60 text-[11px]">
+                      <span className="font-semibold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5 text-zinc-700" /> Admin Asignado
                       </span>
                       {col.admin ? (
                         <button
                           type="button"
                           onClick={() => abrirEditarAdminRapido(col)}
-                          className="text-[11px] font-bold text-purple-600 hover:underline flex items-center gap-0.5 cursor-pointer"
+                          className="text-[11px] font-semibold text-zinc-900 hover:underline flex items-center gap-0.5 cursor-pointer"
                         >
-                          <Key className="w-3 h-3" /> Clave
+                          <Key className="w-3 h-3 text-zinc-500" /> Clave
                         </button>
                       ) : (
                         <button
                           type="button"
                           onClick={() => abrirEditarColegio(col)}
-                          className="text-[11px] font-black text-orange-600 hover:underline cursor-pointer"
+                          className="text-[11px] font-semibold text-amber-700 hover:underline cursor-pointer"
                         >
                           + Asignar Admin
                         </button>
@@ -1153,29 +1160,29 @@ export default function SuperAdminPage() {
 
                     {col.admin ? (
                       <div className="space-y-1 text-xs">
-                        <div className="font-black text-slate-900 flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5 text-slate-400" />
+                        <div className="font-bold text-zinc-950 flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-zinc-400" />
                           <span>{col.admin.nombreCompleto}</span>
                         </div>
-                        <div className="text-slate-600 text-[11px] flex items-center justify-between gap-2">
-                          <span className="font-semibold">
-                            Usuario: <code className="bg-white px-1.5 py-0.5 rounded text-purple-700 font-mono font-bold">{col.admin.dni}</code>
+                        <div className="text-zinc-600 text-[11px] flex items-center justify-between gap-2">
+                          <span className="font-medium">
+                            Usuario: <code className="bg-white px-1.5 py-0.5 rounded border border-zinc-200 text-zinc-900 font-mono font-semibold">{col.admin.dni}</code>
                           </span>
                           {col.admin.telefono && (
-                            <span className="text-slate-500 flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-slate-400" /> {col.admin.telefono}
+                            <span className="text-zinc-500 flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-zinc-400" /> {col.admin.telefono}
                             </span>
                           )}
                         </div>
                         {col.admin.email && (
-                          <div className="text-[11px] text-slate-500 truncate flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-slate-400" /> {col.admin.email}
+                          <div className="text-[11px] text-zinc-500 truncate flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-zinc-400" /> {col.admin.email}
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="py-1 text-center">
-                        <span className="text-xs font-semibold text-amber-700 bg-amber-100/60 px-2.5 py-1 rounded-xl inline-block">
+                        <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-md inline-block">
                           ⚠️ Sin administrador asignado
                         </span>
                       </div>
@@ -1185,63 +1192,67 @@ export default function SuperAdminPage() {
                   {/* Columna 3: Acciones */}
                   <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
                     {/* Botón Ver Estudiantes del Colegio */}
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => abrirModalEstudiantes(col)}
-                      className="p-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                      className="text-xs font-semibold h-8 gap-1.5 cursor-pointer"
                       title="Ver lista de estudiantes (hijos) registrados en este colegio"
                     >
-                      <GraduationCap className="w-4 h-4 text-purple-600" />
+                      <GraduationCap className="w-3.5 h-3.5 text-zinc-600" />
                       <span className="hidden sm:inline">Alumnos ({col.totalEstudiantes || 0})</span>
-                    </button>
+                    </Button>
 
                     {/* Botón Alternar Estado Activo / Pausado */}
-                    <button
+                    <Button
                       type="button"
+                      variant={col.activo ? "outline" : "secondary"}
+                      size="sm"
                       onClick={() => handleToggleEstado(col)}
-                      className={`p-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
-                        col.activo
-                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                          : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
-                      }`}
+                      className="text-xs font-semibold h-8 gap-1 cursor-pointer"
                       title={col.activo ? 'Pausar colegio (no aparecerá en compras de padres)' : 'Activar colegio'}
                     >
                       {col.activo ? (
                         <>
-                          <ToggleRight className="w-4 h-4 text-emerald-600" />
+                          <ToggleRight className="w-3.5 h-3.5 text-zinc-700" />
                           <span className="hidden sm:inline">Pausar</span>
                         </>
                       ) : (
                         <>
-                          <ToggleLeft className="w-4 h-4 text-slate-400" />
+                          <ToggleLeft className="w-3.5 h-3.5 text-zinc-400" />
                           <span className="hidden sm:inline">Activar</span>
                         </>
                       )}
-                    </button>
+                    </Button>
 
                     {/* Botón Editar Colegio y Admin */}
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => abrirEditarColegio(col)}
-                      className="p-2 bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                      className="text-xs font-semibold h-8 gap-1 cursor-pointer"
                       title="Editar colegio y credenciales de administrador"
                     >
-                      <Edit3 className="w-4 h-4" />
+                      <Edit3 className="w-3.5 h-3.5 text-zinc-600" />
                       <span className="hidden sm:inline">Editar</span>
-                    </button>
+                    </Button>
 
                     {/* Botón Eliminar Colegio */}
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleSolicitarEliminar(col)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                      className="h-8 w-8 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
                       title="Eliminar colegio del sistema"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
@@ -1250,17 +1261,17 @@ export default function SuperAdminPage() {
       {/* MODAL: CREAR / EDITAR COLEGIO CON ADMINISTRADOR */}
       {modalColegioAbierto && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5 my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl border border-zinc-200 space-y-5 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 flex items-center justify-center font-bold">
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">
+                  <h3 className="text-base font-bold text-zinc-950">
                     {colegioEnEdicion ? 'Editar Colegio & Administrador' : 'Nuevo Colegio & Administrador'}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-zinc-500">
                     Configura el colegio y su cuenta de acceso
                   </p>
                 </div>
@@ -1268,7 +1279,7 @@ export default function SuperAdminPage() {
               <button
                 type="button"
                 onClick={() => setModalColegioAbierto(false)}
-                className="text-xs font-bold text-slate-400 hover:text-slate-700 px-2 py-1 rounded-lg"
+                className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 px-2 py-1 rounded-md"
               >
                 ✕
               </button>
@@ -1276,13 +1287,13 @@ export default function SuperAdminPage() {
 
             <form onSubmit={handleGuardarColegio} className="space-y-4">
               {/* SECCIÓN 1: DATOS DEL COLEGIO */}
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
-                <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider block">
+              <div className="p-4 bg-zinc-50/70 rounded-lg border border-zinc-200/80 space-y-3">
+                <span className="text-[11px] font-bold text-zinc-900 uppercase tracking-wider block">
                   1. Institución Educativa
                 </span>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
                     Nombre del Colegio *
                   </label>
                   <input
@@ -1290,17 +1301,17 @@ export default function SuperAdminPage() {
                     placeholder="Ej. COLEGIO ZÁRATE"
                     value={nombreColegio}
                     onChange={(e) => setNombreColegio(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                     required
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-slate-700">
+                    <label className="block text-xs font-semibold text-zinc-700">
                       Sigla del Colegio (Identificador)
                     </label>
-                    <span className="text-[10px] text-purple-600 font-mono font-bold">
+                    <span className="text-[10px] text-zinc-500 font-mono font-bold">
                       Ej. CLA, SRO, AGU (2 a 5 letras)
                     </span>
                   </div>
@@ -1310,21 +1321,21 @@ export default function SuperAdminPage() {
                     maxLength={5}
                     value={siglaColegio}
                     onChange={(e) => setSiglaColegio(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5))}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 font-mono uppercase font-bold tracking-wider focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs sm:text-sm text-zinc-900 font-mono uppercase font-bold tracking-wider focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-[11px] text-zinc-500 mt-1">
                     Se usará en los códigos de pedidos y almuerzos de este colegio (ej. #{siglaColegio || 'COL'}-001).
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
                     Estado Operativo
                   </label>
                   <select
                     value={activoColegio ? 'true' : 'false'}
                     onChange={(e) => setActivoColegio(e.target.value === 'true')}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                   >
                     <option value="true">Activo (Visible para padres al ordenar)</option>
                     <option value="false">Pausado (Oculto temporalmente)</option>
@@ -1333,13 +1344,13 @@ export default function SuperAdminPage() {
               </div>
 
               {/* SECCIÓN 2: CUENTA DEL ADMINISTRADOR DE ESTE COLEGIO */}
-              <div className="p-4 bg-purple-50/50 rounded-2xl border border-purple-200/80 space-y-3">
-                <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider block">
+              <div className="p-4 bg-zinc-50/70 rounded-lg border border-zinc-200/80 space-y-3">
+                <span className="text-[11px] font-bold text-zinc-900 uppercase tracking-wider block">
                   2. Cuenta del Administrador para este Colegio
                 </span>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
                     Nombre Completo del Administrador *
                   </label>
                   <input
@@ -1347,14 +1358,14 @@ export default function SuperAdminPage() {
                     placeholder="Ej. Admin San Agustín"
                     value={adminNombre}
                     onChange={(e) => setAdminNombre(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">
                       Usuario / DNI para Login *
                     </label>
                     <input
@@ -1362,13 +1373,13 @@ export default function SuperAdminPage() {
                       placeholder="Ej. ADM-SANAGUSTIN o DNI"
                       value={adminDni}
                       onChange={(e) => setAdminDni(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-mono"
+                      className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden font-mono"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">
                       Teléfono de Contacto
                     </label>
                     <input
@@ -1376,13 +1387,13 @@ export default function SuperAdminPage() {
                       placeholder="Ej. 987654321"
                       value={adminTelefono}
                       onChange={(e) => setAdminTelefono(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                      className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
                     Correo Electrónico
                   </label>
                   <input
@@ -1390,12 +1401,12 @@ export default function SuperAdminPage() {
                     placeholder="Ej. sanagustin@almuerzos.com"
                     value={adminEmail}
                     onChange={(e) => setAdminEmail(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
                     Contraseña de Acceso *
                   </label>
                   <div className="relative">
@@ -1404,18 +1415,18 @@ export default function SuperAdminPage() {
                       placeholder={colegioEnEdicion ? 'Nueva contraseña o dejar actual' : 'Contraseña de acceso'}
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl pl-3 pr-10 py-2 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-mono"
+                      className="w-full bg-white border border-zinc-200 rounded-md pl-3 pr-10 py-2 text-xs sm:text-sm text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden font-mono"
                       required={!colegioEnEdicion}
                     />
                     <button
                       type="button"
                       onClick={() => setVerPassword(!verPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-1 cursor-pointer"
                     >
                       {verPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <span className="text-[10px] text-slate-500 mt-1 block">
+                  <span className="text-[10px] text-zinc-500 mt-1 block">
                     {colegioEnEdicion
                       ? 'Deja la contraseña en blanco si no deseas cambiarla.'
                       : 'El administrador usará su Usuario/DNI y esta clave para ingresar.'}
@@ -1425,24 +1436,25 @@ export default function SuperAdminPage() {
 
               {/* Botones de acción */}
               <div className="flex items-center justify-end gap-2 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setModalColegioAbierto(false)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
+                  className="text-xs font-semibold"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={guardando}
-                  className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm transition shadow-sm cursor-pointer disabled:opacity-50"
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs rounded-lg shadow-xs"
                 >
                   {guardando
                     ? 'Guardando...'
                     : colegioEnEdicion
                     ? 'Actualizar Colegio & Admin'
                     : 'Guardar Colegio & Admin'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -1452,17 +1464,17 @@ export default function SuperAdminPage() {
       {/* MODAL RÁPIDO: EDITAR CONTRASEÑA / ADMIN */}
       {modalAdminRapido.abierto && modalAdminRapido.colegio && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-zinc-200 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 flex items-center justify-center font-bold">
                   <Key className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900">
+                  <h3 className="text-sm font-bold text-zinc-950">
                     Credenciales del Administrador
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-zinc-500">
                     Colegio: {modalAdminRapido.colegio.nombre}
                   </p>
                 </div>
@@ -1470,7 +1482,7 @@ export default function SuperAdminPage() {
               <button
                 type="button"
                 onClick={() => setModalAdminRapido({ abierto: false, colegio: null })}
-                className="text-xs font-bold text-slate-400 hover:text-slate-700"
+                className="text-xs font-semibold text-zinc-400 hover:text-zinc-700"
               >
                 ✕
               </button>
@@ -1478,45 +1490,45 @@ export default function SuperAdminPage() {
 
             <form onSubmit={handleGuardarAdminRapido} className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Nombre del Administrador *
                 </label>
                 <input
                   type="text"
                   value={adminNombre}
                   onChange={(e) => setAdminNombre(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Usuario / DNI de Login *
                 </label>
                 <input
                   type="text"
                   value={adminDni}
                   onChange={(e) => setAdminDni(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500 font-mono"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 font-mono"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Correo Electrónico
                 </label>
                 <input
                   type="email"
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Nueva Contraseña
                 </label>
                 <div className="relative">
@@ -1525,36 +1537,37 @@ export default function SuperAdminPage() {
                     placeholder="Escribe la nueva contraseña"
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-10 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-md pl-3 pr-10 py-2 text-xs text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setVerPassword(!verPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-1"
                   >
                     {verPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
-                <span className="text-[10px] text-slate-400 mt-1 block">
+                <span className="text-[10px] text-zinc-400 mt-1 block">
                   Dejar en blanco para conservar la clave actual.
                 </span>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setModalAdminRapido({ abierto: false, colegio: null })}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+                  className="text-xs font-semibold"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={guardando}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs transition disabled:opacity-50"
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs rounded-lg shadow-xs"
                 >
                   {guardando ? 'Guardando...' : 'Guardar Credenciales'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -1564,23 +1577,23 @@ export default function SuperAdminPage() {
       {/* MODAL: VER ESTUDIANTES ASOCIADOS AL COLEGIO */}
       {modalEstudiantes.abierto && modalEstudiantes.colegio && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden my-6 border border-slate-200 flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-xl max-w-4xl w-full shadow-xl overflow-hidden my-6 border border-zinc-200 flex flex-col max-h-[90vh]">
             {/* Cabecera del Modal */}
-            <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 text-white flex items-center justify-between gap-4 shrink-0">
+            <div className="p-5 sm:p-6 bg-zinc-950 text-white flex items-center justify-between gap-4 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-purple-600/40 text-purple-200 border border-purple-400/30 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-lg bg-zinc-800 text-zinc-100 border border-zinc-700 flex items-center justify-center font-bold">
                   <GraduationCap className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-purple-500/30 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-400/20">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-full border border-zinc-700">
                       Estudiantes Vinculados
                     </span>
-                    <span className="text-xs text-purple-200 font-medium">
+                    <span className="text-xs text-zinc-400 font-medium">
                       {modalEstudiantes.estudiantes.length} alumno(s)
                     </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-black tracking-tight text-white mt-0.5">
+                  <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white mt-0.5">
                     {modalEstudiantes.colegio.nombre}
                   </h3>
                 </div>
@@ -1589,7 +1602,7 @@ export default function SuperAdminPage() {
               <button
                 type="button"
                 onClick={() => setModalEstudiantes((prev) => ({ ...prev, abierto: false }))}
-                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
+                className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition cursor-pointer"
                 title="Cerrar ventana"
               >
                 <X className="w-5 h-5" />
@@ -1597,9 +1610,9 @@ export default function SuperAdminPage() {
             </div>
 
             {/* Barra de herramientas: Búsqueda y Botones de Acción */}
-            <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+            <div className="p-3.5 sm:p-4 bg-zinc-50 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
               <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Buscar por estudiante, grado, apoderado, teléfono..."
@@ -1607,44 +1620,50 @@ export default function SuperAdminPage() {
                   onChange={(e) =>
                     setModalEstudiantes((prev) => ({ ...prev, busquedaEstudiante: e.target.value }))
                   }
-                  className="w-full pl-10 pr-4 py-2 bg-white rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+                  className="w-full pl-9 pr-4 py-1.5 bg-white rounded-md border border-zinc-200 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950"
                 />
               </div>
 
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => {
                     if (modalEstudiantes.colegio) {
                       abrirModalEstudiantes(modalEstudiantes.colegio);
                     }
                   }}
-                  className="p-2 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                  className="h-8 w-8 text-zinc-600 cursor-pointer"
                   title="Refrescar listado"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={exportarEstudiantesCSV}
                   disabled={modalEstudiantes.estudiantes.length === 0}
-                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="h-8 text-xs font-semibold gap-1.5 cursor-pointer"
                   title="Descargar lista de estudiantes en formato Excel/CSV"
                 >
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="w-3.5 h-3.5 text-zinc-600" />
                   <span>Exportar Excel</span>
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => window.print()}
-                  className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="h-8 text-xs font-semibold gap-1.5 cursor-pointer"
                   title="Imprimir nómina de alumnos"
                 >
-                  <Printer className="w-3.5 h-3.5 text-slate-500" />
+                  <Printer className="w-3.5 h-3.5 text-zinc-600" />
                   <span className="hidden sm:inline">Imprimir</span>
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -1652,8 +1671,8 @@ export default function SuperAdminPage() {
             <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               {modalEstudiantes.cargando ? (
                 <div className="py-16 text-center">
-                  <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                  <p className="text-xs font-semibold text-slate-500">
+                  <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-xs font-semibold text-zinc-500">
                     Consultando lista de hijos asociados a este colegio...
                   </p>
                 </div>
@@ -1672,13 +1691,13 @@ export default function SuperAdminPage() {
                 if (modalEstudiantes.estudiantes.length === 0) {
                   return (
                     <div className="py-12 text-center space-y-3">
-                      <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto">
-                        <GraduationCap className="w-6 h-6" />
+                      <div className="w-10 h-10 bg-zinc-100 text-zinc-700 rounded-lg flex items-center justify-center mx-auto border border-zinc-200">
+                        <GraduationCap className="w-5 h-5" />
                       </div>
-                      <h4 className="text-sm font-bold text-slate-800">
+                      <h4 className="text-sm font-bold text-zinc-950">
                         No hay estudiantes registrados para este colegio aún
                       </h4>
-                      <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                      <p className="text-xs text-zinc-500 max-w-sm mx-auto">
                         Cuando los padres de familia registren a sus hijos seleccionando{' '}
                         <strong>{modalEstudiantes.colegio.nombre}</strong>, aparecerán listados aquí con sus datos de contacto y grado.
                       </p>
@@ -1688,7 +1707,7 @@ export default function SuperAdminPage() {
 
                 if (filtrados.length === 0) {
                   return (
-                    <div className="py-10 text-center text-xs text-slate-500">
+                    <div className="py-10 text-center text-xs text-zinc-500">
                       No se encontraron estudiantes que coincidan con &quot;{modalEstudiantes.busquedaEstudiante}&quot;.
                     </div>
                   );
@@ -1696,10 +1715,10 @@ export default function SuperAdminPage() {
 
                 return (
                   <div className="space-y-3">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto rounded-lg border border-zinc-200">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px] tracking-wider bg-slate-50/50">
+                          <tr className="border-b border-zinc-200 text-zinc-500 font-semibold uppercase text-[10px] tracking-wider bg-zinc-50">
                             <th className="py-2.5 px-3">#</th>
                             <th className="py-2.5 px-3">Estudiante</th>
                             <th className="py-2.5 px-3">Grado y Sección</th>
@@ -1709,32 +1728,32 @@ export default function SuperAdminPage() {
                             <th className="py-2.5 px-3 text-right">Registro</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-zinc-100">
                           {filtrados.map((est, idx) => {
                             const telLimpio = est.padreTelefono ? est.padreTelefono.replace(/\D/g, '') : '';
                             const waLink = telLimpio ? `https://wa.me/51${telLimpio}` : null;
 
                             return (
-                              <tr key={est.id} className="hover:bg-purple-50/30 transition-colors">
-                                <td className="py-3 px-3 font-mono text-slate-400 text-[11px] font-bold">
+                              <tr key={est.id} className="hover:bg-zinc-50/80 transition-colors">
+                                <td className="py-3 px-3 font-mono text-zinc-400 text-[11px] font-bold">
                                   {idx + 1}
                                 </td>
                                 <td className="py-3 px-3">
-                                  <div className="font-bold text-slate-900 text-xs">
+                                  <div className="font-semibold text-zinc-950 text-xs">
                                     {est.nombreCompleto}
                                   </div>
                                 </td>
                                 <td className="py-3 px-3">
-                                  <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-100 text-[11px]">
+                                  <span className="font-semibold text-zinc-800 bg-zinc-100 px-2 py-0.5 rounded-md border border-zinc-200 text-[11px]">
                                     {est.gradoSeccion}
                                   </span>
                                 </td>
                                 <td className="py-3 px-3">
-                                  <div className="font-semibold text-slate-800">
+                                  <div className="font-medium text-zinc-900">
                                     {est.padreNombre || 'No especificado'}
                                   </div>
                                   {est.padreDni && (
-                                    <span className="text-[10px] text-slate-400">
+                                    <span className="text-[10px] text-zinc-400 font-mono">
                                       DNI: {est.padreDni}
                                     </span>
                                   )}
@@ -1745,26 +1764,26 @@ export default function SuperAdminPage() {
                                       href={waLink}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                                      className="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
                                     >
-                                      <Phone className="w-3 h-3 text-emerald-500" />
+                                      <Phone className="w-3 h-3 text-emerald-600" />
                                       <span>{est.padreTelefono}</span>
                                     </a>
                                   ) : (
-                                    <span className="text-slate-400">{est.padreTelefono || '-'}</span>
+                                    <span className="text-zinc-400">{est.padreTelefono || '-'}</span>
                                   )}
                                 </td>
                                 <td className="py-3 px-3">
                                   {est.alergiasNotas ? (
-                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
                                       <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
                                       <span>{est.alergiasNotas}</span>
                                     </span>
                                   ) : (
-                                    <span className="text-slate-400 text-[11px]">Ninguna</span>
+                                    <span className="text-zinc-400 text-[11px]">Ninguna</span>
                                   )}
                                 </td>
-                                <td className="py-3 px-3 text-right font-mono text-slate-400 text-[11px]">
+                                <td className="py-3 px-3 text-right font-mono text-zinc-400 text-[11px]">
                                   {est.createdAt ? est.createdAt.slice(0, 10) : '-'}
                                 </td>
                               </tr>
@@ -1779,17 +1798,19 @@ export default function SuperAdminPage() {
             </div>
 
             {/* Pie del Modal */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
+            <div className="p-4 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between text-xs text-zinc-500 shrink-0">
               <span>
                 Mostrando estudiantes matriculados en <strong>{modalEstudiantes.colegio.nombre}</strong>
               </span>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => setModalEstudiantes((prev) => ({ ...prev, abierto: false }))}
-                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition cursor-pointer"
+                className="text-xs font-semibold cursor-pointer"
               >
                 Cerrar
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1797,18 +1818,18 @@ export default function SuperAdminPage() {
 
       {/* MODAL CONFIGURAR YAPE Y PLIN */}
       {modalPagosAbierto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-xl p-5 sm:p-6 shadow-xl border border-zinc-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 flex items-center justify-center shrink-0">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">
+                  <h3 className="text-base font-bold text-zinc-950">
                     Configurar Números de Yape y Plin
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-zinc-500">
                     Configuración centralizada para el método de pago de todos los colegios
                   </p>
                 </div>
@@ -1816,7 +1837,7 @@ export default function SuperAdminPage() {
               <button
                 type="button"
                 onClick={() => setModalPagosAbierto(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition"
+                className="text-zinc-400 hover:text-zinc-600 p-1 rounded-md transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1824,14 +1845,14 @@ export default function SuperAdminPage() {
 
             <form onSubmit={handleGuardarPagos} className="space-y-4">
               {/* Sección Yape */}
-              <div className="p-3.5 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-2.5">
-                <span className="text-xs font-black text-purple-900 flex items-center gap-1.5 uppercase tracking-wider">
+              <div className="p-3.5 bg-zinc-50/70 rounded-lg border border-zinc-200 space-y-2.5">
+                <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5 uppercase tracking-wider">
                   <span className="w-2 h-2 rounded-full bg-purple-600 inline-block" />
                   Datos de Cuenta Yape
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
                       Número de Yape *
                     </label>
                     <input
@@ -1840,11 +1861,11 @@ export default function SuperAdminPage() {
                       placeholder="Ej. 999-999-999"
                       value={numeroYape}
                       onChange={(e) => setNumeroYape(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                      className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs font-mono font-semibold text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
                       Titular / Nombre
                     </label>
                     <input
@@ -1852,21 +1873,21 @@ export default function SuperAdminPage() {
                       placeholder="Ej. Placeres Culinarios"
                       value={titularYape}
                       onChange={(e) => setTitularYape(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                      className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Sección Plin */}
-              <div className="p-3.5 bg-sky-50/50 rounded-2xl border border-sky-100 space-y-2.5">
-                <span className="text-xs font-black text-sky-900 flex items-center gap-1.5 uppercase tracking-wider">
+              <div className="p-3.5 bg-zinc-50/70 rounded-lg border border-zinc-200 space-y-2.5">
+                <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5 uppercase tracking-wider">
                   <span className="w-2 h-2 rounded-full bg-sky-500 inline-block" />
                   Datos de Cuenta Plin
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
                       Número de Plin *
                     </label>
                     <input
@@ -1875,11 +1896,11 @@ export default function SuperAdminPage() {
                       placeholder="Ej. 999-999-999"
                       value={numeroPlin}
                       onChange={(e) => setNumeroPlin(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden"
+                      className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs font-mono font-semibold text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
                       Titular / Nombre
                     </label>
                     <input
@@ -1887,7 +1908,7 @@ export default function SuperAdminPage() {
                       placeholder="Ej. Placeres Culinarios"
                       value={titularPlin}
                       onChange={(e) => setTitularPlin(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden"
+                      className="w-full bg-white border border-zinc-200 rounded-md px-3 py-2 text-xs text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                     />
                   </div>
                 </div>
@@ -1895,26 +1916,26 @@ export default function SuperAdminPage() {
 
               {/* Vista previa en tiempo real */}
               <div className="pt-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1.5">
                   Vista Previa en el Checkout de Padres
                 </span>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-purple-50/60 border border-purple-100 rounded-xl p-2.5 text-purple-950">
-                    <p className="font-bold text-[11px]">Número de Yape: {numeroYape || '999-999-999'}</p>
-                    <p className="text-[10px] text-purple-700 truncate">{titularYape || 'Placeres Culinarios'}</p>
+                  <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-2.5 text-zinc-900">
+                    <p className="font-semibold text-[11px]">Número de Yape: {numeroYape || '999-999-999'}</p>
+                    <p className="text-[10px] text-zinc-500 truncate">{titularYape || 'Placeres Culinarios'}</p>
                   </div>
-                  <div className="bg-sky-50/60 border border-sky-100 rounded-xl p-2.5 text-sky-950">
-                    <p className="font-bold text-[11px]">Número de Plin: {numeroPlin || '999-999-999'}</p>
-                    <p className="text-[10px] text-sky-700 truncate">{titularPlin || 'Placeres Culinarios'}</p>
+                  <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-2.5 text-zinc-900">
+                    <p className="font-semibold text-[11px]">Número de Plin: {numeroPlin || '999-999-999'}</p>
+                    <p className="text-[10px] text-zinc-500 truncate">{titularPlin || 'Placeres Culinarios'}</p>
                   </div>
                 </div>
               </div>
 
               <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                <button
+                <Button
                   type="submit"
                   disabled={guardandoPagos}
-                  className="flex-1 py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-purple-600/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 h-10"
                 >
                   {guardandoPagos ? (
                     <span className="animate-pulse">Guardando configuración...</span>
@@ -1924,14 +1945,15 @@ export default function SuperAdminPage() {
                       <span>Guardar Números de Pago</span>
                     </>
                   )}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setModalPagosAbierto(false)}
-                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
+                  className="text-xs sm:text-sm font-semibold h-10"
                 >
                   Cancelar
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -1940,19 +1962,19 @@ export default function SuperAdminPage() {
 
       {/* Modal para configurar hora límite de pedidos del día */}
       {modalHoraLimiteAbierto && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-zinc-200 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 flex items-center justify-center font-bold">
                   <Clock className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-black text-slate-900">Configurar Hora Límite</h3>
+                <h3 className="text-base font-bold text-zinc-950">Configurar Hora Límite</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setModalHoraLimiteAbierto(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+                className="text-zinc-400 hover:text-zinc-600 p-1 rounded-md transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1960,31 +1982,31 @@ export default function SuperAdminPage() {
 
             <form onSubmit={handleGuardarHoraLimite} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">
                   Hora de Corte de Pedidos *
                 </label>
                 <input
                   type="time"
                   value={nuevaHoraLimite}
                   onChange={(e) => setNuevaHoraLimite(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-base font-bold font-mono text-slate-800 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                  className="w-full bg-white border border-zinc-200 rounded-md px-3.5 py-2 text-base font-semibold font-mono text-zinc-900 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                   required
                 />
-                <div className="mt-2 p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+                <div className="mt-2 p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-800 space-y-1">
                   <p>
                     <strong>Vista previa en la carta:</strong> &quot;Pedidos hasta las {formatearHoraLimiteLegible(nuevaHoraLimite)}&quot;.
                   </p>
-                  <p className="text-[11px] text-amber-800">
+                  <p className="text-[11px] text-zinc-500">
                     Si un padre ingresa después de esta hora para el día de hoy, el sistema le advertirá que el horario regular ha culminado, pero le permitirá enviar el pedido.
                   </p>
                 </div>
               </div>
 
               <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                <button
+                <Button
                   type="submit"
                   disabled={guardandoHoraLimite}
-                  className="flex-1 py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-md shadow-amber-600/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 h-10"
                 >
                   {guardandoHoraLimite ? (
                     <span className="animate-pulse">Guardando...</span>
@@ -1994,14 +2016,15 @@ export default function SuperAdminPage() {
                       <span>Guardar Hora Límite</span>
                     </>
                   )}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setModalHoraLimiteAbierto(false)}
-                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs sm:text-sm transition cursor-pointer"
+                  className="text-xs sm:text-sm font-semibold h-10"
                 >
                   Cancelar
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -2010,21 +2033,21 @@ export default function SuperAdminPage() {
 
       {/* MODAL CONFIGURACIÓN FAVICON */}
       {modalFaviconAbierto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-xl p-6 shadow-xl border border-zinc-200 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 flex items-center justify-center">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-black text-slate-900">
+                <h3 className="text-base font-bold text-zinc-950">
                   Editar Favicon del Sistema
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setModalFaviconAbierto(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl"
+                className="p-1 text-zinc-400 hover:text-zinc-600 rounded-md"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2032,7 +2055,7 @@ export default function SuperAdminPage() {
 
             <form onSubmit={handleGuardarFavicon} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-zinc-700 block mb-1">
                   URL del Favicon / Icono (PNG, ICO, SVG o Cloudinary) *
                 </label>
                 <input
@@ -2041,23 +2064,23 @@ export default function SuperAdminPage() {
                   placeholder="https://.../favicon.png o /favicon.ico"
                   value={faviconInput}
                   onChange={(e) => setFaviconInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-xs sm:text-sm font-medium focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-zinc-400 mt-1">
                   Recomendado: Imagen cuadrada de 32x32 px o 64x64 px.
                 </p>
               </div>
 
               {/* Presets rápidos */}
               <div>
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-2">
                   Iconos Predefinidos Recomendados:
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setFaviconInput('/favicon.ico')}
-                    className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 text-left text-xs font-semibold text-slate-700 flex items-center gap-2"
+                    className="p-2 bg-zinc-50 hover:bg-zinc-100 rounded-md border border-zinc-200 text-left text-xs font-medium text-zinc-800 flex items-center gap-2 transition"
                   >
                     <span>🍽️</span>
                     <span>Por Defecto</span>
@@ -2069,7 +2092,7 @@ export default function SuperAdminPage() {
                         'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=64&h=64&fit=crop&crop=faces'
                       )
                     }
-                    className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 text-left text-xs font-semibold text-slate-700 flex items-center gap-2"
+                    className="p-2 bg-zinc-50 hover:bg-zinc-100 rounded-md border border-zinc-200 text-left text-xs font-medium text-zinc-800 flex items-center gap-2 transition"
                   >
                     <span>🥗</span>
                     <span>Almuerzo Saludable</span>
@@ -2081,7 +2104,7 @@ export default function SuperAdminPage() {
                         'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=64&h=64&fit=crop&crop=faces'
                       )
                     }
-                    className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 text-left text-xs font-semibold text-slate-700 flex items-center gap-2"
+                    className="p-2 bg-zinc-50 hover:bg-zinc-100 rounded-md border border-zinc-200 text-left text-xs font-medium text-zinc-800 flex items-center gap-2 transition"
                   >
                     <span>🎒</span>
                     <span>Lonchera Escolar</span>
@@ -2093,7 +2116,7 @@ export default function SuperAdminPage() {
                         'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=64&h=64&fit=crop&crop=faces'
                       )
                     }
-                    className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 text-left text-xs font-semibold text-slate-700 flex items-center gap-2"
+                    className="p-2 bg-zinc-50 hover:bg-zinc-100 rounded-md border border-zinc-200 text-left text-xs font-medium text-zinc-800 flex items-center gap-2 transition"
                   >
                     <span>🍎</span>
                     <span>Manzana Escolar</span>
@@ -2102,8 +2125,8 @@ export default function SuperAdminPage() {
               </div>
 
               {/* Vista previa en miniatura */}
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-md bg-white border border-zinc-200 flex items-center justify-center overflow-hidden shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={faviconInput || FAVICON_DEFAULT}
@@ -2115,28 +2138,29 @@ export default function SuperAdminPage() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[10px] text-slate-400 block font-bold">Simulación pestaña de navegador:</span>
-                  <span className="text-xs font-bold text-slate-800 truncate block">
+                  <span className="text-[10px] text-zinc-400 block font-semibold">Simulación pestaña de navegador:</span>
+                  <span className="text-xs font-semibold text-zinc-900 truncate block">
                     Placeres Culinarios | Gestión de Almuerzos
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setModalFaviconAbierto(false)}
-                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                  className="text-xs font-semibold"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={guardandoFavicon}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition disabled:opacity-50 flex items-center gap-1.5"
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg shadow-xs transition disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {guardandoFavicon ? 'Guardando...' : 'Guardar Favicon'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

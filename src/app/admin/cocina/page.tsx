@@ -16,6 +16,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  School,
 } from 'lucide-react';
 import { dataService } from '@/lib/dataService';
 import { useAuth } from '@/lib/authContext';
@@ -28,6 +29,13 @@ import {
   obtenerHoraActualPeru,
 } from '@/lib/dateUtils';
 import { Pedido, ResumenCocina } from '@/types';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { StatCard } from '@/components/shared/StatCard';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
 // Formateador legible en español para la fecha
 const formatearFechaLegible = (fechaStr: string) => {
@@ -139,62 +147,68 @@ export default function CocinaPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-20">
-      {/* Barra superior de estado y controles de cocina */}
-      <div className="bg-white text-zinc-950 rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-xs mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
+      {/* Encabezado Principal */}
+      <PageHeader
+        title="Control de Cocina"
+        description="Consolidado de raciones a preparar, platos de fondo, dietas especiales y observaciones."
+        actions={
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
-              <Radio className="w-3 h-3 text-emerald-600 animate-pulse" /> TIEMPO REAL ACTIVO
-            </span>
-            <span className="text-xs text-zinc-400">
-              Actualizado: {ultimaActualizacion || '--:--'}
-            </span>
+            <Badge variant="outline" className="gap-1.5 py-1 px-2.5 font-medium border-emerald-200 bg-emerald-50/50 text-emerald-800">
+              <Radio className="w-3 h-3 text-emerald-600 animate-pulse" />
+              <span>TIEMPO REAL ACTIVO</span>
+              <span className="text-zinc-400 font-normal">| {ultimaActualizacion || '--:--'}</span>
+            </Badge>
+
             {!esSuperAdmin && usuario?.colegioNombre && (
               <span className="hidden">
                 🏫 Colegio: {usuario.colegioNombre}
               </span>
             )}
-          </div>
 
-          <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={cargarDatos}
               disabled={cargando}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold rounded-lg border border-zinc-200 shadow-2xs transition cursor-pointer"
+              className="gap-1.5 h-8 text-xs font-semibold"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-zinc-500 ${cargando ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin' : ''}`} />
               Refrescar
-            </button>
+            </Button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Selector de Calendario y Fechas (Hoy, Ayer, etc.) */}
-        <div className="mt-4 pt-4 border-t border-zinc-100 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-zinc-500 font-semibold flex items-center gap-1.5">
+      {/* Barra de Filtros y Navegación de Fechas Unificada */}
+      <Card className="mb-6">
+        <div className="p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs sm:text-sm">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-zinc-500 font-medium flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-zinc-700" /> Menú de Cocina:
             </span>
-            <span className="font-bold text-zinc-950 capitalize text-sm">
+            <span className="font-bold text-zinc-950 capitalize">
               {formatearFechaLegible(fechaFiltro)}
-              {fechaFiltro === fechaHoy && (
-                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold uppercase tracking-wider border border-emerald-200">
-                  Hoy
-                </span>
-              )}
             </span>
+            {fechaFiltro === fechaHoy && (
+              <Badge variant="success" className="text-[10px] uppercase tracking-wider py-0 px-2 font-bold">
+                Hoy
+              </Badge>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            {/* Botón Día Anterior (Ayer) */}
-            <button
+            {/* Navegación Día Anterior */}
+            <Button
               type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
               onClick={() => cambiarDia(-1)}
-              className="p-1.5 rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition cursor-pointer shadow-2xs"
               title="Ver día anterior (ayer)"
             >
               <ChevronLeft className="w-4 h-4" />
-            </button>
+            </Button>
 
             {/* Input nativo de Calendario */}
             <input
@@ -204,237 +218,287 @@ export default function CocinaPage() {
                 setFechaFiltro(e.target.value || fechaHoy);
                 setPaginaObs(1);
               }}
-              className="bg-white border border-zinc-200 text-zinc-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden cursor-pointer"
+              className="h-8 bg-white border border-zinc-200 text-zinc-800 text-xs font-medium rounded-md px-2.5 focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 focus:outline-hidden cursor-pointer shadow-2xs"
               title="Seleccionar fecha para consultar cocina"
             />
 
-            {/* Botón Día Siguiente */}
-            <button
+            {/* Navegación Día Siguiente */}
+            <Button
               type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
               onClick={() => cambiarDia(1)}
-              className="p-1.5 rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition cursor-pointer shadow-2xs"
               title="Ver día siguiente"
             >
               <ChevronRight className="w-4 h-4" />
-            </button>
+            </Button>
 
             {/* Botón rápido HOY */}
-            <button
+            <Button
               type="button"
+              variant={fechaFiltro === fechaHoy ? "default" : "outline"}
+              size="sm"
+              className="h-8 px-3 text-xs"
               onClick={() => {
                 setFechaFiltro(fechaHoy);
                 setPaginaObs(1);
               }}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
-                fechaFiltro === fechaHoy
-                  ? 'bg-zinc-950 text-white shadow-xs'
-                  : 'bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200'
-              }`}
             >
               Hoy
-            </button>
+            </Button>
 
-            {/* Botón Ver Todas las Fechas */}
-            <button
+            {/* Botón Ver Histórico */}
+            <Button
               type="button"
+              variant={fechaFiltro === 'TODAS' ? "default" : "outline"}
+              size="sm"
+              className="h-8 px-3 text-xs"
               onClick={() => {
                 setFechaFiltro('TODAS');
                 setPaginaObs(1);
               }}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
-                fechaFiltro === 'TODAS'
-                  ? 'bg-zinc-950 text-white shadow-xs'
-                  : 'bg-white text-zinc-600 hover:bg-zinc-50 border border-zinc-200'
-              }`}
             >
               Histórico
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Filtro por Institución Educativa: Exclusivo Superadmin */}
         {esSuperAdmin && (
-          <div className="mt-4 pt-3 border-t border-zinc-100 flex flex-wrap items-center gap-2 text-xs">
+          <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-3 border-t border-zinc-100 flex flex-wrap items-center gap-2 text-xs">
             <span className="text-zinc-500 font-semibold flex items-center gap-1">
               <Filter className="w-3.5 h-3.5" /> Filtrar por Colegio:
             </span>
             {['TODOS', ...colegios].map((c) => (
-              <button
+              <Button
                 key={c}
                 type="button"
+                variant={colegioActivo === c ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs px-2.5"
                 onClick={() => {
                   setColegioFiltro(c);
                   setPaginaObs(1);
                 }}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
-                  colegioActivo === c
-                    ? 'bg-zinc-950 text-white shadow-xs'
-                    : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                }`}
               >
                 {c}
-              </button>
+              </Button>
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Aviso de pedidos pendientes de pago o validación */}
       {pedidosPendientesPago.length > 0 && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm text-amber-900 shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <span className="text-lg">ℹ️</span>
-            <span>
-              Hay <strong>{pedidosPendientesPago.length} pedido(s) con pago por cobrar o validar</strong>. Ya están incluidos en el consolidado de cocina para su preparación.
-            </span>
-          </div>
-          <Link
-            href="/admin/despacho"
-            className="px-3.5 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-950 font-bold rounded-xl shrink-0 transition text-center"
-          >
-            Ir a Despacho y Pagos →
-          </Link>
+        <div className="mb-6 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-xl flex items-center gap-2.5 text-xs text-amber-900 shadow-2xs">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>
+            Hay <strong>{pedidosPendientesPago.length} pedido(s) con pago por cobrar o validar</strong>. Ya están incluidos en el consolidado de cocina para su preparación.
+          </span>
         </div>
       )}
 
       {/* KPI Cards de Resumen */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Almuerzos a Cocinar</span>
-          <span className="text-3xl font-black text-slate-900 tracking-tight block mt-1">
-            {resumen.totalPedidos}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Órdenes confirmadas</span>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Almuerzos a Cocinar"
+          value={resumen.totalPedidos}
+          subtext="Órdenes confirmadas"
+          icon={Utensils}
+          variant="default"
+        />
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider block">Con Observaciones</span>
-          <span className="text-3xl font-black text-amber-600 tracking-tight block mt-1">
-            {resumen.pedidosConObservacion}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Dietas o preferencias</span>
-        </div>
+        <StatCard
+          label="Con Observaciones"
+          value={resumen.pedidosConObservacion}
+          subtext="Dietas o preferencias"
+          icon={AlertTriangle}
+          variant={resumen.pedidosConObservacion > 0 ? "warning" : "default"}
+        />
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider block">Pagos Verificados</span>
-          <span className="text-3xl font-black text-emerald-600 tracking-tight block mt-1">
-            {resumen.pedidosPagados}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">
-            {fechaFiltro === fechaHoy ? 'Pagados para hoy' : `Para ${formatearFechaLegible(fechaFiltro)}`}
-          </span>
-        </div>
+        <StatCard
+          label="Pagos Verificados"
+          value={resumen.pedidosPagados}
+          subtext={fechaFiltro === fechaHoy ? "Pagados para hoy" : `Para ${formatearFechaLegible(fechaFiltro)}`}
+          icon={CheckCircle}
+          variant="success"
+        />
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider block">Pendientes de Pago</span>
-          <span className="text-3xl font-black text-rose-600 tracking-tight block mt-1">
-            {resumen.pedidosPendientesPago}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Por cobrar o validar</span>
-        </div>
+        <StatCard
+          label="Pendientes de Pago"
+          value={resumen.pedidosPendientesPago}
+          subtext="Por cobrar o validar"
+          icon={Clock}
+          variant={resumen.pedidosPendientesPago > 0 ? "destructive" : "default"}
+        />
       </div>
 
       {/* SECCIÓN 1: CONSOLIDADO DE ENTRADAS Y SEGUNDOS */}
       <div className={`grid grid-cols-1 ${resumen.ensaladas && resumen.ensaladas.length > 0 ? 'lg:grid-cols-3 md:grid-cols-2' : 'md:grid-cols-2'} gap-6 mb-8`}>
         {/* PANEL ENTRADAS */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-            <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Utensils className="w-5 h-5 text-orange-500" />
-              Consolidado de Sopas o Postres
-            </h2>
-            <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 text-orange-700 rounded-xl">
-              {resumen.entradas.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {resumen.entradas.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">
-                No hay pedidos de sopas o postres para {formatearFechaLegible(fechaFiltro)}.
-              </p>
-            ) : (
-              resumen.entradas.map((item) => (
-                <div
-                  key={item.plato}
-                  className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80"
-                >
-                  <span className="text-sm font-bold text-slate-800">{item.plato}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-slate-900 bg-white px-3 py-1 rounded-xl shadow-xs border border-slate-200">
-                      {item.cantidad}
-                    </span>
-                  </div>
+        <Card className="flex flex-col justify-between">
+          <div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-zinc-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+                  <Utensils className="w-4 h-4" />
                 </div>
-              ))
-            )}
+                <div>
+                  <CardTitle className="text-base font-bold text-zinc-950">
+                    Consolidado de Sopas o Postres
+                  </CardTitle>
+                  <CardDescription className="text-xs text-zinc-500">
+                    Raciones de entrada requeridas
+                  </CardDescription>
+                </div>
+              </div>
+              <Badge variant="secondary" className="font-semibold text-xs">
+                {resumen.entradas.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="pt-4">
+              {resumen.entradas.length === 0 ? (
+                <EmptyState
+                  title="Sin raciones de entrada"
+                  description={`No hay pedidos de sopas o postres para ${formatearFechaLegible(fechaFiltro)}.`}
+                  className="py-8 border-none bg-transparent"
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-zinc-100 hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold text-zinc-500">Plato / Descripción</TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-zinc-500 w-24">Raciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {resumen.entradas.map((item) => (
+                      <TableRow key={item.plato} className="border-b border-zinc-100/70 hover:bg-zinc-50/50">
+                        <TableCell className="font-semibold text-zinc-900 py-3 text-sm">
+                          {item.plato}
+                        </TableCell>
+                        <TableCell className="text-right py-3">
+                          <Badge variant="outline" className="font-bold text-sm px-2.5 py-0.5 bg-zinc-50 text-zinc-950 border-zinc-200">
+                            {item.cantidad}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
           </div>
-        </div>
+        </Card>
 
         {/* PANEL SEGUNDOS / PLATOS DE FONDO */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-            <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Flame className="w-5 h-5 text-rose-500" />
-              Consolidado de Segundos
-            </h2>
-            <span className="text-xs font-bold px-2.5 py-1 bg-rose-50 text-rose-700 rounded-xl">
-              {resumen.segundos.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {resumen.segundos.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">
-                No hay pedidos de segundo para {formatearFechaLegible(fechaFiltro)}.
-              </p>
-            ) : (
-              resumen.segundos.map((item) => (
-                <div
-                  key={item.plato}
-                  className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80"
-                >
-                  <span className="text-sm font-bold text-slate-800 pr-2">{item.plato}</span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-2xl font-black text-slate-900 bg-white px-3 py-1 rounded-xl shadow-xs border border-slate-200">
-                      {item.cantidad}
-                    </span>
-                  </div>
+        <Card className="flex flex-col justify-between">
+          <div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-zinc-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <Flame className="w-4 h-4" />
                 </div>
-              ))
-            )}
+                <div>
+                  <CardTitle className="text-base font-bold text-zinc-950">
+                    Consolidado de Segundos
+                  </CardTitle>
+                  <CardDescription className="text-xs text-zinc-500">
+                    Platos de fondo a preparar
+                  </CardDescription>
+                </div>
+              </div>
+              <Badge variant="secondary" className="font-semibold text-xs">
+                {resumen.segundos.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="pt-4">
+              {resumen.segundos.length === 0 ? (
+                <EmptyState
+                  title="Sin platos de fondo"
+                  description={`No hay pedidos de segundo para ${formatearFechaLegible(fechaFiltro)}.`}
+                  className="py-8 border-none bg-transparent"
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-zinc-100 hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold text-zinc-500">Plato / Descripción</TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-zinc-500 w-24">Raciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {resumen.segundos.map((item) => (
+                      <TableRow key={item.plato} className="border-b border-zinc-100/70 hover:bg-zinc-50/50">
+                        <TableCell className="font-semibold text-zinc-900 py-3 text-sm">
+                          {item.plato}
+                        </TableCell>
+                        <TableCell className="text-right py-3">
+                          <Badge variant="outline" className="font-bold text-sm px-2.5 py-0.5 bg-zinc-50 text-zinc-950 border-zinc-200">
+                            {item.cantidad}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
           </div>
-        </div>
+        </Card>
 
         {/* PANEL ENSALADAS */}
         {resumen.ensaladas && resumen.ensaladas.length > 0 && (
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs">
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <Salad className="w-5 h-5 text-emerald-600" />
-                Consolidado de Ensaladas
-              </h2>
-              <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-xl">
-                {resumen.ensaladas.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {resumen.ensaladas.map((item) => (
-                <div
-                  key={item.plato}
-                  className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80"
-                >
-                  <span className="text-sm font-bold text-slate-800 pr-2">{item.plato}</span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-2xl font-black text-slate-900 bg-white px-3 py-1 rounded-xl shadow-xs border border-slate-200">
-                      {item.cantidad}
-                    </span>
+          <Card className="flex flex-col justify-between">
+            <div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-zinc-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <Salad className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-bold text-zinc-950">
+                      Consolidado de Ensaladas
+                    </CardTitle>
+                    <CardDescription className="text-xs text-zinc-500">
+                      Porciones frescas solicitadas
+                    </CardDescription>
                   </div>
                 </div>
-              ))}
+                <Badge variant="secondary" className="font-semibold text-xs">
+                  {resumen.ensaladas.reduce((acc, curr) => acc + curr.cantidad, 0)} porciones
+                </Badge>
+              </CardHeader>
+
+              <CardContent className="pt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-zinc-100 hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold text-zinc-500">Ensalada</TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-zinc-500 w-24">Raciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {resumen.ensaladas.map((item) => (
+                      <TableRow key={item.plato} className="border-b border-zinc-100/70 hover:bg-zinc-50/50">
+                        <TableCell className="font-semibold text-zinc-900 py-3 text-sm">
+                          {item.plato}
+                        </TableCell>
+                        <TableCell className="text-right py-3">
+                          <Badge variant="outline" className="font-bold text-sm px-2.5 py-0.5 bg-zinc-50 text-zinc-950 border-zinc-200">
+                            {item.cantidad}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
             </div>
-          </div>
+          </Card>
         )}
       </div>
 
@@ -442,178 +506,199 @@ export default function CocinaPage() {
       {esSuperAdmin && resumen.porColegio && resumen.porColegio.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <span className="text-xl">🏫</span>
+            <h2 className="text-lg font-bold text-zinc-950 flex items-center gap-2">
+              <School className="w-5 h-5 text-zinc-700" />
               Almuerzos Independientes por Colegio
             </h2>
-            <span className="text-xs font-bold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-xl">
+            <Badge variant="outline" className="text-xs font-semibold">
               {resumen.porColegio.length} colegios con pedidos
-            </span>
+            </Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {resumen.porColegio.map((col) => (
-              <div
-                key={col.colegioNombre}
-                className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between"
-              >
+              <Card key={col.colegioNombre} className="flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                    <div className="flex items-center gap-1.5">
-                      <span className="px-2 py-0.5 rounded-md font-mono font-black text-xs bg-orange-100 text-orange-900 border border-orange-200">
-                        {col.identificador}
-                      </span>
-                      <h3 className="font-black text-slate-900 text-sm">{col.colegioNombre}</h3>
+                  <CardHeader className="pb-3 border-b border-zinc-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="secondary" className="font-mono font-bold text-xs">
+                          {col.identificador}
+                        </Badge>
+                        <span className="font-bold text-zinc-950 text-sm">{col.colegioNombre}</span>
+                      </div>
+                      <Badge variant="success" className="text-xs font-bold">
+                        {col.totalPedidos} almuerzos
+                      </Badge>
                     </div>
-                    <span className="text-xs font-black px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg">
-                      {col.totalPedidos} almuerzos
-                    </span>
-                  </div>
+                  </CardHeader>
 
-                  <div className="space-y-3 text-xs">
+                  <CardContent className="pt-3 space-y-3 text-xs">
                     <div>
-                      <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block mb-1.5">
+                      <span className="font-semibold text-zinc-500 uppercase text-[10px] tracking-wider block mb-1.5">
                         Platos de Fondo (Segundos):
                       </span>
                       <div className="space-y-1.5">
                         {col.segundos.map((s) => (
                           <div
                             key={s.plato}
-                            className="flex items-center justify-between p-2 bg-slate-50 rounded-xl"
+                            className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg border border-zinc-100"
                           >
-                            <span className="font-medium text-slate-800">{s.plato}</span>
-                            <span className="font-black text-slate-900 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-xs">
+                            <span className="font-medium text-zinc-800">{s.plato}</span>
+                            <Badge variant="outline" className="bg-white font-bold text-xs">
                               {s.cantidad}
-                            </span>
+                            </Badge>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {col.entradas.length > 0 && (
-                      <div className="pt-2 border-t border-slate-100">
-                        <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block mb-1.5">
+                      <div className="pt-2 border-t border-zinc-100">
+                        <span className="font-semibold text-zinc-500 uppercase text-[10px] tracking-wider block mb-1.5">
                           Sopas o Postres:
                         </span>
                         <div className="space-y-1.5">
                           {col.entradas.map((e) => (
                             <div
                               key={e.plato}
-                              className="flex items-center justify-between p-2 bg-slate-50 rounded-xl"
+                              className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg border border-zinc-100"
                             >
-                              <span className="font-medium text-slate-800">{e.plato}</span>
-                              <span className="font-black text-slate-900 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-xs">
+                              <span className="font-medium text-zinc-800">{e.plato}</span>
+                              <Badge variant="outline" className="bg-white font-bold text-xs">
                                 {e.cantidad}
-                              </span>
+                              </Badge>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-                  </div>
+                  </CardContent>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
       )}
 
-      {/* SECCIÓN 2: ALERTA DE OBSERVACIONES CRÍTICAS (NO MÁS OBSERVACIONES PERDIDAS) */}
-      <div className="bg-amber-50/70 rounded-3xl p-5 sm:p-6 border border-amber-200 shadow-xs mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5" />
+      {/* SECCIÓN 2: ALERTA DE OBSERVACIONES CRÍTICAS (NO MÁS FONDOS AMARILLOS GIGANTES) */}
+      <Card className="mb-8">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-amber-950">
+              <CardTitle className="text-base font-bold text-zinc-950">
                 Observaciones y Dietas Especiales
-              </h2>
+              </CardTitle>
+              <CardDescription className="text-xs text-zinc-500">
+                Alergias, restricciones alimenticias y notas personalizadas de los alumnos
+              </CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-xs font-black bg-amber-200 text-amber-900 px-3 py-1 rounded-full">
+            <Badge variant={totalObs > 0 ? "warning" : "secondary"} className="font-semibold">
               {totalObs} Alertas
-            </span>
+            </Badge>
             {totalPaginasObs > 1 && (
-              <div className="flex items-center gap-1 bg-white border border-amber-200 rounded-xl px-2 py-1 shadow-xs">
-                <span className="text-xs font-semibold text-slate-600 mr-1">
+              <div className="flex items-center gap-1 bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1">
+                <span className="text-xs font-medium text-zinc-600 mr-1">
                   Pág. {paginaValidaObs} de {totalPaginasObs}
                 </span>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
                   onClick={() => setPaginaObs((prev) => Math.max(1, prev - 1))}
                   disabled={paginaValidaObs <= 1}
-                  className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700"
                   title="Página anterior"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
                   onClick={() => setPaginaObs((prev) => Math.min(totalPaginasObs, prev + 1))}
                   disabled={paginaValidaObs >= totalPaginasObs}
-                  className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700"
                   title="Página siguiente"
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                </Button>
               </div>
             )}
           </div>
-        </div>
+        </CardHeader>
 
-        {totalObs === 0 ? (
-          <div className="bg-white rounded-2xl p-4 text-center text-xs text-slate-500">
-            ✓ No hay observaciones especiales para los pedidos actuales.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {obsPaginadas.map((p) => {
-              const matchNum = (p.codigoPedido || '').match(/-(\d+)$/);
-              const numAlm = matchNum ? parseInt(matchNum[1], 10) : undefined;
-              return (
-                <div
-                  key={p.id}
-                  className="bg-white rounded-2xl p-3.5 border border-amber-300 shadow-xs space-y-1.5"
-                >
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-mono font-black text-xs text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md">
-                        #{p.codigoPedido}
-                      </span>
-                      {numAlm && (
-                        <span className="text-[10px] font-bold text-slate-500">
-                          Almuerzo #{numAlm}
+        <CardContent className="pt-5">
+          {totalObs === 0 ? (
+            <EmptyState
+              icon={CheckCircle}
+              title="Sin alertas ni dietas especiales"
+              description="No hay observaciones médicas o dietas especiales registradas para esta fecha."
+              className="py-8 border-none bg-zinc-50/50"
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {obsPaginadas.map((p) => {
+                const matchNum = (p.codigoPedido || '').match(/-(\d+)$/);
+                const numAlm = matchNum ? parseInt(matchNum[1], 10) : undefined;
+                return (
+                  <div
+                    key={p.id}
+                    className="rounded-xl border border-zinc-200/90 border-l-4 border-l-amber-500 bg-white p-4 shadow-2xs space-y-2.5 hover:border-zinc-300 transition-all"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono font-bold text-xs text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                          #{p.codigoPedido}
                         </span>
+                        {numAlm && (
+                          <span className="text-[10px] font-medium text-zinc-500">
+                            Almuerzo #{numAlm}
+                          </span>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="text-[10px] font-medium text-zinc-600 bg-zinc-50">
+                        {p.gradoSeccion}
+                      </Badge>
+                    </div>
+
+                    <div>
+                      <div className="font-bold text-zinc-950 text-sm leading-tight">{p.estudianteNombre}</div>
+                      <p className="text-xs text-zinc-500 font-medium mt-0.5">🏫 {p.colegioNombre}</p>
+                    </div>
+
+                    <div className="text-xs text-zinc-700 bg-zinc-50/80 p-2.5 rounded-lg border border-zinc-100 space-y-1">
+                      <div>
+                        <span className="text-zinc-500 text-[11px] block">Menú seleccionado:</span>
+                        <span className="text-orange-700 font-semibold">{p.entradaNombre}</span> +{' '}
+                        <span className="text-zinc-900 font-semibold">{p.segundoNombre}</span>
+                        {p.ensaladaNombre && p.ensaladaNombre !== 'Sin ensalada' && (
+                          <> + <span className="text-emerald-700 font-semibold">{p.ensaladaNombre}</span></>
+                        )}
+                      </div>
+                      {p.refrigerioNombre && (
+                        <div className="text-emerald-700 font-semibold text-[11px] pt-1 border-t border-zinc-200/60">
+                          Extras: {p.refrigerioNombre}
+                        </div>
                       )}
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-600">
-                      {p.gradoSeccion}
-                    </span>
+
+                    <div className="p-2.5 bg-amber-50/80 border border-amber-200/90 rounded-lg text-xs font-semibold text-amber-950 flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <span>{p.observacion}</span>
+                    </div>
                   </div>
-                  <div className="font-black text-slate-900 text-sm">{p.estudianteNombre}</div>
-                  <p className="text-xs text-slate-500 font-medium">🏫 {p.colegioNombre}</p>
-                  <div className="text-xs text-slate-700">
-                    <span className="text-orange-600 font-semibold">{p.entradaNombre}</span> +{' '}
-                    <span className="text-slate-800 font-semibold">{p.segundoNombre}</span>
-                    {p.ensaladaNombre && p.ensaladaNombre !== 'Sin ensalada' && (
-                      <> + <span className="text-emerald-700 font-semibold">{p.ensaladaNombre}</span></>
-                    )}
-                    {p.refrigerioNombre && (
-                      <span className="text-emerald-700 font-bold block mt-0.5">Extras: {p.refrigerioNombre}</span>
-                    )}
-                  </div>
-                  <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 flex items-start gap-1.5">
-                    <span className="shrink-0">⚠️</span>
-                    <span>{p.observacion}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
