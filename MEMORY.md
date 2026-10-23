@@ -1647,7 +1647,32 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/menu-distribucion-entrada-segundo-ensalada.test.mjs`
   - `MEMORY.md`
 
+### D-055 — 2026-10-23 — Tabla y desglose de Fiados organizados igual que Despacho (Entrada, Segundo y Ensalada)
 
+- Decisión: Alinear la tabla principal de fiados y su desglose desplegable a la estructura visual y organización de despacho:
+  1. Tabla Principal (`/fiado`):
+     - Estructurada en las 7 columnas: `Almuerzos`, `Grado y Estudiante`, `Nombre (Padre y Teléfono)`, `Detalle de Pedidos`, `Fecha y Hora`, `Deuda / Pago`, `Acciones`.
+     - Columna `Detalle de Pedidos`: Despliega Entrada, Segundo y Ensalada juntos con etiquetas semánticas y colores idénticos a Despacho (`Entrada:` en naranja, `Segundo:` en zinc-900, `Ensalada:` en esmeralda).
+     - Columna `Fecha y Hora`: Formato limpio idéntico a Despacho con icono Calendar, fecha legible, badge compacto de `Consumo de HOY` si aplica, e icono Clock con hora en formato Perú.
+     - Columna `Grado y Estudiante`: Estudiantes en negrita acompañados de badges de grado.
+  2. Desglose Expandible ("Pagar luego"):
+     - Cabecera: `Fecha y Hora`, `Estudiante`, `Pedido`, `Entrega`, `Monto`, `Estado Pago`, `Acción`.
+     - Erradicación total de textos residuales o concatenaciones anómalas (`EntradaSopa o postre`).
+     - Columna `Pedido`: Despliega el bloque completo de Entrada, Segundo, Ensalada, Extras y Observaciones.
+  3. Modal de Reporte Familiar:
+     - Cabecera de platos renombrada a `Pedido` con desglose visual de Entrada, Segundo, Ensalada y Extras.
+  4. Tipos e Integridad de Datos:
+     - `ItemFiadoPedido` en `src/types/index.ts` incorpora `ensaladaNombre`, `refrigerioNombre` y `observacion`.
+     - `dataService.obtenerFiados` transfiere `ensaladaNombre`, `refrigerioNombre` y `observacion` a los ítems del resumen.
+  5. Suite de Pruebas:
+     - Creada suite `tests/fiado-tabla-desglose-pedido-despacho.test.mjs` con 5 pruebas automatizadas.
+- Fuente: Instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/app/admin/fiado/page.tsx`
+  - `src/types/index.ts`
+  - `src/lib/dataService.ts`
+  - `tests/fiado-tabla-desglose-pedido-despacho.test.mjs`
+  - `MEMORY.md`
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
