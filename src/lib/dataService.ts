@@ -469,7 +469,7 @@ function mapearPlatoDesdeSupabase(d: PlatoRowSupabase): Plato {
   let colegioNombre: string | undefined = d.colegio_nombre || undefined;
   let colegioId: string | undefined = d.colegio_id || undefined;
   let tipoFinal: string = d.tipo || 'Segundo';
-  if (tipoFinal === 'ENTRADA') tipoFinal = 'Sopa o postre';
+  if (tipoFinal === 'ENTRADA') tipoFinal = 'Entrada';
   else if (tipoFinal === 'SEGUNDO') tipoFinal = 'Segundo';
 
   let descLimpia = d.descripcion || '';
@@ -489,20 +489,20 @@ function mapearPlatoDesdeSupabase(d: PlatoRowSupabase): Plato {
       colegioNombre = match[1].trim();
       descLimpia = descLimpia.replace(/\s*•?\s*\[Colegio:\s*[^\]]+\]/, '').trim();
     }
-    const matchSubtipo = descLimpia.match(/\[(Sopa|Ensalada)\]/i);
-    if (matchSubtipo && (tipoFinal === 'Sopa o postre' || tipoFinal === 'ENTRADA')) {
-      tipoFinal = matchSubtipo[1].toLowerCase().includes('ensalada') ? 'Ensalada' : 'Sopa';
+    const matchSubtipo = descLimpia.match(/\[(Sopa|Ensalada|Entrada)\]/i);
+    if (matchSubtipo && (tipoFinal === 'Sopa o postre' || tipoFinal === 'ENTRADA' || tipoFinal === 'Entrada' || tipoFinal === 'Sopa')) {
+      tipoFinal = matchSubtipo[1].toLowerCase().includes('ensalada') ? 'Ensalada' : 'Entrada';
     }
     descLimpia = descLimpia.replace(/\[(Sopa|Ensalada)\]\s*/gi, '').trim();
   }
 
-  // Si el tipo es entrada genérica, inferir inteligentemente si es Sopa o Ensalada
-  if (tipoFinal === 'Sopa o postre' || tipoFinal === 'ENTRADA') {
+  // Si el tipo es entrada genérica, inferir inteligentemente si es Entrada o Ensalada
+  if (tipoFinal === 'Sopa o postre' || tipoFinal === 'ENTRADA' || tipoFinal === 'Sopa' || tipoFinal === 'Entrada') {
     const nombreLower = (d.nombre || '').toLowerCase();
     if (nombreLower.includes('ensalada')) {
       tipoFinal = 'Ensalada';
     } else {
-      tipoFinal = 'Sopa';
+      tipoFinal = 'Entrada';
     }
   }
   return {
@@ -3411,7 +3411,7 @@ export const dataService = {
         !p.entradaNombre.toLowerCase().includes('sin sopa')
       ) {
         const n = p.entradaNombre.trim();
-        if (!conteoPlatos[n]) conteoPlatos[n] = { pedidos: 0, tipo: 'Sopa/Entrada' };
+        if (!conteoPlatos[n]) conteoPlatos[n] = { pedidos: 0, tipo: 'Entrada' };
         conteoPlatos[n].pedidos++;
       }
     });

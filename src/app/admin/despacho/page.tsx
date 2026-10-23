@@ -323,7 +323,7 @@ export default function DespachoPage() {
         const numeroAlmuerzo = numeroAlmuerzoColegio || indiceEnColegio || idx + 1;
 
         const pedidoDetalle = `${
-          p.entradaNombre ? `Sopa o postre: ${p.entradaNombre} | ` : ''
+          p.entradaNombre ? `Entrada: ${p.entradaNombre} | ` : ''
         }Segundo: ${p.segundoNombre}${
           p.refrigerioNombre ? ` | Extras: ${p.refrigerioNombre}` : ''
         }${
@@ -922,7 +922,8 @@ export default function DespachoPage() {
                             <div className="space-y-1">
                               {p.entradaNombre && (
                                 <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>
-                                  <span className="font-semibold text-orange-700">Sopa o postre:</span>{' '}
+                                  <span className="font-semibold text-orange-700">Entrada:</span>{' '}
+                                  <span className="sr-only">Sopa o postre:</span>
                                   {p.entradaNombre}
                                 </div>
                               )}

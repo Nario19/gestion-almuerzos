@@ -40,7 +40,7 @@ export function SkeletonHomePage() {
         ))}
       </div>
 
-      {/* Sección de Entradas / Sopas */}
+      {/* Sección de Entradas */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Skeleton className="w-8 h-8 rounded-xl" />

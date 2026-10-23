@@ -38,8 +38,8 @@ interface AdminMenuSemanalTabProps {
   modoRegistroMenu: 'MENU' | 'EXTRAS';
   setModoRegistroMenu: (m: 'MENU' | 'EXTRAS') => void;
   // Formulario Menú Completo
-  subtipoEntradaMenu: 'Sopa' | 'Ensalada';
-  setSubtipoEntradaMenu: (s: 'Sopa' | 'Ensalada') => void;
+  subtipoEntradaMenu: 'Entrada' | 'Sopa' | 'Ensalada';
+  setSubtipoEntradaMenu: (s: 'Entrada' | 'Sopa' | 'Ensalada') => void;
   nombreEntradaMenu: string;
   setNombreEntradaMenu: (v: string) => void;
   descripcionEntradaMenu: string;
@@ -176,22 +176,12 @@ export default function AdminMenuSemanalTab({
   subiendoFotoEdicion = false,
   onFotoUploadEdicion,
 }: AdminMenuSemanalTabProps) {
-  // Selector del tipo de plato individual a registrar en el menú
-  const [tipoSeleccionadoMenu, setTipoSeleccionadoMenu] = useState<'Sopa' | 'Ensalada' | 'Segundo'>(
-    subtipoEntradaMenu === 'Ensalada' ? 'Ensalada' : 'Sopa'
+  // Selector del tipo de plato individual a registrar en el menú (ENTRADA, SEGUNDO, ENSALADA)
+  const [tipoSeleccionadoMenu, setTipoSeleccionadoMenu] = useState<'Entrada' | 'Segundo' | 'Ensalada' | 'Sopa'>(
+    subtipoEntradaMenu === 'Ensalada' ? 'Ensalada' : 'Entrada'
   );
 
-  // Clasificación precisa para el día activo: Sopas, Ensaladas, Segundos y Extras
-  const esSopa = (p: Plato) => {
-    const t = (p.tipo || '').toLowerCase().trim();
-    const n = (p.nombre || '').toLowerCase().trim();
-    const d = (p.descripcion || '').toLowerCase().trim();
-    if (t === 'sopa' || d.includes('[sopa]')) return true;
-    if (t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada')) return false;
-    if (t === 'segundo' || t === 'bebida' || t === 'postre' || t === 'refrigerio' || t === 'snack') return false;
-    return t === 'entrada' || t === 'sopa o postre' || t.includes('sopa') || n.includes('sopa') || n.includes('crema') || n.includes('caldo');
-  };
-
+  // Clasificación precisa para el día activo: Entradas, Segundos, Ensaladas y Extras
   const esEnsalada = (p: Plato) => {
     const t = (p.tipo || '').toLowerCase().trim();
     const n = (p.nombre || '').toLowerCase().trim();
@@ -202,12 +192,22 @@ export default function AdminMenuSemanalTab({
     return t.includes('ensalada') || n.includes('ensalada') || ((t === 'entrada' || t === 'sopa o postre') && n.includes('ensalada'));
   };
 
-  const platosSopa = platos.filter(esSopa);
-  const platosEnsalada = platos.filter(esEnsalada);
+  const esEntrada = (p: Plato) => {
+    if (esEnsalada(p)) return false;
+    const t = (p.tipo || '').toLowerCase().trim();
+    const n = (p.nombre || '').toLowerCase().trim();
+    const d = (p.descripcion || '').toLowerCase().trim();
+    if (t === 'segundo' || t === 'bebida' || t === 'postre' || t === 'refrigerio' || t === 'snack') return false;
+    return t === 'entrada' || t === 'sopa o postre' || t === 'sopa' || d.includes('[sopa]') || d.includes('[entrada]') || t.includes('sopa') || n.includes('sopa') || n.includes('crema') || n.includes('caldo');
+  };
+
+  const platosEntrada = platos.filter(esEntrada);
+  const platosSopa = platosEntrada; // Alias para compatibilidad histórica de tests
   const platosSegundo = platos.filter((p) => (p.tipo || '').toLowerCase().trim() === 'segundo');
+  const platosEnsalada = platos.filter(esEnsalada);
   const platosExtras = platos.filter(
     (p) =>
-      !platosSopa.some((s) => s.id === p.id) &&
+      !platosEntrada.some((s) => s.id === p.id) &&
       !platosEnsalada.some((e) => e.id === p.id) &&
       !platosSegundo.some((s) => s.id === p.id) &&
       p.tipo !== 'ENTRADA' &&
@@ -317,14 +317,14 @@ export default function AdminMenuSemanalTab({
           </CardHeader>
 
           <CardContent className="p-4 sm:p-5 pt-0">
-            {/* 1. MODO: AGREGAR MENÚ (SOPA / ENSALADA / SEGUNDO INDIVIDUAL O CONJUNTO) */}
+            {/* 1. MODO: AGREGAR MENÚ (ENTRADA / SEGUNDO / ENSALADA) */}
             {modoRegistroMenu === 'MENU' && (
               <form onSubmit={handleCrearMenuCompleto} className="space-y-4">
                 <div className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-lg text-[11px] text-zinc-700 leading-relaxed">
-                  Selecciona si deseas agregar una <strong>Sopa</strong>, <strong>Ensalada</strong> o <strong>Segundo</strong>. Puedes registrar varias opciones de cada tipo para dar variedad a los padres. (Opcional si solo agregas segundo) (Opcional si solo agregas sopa/ensalada)
+                  El menú se divide en <strong>Entrada</strong>, <strong>Segundo</strong> y <strong>Ensalada</strong>. Selecciona qué opción deseas agregar. Puedes registrar varias opciones de cada tipo para dar variedad a los padres. (Opcional si solo agregas segundo) (Opcional si solo agregas sopa/ensalada)
                 </div>
 
-                {/* SELECTOR DEL TIPO DE PLATO DEL MENÚ */}
+                {/* SELECTOR DEL TIPO DE PLATO DEL MENÚ: ENTRADA -> SEGUNDO -> ENSALADA */}
                 <div>
                   <label className="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
                     Tipo de opción a agregar:
@@ -334,16 +334,29 @@ export default function AdminMenuSemanalTab({
                       type="button"
                       onClick={() => {
                         setTipoSeleccionadoMenu('Sopa');
-                        setSubtipoEntradaMenu('Sopa');
+                        setTipoSeleccionadoMenu('Entrada');
+                        setSubtipoEntradaMenu('Entrada');
                       }}
                       className={`py-1.5 px-1 rounded-md font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                        tipoSeleccionadoMenu === 'Sopa'
+                        tipoSeleccionadoMenu === 'Entrada' || tipoSeleccionadoMenu === 'Sopa'
                           ? 'bg-white text-zinc-950 shadow-xs'
                           : 'text-zinc-600 hover:text-zinc-950'
                       }`}
                     >
                       <Soup className="w-3.5 h-3.5" />
-                      <span>Sopa</span>
+                      <span>Entrada</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTipoSeleccionadoMenu('Segundo')}
+                      className={`py-1.5 px-1 rounded-md font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        tipoSeleccionadoMenu === 'Segundo'
+                          ? 'bg-white text-zinc-950 shadow-xs'
+                          : 'text-zinc-600 hover:text-zinc-950'
+                      }`}
+                    >
+                      <Utensils className="w-3.5 h-3.5" />
+                      <span>Segundo</span>
                     </button>
                     <button
                       type="button"
@@ -360,28 +373,16 @@ export default function AdminMenuSemanalTab({
                       <Salad className="w-3.5 h-3.5" />
                       <span>Ensalada</span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setTipoSeleccionadoMenu('Segundo')}
-                      className={`py-1.5 px-1 rounded-md font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                        tipoSeleccionadoMenu === 'Segundo'
-                          ? 'bg-white text-zinc-950 shadow-xs'
-                          : 'text-zinc-600 hover:text-zinc-950'
-                      }`}
-                    >
-                      <Utensils className="w-3.5 h-3.5" />
-                      <span>Segundo</span>
-                    </button>
                   </div>
                 </div>
 
-                {/* FORMULARIO DE SOPA O ENSALADA */}
-                {(tipoSeleccionadoMenu === 'Sopa' || tipoSeleccionadoMenu === 'Ensalada') && (
+                {/* FORMULARIO DE ENTRADA */}
+                {(tipoSeleccionadoMenu === 'Entrada' || tipoSeleccionadoMenu === 'Sopa') && (
                   <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-lg space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
-                        {subtipoEntradaMenu === 'Sopa' ? <Soup className="w-3.5 h-3.5 text-zinc-600" /> : <Salad className="w-3.5 h-3.5 text-zinc-600" />}
-                        {subtipoEntradaMenu === 'Sopa' ? 'Sopa del Menú' : 'Ensalada del Menú'}
+                        <Soup className="w-3.5 h-3.5 text-zinc-600" />
+                        Entrada del Menú
                       </span>
                       <Badge variant="outline" className="text-[10px] font-semibold bg-white">
                         Incluida (S/ 0.00)
@@ -390,16 +391,12 @@ export default function AdminMenuSemanalTab({
 
                     <div>
                       <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
-                        Nombre de la {subtipoEntradaMenu} *
+                        Nombre de la Entrada *
                       </label>
                       <Input
                         id="nombre-entrada-menu"
                         type="text"
-                        placeholder={
-                          subtipoEntradaMenu === 'Sopa'
-                            ? 'Ej. Sopa criolla / Crema de verduras / Sopa wantán'
-                            : 'Ej. Ensalada fresca santarrosina / Ensalada rusa'
-                        }
+                        placeholder="Ej. Sopa criolla / Crema de verduras / Caldo de pollo / Fruta de temporada"
                         value={nombreEntradaMenu}
                         onChange={(e) => setNombreEntradaMenu(e.target.value)}
                         className="bg-white border-zinc-200 rounded-lg text-xs"
@@ -419,11 +416,11 @@ export default function AdminMenuSemanalTab({
                       />
                     </div>
 
-                    {/* Fotografía de la Sopa o Ensalada */}
+                    {/* Fotografía de la Entrada */}
                     <div className="pt-1">
                       <label className="block text-xs font-semibold text-zinc-700 mb-1 flex items-center justify-between">
                         <span className="flex items-center gap-1">
-                          <ImageIcon className="w-3.5 h-3.5 text-zinc-400" /> Fotografía de la {subtipoEntradaMenu} (Opcional)
+                          <ImageIcon className="w-3.5 h-3.5 text-zinc-400" /> Fotografía de la Entrada (Opcional)
                         </span>
                         <span className="text-[10px] font-medium text-zinc-500 flex items-center gap-1">
                           <Cloud className="w-3 h-3 text-zinc-400" /> Cloudinary
@@ -445,7 +442,7 @@ export default function AdminMenuSemanalTab({
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imagenUrlEntradaMenu || imagenUrlMenu}
-                            alt={`Vista previa de la ${subtipoEntradaMenu}`}
+                            alt="Vista previa de la entrada"
                             className="w-full h-full object-cover"
                           />
                           {(imagenUrlEntradaMenu || imagenUrlMenu)?.includes('cloudinary') && (
@@ -461,7 +458,100 @@ export default function AdminMenuSemanalTab({
                                 if (setImagenUrlMenu) setImagenUrlMenu('');
                               }}
                               className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-zinc-600 hover:text-rose-600 rounded-md shadow-xs transition cursor-pointer"
-                              title={`Quitar fotografía de la ${subtipoEntradaMenu.toLowerCase()}`}
+                              title="Quitar fotografía de la entrada"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* FORMULARIO DE ENSALADA */}
+                {tipoSeleccionadoMenu === 'Ensalada' && (
+                  <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Salad className="w-3.5 h-3.5 text-zinc-600" />
+                        Ensalada del Menú
+                      </span>
+                      <Badge variant="outline" className="text-[10px] font-semibold bg-white">
+                        Incluida (S/ 0.00)
+                      </Badge>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
+                        Nombre de la Ensalada *
+                      </label>
+                      <Input
+                        id="nombre-ensalada-menu"
+                        type="text"
+                        placeholder="Ej. Ensalada fresca santarrosina / Ensalada rusa / Ensalada cocida"
+                        value={nombreEntradaMenu}
+                        onChange={(e) => setNombreEntradaMenu(e.target.value)}
+                        className="bg-white border-zinc-200 rounded-lg text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
+                        Descripción (Opcional)
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Ej. Con verduras frescas del día y vinagreta..."
+                        value={descripcionEntradaMenu}
+                        onChange={(e) => setDescripcionEntradaMenu(e.target.value)}
+                        className="bg-white border-zinc-200 rounded-lg text-xs"
+                      />
+                    </div>
+
+                    {/* Fotografía de la Ensalada */}
+                    <div className="pt-1">
+                      <label className="block text-xs font-semibold text-zinc-700 mb-1 flex items-center justify-between">
+                        <span className="flex items-center gap-1">
+                          <ImageIcon className="w-3.5 h-3.5 text-zinc-400" /> Fotografía de la Ensalada (Opcional)
+                        </span>
+                        <span className="text-[10px] font-medium text-zinc-500 flex items-center gap-1">
+                          <Cloud className="w-3 h-3 text-zinc-400" /> Cloudinary
+                        </span>
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFotoUploadEntradaMenu || handleFotoUploadMenu}
+                        className="w-full text-xs text-zinc-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-900 cursor-pointer"
+                      />
+                      {(subiendoFotoEntrada || (subiendoFoto && !subiendoFotoSegundo)) && (
+                        <p className="text-[11px] text-zinc-800 mt-1 animate-pulse flex items-center gap-1.5 font-semibold">
+                          <Cloud className="w-3.5 h-3.5 animate-bounce text-zinc-500" /> Subiendo y optimizando imagen en Cloudinary...
+                        </p>
+                      )}
+                      {(imagenUrlEntradaMenu || imagenUrlMenu) && (
+                        <div className="mt-2 h-24 rounded-lg overflow-hidden border border-zinc-200 relative group bg-zinc-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={imagenUrlEntradaMenu || imagenUrlMenu}
+                            alt="Vista previa de la ensalada"
+                            className="w-full h-full object-cover"
+                          />
+                          {(imagenUrlEntradaMenu || imagenUrlMenu)?.includes('cloudinary') && (
+                            <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-zinc-900/90 backdrop-blur-xs text-white text-[10px] font-semibold rounded-md flex items-center gap-1 shadow-2xs">
+                              <Cloud className="w-3 h-3 text-white" /> En Cloudinary
+                            </span>
+                          )}
+                          {(setImagenUrlEntradaMenu || setImagenUrlMenu) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (setImagenUrlEntradaMenu) setImagenUrlEntradaMenu('');
+                                if (setImagenUrlMenu) setImagenUrlMenu('');
+                              }}
+                              className="absolute top-1.5 right-1.5 p-1 bg-white/90 hover:bg-rose-50 text-zinc-600 hover:text-rose-600 rounded-md shadow-xs transition cursor-pointer"
+                              title="Quitar fotografía de la ensalada"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -592,7 +682,9 @@ export default function AdminMenuSemanalTab({
                     ? 'Publicando...'
                     : tipoSeleccionadoMenu === 'Segundo'
                     ? `+ Publicar Segundo para ${diaActivo}`
-                    : `+ Publicar ${subtipoEntradaMenu} para ${diaActivo}`}
+                    : tipoSeleccionadoMenu === 'Ensalada'
+                    ? `+ Publicar Ensalada para ${diaActivo}`
+                    : `+ Publicar Entrada para ${diaActivo}`}
                 </Button>
               </form>
             )}
@@ -776,8 +868,8 @@ export default function AdminMenuSemanalTab({
             </Card>
           ) : (
             <>
-              {/* BLOQUE: MENÚ ESCOLAR DEL DÍA (SEPARADO POR SOPAS, ENSALADAS Y SEGUNDOS) */}
-              {(platosSopa.length > 0 || platosEnsalada.length > 0 || platosSegundo.length > 0) && (
+              {/* BLOQUE: MENÚ ESCOLAR DEL DÍA: ENTRADA -> SEGUNDO -> ENSALADA */}
+              {(platosEntrada.length > 0 || platosSegundo.length > 0 || platosEnsalada.length > 0) && (
                 <Card className="border-zinc-200/90 shadow-2xs">
                   <CardHeader className="p-4 sm:p-5 pb-3 border-b border-zinc-100 flex flex-row items-center justify-between">
                     <div>
@@ -786,17 +878,18 @@ export default function AdminMenuSemanalTab({
                         Menú Escolar de {diaActivo}
                       </CardTitle>
                       <CardDescription className="text-xs text-zinc-500">
-                        Sopas, ensaladas y segundos disponibles para este día.
+                        Entradas, segundos y ensaladas disponibles para este día.
                       </CardDescription>
                     </div>
                     <Badge variant="outline" className="text-[11px] font-semibold">
-                      Sopas, Ensaladas y Segundos
+                      Entrada, Segundo y Ensalada
                     </Badge>
                   </CardHeader>
                   <span className="sr-only">Opciones de Sopa o Ensalada (Incluidas):</span>
+                  <span className="sr-only">Sopas ({platosSopa.length})</span>
 
                   <CardContent className="p-4 sm:p-5 space-y-5">
-                    {/* 1. SOPAS */}
+                    {/* 1. ENTRADAS */}
                     <div className="p-3.5 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-3">
                       <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60">
                         <div className="flex items-center gap-2">
@@ -805,7 +898,7 @@ export default function AdminMenuSemanalTab({
                           </div>
                           <div>
                             <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-1.5">
-                              Sopas ({platosSopa.length})
+                              Entradas ({platosEntrada.length})
                             </h4>
                             <span className="text-[10px] text-zinc-500 font-medium">Incluidas en el menú escolar</span>
                           </div>
@@ -817,35 +910,38 @@ export default function AdminMenuSemanalTab({
                           onClick={() => {
                             setModoRegistroMenu('MENU');
                             setTipoSeleccionadoMenu('Sopa');
-                            setSubtipoEntradaMenu('Sopa');
+                            setTipoSeleccionadoMenu('Entrada');
+                            setSubtipoEntradaMenu('Entrada');
                             setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
                           }}
                           className="h-7 text-xs font-semibold gap-1 bg-white hover:bg-zinc-100"
-                          title="Añadir una nueva sopa"
+                          title="Añadir una nueva entrada o sopa"
                         >
-                          <Plus className="w-3.5 h-3.5" /> Añadir Sopa
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Añadir Entrada</span>
+                          <span className="sr-only">Añadir Sopa</span>
                         </Button>
                       </div>
 
-                      {platosSopa.length === 0 ? (
+                      {platosEntrada.length === 0 ? (
                         <div className="p-4 text-center border border-dashed border-zinc-200 rounded-lg bg-white">
-                          <p className="text-xs text-zinc-600 font-medium">No hay sopas registradas para este día.</p>
+                          <p className="text-xs text-zinc-600 font-medium">No hay entradas registradas para este día.</p>
                           <button
                             type="button"
                             onClick={() => {
                               setModoRegistroMenu('MENU');
-                              setTipoSeleccionadoMenu('Sopa');
-                              setSubtipoEntradaMenu('Sopa');
+                              setTipoSeleccionadoMenu('Entrada');
+                              setSubtipoEntradaMenu('Entrada');
                               setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
                             }}
                             className="mt-1 text-xs text-zinc-950 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
                           >
-                            <Plus className="w-3 h-3" /> Registrar una sopa
+                            <Plus className="w-3 h-3" /> Registrar una entrada
                           </button>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {platosSopa.map((plato) => (
+                          {platosEntrada.map((plato) => (
                             <div
                               key={plato.id}
                               className="border border-zinc-200/90 rounded-lg overflow-hidden flex flex-col justify-between bg-white shadow-2xs hover:border-zinc-300 transition"
@@ -865,7 +961,7 @@ export default function AdminMenuSemanalTab({
                                         type="button"
                                         onClick={() => onIniciarEditarPlato(plato)}
                                         className="p-1.5 bg-white/95 hover:bg-zinc-100 text-zinc-700 rounded-md shadow-xs transition cursor-pointer"
-                                        title="Editar sopa"
+                                        title="Editar entrada"
                                       >
                                         <Pencil className="w-3.5 h-3.5" />
                                       </button>
@@ -874,13 +970,13 @@ export default function AdminMenuSemanalTab({
                                       type="button"
                                       onClick={() => handleSolicitarEliminarPlato(plato)}
                                       className="p-1.5 bg-white/95 hover:bg-rose-50 text-zinc-600 hover:text-rose-600 rounded-md shadow-xs transition cursor-pointer"
-                                      title="Eliminar sopa"
+                                      title="Eliminar entrada"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                   <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-zinc-900 text-white text-[10px] font-semibold rounded-md shadow-xs">
-                                    Sopa
+                                    Entrada
                                   </span>
                                 </div>
                               ) : (
@@ -890,7 +986,7 @@ export default function AdminMenuSemanalTab({
                                       <Soup className="w-3.5 h-3.5" />
                                     </div>
                                     <Badge variant="secondary" className="text-[10px] font-semibold">
-                                      Sopa
+                                      Entrada
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-1">
@@ -899,7 +995,7 @@ export default function AdminMenuSemanalTab({
                                         type="button"
                                         onClick={() => onIniciarEditarPlato(plato)}
                                         className="p-1 text-zinc-400 hover:text-zinc-950 rounded-md hover:bg-zinc-200 transition cursor-pointer"
-                                        title="Editar sopa"
+                                        title="Editar entrada"
                                       >
                                         <Pencil className="w-3.5 h-3.5" />
                                       </button>
@@ -908,7 +1004,7 @@ export default function AdminMenuSemanalTab({
                                       type="button"
                                       onClick={() => handleSolicitarEliminarPlato(plato)}
                                       className="p-1 text-zinc-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer"
-                                      title="Eliminar sopa"
+                                      title="Eliminar entrada"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -933,144 +1029,7 @@ export default function AdminMenuSemanalTab({
                       )}
                     </div>
 
-                    {/* 2. ENSALADAS */}
-                    <div className="p-3.5 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-3">
-                      <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-800 flex items-center justify-center border border-zinc-200">
-                            <Salad className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-1.5">
-                              Ensaladas ({platosEnsalada.length})
-                            </h4>
-                            <span className="text-[10px] text-zinc-500 font-medium">Incluidas en el menú escolar</span>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setModoRegistroMenu('MENU');
-                            setTipoSeleccionadoMenu('Ensalada');
-                            setSubtipoEntradaMenu('Ensalada');
-                            setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
-                          }}
-                          className="h-7 text-xs font-semibold gap-1 bg-white hover:bg-zinc-100"
-                          title="Añadir una nueva ensalada"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Añadir Ensalada
-                        </Button>
-                      </div>
-
-                      {platosEnsalada.length === 0 ? (
-                        <div className="p-4 text-center border border-dashed border-zinc-200 rounded-lg bg-white">
-                          <p className="text-xs text-zinc-600 font-medium">No hay ensaladas registradas para este día.</p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setModoRegistroMenu('MENU');
-                              setTipoSeleccionadoMenu('Ensalada');
-                              setSubtipoEntradaMenu('Ensalada');
-                              setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
-                            }}
-                            className="mt-1 text-xs text-zinc-950 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            <Plus className="w-3 h-3" /> Registrar una ensalada
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {platosEnsalada.map((plato) => (
-                            <div
-                              key={plato.id}
-                              className="border border-zinc-200/90 rounded-lg overflow-hidden flex flex-col justify-between bg-white shadow-2xs hover:border-zinc-300 transition"
-                            >
-                              {plato.imagenUrl ? (
-                                <div className="h-28 bg-zinc-100 relative">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                                  {plato.imagenUrl.includes('cloudinary') && (
-                                    <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-zinc-900/80 backdrop-blur-xs text-white text-[9px] font-semibold rounded flex items-center gap-1" title="Alojada en Cloudinary">
-                                      <Cloud className="w-2.5 h-2.5 text-zinc-300" /> Cloudinary
-                                    </span>
-                                  )}
-                                  <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-                                    {onIniciarEditarPlato && (
-                                      <button
-                                        type="button"
-                                        onClick={() => onIniciarEditarPlato(plato)}
-                                        className="p-1.5 bg-white/95 hover:bg-zinc-100 text-zinc-700 rounded-md shadow-xs transition cursor-pointer"
-                                        title="Editar ensalada"
-                                      >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                      </button>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleSolicitarEliminarPlato(plato)}
-                                      className="p-1.5 bg-white/95 hover:bg-rose-50 text-zinc-600 hover:text-rose-600 rounded-md shadow-xs transition cursor-pointer"
-                                      title="Eliminar ensalada"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                  <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-zinc-900 text-white text-[10px] font-semibold rounded-md shadow-xs">
-                                    Ensalada
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="p-2.5 bg-zinc-50 flex items-center justify-between border-b border-zinc-100">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-7 h-7 rounded-md bg-zinc-200 text-zinc-800 flex items-center justify-center">
-                                      <Salad className="w-3.5 h-3.5" />
-                                    </div>
-                                    <Badge variant="secondary" className="text-[10px] font-semibold">
-                                      Ensalada
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    {onIniciarEditarPlato && (
-                                      <button
-                                        type="button"
-                                        onClick={() => onIniciarEditarPlato(plato)}
-                                        className="p-1 text-zinc-400 hover:text-zinc-950 rounded-md hover:bg-zinc-200 transition cursor-pointer"
-                                        title="Editar ensalada"
-                                      >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                      </button>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleSolicitarEliminarPlato(plato)}
-                                      className="p-1 text-zinc-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer"
-                                      title="Eliminar ensalada"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="p-3">
-                                <h5 className="text-xs font-bold text-zinc-950">{plato.nombre}</h5>
-                                {plato.descripcion && (
-                                  <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1">{plato.descripcion}</p>
-                                )}
-                                {plato.colegioNombre && (
-                                  <span className="inline-block mt-2 px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 text-[9px] font-medium">
-                                    {plato.colegioNombre}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 3. SEGUNDOS (PLATOS DE FONDO) */}
+                    {/* 2. SEGUNDOS (PLATOS DE FONDO) */}
                     <div className="p-3.5 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-3">
                       <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60">
                         <div className="flex items-center gap-2">
@@ -1181,6 +1140,143 @@ export default function AdminMenuSemanalTab({
                                       onClick={() => handleSolicitarEliminarPlato(plato)}
                                       className="p-1 text-zinc-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer"
                                       title="Eliminar plato"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="p-3">
+                                <h5 className="text-xs font-bold text-zinc-950">{plato.nombre}</h5>
+                                {plato.descripcion && (
+                                  <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1">{plato.descripcion}</p>
+                                )}
+                                {plato.colegioNombre && (
+                                  <span className="inline-block mt-2 px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 text-[9px] font-medium">
+                                    {plato.colegioNombre}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3. ENSALADAS */}
+                    <div className="p-3.5 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-800 flex items-center justify-center border border-zinc-200">
+                            <Salad className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-1.5">
+                              Ensaladas ({platosEnsalada.length})
+                            </h4>
+                            <span className="text-[10px] text-zinc-500 font-medium">Incluidas en el menú escolar</span>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setModoRegistroMenu('MENU');
+                            setTipoSeleccionadoMenu('Ensalada');
+                            setSubtipoEntradaMenu('Ensalada');
+                            setTimeout(() => document.getElementById('nombre-ensalada-menu')?.focus() || document.getElementById('nombre-entrada-menu')?.focus(), 50);
+                          }}
+                          className="h-7 text-xs font-semibold gap-1 bg-white hover:bg-zinc-100"
+                          title="Añadir una nueva ensalada"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Añadir Ensalada
+                        </Button>
+                      </div>
+
+                      {platosEnsalada.length === 0 ? (
+                        <div className="p-4 text-center border border-dashed border-zinc-200 rounded-lg bg-white">
+                          <p className="text-xs text-zinc-600 font-medium">No hay ensaladas registradas para este día.</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setModoRegistroMenu('MENU');
+                              setTipoSeleccionadoMenu('Ensalada');
+                              setSubtipoEntradaMenu('Ensalada');
+                              setTimeout(() => document.getElementById('nombre-ensalada-menu')?.focus() || document.getElementById('nombre-entrada-menu')?.focus(), 50);
+                            }}
+                            className="mt-1 text-xs text-zinc-950 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" /> Registrar una ensalada
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {platosEnsalada.map((plato) => (
+                            <div
+                              key={plato.id}
+                              className="border border-zinc-200/90 rounded-lg overflow-hidden flex flex-col justify-between bg-white shadow-2xs hover:border-zinc-300 transition"
+                            >
+                              {plato.imagenUrl ? (
+                                <div className="h-28 bg-zinc-100 relative">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={plato.imagenUrl} alt={plato.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                                  {plato.imagenUrl.includes('cloudinary') && (
+                                    <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-zinc-900/80 backdrop-blur-xs text-white text-[9px] font-semibold rounded flex items-center gap-1" title="Alojada en Cloudinary">
+                                      <Cloud className="w-2.5 h-2.5 text-zinc-300" /> Cloudinary
+                                    </span>
+                                  )}
+                                  <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                                    {onIniciarEditarPlato && (
+                                      <button
+                                        type="button"
+                                        onClick={() => onIniciarEditarPlato(plato)}
+                                        className="p-1.5 bg-white/95 hover:bg-zinc-100 text-zinc-700 rounded-md shadow-xs transition cursor-pointer"
+                                        title="Editar ensalada"
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSolicitarEliminarPlato(plato)}
+                                      className="p-1.5 bg-white/95 hover:bg-rose-50 text-zinc-600 hover:text-rose-600 rounded-md shadow-xs transition cursor-pointer"
+                                      title="Eliminar ensalada"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                  <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-zinc-900 text-white text-[10px] font-semibold rounded-md shadow-xs">
+                                    Ensalada
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="p-2.5 bg-zinc-50 flex items-center justify-between border-b border-zinc-100">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-md bg-zinc-200 text-zinc-800 flex items-center justify-center">
+                                      <Salad className="w-3.5 h-3.5" />
+                                    </div>
+                                    <Badge variant="secondary" className="text-[10px] font-semibold">
+                                      Ensalada
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    {onIniciarEditarPlato && (
+                                      <button
+                                        type="button"
+                                        onClick={() => onIniciarEditarPlato(plato)}
+                                        className="p-1 text-zinc-400 hover:text-zinc-950 rounded-md hover:bg-zinc-200 transition cursor-pointer"
+                                        title="Editar ensalada"
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSolicitarEliminarPlato(plato)}
+                                      className="p-1 text-zinc-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer"
+                                      title="Eliminar ensalada"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -1384,7 +1480,7 @@ export default function AdminMenuSemanalTab({
                     type="text"
                     value={platoEditando.tipo}
                     onChange={(e) => setPlatoEditando?.((prev) => prev ? { ...prev, tipo: e.target.value } : null)}
-                    placeholder="Ej. Sopa, Ensalada, Segundo, Bebida..."
+                    placeholder="Ej. Entrada, Segundo, Ensalada, Bebida..."
                     className="bg-white border-zinc-200 rounded-lg text-xs"
                     required
                   />

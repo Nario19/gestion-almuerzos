@@ -79,8 +79,8 @@ export default function AdminPage() {
   // Formulario y Modos de Registro en Menú Semanal
   const [modoRegistroMenu, setModoRegistroMenu] = useState<'MENU' | 'EXTRAS'>('MENU');
 
-  // Estados para "Agregar Menú" (Sopa o ensalada + Segundo con precio conjunto)
-  const [subtipoEntradaMenu, setSubtipoEntradaMenu] = useState<'Sopa' | 'Ensalada'>('Sopa');
+  // Estados para "Agregar Menú" (Entrada o ensalada + Segundo con precio conjunto)
+  const [subtipoEntradaMenu, setSubtipoEntradaMenu] = useState<'Entrada' | 'Sopa' | 'Ensalada'>('Entrada');
   const [nombreEntradaMenu, setNombreEntradaMenu] = useState('');
   const [descripcionEntradaMenu, setDescripcionEntradaMenu] = useState('');
   const [nombreSegundoMenu, setNombreSegundoMenu] = useState('');
@@ -106,8 +106,9 @@ export default function AdminPage() {
 
   // Formulario de plato individual (retrocompatibilidad)
   const [tiposDisponibles, setTiposDisponibles] = useState<string[]>([
-    'Sopa o postre',
+    'Entrada',
     'Segundo',
+    'Ensalada',
     'Refrigerio',
     'Bebida',
     'Postre',
@@ -658,7 +659,7 @@ export default function AdminPage() {
       ? usuario.colegioId
       : undefined;
 
-    const esSopa = tipoNuevo === 'Sopa o postre' || tipoNuevo === 'ENTRADA';
+    const esSopa = tipoNuevo === 'Entrada' || tipoNuevo === 'Sopa o postre' || tipoNuevo === 'ENTRADA' || tipoNuevo === 'Ensalada' || tipoNuevo === 'Sopa';
     setGuardandoPlato(true);
     try {
       const nuevo = await dataService.agregarPlato({
@@ -708,11 +709,11 @@ export default function AdminPage() {
 
   // Categorías de platos dinámicas
   const categoriasOrdenadas = useMemo(() => {
-    const ordenBase = ['Sopa o postre', 'Segundo', 'Refrigerio', 'Bebida', 'Postre'];
+    const ordenBase = ['Entrada', 'Segundo', 'Ensalada', 'Refrigerio', 'Bebida', 'Postre'];
     const categoriasPresentes = new Set<string>();
     platos.forEach((p) => {
       let t = p.tipo;
-      if (t === 'ENTRADA') t = 'Sopa o postre';
+      if (t === 'ENTRADA' || t === 'Sopa o postre' || t === 'Sopa') t = 'Entrada';
       else if (t === 'SEGUNDO') t = 'Segundo';
       categoriasPresentes.add(t);
     });
@@ -727,7 +728,7 @@ export default function AdminPage() {
     const mapa: Record<string, Plato[]> = {};
     for (const plato of platos) {
       let t = plato.tipo;
-      if (t === 'ENTRADA') t = 'Sopa o postre';
+      if (t === 'ENTRADA' || t === 'Sopa o postre' || t === 'Sopa') t = 'Entrada';
       else if (t === 'SEGUNDO') t = 'Segundo';
       if (!mapa[t]) mapa[t] = [];
       mapa[t].push(plato);

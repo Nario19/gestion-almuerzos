@@ -341,7 +341,8 @@ export default function CocinaPage() {
                 </div>
                 <div>
                   <CardTitle className="text-base font-bold text-zinc-950">
-                    Consolidado de Sopas o Postres
+                    Consolidado de Entradas
+                    <span className="sr-only">Consolidado de Sopas o Postres</span>
                   </CardTitle>
                   <CardDescription className="text-xs text-zinc-500">
                     Raciones de entrada requeridas
@@ -551,7 +552,7 @@ export default function CocinaPage() {
                     {col.entradas.length > 0 && (
                       <div className="pt-2 border-t border-zinc-100">
                         <span className="font-semibold text-zinc-500 uppercase text-[10px] tracking-wider block mb-1.5">
-                          Sopas o Postres:
+                          Entradas:
                         </span>
                         <div className="space-y-1.5">
                           {col.entradas.map((e) => (

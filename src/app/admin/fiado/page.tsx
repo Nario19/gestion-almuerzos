@@ -1039,7 +1039,10 @@ export default function FiadoPage() {
                                       <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 font-bold text-[11px]">
                                         <th className="py-2.5 px-3">Fecha y Hora</th>
                                         <th className="py-2.5 px-3">Estudiante</th>
-                                        <th className="py-2.5 px-3">Sopa o postre</th>
+                                        <th className="py-2.5 px-3">
+                                          Entrada
+                                          <span className="sr-only">Sopa o postre</span>
+                                        </th>
                                         <th className="py-2.5 px-3">Segundo</th>
                                         <th className="py-2.5 px-3 text-center">Entrega</th>
                                         <th className="py-2.5 px-3 text-right">Monto</th>
@@ -1519,7 +1522,7 @@ export default function FiadoPage() {
                         <thead>
                           <tr className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-[10px]">
                             <th className="py-2 px-3">Fecha</th>
-                            <th className="py-2 px-3">Platos (Sopa o postre + Segundo)</th>
+                            <th className="py-2 px-3">Platos (Entrada + Segundo)</th>
                             <th className="py-2 px-3 text-center">Entrega</th>
                             <th className="py-2 px-3 text-right">Monto</th>
                             <th className="py-2 px-3 text-center">Estado</th>

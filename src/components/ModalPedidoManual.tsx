@@ -570,10 +570,31 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                 </button>
               </div>
 
-              {/* Selector de Segundo / Plato Principal */}
+              {/* 1. Selector de Entrada (Opcional) */}
+              {platosEntradas.length > 0 && (
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    1. Entrada (Opcional):
+                  </label>
+                  <select
+                    value={entradaNombre}
+                    onChange={(e) => setEntradaNombre(e.target.value)}
+                    className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
+                  >
+                    <option value="Sin entrada">Sin entrada</option>
+                    {platosEntradas.map((p) => (
+                      <option key={p.id} value={p.nombre}>
+                        {p.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* 2. Selector de Segundo / Plato Principal */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  Segundo / Plato Principal <span className="text-rose-500">*</span>:
+                  2. Segundo / Plato Principal <span className="text-rose-500">*</span>:
                 </label>
 
                 {platoPersonalizado || platosSegundos.length === 0 ? (
@@ -612,32 +633,11 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                 )}
               </div>
 
-              {/* Selector de Entrada / Sopa / Postre (Opcional) */}
-              {platosEntradas.length > 0 && (
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Entrada, Sopa o Fruta (Opcional):
-                  </label>
-                  <select
-                    value={entradaNombre}
-                    onChange={(e) => setEntradaNombre(e.target.value)}
-                    className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
-                  >
-                    <option value="Sin entrada">Sin entrada / postre</option>
-                    {platosEntradas.map((p) => (
-                      <option key={p.id} value={p.nombre}>
-                        {p.nombre} ({p.tipo})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Selector de Ensalada (Opcional) */}
+              {/* 3. Selector de Ensalada (Opcional) */}
               {platosEnsaladas.length > 0 && (
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Ensalada (Opcional):
+                    3. Ensalada (Opcional):
                   </label>
                   <select
                     value={ensaladaNombre}

@@ -433,7 +433,7 @@ export default function AdminDashboardTab({
             <div className="pt-3 border-t border-slate-100">
               <div className="flex items-center justify-between mb-2.5">
                 <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                  Sopas / Entradas
+                  Entradas
                 </span>
                 <span className="text-[11px] text-slate-400 font-bold">
                   {topEntradas.length} variedades

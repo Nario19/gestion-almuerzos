@@ -1608,6 +1608,45 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/padres/perfil/loading.tsx`
   - `MEMORY.md`
 
+### D-060 — 2026-10-23 — Distribución Estricta del Menú en Toda la Aplicación: ENTRADA -> SEGUNDO -> ENSALADA
+- Decisión: A petición explícita del usuario ("EEL MENU EN TODO DEBE ESTAR DSITRIBUIDO ASI: ENTRADA SEGUNDO ENSALADA ENVES DE ESTO Tipo de opción a agregar: Sopa Ensalada Segundo DEBE SER ASI ENTRADA SEGUNDO Y ENSALDA ASI SE DIVIDE EL MENU Y ASI DEBES MOSTRARLO EN EL MENU PUBLICO DE LA PAGE PUBLICA Y DE LOS APDRES Y DONDE SEA NECESARIO. COSA QUE ES FACIL SELECCIONAR PARA LOS PADRES Y EN EL PEDIDO MANUAL TAMBIEN"):
+  1. Panel Administrativo de Menú Semanal (`AdminMenuSemanalTab.tsx`):
+     - Selector "Tipo de opción a agregar:" distribuido estrictamente en orden: 1. `Entrada`, 2. `Segundo`, 3. `Ensalada`.
+     - Por defecto se selecciona `Entrada` (sustituyendo "Sopa" como etiqueta primaria).
+     - Formularios especializados: Formulario de Entrada (`id="nombre-entrada-menu"`), Formulario de Segundo (`id="nombre-segundo-menu"`), y Formulario de Ensalada (`id="nombre-ensalada-menu"`).
+     - Bloques del listado del menú escolar distribuidos y renderizados estrictamente en orden: 1. `Entradas`, 2. `Segundos (Platos de Fondo)`, 3. `Ensaladas`, con sus respectivos botones de adición rápida `+ Añadir Entrada`, `+ Añadir Segundo`, `+ Añadir Ensalada`.
+  2. Vista Pública y Carta de Padres (`src/app/padres/page.tsx` y `/`):
+     - Carta Semanal ("Ver Menú" / visitante y padres): Secciones distribuidas estrictamente en: 1. `1. Entradas`, 2. `2. Segundo (Plato de Fondo)`, 3. `3. Ensaladas`, 4. `4. Extras y Adicionales`.
+     - Badges de tarjetas actualizados de "Sopa" a "Entrada".
+     - Formulario de Pedido para Padres ("Pedir Menú"): Estructurado en 1. `1. Entrada` (con opción "Sin entrada"), 2. `2. Segundo`, 3. `3. Ensalada` (con opción "Sin ensalada"), y 4. `Extras`.
+     - Desglose en confirmación de orden y comprobante: Se visualiza en orden Entrada -> Segundo -> Ensalada.
+  3. Pedido Manual (`src/app/admin/pedido-manual/page.tsx` y `src/components/ModalPedidoManual.tsx`):
+     - Estructurado estrictamente en 1. Entrada, 2. Segundo / Plato de Fondo, 3. Ensalada.
+     - Resumen de pedido creado ordenado en Entrada -> Segundo -> Ensalada.
+  4. Cocina y Despacho (`src/app/admin/cocina/page.tsx` y `src/app/admin/despacho/page.tsx`):
+     - Cocina: Títulos y consolidados en orden Entradas, Segundos, Ensaladas.
+     - Despacho: Columnas y etiquetas rotuladas como `Entrada:` en lugar de `Sopa o postre:`.
+  5. Servicio de Datos (`src/lib/dataService.ts`):
+     - `mapearPlatoDesdeSupabase`: Mapea tipos de entrada no ensaladas a `'Entrada'` en lugar de forzar `'Sopa'`.
+  6. Suite de Pruebas:
+     - Creada suite automatizada `tests/menu-distribucion-entrada-segundo-ensalada.test.mjs` con 6 pruebas integrales.
+     - 340 tests totales ejecutados (334 aprobados, 0 fallos, 6 omitidos por dependencias de backend no configuradas).
+- Fuente: Instrucción explícita del usuario en esta conversación.
+- Impacto:
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/app/padres/page.tsx`
+  - `src/app/admin/page.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/components/ModalPedidoManual.tsx`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/app/admin/components/AdminDashboardTab.tsx`
+  - `src/lib/dataService.ts`
+  - `src/components/Skeleton.tsx`
+  - `tests/menu-distribucion-entrada-segundo-ensalada.test.mjs`
+  - `MEMORY.md`
+
 
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)

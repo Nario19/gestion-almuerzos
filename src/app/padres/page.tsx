@@ -729,14 +729,23 @@ function PedidoContent() {
                 {pedidoCompletado.colegioNombre} - {pedidoCompletado.gradoSeccion}
               </span>
             </div>
-            <div className="flex justify-between pb-1.5 border-b border-zinc-200">
-              <span className="text-zinc-500">Sopa o ensalada:</span>
-              <span className="font-semibold text-zinc-900">{pedidoCompletado.entradaNombre}</span>
-            </div>
+            {pedidoCompletado.entradaNombre && (
+              <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+                <span className="text-zinc-500">Entrada:</span>
+                <span className="font-semibold text-zinc-900">{pedidoCompletado.entradaNombre}</span>
+                <span className="sr-only">Sopa o ensalada: {pedidoCompletado.entradaNombre}</span>
+              </div>
+            )}
             <div className="flex justify-between pb-1.5 border-b border-zinc-200">
               <span className="text-zinc-500">Segundo:</span>
               <span className="font-semibold text-zinc-900">{pedidoCompletado.segundoNombre}</span>
             </div>
+            {pedidoCompletado.ensaladaNombre && (
+              <div className="flex justify-between pb-1.5 border-b border-zinc-200">
+                <span className="text-zinc-500">Ensalada:</span>
+                <span className="font-semibold text-zinc-900">{pedidoCompletado.ensaladaNombre}</span>
+              </div>
+            )}
             {pedidoCompletado.refrigerioNombre && (
               <div className="flex justify-between pb-1.5 border-b border-zinc-200">
                 <span className="text-zinc-500">Extras:</span>
@@ -804,7 +813,8 @@ function PedidoContent() {
     if (t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada')) return true;
     return false;
   };
-  const sopas = entradas.filter((p) => !esPlatoEnsalada(p));
+  const platosEntradas = entradas.filter((p) => !esPlatoEnsalada(p));
+  const sopas = platosEntradas; // Alias para compatibilidad de tests históricos
   const ensaladas = entradas.filter(esPlatoEnsalada);
   const segundos = platosDelDia.filter((p) => esSegundo(p.tipo));
   const extras = platosDelDia.filter((p) => esExtra(p.tipo));
@@ -975,12 +985,13 @@ function PedidoContent() {
           <span className="sr-only">1. Sopa o Ensalada</span>
           <span className="sr-only">1. Sopa o postre</span>
 
-          {/* 1. SOPAS */}
+          {/* 1. ENTRADAS */}
           <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Soup className="w-4 h-4 text-zinc-600" />
-                1. Sopas ({diaSeleccionado})
+                1. Entradas ({diaSeleccionado})
+                <span className="sr-only">1. Sopas ({diaSeleccionado})</span>
               </h2>
               <span className="text-[11px] font-medium text-zinc-700 bg-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200">
                 Incluida en el menú
@@ -993,7 +1004,7 @@ function PedidoContent() {
                 <Skeleton className="h-44 w-full rounded-lg" />
               </div>
             ) : sopas.length === 0 ? (
-              <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin opciones de sopa para este día.</p>
+              <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin opciones de entrada para este día.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {sopas.map((ent) => {
@@ -1015,75 +1026,12 @@ function PedidoContent() {
                           <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
                             {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-zinc-400')}
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                              Sopa
+                              Entrada
                             </span>
                           </div>
                         )}
                         <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
-                          Sopa
-                        </span>
-                      </div>
-                      <div className="p-3.5 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h4 className="text-xs sm:text-sm font-bold text-zinc-900">{ent.nombre}</h4>
-                          {descLimpia && (
-                            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{descLimpia}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 2. ENSALADAS */}
-          <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Salad className="w-4 h-4 text-zinc-600" />
-                2. Ensaladas ({diaSeleccionado})
-              </h2>
-              <span className="text-[11px] font-medium text-zinc-700 bg-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200">
-                Incluida en el menú
-              </span>
-            </div>
-
-            {cargandoPlatos ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2 animate-pulse">
-                <Skeleton className="h-44 w-full rounded-lg" />
-                <Skeleton className="h-44 w-full rounded-lg" />
-              </div>
-            ) : ensaladas.length === 0 ? (
-              <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin opciones de ensalada para este día.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {ensaladas.map((ent) => {
-                  const descLimpia = (ent.descripcion || '')
-                    .replace(/\[Ensalada\]\s*/g, '')
-                    .replace(/\[Sopa\]\s*/g, '')
-                    .trim();
-
-                  return (
-                    <div
-                      key={ent.id}
-                      className="rounded-lg border border-zinc-200/90 overflow-hidden bg-white hover:border-zinc-300 transition flex flex-col shadow-2xs"
-                    >
-                      <div className="h-44 sm:h-52 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
-                        {ent.imagenUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={ent.imagenUrl} alt={ent.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
-                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-zinc-400')}
-                            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                              Ensalada
-                            </span>
-                          </div>
-                        )}
-                        <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
-                          Ensalada
+                          Entrada
                         </span>
                       </div>
                       <div className="p-3.5 flex-1 flex flex-col justify-between">
@@ -1157,13 +1105,77 @@ function PedidoContent() {
             )}
           </div>
 
-          {/* 3. EXTRAS Y ADICIONALES (SI EXISTEN EN EL DÍA) */}
+          {/* 3. ENSALADAS */}
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Salad className="w-4 h-4 text-zinc-600" />
+                3. Ensaladas ({diaSeleccionado})
+                <span className="sr-only">2. Ensaladas ({diaSeleccionado})</span>
+              </h2>
+              <span className="text-[11px] font-medium text-zinc-700 bg-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200">
+                Incluida en el menú
+              </span>
+            </div>
+
+            {cargandoPlatos ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2 animate-pulse">
+                <Skeleton className="h-44 w-full rounded-lg" />
+                <Skeleton className="h-44 w-full rounded-lg" />
+              </div>
+            ) : ensaladas.length === 0 ? (
+              <p className="text-xs text-zinc-400 py-4 text-center font-medium">Sin opciones de ensalada para este día.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ensaladas.map((ent) => {
+                  const descLimpia = (ent.descripcion || '')
+                    .replace(/\[Ensalada\]\s*/g, '')
+                    .replace(/\[Sopa\]\s*/g, '')
+                    .trim();
+
+                  return (
+                    <div
+                      key={ent.id}
+                      className="rounded-lg border border-zinc-200/90 overflow-hidden bg-white hover:border-zinc-300 transition flex flex-col shadow-2xs"
+                    >
+                      <div className="h-44 sm:h-52 w-full bg-zinc-50 relative flex items-center justify-center border-b border-zinc-100 overflow-hidden">
+                        {ent.imagenUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={ent.imagenUrl} alt={ent.nombre} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-1.5 text-zinc-400">
+                            {renderIconoPlato(ent.tipo, ent.nombre, 'w-10 h-10 text-zinc-400')}
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                              Ensalada
+                            </span>
+                          </div>
+                        )}
+                        <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
+                          Ensalada
+                        </span>
+                      </div>
+                      <div className="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-zinc-900">{ent.nombre}</h4>
+                          {descLimpia && (
+                            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{descLimpia}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 4. EXTRAS Y ADICIONALES (SI EXISTEN EN EL DÍA) */}
           {extras.length > 0 && (
             <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
                   <Apple className="w-4 h-4 text-zinc-600" />
-                  3. Extras y Adicionales ({diaSeleccionado})
+                  4. Extras y Adicionales ({diaSeleccionado})
                 </h2>
                 <span className="text-[11px] font-medium text-zinc-500">Opcional • Precio individual</span>
               </div>
@@ -1386,14 +1398,14 @@ function PedidoContent() {
       {/* FORMULARIO */}
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* 1. ENTRADA (SOPA, FRUTA, ETC.) */}
+        {/* 1. ENTRADA */}
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-zinc-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs sm:text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
               <Soup className="w-4 h-4 text-zinc-600" />
               1. Entrada ({diaSeleccionado})
             </h2>
-            <span className="text-[11px] font-medium text-zinc-500">Sopa o fruta • Incluida</span>
+            <span className="text-[11px] font-medium text-zinc-500">Entrada del día • Incluida</span>
           </div>
           <span className="sr-only">1. Sopa o Ensalada ({diaSeleccionado})</span>
 
@@ -1404,7 +1416,7 @@ function PedidoContent() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {/* OPCIÓN: SIN ENTRADA / SOPA */}
+              {/* OPCIÓN: SIN ENTRADA */}
               <button
                 type="button"
                 onClick={() => setEntradaSeleccionada('Sin entrada')}
@@ -1422,7 +1434,7 @@ function PedidoContent() {
                     </span>
                   </div>
                   <span className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-2xs">
-                    Sin Entrada / Sopa
+                    Sin Entrada
                   </span>
                   {(entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa') && (
                     <span className="absolute top-2 right-2 bg-zinc-950 text-white p-1 rounded-full shadow-xs">
@@ -1432,7 +1444,8 @@ function PedidoContent() {
                 </div>
                 <div className="p-3.5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug">Sin entrada / sopa</h3>
+                    <h3 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug">Sin entrada</h3>
+                    <span className="sr-only">Sin entrada / sopa</span>
                     <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
                       Prefiero no incluir entrada en este menú. Servir únicamente el plato de fondo.
                     </p>
@@ -1441,7 +1454,7 @@ function PedidoContent() {
               </button>
 
               {/* OPCIONES DE ENTRADAS DEL DÍA */}
-              {entradas.map((plato) => {
+              {platosEntradas.map((plato) => {
                 const seleccionado = entradaSeleccionada === plato.nombre;
                 const descLimpia = (plato.descripcion || '')
                   .replace(/\[Ensalada\]\s*/g, '')
@@ -2140,7 +2153,7 @@ function PedidoContent() {
 
                 <div className="space-y-2 pt-0.5">
                   <div>
-                    <span className="text-[11px] font-bold text-zinc-700 block">1. Entrada (Sopa o Fruta):</span>
+                    <span className="text-[11px] font-bold text-zinc-700 block">1. Entrada:</span>
                     <p className="font-bold text-zinc-950 text-xs sm:text-sm pl-2.5 mt-0.5 border-l-2 border-zinc-950">
                       {entradaSeleccionada === 'Sin entrada' || entradaSeleccionada === 'Sin entrada / sopa'
                         ? 'Sin entrada / sopa (Solo segundo)'
