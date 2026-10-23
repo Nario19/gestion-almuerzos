@@ -150,9 +150,11 @@ export interface ItemFiadoPedido {
   estudianteNombre: string;
   gradoSeccion: string;
   colegioNombre: string;
-  entradaNombre: string; // Sopa o postre
+  entradaNombre: string; // Entrada
   segundoNombre: string; // Segundo
   ensaladaNombre?: string; // Ensalada
+  refrigerioNombre?: string;
+  observacion?: string;
   monto: number;
   estadoPedido: EstadoPedido;
   horaEntrega?: string;
