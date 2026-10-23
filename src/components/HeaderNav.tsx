@@ -70,18 +70,22 @@ export default function HeaderNav() {
     return null;
   }
 
-  const prefix = esSuperAdmin && pathname.startsWith('/superadmin') ? '/superadmin' : '/admin';
-  const adminNavItems = [
-    ...(esSuperAdmin ? [{ href: '/superadmin', label: 'Colegios', icon: Building2 }] : []),
-    { href: prefix === '/superadmin' ? '/superadmin' : '/admin', label: 'Admin', icon: BarChart3 },
-    { href: `${prefix}/cocina`, label: 'Cocina', icon: ChefHat },
-    { href: `${prefix}/fiado`, label: 'Fiado', icon: Receipt },
-    { href: `${prefix}/despacho`, label: 'Despacho', icon: PackageCheck },
-    ...(esSuperAdmin
-      ? [{ href: '/superadmin/pedido-manual', label: 'Pedido Manual', icon: UtensilsCrossed }]
-      : [{ href: '/admin/pedido-manual', label: 'Pedido Manual', icon: UtensilsCrossed }]),
-    ...(esSuperAdmin ? [{ href: '/superadmin/analytics', label: 'Analítica', icon: TrendingUp }] : []),
-  ];
+  const adminNavItems = esSuperAdmin
+    ? [
+        { href: '/superadmin', label: 'Colegios', icon: Building2 },
+        { href: '/superadmin/cocina', label: 'Cocina', icon: ChefHat },
+        { href: '/superadmin/fiado', label: 'Fiado', icon: Receipt },
+        { href: '/superadmin/despacho', label: 'Despacho', icon: PackageCheck },
+        { href: '/superadmin/pedido-manual', label: 'Pedido Manual', icon: UtensilsCrossed },
+        { href: '/superadmin/analytics', label: 'Analítica', icon: TrendingUp },
+      ]
+    : [
+        { href: '/admin', label: 'Admin', icon: BarChart3 },
+        { href: '/admin/cocina', label: 'Cocina', icon: ChefHat },
+        { href: '/admin/fiado', label: 'Fiado', icon: Receipt },
+        { href: '/admin/despacho', label: 'Despacho', icon: PackageCheck },
+        { href: '/admin/pedido-manual', label: 'Pedido Manual', icon: UtensilsCrossed },
+      ];
 
   // Título administrativo visible en la barra superior blanca (App Shell)
   const obtenerTituloAdmin = () => {

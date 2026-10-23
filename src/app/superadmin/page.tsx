@@ -20,8 +20,6 @@ import {
   EyeOff,
   Search,
   RefreshCw,
-  BarChart3,
-  PackageCheck,
   ChefHat,
   ArrowRight,
   Sparkles,
@@ -636,22 +634,6 @@ export default function SuperAdminPage() {
         title="Gestión de Colegios & Cuentas"
         subtitle="Control central de instituciones educativas, administradores de sede y configuración global."
         isSuperAdmin={true}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild variant="outline" size="sm" className="h-8 text-xs font-semibold">
-              <Link href="/admin">
-                <BarChart3 className="w-3.5 h-3.5" />
-                <span>Panel Operativo</span>
-              </Link>
-            </Button>
-            <Button asChild size="sm" className="h-8 text-xs font-semibold bg-zinc-950 text-white hover:bg-zinc-800">
-              <Link href="/admin/despacho">
-                <PackageCheck className="w-3.5 h-3.5" />
-                <span>Despacho</span>
-              </Link>
-            </Button>
-          </div>
-        }
       />
 
       {/* TARJETAS DE KPIS DEL SUPER ADMIN */}

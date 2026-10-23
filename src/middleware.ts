@@ -56,6 +56,15 @@ export function middleware(request: NextRequest) {
     if (!estaAutenticado || !esAdmin) {
       return redirigirALogin();
     }
+
+    // Si un Super Administrador accede a rutas de /admin, redirigir a su equivalente en /superadmin
+    if (esSuperAdmin) {
+      const rutaSuperAdmin =
+        pathname === '/admin' ? '/superadmin' : pathname.replace(/^\/admin/, '/superadmin');
+      const urlDestino = new URL(rutaSuperAdmin, request.url);
+      urlDestino.search = request.nextUrl.search;
+      return NextResponse.redirect(urlDestino);
+    }
   }
 
   // 6. Protección de rutas privadas de padres de familia (Mis Pedidos, Mis Deudas, Mis Hijos, Mi Perfil)

@@ -491,7 +491,7 @@ export default function PedidoManualPage() {
               variant="outline"
               className="w-full sm:w-auto text-xs font-semibold h-10 px-4 gap-2 cursor-pointer"
             >
-              <Link href="/admin/despacho">
+              <Link href={esSuperAdmin ? '/superadmin/despacho' : '/admin/despacho'}>
                 <PackageCheck className="w-4 h-4 text-zinc-600" /> Ir a Despacho
               </Link>
             </Button>
@@ -500,7 +500,7 @@ export default function PedidoManualPage() {
               variant="outline"
               className="w-full sm:w-auto text-xs font-semibold h-10 px-4 gap-2 cursor-pointer"
             >
-              <Link href="/admin/cocina">
+              <Link href={esSuperAdmin ? '/superadmin/cocina' : '/admin/cocina'}>
                 <ChefHat className="w-4 h-4 text-zinc-600" /> Ir a Cocina
               </Link>
             </Button>

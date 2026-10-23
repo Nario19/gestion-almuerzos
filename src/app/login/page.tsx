@@ -57,7 +57,11 @@ function LoginContent() {
       const redir = searchParams.get('redirigir');
       let destino = '/';
       if (redir && redir.startsWith('/') && !redir.startsWith('//') && redir !== '/login') {
-        destino = redir;
+        if (esSuperAdmin && redir.startsWith('/admin')) {
+          destino = redir === '/admin' ? '/superadmin' : redir.replace(/^\/admin/, '/superadmin');
+        } else {
+          destino = redir;
+        }
       } else if (esSuperAdmin) {
         destino = '/superadmin';
       } else if (esAdmin) {
