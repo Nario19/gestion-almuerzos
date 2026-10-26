@@ -1832,9 +1832,8 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
      - Segundo en color oscuro principal (`text-zinc-950 font-bold`).
      - Ensalada en color verde fresco (`text-emerald-700 font-medium`).
      - Extras/Refrigerios en color teal (`text-teal-700 font-medium`).
-  2. **Erradicación del doble "HOY" en Despacho**: Si un pedido es para el día de hoy, se muestra una sola insignia `[HOY]` acompañada de la fecha. Si es para otro día, se muestra el día programado en mayúsculas (`LUNES`, `MARTES`, `MIÉRCOLES`, etc.) y la fecha, sin badges redundantes de hoy ni cadenas como `HOY 25/10/2026`.
-  3. **Remoción de "Consumo de HOY" en Fiado**: En la tabla de Fiado no se muestra la insignia "Consumo de HOY"; se muestra de forma limpia y directa únicamente el día de la semana y la fecha de consumo programada.
-  4. **Función `limpiarNombrePlato` y normalización defensiva**: En `src/lib/dateUtils.ts` se implementa `limpiarNombrePlato` para sanear prefijos históricos (`Entrada:Sopa o postre:`, etc.) y en `src/lib/dataService.ts` se normaliza `diaSemana` para que nunca tome el valor `'HOY'`, asignando siempre el día escolar canónico.
+  2. **Remoción de "Consumo de HOY" en Fiado**: En la tabla de Fiado no se muestra la insignia "Consumo de HOY"; se muestra de forma limpia y directa únicamente el día de la semana y la fecha de consumo programada.
+  3. **Función `limpiarNombrePlato` y normalización defensiva**: En `src/lib/dateUtils.ts` se implementa `limpiarNombrePlato` para sanear prefijos históricos (`Entrada:Sopa o postre:`, etc.) y en `src/lib/dataService.ts` se normaliza `diaSemana` para que nunca tome el valor `'HOY'`, asignando siempre el día escolar canónico.
 - Fuente: Instrucción explícita del usuario en el seguimiento de la entrega.
 - Impacto:
   - `src/lib/dateUtils.ts`
@@ -1843,6 +1842,32 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `src/app/admin/fiado/page.tsx`
   - `src/app/admin/pedido-manual/page.tsx`
   - `tests/separacion-fechas-consumo-registro-despacho-fiado.test.mjs`
+  - `MEMORY.md`
+
+### D-065 — 2026-10-25 — Erradicación Total del Badge "HOY", Reconciliación de Fecha por Día Escolar y Aislamiento Estricto de Pedidos Futuros en Despacho y Fiado
+
+- Decisión:
+  1. **Eliminación Total de la palabra y badge "HOY" en la columna de Día Programado**:
+     - En la columna *Día Programado* de Despacho (`/admin/despacho`) y Fiado (`/admin/fiado`) NUNCA se muestra la palabra "HOY" ni ningún badge `HOY`.
+     - Únicamente se muestra el Día Escolar en mayúsculas y la Fecha (ej. `LUNES 26/10/2026`, `MARTES 27/10/2026`, `MIÉRCOLES 28/10/2026`, `JUEVES 29/10/2026`, `VIERNES 30/10/2026`).
+  2. **Aislamiento Estricto de Pedidos por Fecha de Consumo**:
+     - Si hoy es Lunes y se realiza un pedido para el Martes, el pedido para el Martes **NO DEBE APARECER** en la vista de Lunes (ni en Despacho ni en Fiado).
+     - El pedido para el Martes únicamente aparecerá cuando el operador filtre por la fecha del Martes (o seleccione "Todas las fechas").
+  3. **Reconciliación Defensiva de Fecha según el Día Escolar Programado**:
+     - En `src/lib/dataService.ts:mapearPedidoDesdeSupabase`: Si un pedido tiene `dia_semana: 'MARTES'`, su fecha se reconcilia automáticamente con `obtenerFechaParaDiaSemana('MARTES', fechaNormalizada)` para que corresponda exactamente al martes escolar (`2026-10-27`) y no a la fecha de hoy o de creación (`2026-10-25` o `2026-10-26`).
+     - En `src/lib/dataService.ts:crearPedido`: La fecha persistida se calcula siempre con `obtenerFechaParaDiaSemana` según el día seleccionado.
+     - En `src/lib/dateUtils.ts:formatearDiaYFechaProgramadaPeru`: Se alinea defensivamente la fecha con el día escolar programado para garantizar que nunca imprima combinaciones desfasadas como `MARTES 25/10/2026`.
+  4. **Suite de pruebas de regresión y validación**:
+     - 378 pruebas automáticas aprobadas en verde (`0` fallos).
+- Fuente: Instrucción explícita del usuario ("no me estas entendiendo TE PONGO UN EJEMPLO HOY ES LUNES Y YO HICE UN PEDIDO PARA EL MARTES. EN DESPACHO Y EN FIADO SI HOY ES LUNES NO DEBERIA APARECER ESE PEDIDO EN LUNES DEBERIA APARECER EN LA FECHA DE MARTES. HOY MARTES 25/10/2026 Y ESTA APARECIENDO ASI HOY MARTES NO TIENE SENTIDO ESE HOY QUE NO APAREZCA SOLO QUE APAREZCA EL DIAY LA FECHA").
+- Impacto:
+  - `src/lib/dateUtils.ts`
+  - `src/lib/dataService.ts`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `tests/separacion-fechas-consumo-registro-despacho-fiado.test.mjs`
+  - `tests/fiado-filtro-fechas.test.mjs`
+  - `tests/fiado-tabla-desglose-pedido-despacho.test.mjs`
   - `MEMORY.md`
 
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)

@@ -274,26 +274,36 @@ export function limpiarNombrePlato(nombre?: string): string {
 /**
  * Retorna el día de la semana escolar y la fecha programada del almuerzo en formato legible:
  * Ej. 'LUNES 26/10/2026', 'MARTES 27/10/2026', 'MIÉRCOLES 28/10/2026', 'JUEVES 29/10/2026', 'VIERNES 30/10/2026'
- * Garantiza que NUNCA retorne 'HOY [fecha]' en lugar del día de la semana.
+ * Garantiza que NUNCA retorne 'HOY [fecha]' en lugar del día de la semana, y reconcilia la fecha
+ * con el día de la semana escolar programado para evitar incongruencias como 'MARTES 25/10/2026'.
  */
 export function formatearDiaYFechaProgramadaPeru(fechaStr?: string, diaSemana?: string): string {
-  if (!fechaStr) {
-    const dia = (diaSemana || '').toUpperCase();
+  let dia = (diaSemana || '').toUpperCase().trim();
+  const esDiaSemanaValido = dia && ['LUNES', 'MARTES', 'MIERCOLES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'].includes(dia);
+
+  // Si no se proporcionó fecha o está vacía, se calcula a partir del día escolar programado
+  let fechaFinal = fechaStr;
+  if (!fechaFinal && esDiaSemanaValido) {
+    fechaFinal = obtenerFechaParaDiaSemana(dia === 'MIÉRCOLES' ? 'MIERCOLES' : (dia as DiaSemana));
+  } else if (fechaFinal && esDiaSemanaValido) {
+    // Reconciliación defensiva: asegurar que la fecha mostrada corresponda exactamente al día escolar
+    fechaFinal = obtenerFechaParaDiaSemana(dia === 'MIÉRCOLES' ? 'MIERCOLES' : (dia as DiaSemana), fechaFinal);
+  }
+
+  if (!fechaFinal) {
     if (!dia || dia === 'HOY') return 'Fecha no definida';
     return dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia;
   }
+
   try {
-    const [y, m, d] = fechaStr.split('-').map(Number);
+    const [y, m, d] = fechaFinal.split('-').map(Number);
     if (!y || !m || !d) {
-      let dia = (diaSemana || '').toUpperCase();
-      if (!dia || dia === 'HOY') return fechaStr;
-      return `${dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia} ${fechaStr}`;
+      if (!dia || dia === 'HOY') return fechaFinal;
+      return `${dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia} ${fechaFinal}`;
     }
     const date = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
 
     // Determinar día de la semana real (si diaSemana es 'HOY' o no es un día válido, se calcula de la fecha)
-    let dia = (diaSemana || '').toUpperCase();
-    const esDiaSemanaValido = dia && ['LUNES', 'MARTES', 'MIERCOLES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'].includes(dia);
     if (!esDiaSemanaValido) {
       const dayIndex = date.getUTCDay();
       const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
@@ -307,7 +317,7 @@ export function formatearDiaYFechaProgramadaPeru(fechaStr?: string, diaSemana?: 
     const yyyy = String(y);
     return `${dia} ${dd}/${mm}/${yyyy}`;
   } catch {
-    return diaSemana && diaSemana !== 'HOY' ? `${diaSemana} ${fechaStr}` : (fechaStr || '');
+    return dia && dia !== 'HOY' ? `${dia} ${fechaFinal}` : (fechaFinal || '');
   }
 }
 

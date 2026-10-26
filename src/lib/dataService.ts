@@ -437,7 +437,7 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
   // Normalización defensiva de fecha según la zona horaria de Perú (America/Lima)
   // Si la fila tiene d.fecha explícita (YYYY-MM-DD), representa la fecha programada para el almuerzo.
   // Si no tiene d.fecha, se deriva de created_at en zona horaria de Perú o fallback a fechaHoy.
-  const fechaNormalizada = d.fecha
+  let fechaNormalizada = d.fecha
     ? d.fecha.slice(0, 10)
     : (d.created_at ? obtenerFechaPeruDeIso(d.created_at) : obtenerFechaHoyPeru());
 
@@ -446,6 +446,13 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
   const diaSemanaNormalizado: DiaSemana = esDiaSemanaValido
     ? (rawDia === 'MIÉRCOLES' ? 'MIERCOLES' : (rawDia as DiaSemana))
     : obtenerDiaActualSemanaPeru(new Date(`${fechaNormalizada}T12:00:00-05:00`));
+
+  // Reconciliación defensiva de la fecha de consumo con el día escolar programado:
+  // Si el pedido tiene un día escolar explícito (ej. 'MARTES'), su fecha de consumo DEBE coincidir
+  // con ese día de la semana escolar para que nunca aparezca en el día equivocado en Despacho ni en Fiado.
+  if (esDiaSemanaValido) {
+    fechaNormalizada = obtenerFechaParaDiaSemana(diaSemanaNormalizado, fechaNormalizada);
+  }
 
   return {
     id: d.id,
@@ -1028,11 +1035,17 @@ export const dataService = {
     const siguienteNum = await this.obtenerSiguienteNumeroAlmuerzoColegio(colegioNom);
     const codigoInicial = `${prefijo}-${String(siguienteNum).padStart(3, '0')}`;
 
-    const fechaCalculada = (pedidoData.diaSemana && !pedidoData.fecha)
-      ? obtenerFechaParaDiaSemana(pedidoData.diaSemana as DiaSemana)
-      : undefined;
-    const fechaFinal = pedidoData.fecha || fechaCalculada || (pedidoData.fecha || obtenerFechaHoyPeru());
-    const diaSemanaFinal = pedidoData.diaSemana || obtenerDiaActualSemanaPeru(new Date(`${fechaFinal}T12:00:00-05:00`));
+    const rawDia = pedidoData.diaSemana ? String(pedidoData.diaSemana).toUpperCase().trim() : '';
+    const esDiaValido = rawDia && ['LUNES', 'MARTES', 'MIERCOLES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'].includes(rawDia);
+    const diaSemanaFinal: DiaSemana = esDiaValido
+      ? (rawDia === 'MIÉRCOLES' ? 'MIERCOLES' : (rawDia as DiaSemana))
+      : obtenerDiaActualSemanaPeru(new Date(`${pedidoData.fecha || obtenerFechaHoyPeru()}T12:00:00-05:00`));
+
+    // La fecha del pedido siempre debe corresponder a la fecha exacta de su día escolar programado
+    const fechaBase = pedidoData.fecha || obtenerFechaHoyPeru();
+    const fechaFinal = esDiaValido
+      ? obtenerFechaParaDiaSemana(diaSemanaFinal, fechaBase)
+      : fechaBase;
 
     const nuevo: Pedido = {
       ...pedidoData,

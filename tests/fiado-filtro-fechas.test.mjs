@@ -36,25 +36,25 @@ test('Filtro por Fecha, Resaltado de Consumos de Hoy y Fechas en Listado de Fiad
     );
   });
 
-  await t.test('2. En la lista de fiados, cada tarjeta de familia muestra sus fechas y resalta HOY', () => {
+  await t.test('2. En la lista de fiados, cada tarjeta de familia muestra sus fechas y día programado limpio', () => {
     const fiadoPath = path.join(rootDir, 'src', 'app', 'admin', 'fiado', 'page.tsx');
     const content = fs.readFileSync(fiadoPath, 'utf-8');
 
     assert.ok(
       content.includes('tieneConsumoHoy'),
-      'Debe evaluar tieneConsumoHoy para resaltar pedidos de la fecha actual'
+      'Debe evaluar tieneConsumoHoy para métricas internas'
     );
     assert.ok(
-      content.includes('Consumo de HOY'),
-      'Debe renderizar insignia Consumo de HOY cuando la familia tiene pedidos hoy'
+      !content.includes('Consumo de HOY</Badge>') && !content.includes('>Consumo de HOY<'),
+      'NO debe renderizar insignia Consumo de HOY por instrucción explícita del usuario'
     );
     assert.ok(
       content.includes('fechasUnicas'),
       'Debe generar y listar fechasUnicas de consumo en la cabecera de la tarjeta'
     );
     assert.ok(
-      content.includes('HOY'),
-      'Debe mostrar badge HOY en la columna Fecha de la tabla desplegable'
+      content.includes('formatearDiaYFechaProgramadaPeru'),
+      'Debe mostrar Día Programado limpio con formatearDiaYFechaProgramadaPeru'
     );
   });
 

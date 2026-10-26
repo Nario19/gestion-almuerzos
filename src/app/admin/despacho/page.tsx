@@ -989,23 +989,10 @@ export default function DespachoPage() {
 
                           {/* Columna 6: Día para el que se pidió el almuerzo (Día Programado) */}
                           <TableCell className="py-3.5 px-4">
-                            <div className="flex flex-col gap-1 text-xs">
-                              {p.fecha === fechaHoy ? (
-                                <div className="flex items-center gap-1.5 whitespace-nowrap">
-                                  <Badge variant="success" className="px-1.5 py-0 text-[10px] font-bold bg-emerald-600 text-white">
-                                    HOY
-                                  </Badge>
-                                  <span className="font-bold text-zinc-900">
-                                    {formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana)}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="font-bold text-zinc-950 flex items-center gap-1.5 whitespace-nowrap">
-                                  <CalendarIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                                  {formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana)}
-                                </span>
-                              )}
-                            </div>
+                            <span className="font-bold text-zinc-950 flex items-center gap-1.5 whitespace-nowrap text-xs">
+                              <CalendarIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                              {formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana)}
+                            </span>
                           </TableCell>
 
                           {/* Columna: Pago y Aceptación */}

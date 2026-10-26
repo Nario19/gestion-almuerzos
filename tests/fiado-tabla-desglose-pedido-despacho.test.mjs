@@ -27,15 +27,15 @@ describe('Estructura de Tabla y Desglose de Fiados organizada igual que Despacho
   test('3. Columna "Fecha y Hora" en la tabla principal está organizada idéntica a Despacho', () => {
     assert.ok(fiadoContent.includes('Calendar'), 'Debe usar icono Calendar');
     assert.ok(fiadoContent.includes('Clock'), 'Debe usar icono Clock');
-    assert.ok(fiadoContent.includes('Consumo de HOY'), 'Debe incluir badge Consumo de HOY');
+    assert.ok(!fiadoContent.includes('Consumo de HOY</Badge>'), 'NO debe incluir badge Consumo de HOY por instrucción del usuario');
   });
 
-  test('4. Desglose de Almuerzos cuenta con columna "Pedido" que integra Entrada, Segundo y Ensalada juntos con etiquetas y colores claros', () => {
+  test('4. Desglose de Almuerzos cuenta con columna "Pedido" que integra Entrada, Segundo y Ensalada diferenciados por color sin prefijos técnicos', () => {
     // En la tabla interna desplegable
     assert.ok(fiadoContent.includes('<th className="py-2.5 px-3">Pedido</th>'), 'Desglose debe tener encabezado Pedido');
-    assert.ok(fiadoContent.includes('Entrada:'), 'Debe incluir etiqueta Entrada:');
-    assert.ok(fiadoContent.includes('Segundo:'), 'Debe incluir etiqueta Segundo:');
-    assert.ok(fiadoContent.includes('Ensalada:'), 'Debe incluir etiqueta Ensalada:');
+    assert.ok(fiadoContent.includes('limpiarNombrePlato(ped.entradaNombre)'), 'Debe limpiar nombre de Entrada');
+    assert.ok(fiadoContent.includes('limpiarNombrePlato(ped.segundoNombre)'), 'Debe limpiar nombre de Segundo');
+    assert.ok(fiadoContent.includes('limpiarNombrePlato(ped.ensaladaNombre)'), 'Debe limpiar nombre de Ensalada');
     assert.ok(fiadoContent.includes('text-orange-700'), 'Debe usar clase text-orange-700 para Entrada');
     assert.ok(fiadoContent.includes('text-emerald-700'), 'Debe usar clase text-emerald-700 para Ensalada');
     assert.ok(!fiadoContent.includes('EntradaSopa o postre'), 'No debe concatenar Entrada con Sopa o postre');

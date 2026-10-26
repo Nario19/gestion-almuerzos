@@ -194,4 +194,44 @@ test('Separación estricta de Fecha de Consumo vs Fecha de Emisión y Dos Column
       'Ensalada debe tener color verde'
     );
   });
+
+  await t.test('7. Eliminación absoluta del badge HOY en la columna de Día Programado', () => {
+    const despachoPath = path.join(rootDir, 'src', 'app', 'admin', 'despacho', 'page.tsx');
+    const despachoContent = fs.readFileSync(despachoPath, 'utf-8');
+
+    // La celda de Día Programado NO debe tener ningún Badge con texto 'HOY'
+    assert.ok(
+      !despachoContent.includes('p.fecha === fechaHoy ? (\n                                <div className="flex items-center gap-1.5 whitespace-nowrap">\n                                  <Badge variant="success" className="px-1.5 py-0 text-[10px] font-bold bg-emerald-600 text-white">\n                                    HOY'),
+      'Despacho no debe tener badge HOY en la celda de Día Programado'
+    );
+    assert.ok(
+      despachoContent.includes('{formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana)}'),
+      'Despacho debe renderizar directamente formatearDiaYFechaProgramadaPeru'
+    );
+  });
+
+  await t.test('8. Reconciliación defensiva de fecha según día de la semana escolar', () => {
+    // Si se pasa fecha 2026-10-25 (domingo) pero día MARTES, la función debe alinear al martes (2026-10-27)
+    const formateado = formatearDiaYFechaProgramadaPeru('2026-10-25', 'MARTES');
+    assert.strictEqual(formateado, 'MARTES 27/10/2026');
+    assert.ok(!formateado.includes('HOY'), 'Nunca debe contener la palabra HOY');
+
+    // Si se pasa fecha 2026-10-26 (lunes) pero día MIERCOLES, debe alinear al miércoles (2026-10-28)
+    const formateadoMiercoles = formatearDiaYFechaProgramadaPeru('2026-10-26', 'MIERCOLES');
+    assert.strictEqual(formateadoMiercoles, 'MIÉRCOLES 28/10/2026');
+  });
+
+  await t.test('9. DataService reconcilia fecha con diaSemana al mapear y al crear pedido', () => {
+    const dsPath = path.join(rootDir, 'src', 'lib', 'dataService.ts');
+    const dsContent = fs.readFileSync(dsPath, 'utf-8');
+
+    assert.ok(
+      dsContent.includes('fechaNormalizada = obtenerFechaParaDiaSemana(diaSemanaNormalizado, fechaNormalizada)'),
+      'mapearPedidoDesdeSupabase debe reconciliar defensivamente fechaNormalizada con el día de la semana'
+    );
+    assert.ok(
+      dsContent.includes('obtenerFechaParaDiaSemana(diaSemanaFinal, fechaBase)'),
+      'crearPedido debe sincronizar fechaFinal con el día escolar programado'
+    );
+  });
 });

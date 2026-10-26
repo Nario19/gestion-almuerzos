@@ -928,13 +928,10 @@ export default function FiadoPage() {
                                 <span className="font-bold text-zinc-950 flex items-center gap-1.5">
                                   <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                                   {formatearDiaYFechaProgramadaPeru(
-                                    padre.fechasUnicas && padre.fechasUnicas.includes(fechaHoy)
-                                      ? (fechaFiltro === 'TODAS' || fechaFiltro === fechaHoy ? fechaHoy : fechaFiltro)
-                                      : (padre.fechasUnicas?.[0] || fechaHoy),
+                                    padre.pedidos[0]?.fecha || padre.fechasUnicas?.[0] || fechaHoy,
                                     padre.pedidos[0]?.diaSemana
                                   )}
                                 </span>
-                                {/* Consumo de HOY */}
                               </div>
 
                               {padre.fechasUnicas && padre.fechasUnicas.length > 1 && (
@@ -945,15 +942,13 @@ export default function FiadoPage() {
                                       type="button"
                                       onClick={() => setFechaFiltro(f)}
                                       className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border transition cursor-pointer ${
-                                        f === fechaHoy
-                                          ? 'bg-amber-100 text-amber-950 font-bold border-amber-300'
-                                          : fechaFiltro === f
+                                        fechaFiltro === f
                                           ? 'bg-zinc-950 text-white border-zinc-950'
                                           : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-200'
                                       }`}
                                       title={`Filtrar por fecha ${f}`}
                                     >
-                                      {f === fechaHoy ? 'HOY' : f}
+                                      {formatearFechaLegiblePeru(f)}
                                     </button>
                                   ))}
                                   {padre.fechasUnicas.length > 3 && (
@@ -1377,13 +1372,9 @@ export default function FiadoPage() {
                             {p.fechasUnicas.map((f) => (
                               <span
                                 key={f}
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                  f === fechaHoy
-                                    ? 'bg-amber-100 text-amber-900 border border-amber-300 font-black'
-                                    : 'bg-slate-100 text-slate-700'
-                                }`}
+                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200"
                               >
-                                {f === fechaHoy ? 'Hoy' : f}
+                                {formatearFechaLegiblePeru(f)}
                               </span>
                             ))}
                           </div>
@@ -1575,11 +1566,6 @@ export default function FiadoPage() {
                                   {ped.createdAt && (
                                     <span className="text-[10px] text-slate-500 font-normal">
                                       Pedido: {formatearFechaHoraRegistroPeru(ped.createdAt).texto}
-                                    </span>
-                                  )}
-                                  {ped.fecha === fechaHoy && (
-                                    <span className="inline-flex items-center gap-1 text-[9px] font-black text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300 w-fit">
-                                      HOY
                                     </span>
                                   )}
                                 </div>
