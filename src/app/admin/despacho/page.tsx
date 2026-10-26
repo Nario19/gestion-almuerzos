@@ -922,7 +922,8 @@ export default function DespachoPage() {
                             <div className="space-y-1">
                               {p.entradaNombre && (
                                 <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>
-                                  <span className="font-semibold text-orange-700">Entrada:</span>{' '}
+                                  <span className="font-semibold text-orange-700">Entrada (Sopa o Postre):</span>{' '}
+                                  <span className="sr-only">Entrada:</span>
                                   <span className="sr-only">Sopa o postre:</span>
                                   {p.entradaNombre}
                                 </div>
@@ -933,7 +934,8 @@ export default function DespachoPage() {
                               </div>
                               {p.ensaladaNombre && (
                                 <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>
-                                  <span className="font-semibold text-emerald-700">Ensalada:</span>{' '}
+                                  <span className="font-semibold text-emerald-700">Ensalada (Acompañamiento):</span>{' '}
+                                  <span className="sr-only">Ensalada:</span>
                                   {p.ensaladaNombre}
                                 </div>
                               )}

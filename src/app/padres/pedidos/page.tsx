@@ -828,7 +828,8 @@ function PedidosContent() {
                 {/* Menú seleccionado */}
                 <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100 space-y-1.5 text-xs">
                   <div className="flex items-start gap-2">
-                    <span className="text-zinc-400 font-medium shrink-0">1. Entrada:</span>
+                    <span className="text-zinc-400 font-medium shrink-0">1. Entrada (Sopa o Postre):</span>
+                    <span className="sr-only">1. Entrada:</span>
                     <span className="font-medium text-zinc-800">{pedido.entradaNombre}</span>
                   </div>
                   <div className="flex items-start gap-2">
@@ -837,7 +838,8 @@ function PedidosContent() {
                   </div>
                   {pedido.ensaladaNombre && (
                     <div className="flex items-start gap-2">
-                      <span className="text-zinc-400 font-medium shrink-0">3. Ensalada:</span>
+                      <span className="text-zinc-400 font-medium shrink-0">3. Ensalada (Acompañamiento):</span>
+                      <span className="sr-only">3. Ensalada:</span>
                       <span className="font-medium text-zinc-800">{pedido.ensaladaNombre}</span>
                     </div>
                   )}

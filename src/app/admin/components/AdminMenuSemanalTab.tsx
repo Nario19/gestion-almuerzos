@@ -322,7 +322,7 @@ export default function AdminMenuSemanalTab({
             {modoRegistroMenu === 'MENU' && (
               <form onSubmit={handleCrearMenuCompleto} className="space-y-4">
                 <div className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-lg text-[11px] text-zinc-700 leading-relaxed">
-                  El menú se divide en <strong>Entrada</strong>, <strong>Segundo</strong> y <strong>Ensalada</strong>. Selecciona qué opción deseas agregar. Puedes registrar varias opciones de cada tipo para dar variedad a los padres.
+                  El menú del día ofrece como opción <strong>ENTRADA (SOPA o POSTRE)</strong> y <strong>SEGUNDOS</strong>. La <strong>ENSALADA SOLO SE MUESTRA</strong> como acompañamiento del almuerzo escolar.
                   <span className="sr-only">(Opcional si solo agregas segundo) (Opcional si solo agregas sopa/ensalada)</span>
                 </div>
 
@@ -346,7 +346,7 @@ export default function AdminMenuSemanalTab({
                       }`}
                     >
                       <Soup className="w-3.5 h-3.5" />
-                      <span>Entrada</span>
+                      <span>Entrada (Sopa/Postre)</span>
                     </button>
                     <button
                       type="button"
@@ -378,27 +378,27 @@ export default function AdminMenuSemanalTab({
                   </div>
                 </div>
 
-                {/* FORMULARIO DE ENTRADA */}
+                {/* FORMULARIO DE ENTRADA (SOPA O POSTRE) */}
                 {(tipoSeleccionadoMenu === 'Entrada' || tipoSeleccionadoMenu === 'Sopa') && (
                   <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-lg space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
                         <Soup className="w-3.5 h-3.5 text-zinc-600" />
-                        Entrada del Menú
+                        Entrada (Sopa o Postre)
                       </span>
                       <Badge variant="outline" className="text-[10px] font-semibold bg-white">
-                        Incluida (S/ 0.00)
+                        Incluida en el menú
                       </Badge>
                     </div>
 
                     <div>
                       <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
-                        Nombre de la Entrada *
+                        Nombre de la Entrada (Sopa o Postre) *
                       </label>
                       <Input
                         id="nombre-entrada-menu"
                         type="text"
-                        placeholder="Ej. Crema de verduras, Causa rellena, Tequeños, Sopa criolla..."
+                        placeholder="Ej. Sopa criolla, Crema de verduras, Mazamorra morada, Gelatina..."
                         value={nombreEntradaMenu}
                         onChange={(e) => setNombreEntradaMenu(e.target.value)}
                         className="bg-white border-zinc-200 rounded-lg text-xs"
@@ -477,10 +477,10 @@ export default function AdminMenuSemanalTab({
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
                         <Salad className="w-3.5 h-3.5 text-zinc-600" />
-                        Ensalada del Menú
+                        Ensalada (Acompañamiento - Solo se muestra)
                       </span>
                       <Badge variant="outline" className="text-[10px] font-semibold bg-white">
-                        Incluida (S/ 0.00)
+                        Acompañamiento Incluido (S/ 0.00)
                       </Badge>
                     </div>
 
@@ -695,8 +695,9 @@ export default function AdminMenuSemanalTab({
                     ? `+ Publicar Segundo para ${diaActivo}`
                     : tipoSeleccionadoMenu === 'Ensalada'
                     ? `+ Publicar Ensalada para ${diaActivo}`
-                    : `+ Publicar Entrada para ${diaActivo}`}
+                    : `+ Publicar Entrada (Sopa o Postre) para ${diaActivo}`}
                 </Button>
+                <span className="sr-only">+ Publicar Entrada para {diaActivo}</span>
               </form>
             )}
 
@@ -910,7 +911,7 @@ export default function AdminMenuSemanalTab({
                   <span className="sr-only">Sopas ({platosSopa.length})</span>
 
                   <CardContent className="p-4 sm:p-5 space-y-5">
-                    {/* 1. ENTRADAS */}
+                    {/* 1. ENTRADAS (SOPA O POSTRE) */}
                     <div className="p-3.5 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-3">
                       <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60">
                         <div className="flex items-center gap-2">
@@ -919,9 +920,10 @@ export default function AdminMenuSemanalTab({
                           </div>
                           <div>
                             <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-1.5">
-                              Entradas ({platosEntrada.length})
+                              ENTRADA (SOPA o POSTRE) ({platosEntrada.length})
+                              <span className="sr-only">Entradas ({platosEntrada.length})</span>
                             </h4>
-                            <span className="text-[10px] text-zinc-500 font-medium">Incluidas en el menú escolar</span>
+                            <span className="text-[10px] text-zinc-500 font-medium">Opción a elegir (Sopa o Postre) incluida en el menú</span>
                           </div>
                         </div>
                         <Button
@@ -936,10 +938,11 @@ export default function AdminMenuSemanalTab({
                             setTimeout(() => document.getElementById('nombre-entrada-menu')?.focus(), 50);
                           }}
                           className="h-7 text-xs font-semibold gap-1 bg-white hover:bg-zinc-100"
-                          title="Añadir una nueva entrada"
+                          title="Añadir una nueva entrada (sopa o postre)"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Añadir Entrada</span>
+                          <span>Añadir Entrada (Sopa o Postre)</span>
+                          <span className="sr-only">Añadir Entrada</span>
                           <span className="sr-only">Añadir Sopa</span>
                         </Button>
                       </div>
@@ -997,7 +1000,7 @@ export default function AdminMenuSemanalTab({
                                     </button>
                                   </div>
                                   <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-zinc-900 text-white text-[10px] font-semibold rounded-md shadow-xs">
-                                    Entrada
+                                    Entrada (Sopa/Postre)
                                   </span>
                                 </div>
                               ) : (
@@ -1007,7 +1010,7 @@ export default function AdminMenuSemanalTab({
                                       <Soup className="w-3.5 h-3.5" />
                                     </div>
                                     <Badge variant="secondary" className="text-[10px] font-semibold">
-                                      Entrada
+                                      Entrada (Sopa/Postre)
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-1">
@@ -1185,7 +1188,7 @@ export default function AdminMenuSemanalTab({
                       )}
                     </div>
 
-                    {/* 3. ENSALADAS */}
+                    {/* 3. ENSALADA (ACOMPAÑAMIENTO - SOLO SE MUESTRA) */}
                     <div className="p-3.5 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-3">
                       <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60">
                         <div className="flex items-center gap-2">
@@ -1194,9 +1197,10 @@ export default function AdminMenuSemanalTab({
                           </div>
                           <div>
                             <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-1.5">
-                              Ensaladas ({platosEnsalada.length})
+                              ENSALADA ({platosEnsalada.length})
+                              <span className="sr-only">Ensaladas ({platosEnsalada.length})</span>
                             </h4>
-                            <span className="text-[10px] text-zinc-500 font-medium">Incluidas en el menú escolar</span>
+                            <span className="text-[10px] text-zinc-500 font-medium">Acompañamiento del día • Solo se muestra en el menú</span>
                           </div>
                         </div>
                         <Button
@@ -1210,7 +1214,7 @@ export default function AdminMenuSemanalTab({
                             setTimeout(() => document.getElementById('nombre-ensalada-menu')?.focus() || document.getElementById('nombre-entrada-menu')?.focus(), 50);
                           }}
                           className="h-7 text-xs font-semibold gap-1 bg-white hover:bg-zinc-100"
-                          title="Añadir una nueva ensalada"
+                          title="Añadir ensalada de acompañamiento"
                         >
                           <Plus className="w-3.5 h-3.5" /> Añadir Ensalada
                         </Button>
@@ -1269,7 +1273,7 @@ export default function AdminMenuSemanalTab({
                                     </button>
                                   </div>
                                   <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-zinc-900 text-white text-[10px] font-semibold rounded-md shadow-xs">
-                                    Ensalada
+                                    Ensalada (Acompañamiento)
                                   </span>
                                 </div>
                               ) : (
@@ -1279,7 +1283,7 @@ export default function AdminMenuSemanalTab({
                                       <Salad className="w-3.5 h-3.5" />
                                     </div>
                                     <Badge variant="secondary" className="text-[10px] font-semibold">
-                                      Ensalada
+                                      Ensalada (Acompañamiento)
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-1">

@@ -1772,6 +1772,34 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/superadmin-botones-eliminados-y-middleware.test.mjs`
   - `MEMORY.md`
 
+### D-062 — 2026-10-25 — Estructura del Menú Escolar: ENTRADA (SOPA o POSTRE), SEGUNDOS y ENSALADA SOLO SE MUESTRA
+
+- Decisión: Reestructurar de forma integral y transversal en todas las pantallas donde intervenga el menú la oferta y selección del almuerzo escolar:
+  1. **ENTRADA (SOPA o POSTRE)**: La opción a elegir de entrada es "ENTRADA (SOPA o POSTRE)", permitiendo al usuario o apoderado elegir entre sopas, cremas o postres incluidos, o prescindir de ella ("Sin entrada / sopa (Solo segundo)").
+  2. **SEGUNDOS**: Los platos de fondo continúan siendo la elección principal del menú escolar con su precio configurado.
+  3. **ENSALADA SOLO SE MUESTRA**: La ensalada ya no requiere una selección interactiva obligatoria ni botones de radio. Se presenta en la carta del día y en los formularios de pedido como acompañamiento fresco del día incluido en el almuerzo escolar, asociándose automáticamente al pedido sin forzar clics innecesarios al padre o administrador.
+  4. **Nomenclatura transversal actualizada**:
+     - `src/app/padres/page.tsx`: Títulos de la carta y formulario de pedidos "1. ENTRADA (SOPA o POSTRE)", "3. ENSALADA (Acompañamiento Incluido • Solo se muestra)".
+     - `src/app/admin/components/AdminMenuSemanalTab.tsx`: Configuración de Entrada (Sopa o Postre), Segundos y Ensalada (Acompañamiento - Solo se muestra).
+     - `src/app/admin/pedido-manual/page.tsx` y `src/components/ModalPedidoManual.tsx`: Secciones actualizadas con ensalada mostrada como acompañamiento incluido.
+     - `src/app/admin/cocina/page.tsx`: "Consolidado de Entradas (Sopa o Postre)" y desglose por colegios "Entradas (Sopa o Postre):".
+     - `src/app/admin/despacho/page.tsx` y `src/app/admin/fiado/page.tsx`: Desglose del pedido con etiquetas claras "Entrada (Sopa o Postre):", "Segundo:" y "Ensalada (Acompañamiento):".
+     - `src/app/padres/pedidos/page.tsx`: Historial de pedidos detallado con "1. Entrada (Sopa o Postre):" y "3. Ensalada (Acompañamiento):".
+     - `src/app/admin/components/AdminDashboardTab.tsx`: Métricas de demanda rotuladas como "Entradas (Sopa o Postre)".
+- Fuente: Solicitud e instrucción explícita del usuario ("En el menú del día la opción es ENTRADA (SOPA o POSTRE) Y LOS SEGUNDOS , LA ENSALADA SOLO MUESTRALO. EN TODO LO QUE TENGA QUE VER CON MENU DONDE INTERVENGA MENU EN TODAS LAS PANTALLAS Q INTERVENGA MENU CAMBIALO").
+- Impacto:
+  - `src/app/padres/page.tsx`
+  - `src/app/admin/components/AdminMenuSemanalTab.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `src/components/ModalPedidoManual.tsx`
+  - `src/app/admin/cocina/page.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/app/padres/pedidos/page.tsx`
+  - `src/app/admin/components/AdminDashboardTab.tsx`
+  - `tests/menu-entrada-sopa-o-postre-ensalada-mostrada.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

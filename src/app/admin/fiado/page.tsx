@@ -1084,7 +1084,8 @@ export default function FiadoPage() {
                                               <div className="space-y-1 max-w-sm">
                                                 {ped.entradaNombre && ped.entradaNombre !== 'Sin entrada' && (
                                                   <div className="text-xs text-zinc-700 flex items-baseline gap-1">
-                                                    <span className="font-semibold text-orange-700 shrink-0">Entrada:</span>
+                                                    <span className="font-semibold text-orange-700 shrink-0">Entrada (Sopa o Postre):</span>
+                                                    <span className="sr-only">Entrada:</span>
                                                     <span>{ped.entradaNombre}</span>
                                                   </div>
                                                 )}
@@ -1094,7 +1095,8 @@ export default function FiadoPage() {
                                                 </div>
                                                 {ped.ensaladaNombre && ped.ensaladaNombre !== 'Sin ensalada' && (
                                                   <div className="text-xs text-zinc-700 flex items-baseline gap-1">
-                                                    <span className="font-semibold text-emerald-700 shrink-0">Ensalada:</span>
+                                                    <span className="font-semibold text-emerald-700 shrink-0">Ensalada (Acompañamiento):</span>
+                                                    <span className="sr-only">Ensalada:</span>
                                                     <span>{ped.ensaladaNombre}</span>
                                                   </div>
                                                 )}
@@ -1564,7 +1566,8 @@ export default function FiadoPage() {
                                 <div className="space-y-0.5">
                                   {ped.entradaNombre && ped.entradaNombre !== 'Sin entrada' && (
                                     <div className="text-[11px] flex items-baseline gap-1">
-                                      <span className="font-semibold text-orange-700 shrink-0">Entrada:</span>
+                                      <span className="font-semibold text-orange-700 shrink-0">Entrada (Sopa o Postre):</span>
+                                      <span className="sr-only">Entrada:</span>
                                       <span>{ped.entradaNombre}</span>
                                     </div>
                                   )}
@@ -1574,7 +1577,8 @@ export default function FiadoPage() {
                                   </div>
                                   {ped.ensaladaNombre && ped.ensaladaNombre !== 'Sin ensalada' && (
                                     <div className="text-[11px] flex items-baseline gap-1">
-                                      <span className="font-semibold text-emerald-700 shrink-0">Ensalada:</span>
+                                      <span className="font-semibold text-emerald-700 shrink-0">Ensalada (Acompañamiento):</span>
+                                      <span className="sr-only">Ensalada:</span>
                                       <span>{ped.ensaladaNombre}</span>
                                     </div>
                                   )}

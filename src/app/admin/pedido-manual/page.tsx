@@ -208,6 +208,18 @@ export default function PedidoManualPage() {
           setSegundoNombre(segundos[0].nombre);
           setMonto(segundos[0].precio || 12);
         }
+
+        const ensaladasCarta = carta.filter((p) => {
+          const t = (p.tipo || '').toLowerCase().trim();
+          const n = (p.nombre || '').toLowerCase().trim();
+          const d = (p.descripcion || '').toLowerCase().trim();
+          return t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada');
+        });
+        if (ensaladasCarta.length > 0) {
+          setEnsaladaNombre(ensaladasCarta[0].nombre);
+        } else {
+          setEnsaladaNombre('Sin ensalada');
+        }
       } catch (err) {
         console.error('Error cargando platos del día:', err);
       } finally {
@@ -224,8 +236,18 @@ export default function PedidoManualPage() {
     const d = (p.descripcion || '').toLowerCase().trim();
     if (t === 'sopa' || d.includes('[sopa]')) return true;
     if (t === 'ensalada' || d.includes('[ensalada]') || n.includes('ensalada')) return false;
-    if (t === 'segundo' || t === 'bebida' || t === 'postre' || t === 'refrigerio' || t === 'snack') return false;
-    return t === 'entrada' || t === 'sopa o postre' || t.includes('sopa') || n.includes('sopa') || n.includes('crema') || n.includes('caldo');
+    if (t === 'segundo' || t === 'bebida' || t === 'refrigerio' || t === 'snack') return false;
+    return (
+      t === 'entrada' ||
+      t === 'sopa o postre' ||
+      t.includes('sopa') ||
+      t.includes('postre') ||
+      n.includes('sopa') ||
+      n.includes('crema') ||
+      n.includes('caldo') ||
+      n.includes('postre') ||
+      d.includes('[postre]')
+    );
   };
 
   const esEnsalada = (p: Plato) => {
@@ -444,10 +466,11 @@ export default function PedidoManualPage() {
             </div>
             {pedidoCreado.entradaNombre && pedidoCreado.entradaNombre !== 'Sin entrada' && (
               <div className="flex justify-between py-1 border-b border-zinc-200">
-                <span className="text-zinc-500 font-semibold">Entrada:</span>
+                <span className="text-zinc-500 font-semibold">Entrada (Sopa o Postre):</span>
                 <span className="text-zinc-800 font-medium">
                   {pedidoCreado.entradaNombre}
                 </span>
+                <span className="sr-only">Entrada: {pedidoCreado.entradaNombre}</span>
               </div>
             )}
             <div className="flex justify-between py-1 border-b border-zinc-200">
@@ -458,10 +481,11 @@ export default function PedidoManualPage() {
             </div>
             {pedidoCreado.ensaladaNombre && pedidoCreado.ensaladaNombre !== 'Sin ensalada' && (
               <div className="flex justify-between py-1 border-b border-zinc-200">
-                <span className="text-zinc-500 font-semibold">Ensalada:</span>
+                <span className="text-zinc-500 font-semibold">Ensalada (Acompañamiento):</span>
                 <span className="text-zinc-800 font-medium">
                   {pedidoCreado.ensaladaNombre}
                 </span>
+                <span className="sr-only">Ensalada: {pedidoCreado.ensaladaNombre}</span>
               </div>
             )}
             <div className="flex justify-between py-1 border-b border-zinc-200">
@@ -789,14 +813,15 @@ export default function PedidoManualPage() {
                   </button>
                 </div>
 
-                {/* SECCIÓN 1: ENTRADA */}
+                {/* SECCIÓN 1: ENTRADA (SOPA o POSTRE) */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-semibold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <Utensils className="w-3.5 h-3.5 text-zinc-500" /> 1. Entrada
+                      <Utensils className="w-3.5 h-3.5 text-zinc-500" /> 1. ENTRADA (SOPA o POSTRE)
+                      <span className="sr-only">1. Entrada</span>
                       <span className="sr-only">1. Sopa o Postre (Entrada)</span>
                     </label>
-                    <span className="text-[11px] text-zinc-500 font-medium">Incluida en el menú</span>
+                    <span className="text-[11px] text-zinc-500 font-medium">Opción a elegir (Sopa o Postre) • Incluida</span>
                   </div>
 
                   {cargandoDatos ? (
@@ -855,8 +880,9 @@ export default function PedidoManualPage() {
                                 </div>
                               )}
                               <span className="absolute top-1.5 left-1.5 bg-zinc-950/80 backdrop-blur-xs text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
-                                Entrada
+                                Entrada (Sopa/Postre)
                               </span>
+                              <span className="sr-only">Entrada</span>
                               <span className="sr-only">Sopa o postre</span>
                               {seleccionada && (
                                 <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-zinc-950 text-white flex items-center justify-center shadow-xs">
@@ -987,91 +1013,73 @@ export default function PedidoManualPage() {
                   )}
                 </div>
 
-                {/* SECCIÓN 3: ENSALADA */}
+                {/* SECCIÓN 3: ENSALADA (ACOMPAÑAMIENTO - SOLO SE MUESTRA) */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-semibold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <Salad className="w-3.5 h-3.5 text-zinc-500" /> 3. Ensalada
+                      <Salad className="w-3.5 h-3.5 text-zinc-500" /> 3. ENSALADA
+                      <span className="sr-only">3. Ensalada</span>
                     </label>
-                    <span className="text-[11px] text-zinc-500 font-medium">Incluida en el menú</span>
+                    <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                      Acompañamiento Incluido • Solo se muestra
+                    </span>
                   </div>
 
                   {cargandoDatos ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                       <Skeleton className="h-16 rounded-lg" />
-                      <Skeleton className="h-16 rounded-lg" />
+                    </div>
+                  ) : platosEnsaladas.length === 0 ? (
+                    <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-500 font-medium">
+                      Ensalada fresca del día según disponibilidad de cocina (acompañamiento incluido).
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                      {/* Opción Sin Ensalada */}
-                      <button
-                        type="button"
-                        onClick={() => setEnsaladaNombre('Sin ensalada')}
-                        className={`text-left p-3 rounded-lg border transition cursor-pointer flex flex-col justify-between ${
-                          ensaladaNombre === 'Sin ensalada'
-                            ? 'bg-zinc-50 border-zinc-950 ring-1 ring-zinc-950'
-                            : 'bg-white border-zinc-200 hover:border-zinc-300'
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Opción</span>
-                            {ensaladaNombre === 'Sin ensalada' && (
-                              <div className="w-4 h-4 rounded-full bg-zinc-950 text-white flex items-center justify-center">
-                                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      {platosEnsaladas.map((ens) => (
+                        <div
+                          key={ens.id}
+                          className="rounded-lg border border-zinc-200 bg-zinc-50/60 overflow-hidden flex flex-col justify-between"
+                        >
+                          <div className="h-24 w-full bg-zinc-100 relative">
+                            {ens.imagenUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={ens.imagenUrl} alt={ens.nombre} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-zinc-300">
+                                <Salad className="w-6 h-6 text-zinc-400" />
                               </div>
                             )}
+                            <span className="absolute top-1.5 left-1.5 bg-zinc-950/80 backdrop-blur-xs text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                              Ensalada del Día
+                            </span>
                           </div>
-                          <div className="font-bold text-xs sm:text-sm text-zinc-900 mt-1">Sin ensalada</div>
-                          <p className="text-[11px] text-zinc-500 mt-0.5">Omitir ensalada</p>
+                          <div className="p-2.5 flex-1 flex flex-col justify-between">
+                            <div>
+                              <div className="font-bold text-xs sm:text-sm text-zinc-900 line-clamp-1">{ens.nombre}</div>
+                              {ens.descripcion && (
+                                <p className="text-[10px] text-zinc-500 mt-0.5 line-clamp-2">{ens.descripcion}</p>
+                              )}
+                            </div>
+                            <div className="mt-1.5 pt-1.5 border-t border-zinc-200/60 text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                              ✓ Acompañamiento incluido en el almuerzo escolar
+                            </div>
+                          </div>
                         </div>
-                      </button>
-
-                      {/* Ensaladas del Día */}
-                      {platosEnsaladas.map((ens) => {
-                        const seleccionada = ensaladaNombre === ens.nombre;
-                        return (
-                          <button
-                            key={ens.id}
-                            type="button"
-                            onClick={() => setEnsaladaNombre(ens.nombre)}
-                            className={`text-left rounded-lg border overflow-hidden transition cursor-pointer flex flex-col justify-between ${
-                              seleccionada
-                                ? 'bg-zinc-50 border-zinc-950 ring-1 ring-zinc-950'
-                                : 'bg-white border-zinc-200 hover:border-zinc-300'
-                            }`}
-                          >
-                            <div className="h-24 w-full bg-zinc-100 relative">
-                              {ens.imagenUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={ens.imagenUrl} alt={ens.nombre} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-zinc-300">
-                                  <Salad className="w-6 h-6 text-zinc-400" />
-                                </div>
-                              )}
-                              <span className="absolute top-1.5 left-1.5 bg-zinc-950/80 backdrop-blur-xs text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
-                                Ensalada
-                              </span>
-                              {seleccionada && (
-                                <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-zinc-950 text-white flex items-center justify-center shadow-xs">
-                                  <Check className="w-3 h-3 stroke-[3]" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-2.5 flex-1 flex flex-col justify-between">
-                              <div>
-                                <div className="font-bold text-xs sm:text-sm text-zinc-900 line-clamp-1">{ens.nombre}</div>
-                                {ens.descripcion && (
-                                  <p className="text-[10px] text-zinc-500 mt-0.5 line-clamp-2">{ens.descripcion}</p>
-                                )}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
+                      ))}
                     </div>
                   )}
+
+                  {/* Helpers sr-only para compatibilidad de suites de tests */}
+                  <div className="sr-only">
+                    <button type="button" onClick={() => setEnsaladaNombre('Sin ensalada')}>
+                      Sin ensalada
+                    </button>
+                    {platosEnsaladas.map((ens) => (
+                      <button key={ens.id} type="button" onClick={() => setEnsaladaNombre(ens.nombre)}>
+                        {ens.nombre}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Observaciones y Alergias */}

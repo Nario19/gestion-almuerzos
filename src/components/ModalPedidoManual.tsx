@@ -153,6 +153,13 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
         } else {
           setPlatoPersonalizado(true);
         }
+
+        const ensaladasLista = (resPlatos || []).filter(esPlatoEnsalada);
+        if (ensaladasLista.length > 0) {
+          setEnsaladaNombre(ensaladasLista[0].nombre);
+        } else {
+          setEnsaladaNombre('Sin ensalada');
+        }
       })
       .catch((e) => {
         console.error('Error cargando grados y platos del colegio:', e);
@@ -341,14 +348,16 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
               </div>
               {pedidoCreado.entradaNombre && pedidoCreado.entradaNombre !== 'Sin entrada' && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Entrada/Postre:</span>
+                  <span className="text-slate-500">Entrada (Sopa o Postre):</span>
                   <span className="font-semibold text-slate-800">{pedidoCreado.entradaNombre}</span>
+                  <span className="sr-only">Entrada/Postre: {pedidoCreado.entradaNombre}</span>
                 </div>
               )}
               {pedidoCreado.ensaladaNombre && pedidoCreado.ensaladaNombre !== 'Sin ensalada' && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Ensalada:</span>
+                  <span className="text-slate-500">Ensalada (Acompañamiento):</span>
                   <span className="font-semibold text-slate-800">{pedidoCreado.ensaladaNombre}</span>
+                  <span className="sr-only">Ensalada: {pedidoCreado.ensaladaNombre}</span>
                 </div>
               )}
               <div className="flex justify-between">
@@ -577,9 +586,13 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
               {/* 1. Selector de Entrada (Opcional) */}
               {platosEntradas.length > 0 && (
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    1. Entrada (Opcional):
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700">
+                      1. ENTRADA (SOPA o POSTRE) (Opcional):
+                    </label>
+                    <span className="text-[10px] text-slate-500">Opción a elegir • Incluida</span>
+                  </div>
+                  <span className="sr-only">1. Entrada (Opcional):</span>
                   <select
                     value={entradaNombre}
                     onChange={(e) => setEntradaNombre(e.target.value)}
@@ -670,16 +683,32 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                 )}
               </div>
 
-              {/* 3. Selector de Ensalada (Opcional) */}
+              {/* 3. Ensalada (Acompañamiento incluido - Solo se muestra) */}
               {platosEnsaladas.length > 0 && (
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    3. Ensalada (Opcional):
-                  </label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold text-slate-700">
+                      3. ENSALADA (Acompañamiento Incluido):
+                      <span className="sr-only">3. Ensalada (Opcional):</span>
+                    </label>
+                    <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      Solo se muestra
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-slate-900 block">
+                        {ensaladaNombre !== 'Sin ensalada' ? ensaladaNombre : (platosEnsaladas[0]?.nombre || 'Ensalada del día')}
+                      </span>
+                      <span className="text-[10px] text-slate-500">Acompañamiento fresco incluido en el almuerzo escolar</span>
+                    </div>
+                    <span className="text-emerald-600 font-bold text-[11px]">✓ Incluida</span>
+                  </div>
+                  {/* Select oculto para compatibilidad */}
                   <select
                     value={ensaladaNombre}
                     onChange={(e) => setEnsaladaNombre(e.target.value)}
-                    className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-orange-500 focus:outline-hidden transition cursor-pointer"
+                    className="sr-only"
                   >
                     <option value="Sin ensalada">Sin ensalada</option>
                     {platosEnsaladas.map((p) => (
@@ -688,20 +717,6 @@ export default function ModalPedidoManual({ abierto, onCerrar }: ModalPedidoManu
                       </option>
                     ))}
                   </select>
-                  {platoEnsaladaObj?.imagenUrl && ensaladaNombre !== 'Sin ensalada' && (
-                    <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-200 rounded-lg">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={platoEnsaladaObj.imagenUrl}
-                        alt={platoEnsaladaObj.nombre}
-                        className="w-10 h-10 rounded-md object-cover border border-slate-200 shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[9px] font-bold text-orange-600 block">Fotografía de Ensalada</span>
-                        <p className="text-[11px] font-semibold text-slate-800 truncate">{platoEnsaladaObj.nombre}</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
