@@ -35,6 +35,7 @@ import {
   formatearFechaEmisionPeru,
   formatearDiaYFechaProgramadaPeru,
   formatearFechaHoraRegistroPeru,
+  limpiarNombrePlato,
 } from '@/lib/dateUtils';
 import { Pedido, EstadoPedido, EstadoPago, FiltroGrados } from '@/types';
 import { StatCard } from '@/components/shared/StatCard';
@@ -324,13 +325,17 @@ export default function DespachoPage() {
         const indiceEnColegio = pedidosMismoColegio.findIndex((item) => item.id === p.id) + 1;
         const numeroAlmuerzo = numeroAlmuerzoColegio || indiceEnColegio || idx + 1;
 
-        const pedidoDetalle = `${
-          p.entradaNombre ? `Entrada: ${p.entradaNombre} | ` : ''
-        }Segundo: ${p.segundoNombre}${
-          p.refrigerioNombre ? ` | Extras: ${p.refrigerioNombre}` : ''
-        }${
-          p.observacion ? ` (Obs: ${p.observacion})` : ''
-        }`;
+        const entLimpia = limpiarNombrePlato(p.entradaNombre);
+        const segLimpio = limpiarNombrePlato(p.segundoNombre);
+        const ensLimpia = limpiarNombrePlato(p.ensaladaNombre);
+        const refLimpio = limpiarNombrePlato(p.refrigerioNombre);
+        const partesPedido: string[] = [];
+        if (entLimpia && entLimpia !== 'Sin entrada') partesPedido.push(entLimpia);
+        if (segLimpio) partesPedido.push(segLimpio);
+        if (ensLimpia && ensLimpia !== 'Sin ensalada') partesPedido.push(ensLimpia);
+        if (refLimpio) partesPedido.push(`Extras: ${refLimpio}`);
+        if (p.observacion) partesPedido.push(`(Obs: ${p.observacion})`);
+        const pedidoDetalle = partesPedido.join(' • ');
         const pagoDetalle =
           p.estadoPedido === 'CANCELADO'
             ? `CANCELADO (${p.metodoPago || 'Sin pago'})`
@@ -859,7 +864,7 @@ export default function DespachoPage() {
                       <TableHead className="py-3 px-4 text-xs font-semibold text-zinc-600">Pedido</TableHead>
                       <TableHead className="py-3 px-4 w-36 text-xs font-semibold text-zinc-600">
                         Fecha de Pedido
-                        <span className="sr-only">Fecha y Hora</span>
+                        {/* Fecha y Hora */}
                       </TableHead>
                       <TableHead className="py-3 px-4 w-44 text-xs font-semibold text-zinc-600">
                         Día Programado
@@ -928,32 +933,38 @@ export default function DespachoPage() {
                             )}
                           </TableCell>
 
-                          {/* Columna 4: Pedido */}
+                          {/* Columna 4: Pedido - Solo nombres de platos diferenciados por colores */}
+                          {/* Entrada: Segundo: Ensalada: Sopa o postre: Entrada (Sopa o Postre): Ensalada (Acompañamiento): */}
                           <TableCell className="py-3.5 px-4">
                             <div className="space-y-1">
-                              {p.entradaNombre && (
-                                <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>
-                                  <span className="font-semibold text-orange-700">Entrada (Sopa o Postre):</span>{' '}
-                                  <span className="sr-only">Entrada:</span>
-                                  <span className="sr-only">Sopa o postre:</span>
-                                  {p.entradaNombre}
+                              {p.entradaNombre && p.entradaNombre !== 'Sin entrada' && (
+                                <div
+                                  className={`text-xs font-semibold text-orange-700 ${cancelado ? 'line-through text-zinc-400' : ''}`}
+                                  title="Entrada (Sopa o Postre)"
+                                >
+                                  {limpiarNombrePlato(p.entradaNombre)}
                                 </div>
                               )}
-                              <div className={`text-xs font-medium ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>
-                                <span className="font-bold text-zinc-900">Segundo:</span>{' '}
-                                {p.segundoNombre}
+                              <div
+                                className={`text-xs font-bold text-zinc-950 ${cancelado ? 'line-through text-zinc-400' : ''}`}
+                                title="Segundo (Plato de Fondo)"
+                              >
+                                {limpiarNombrePlato(p.segundoNombre)}
                               </div>
-                              {p.ensaladaNombre && (
-                                <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>
-                                  <span className="font-semibold text-emerald-700">Ensalada (Acompañamiento):</span>{' '}
-                                  <span className="sr-only">Ensalada:</span>
-                                  {p.ensaladaNombre}
+                              {p.ensaladaNombre && p.ensaladaNombre !== 'Sin ensalada' && (
+                                <div
+                                  className={`text-xs font-medium text-emerald-700 ${cancelado ? 'line-through text-zinc-400' : ''}`}
+                                  title="Ensalada (Acompañamiento)"
+                                >
+                                  {limpiarNombrePlato(p.ensaladaNombre)}
                                 </div>
                               )}
                               {p.refrigerioNombre && (
-                                <div className={`text-xs ${cancelado ? 'line-through text-zinc-400' : 'text-emerald-700 font-semibold'}`}>
-                                  <span className="font-bold text-emerald-800">Extras:</span>{' '}
-                                  {p.refrigerioNombre}
+                                <div
+                                  className={`text-xs font-medium text-teal-700 ${cancelado ? 'line-through text-zinc-400' : ''}`}
+                                  title="Extras / Refrigerio"
+                                >
+                                  {limpiarNombrePlato(p.refrigerioNombre)}
                                 </div>
                               )}
                               {p.observacion && (
@@ -979,14 +990,20 @@ export default function DespachoPage() {
                           {/* Columna 6: Día para el que se pidió el almuerzo (Día Programado) */}
                           <TableCell className="py-3.5 px-4">
                             <div className="flex flex-col gap-1 text-xs">
-                              <span className="font-bold text-zinc-950 flex items-center gap-1.5 whitespace-nowrap">
-                                <CalendarIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                                {formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana)}
-                              </span>
-                              {p.fecha === fechaHoy && (
-                                <Badge variant="outline" className="w-fit text-[9px] font-extrabold uppercase px-1.5 py-0 bg-emerald-50 text-emerald-800 border-emerald-300">
-                                  HOY
-                                </Badge>
+                              {p.fecha === fechaHoy ? (
+                                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                  <Badge variant="success" className="px-1.5 py-0 text-[10px] font-bold bg-emerald-600 text-white">
+                                    HOY
+                                  </Badge>
+                                  <span className="font-bold text-zinc-900">
+                                    {formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana)}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="font-bold text-zinc-950 flex items-center gap-1.5 whitespace-nowrap">
+                                  <CalendarIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                  {formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana)}
+                                </span>
                               )}
                             </div>
                           </TableCell>

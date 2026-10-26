@@ -47,6 +47,7 @@ import {
   obtenerDiaActualSemanaPeru,
   obtenerHoraActualPeru,
   obtenerFechaParaDiaSemana,
+  limpiarNombrePlato,
 } from '@/lib/dateUtils';
 
 export const DIAS_SEMANA: { key: DiaSemana; label: string; short: string }[] = [
@@ -440,11 +441,17 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
     ? d.fecha.slice(0, 10)
     : (d.created_at ? obtenerFechaPeruDeIso(d.created_at) : obtenerFechaHoyPeru());
 
+  const rawDia = ((d as { dia_semana?: string }).dia_semana || '').toUpperCase().trim();
+  const esDiaSemanaValido = rawDia && ['LUNES', 'MARTES', 'MIERCOLES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'].includes(rawDia);
+  const diaSemanaNormalizado: DiaSemana = esDiaSemanaValido
+    ? (rawDia === 'MIÉRCOLES' ? 'MIERCOLES' : (rawDia as DiaSemana))
+    : obtenerDiaActualSemanaPeru(new Date(`${fechaNormalizada}T12:00:00-05:00`));
+
   return {
     id: d.id,
     codigoPedido: d.codigo || (d as { codigo_pedido?: string }).codigo_pedido || '',
     fecha: fechaNormalizada,
-    diaSemana: (d as { dia_semana?: DiaSemana }).dia_semana || obtenerDiaActualSemanaPeru(new Date(`${fechaNormalizada}T12:00:00-05:00`)),
+    diaSemana: diaSemanaNormalizado,
     padreId: d.padre_id || '',
     padreNombre: padreNombre || undefined,
     hijoId: (d as { hijo_id?: string }).hijo_id,
@@ -453,10 +460,10 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
     gradoSeccion: d.grado_seccion || '',
     estudianteNombre: d.estudiante_nombre || '',
     telefonoContacto: d.padre_telefono || (d as { telefono_contacto?: string }).telefono_contacto || '',
-    entradaNombre: d.entrada_nombre || '',
-    segundoNombre: d.segundo_nombre || '',
-    ensaladaNombre: ensaladaNombre || (d as { ensalada_nombre?: string }).ensalada_nombre || undefined,
-    refrigerioNombre,
+    entradaNombre: d.entrada_nombre ? limpiarNombrePlato(d.entrada_nombre) : '',
+    segundoNombre: d.segundo_nombre ? limpiarNombrePlato(d.segundo_nombre) : '',
+    ensaladaNombre: ensaladaNombre ? limpiarNombrePlato(ensaladaNombre) : (d as { ensalada_nombre?: string }).ensalada_nombre ? limpiarNombrePlato((d as { ensalada_nombre?: string }).ensalada_nombre) : undefined,
+    refrigerioNombre: refrigerioNombre ? limpiarNombrePlato(refrigerioNombre) : undefined,
     observacion: obs || undefined,
     metodoPago: d.metodo_pago || 'Pagar luego',
     estadoPago: d.estado_pago || 'PENDIENTE',
@@ -1087,7 +1094,7 @@ export const dataService = {
               {
                 codigo_pedido: nuevo.codigoPedido,
                 fecha: nuevo.fecha,
-                dia_semana: nuevo.diaSemana || 'HOY',
+                dia_semana: nuevo.diaSemana || obtenerDiaActualSemanaPeru(),
                 padre_id: nuevo.padreId,
                 hijo_id: nuevo.hijoId,
                 colegio_nombre: nuevo.colegioNombre,

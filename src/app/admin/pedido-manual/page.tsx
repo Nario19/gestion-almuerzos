@@ -391,6 +391,7 @@ export default function PedidoManualPage() {
         estadoPago: estadoPagoFinal,
         monto: Number(monto) || 12,
         fecha,
+        diaSemana: diaSeleccionado,
       });
 
       guardarAlumnoEnLocalStorage({

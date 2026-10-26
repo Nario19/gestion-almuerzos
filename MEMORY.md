@@ -1824,6 +1824,27 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/separacion-fechas-consumo-registro-despacho-fiado.test.mjs`
   - `MEMORY.md`
 
+### D-064 — 2026-10-25 — Limpieza de Etiquetas en Pedido, Erradicación de Doble HOY y Remoción de "Consumo de HOY" en Fiados
+
+- Decisión:
+  1. **Nombres limpios de platos sin etiquetas técnicas repetitivas**: En la columna *Pedido* de Despacho y Fiado, se eliminan las etiquetas textuales redundantes (`Entrada (Sopa o Postre):`, `Segundo:`, `Ensalada (Acompañamiento):`). Solo se muestran los nombres limpios de los platos diferenciados visualmente por colores:
+     - Entrada en color anaranjado (`text-orange-700 font-semibold`).
+     - Segundo en color oscuro principal (`text-zinc-950 font-bold`).
+     - Ensalada en color verde fresco (`text-emerald-700 font-medium`).
+     - Extras/Refrigerios en color teal (`text-teal-700 font-medium`).
+  2. **Erradicación del doble "HOY" en Despacho**: Si un pedido es para el día de hoy, se muestra una sola insignia `[HOY]` acompañada de la fecha. Si es para otro día, se muestra el día programado en mayúsculas (`LUNES`, `MARTES`, `MIÉRCOLES`, etc.) y la fecha, sin badges redundantes de hoy ni cadenas como `HOY 25/10/2026`.
+  3. **Remoción de "Consumo de HOY" en Fiado**: En la tabla de Fiado no se muestra la insignia "Consumo de HOY"; se muestra de forma limpia y directa únicamente el día de la semana y la fecha de consumo programada.
+  4. **Función `limpiarNombrePlato` y normalización defensiva**: En `src/lib/dateUtils.ts` se implementa `limpiarNombrePlato` para sanear prefijos históricos (`Entrada:Sopa o postre:`, etc.) y en `src/lib/dataService.ts` se normaliza `diaSemana` para que nunca tome el valor `'HOY'`, asignando siempre el día escolar canónico.
+- Fuente: Instrucción explícita del usuario en el seguimiento de la entrega.
+- Impacto:
+  - `src/lib/dateUtils.ts`
+  - `src/lib/dataService.ts`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `src/app/admin/pedido-manual/page.tsx`
+  - `tests/separacion-fechas-consumo-registro-despacho-fiado.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

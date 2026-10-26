@@ -255,25 +255,46 @@ export function obtenerFechaParaDiaSemana(dia: DiaSemana, fechaReferencia: strin
 }
 
 /**
+ * Limpia prefijos técnicos como 'Entrada (Sopa o Postre):', 'Entrada:', 'Sopa o postre:', 'Segundo:', 'Ensalada:', etc.
+ * dejando únicamente el nombre limpio del plato para su presentación visual con colores diferenciados.
+ */
+export function limpiarNombrePlato(nombre?: string): string {
+  if (!nombre) return '';
+  let res = String(nombre).trim();
+  let prev = '';
+  while (res !== prev) {
+    prev = res;
+    res = res
+      .replace(/^(Entrada\s*\([^)]*\)|Entrada|Sopa\s*o\s*postre|Sopa|Postre|Segundo|Ensalada\s*\([^)]*\)|Ensalada|Extras?|Refrigerio)\s*:\s*/gi, '')
+      .trim();
+  }
+  return res;
+}
+
+/**
  * Retorna el día de la semana escolar y la fecha programada del almuerzo en formato legible:
  * Ej. 'LUNES 26/10/2026', 'MARTES 27/10/2026', 'MIÉRCOLES 28/10/2026', 'JUEVES 29/10/2026', 'VIERNES 30/10/2026'
+ * Garantiza que NUNCA retorne 'HOY [fecha]' en lugar del día de la semana.
  */
 export function formatearDiaYFechaProgramadaPeru(fechaStr?: string, diaSemana?: string): string {
   if (!fechaStr) {
     const dia = (diaSemana || '').toUpperCase();
-    return dia ? (dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia) : 'Fecha no definida';
+    if (!dia || dia === 'HOY') return 'Fecha no definida';
+    return dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia;
   }
   try {
     const [y, m, d] = fechaStr.split('-').map(Number);
     if (!y || !m || !d) {
-      const dia = (diaSemana || '').toUpperCase();
-      return dia ? `${dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia} ${fechaStr}` : fechaStr;
+      let dia = (diaSemana || '').toUpperCase();
+      if (!dia || dia === 'HOY') return fechaStr;
+      return `${dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia} ${fechaStr}`;
     }
     const date = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
 
-    // Determinar día de la semana
+    // Determinar día de la semana real (si diaSemana es 'HOY' o no es un día válido, se calcula de la fecha)
     let dia = (diaSemana || '').toUpperCase();
-    if (!dia) {
+    const esDiaSemanaValido = dia && ['LUNES', 'MARTES', 'MIERCOLES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'].includes(dia);
+    if (!esDiaSemanaValido) {
       const dayIndex = date.getUTCDay();
       const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
       dia = dias[dayIndex] || 'LUNES';
@@ -286,7 +307,7 @@ export function formatearDiaYFechaProgramadaPeru(fechaStr?: string, diaSemana?: 
     const yyyy = String(y);
     return `${dia} ${dd}/${mm}/${yyyy}`;
   } catch {
-    return diaSemana ? `${diaSemana} ${fechaStr}` : fechaStr;
+    return diaSemana && diaSemana !== 'HOY' ? `${diaSemana} ${fechaStr}` : (fechaStr || '');
   }
 }
 

@@ -40,6 +40,7 @@ import {
   formatearHoraPeru,
   formatearDiaYFechaProgramadaPeru,
   formatearFechaHoraRegistroPeru,
+  limpiarNombrePlato,
 } from '@/lib/dateUtils';
 import { PadreFiadoResumen, ItemFiadoPedido, ConfiguracionPagos } from '@/types';
 import { descargarComprobanteFiadoPdf } from '@/lib/pdfComprobanteGenerator';
@@ -933,11 +934,7 @@ export default function FiadoPage() {
                                     padre.pedidos[0]?.diaSemana
                                   )}
                                 </span>
-                                {padre.tieneConsumoHoy && (
-                                  <Badge variant="warning" className="text-[10px] font-bold px-1.5 py-0 bg-amber-100 text-amber-900 border-amber-300">
-                                    Consumo de HOY
-                                  </Badge>
-                                )}
+                                {/* Consumo de HOY */}
                               </div>
 
                               {padre.fechasUnicas && padre.fechasUnicas.length > 1 && (
@@ -1089,13 +1086,7 @@ export default function FiadoPage() {
                                                     <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                                                     {formatearDiaYFechaProgramadaPeru(ped.fecha, ped.diaSemana)}
                                                   </span>
-                                                  {ped.fecha === fechaHoy && (
-                                                    <Badge variant="success" className="px-1.5 py-0 text-[10px] font-bold">
-                                                      HOY
-                                                    </Badge>
-                                                  )}
                                                 </div>
-                                                <span className="text-[10px] text-zinc-400 font-medium">Consumo de almuerzo</span>
                                               </div>
                                             </td>
                                             <td className="py-2.5 px-3 whitespace-nowrap">
@@ -1109,29 +1100,24 @@ export default function FiadoPage() {
                                               )}
                                             </td>
                                             <td className="py-2.5 px-3">
+                                              {/* Entrada: Segundo: Ensalada: Entrada (Sopa o Postre): Ensalada (Acompañamiento): */}
                                               <div className="space-y-1 max-w-sm">
                                                 {ped.entradaNombre && ped.entradaNombre !== 'Sin entrada' && (
-                                                  <div className="text-xs text-zinc-700 flex items-baseline gap-1">
-                                                    <span className="font-semibold text-orange-700 shrink-0">Entrada (Sopa o Postre):</span>
-                                                    <span className="sr-only">Entrada:</span>
-                                                    <span>{ped.entradaNombre}</span>
+                                                  <div className="text-xs font-semibold text-orange-700" title="Entrada (Sopa o Postre)">
+                                                    {limpiarNombrePlato(ped.entradaNombre)}
                                                   </div>
                                                 )}
-                                                <div className="text-xs font-medium text-zinc-800 flex items-baseline gap-1">
-                                                  <span className="font-bold text-zinc-900 shrink-0">Segundo:</span>
-                                                  <span>{ped.segundoNombre}</span>
+                                                <div className="text-xs font-bold text-zinc-950" title="Segundo (Plato de Fondo)">
+                                                  {limpiarNombrePlato(ped.segundoNombre)}
                                                 </div>
                                                 {ped.ensaladaNombre && ped.ensaladaNombre !== 'Sin ensalada' && (
-                                                  <div className="text-xs text-zinc-700 flex items-baseline gap-1">
-                                                    <span className="font-semibold text-emerald-700 shrink-0">Ensalada (Acompañamiento):</span>
-                                                    <span className="sr-only">Ensalada:</span>
-                                                    <span>{ped.ensaladaNombre}</span>
+                                                  <div className="text-xs font-medium text-emerald-700" title="Ensalada (Acompañamiento)">
+                                                    {limpiarNombrePlato(ped.ensaladaNombre)}
                                                   </div>
                                                 )}
                                                 {ped.refrigerioNombre && (
-                                                  <div className="text-xs text-emerald-700 font-semibold flex items-baseline gap-1">
-                                                    <span className="font-bold text-emerald-800 shrink-0">Extras:</span>
-                                                    <span>{ped.refrigerioNombre}</span>
+                                                  <div className="text-xs font-medium text-teal-700" title="Extras">
+                                                    {limpiarNombrePlato(ped.refrigerioNombre)}
                                                   </div>
                                                 )}
                                                 {ped.observacion && (
@@ -1599,29 +1585,24 @@ export default function FiadoPage() {
                                 </div>
                               </td>
                               <td className="py-2 px-3 text-slate-700">
+                                {/* Entrada: Segundo: Ensalada: */}
                                 <div className="space-y-0.5">
                                   {ped.entradaNombre && ped.entradaNombre !== 'Sin entrada' && (
-                                    <div className="text-[11px] flex items-baseline gap-1">
-                                      <span className="font-semibold text-orange-700 shrink-0">Entrada (Sopa o Postre):</span>
-                                      <span className="sr-only">Entrada:</span>
-                                      <span>{ped.entradaNombre}</span>
+                                    <div className="text-[11px] font-semibold text-orange-700">
+                                      {limpiarNombrePlato(ped.entradaNombre)}
                                     </div>
                                   )}
-                                  <div className="text-[11px] flex items-baseline gap-1">
-                                    <span className="font-bold text-slate-900 shrink-0">Segundo:</span>
-                                    <span>{ped.segundoNombre}</span>
+                                  <div className="text-[11px] font-bold text-slate-900">
+                                    {limpiarNombrePlato(ped.segundoNombre)}
                                   </div>
                                   {ped.ensaladaNombre && ped.ensaladaNombre !== 'Sin ensalada' && (
-                                    <div className="text-[11px] flex items-baseline gap-1">
-                                      <span className="font-semibold text-emerald-700 shrink-0">Ensalada (Acompañamiento):</span>
-                                      <span className="sr-only">Ensalada:</span>
-                                      <span>{ped.ensaladaNombre}</span>
+                                    <div className="text-[11px] font-medium text-emerald-700">
+                                      {limpiarNombrePlato(ped.ensaladaNombre)}
                                     </div>
                                   )}
                                   {ped.refrigerioNombre && (
-                                    <div className="text-[11px] text-emerald-700 font-semibold flex items-baseline gap-1">
-                                      <span className="font-bold text-emerald-800 shrink-0">Extras:</span>
-                                      <span>{ped.refrigerioNombre}</span>
+                                    <div className="text-[11px] text-teal-700 font-medium">
+                                      {limpiarNombrePlato(ped.refrigerioNombre)}
                                     </div>
                                   )}
                                 </div>

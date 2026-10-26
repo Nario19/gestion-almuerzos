@@ -155,4 +155,43 @@ test('Separación estricta de Fecha de Consumo vs Fecha de Emisión y Dos Column
       'Modal de reporte de Fiado debe mostrar Día Programado en mayúsculas'
     );
   });
+
+  await t.test('6. Limpieza y diferenciación de colores de platos sin prefijos técnicos en Pedido', async () => {
+    const { limpiarNombrePlato } = await import('../src/lib/dateUtils.ts');
+
+    assert.strictEqual(
+      limpiarNombrePlato('Entrada (Sopa o Postre): Entrada:Sopa o postre:SOPA DE POLLO'),
+      'SOPA DE POLLO'
+    );
+    assert.strictEqual(limpiarNombrePlato('Segundo: LENTEJAS'), 'LENTEJAS');
+    assert.strictEqual(
+      limpiarNombrePlato('Ensalada (Acompañamiento): Ensalada:ENSALADA DE FRUTA'),
+      'ENSALADA DE FRUTA'
+    );
+
+    const despachoPath = path.join(rootDir, 'src', 'app', 'admin', 'despacho', 'page.tsx');
+    const despachoContent = fs.readFileSync(despachoPath, 'utf-8');
+
+    // Despacho usa limpiarNombrePlato y clases de color diferenciadas sin etiquetas visibles
+    assert.ok(
+      despachoContent.includes('limpiarNombrePlato(p.entradaNombre)'),
+      'Despacho debe limpiar entradaNombre'
+    );
+    assert.ok(
+      despachoContent.includes('limpiarNombrePlato(p.segundoNombre)'),
+      'Despacho debe limpiar segundoNombre'
+    );
+    assert.ok(
+      despachoContent.includes('limpiarNombrePlato(p.ensaladaNombre)'),
+      'Despacho debe limpiar ensaladaNombre'
+    );
+    assert.ok(
+      despachoContent.includes('text-orange-700'),
+      'Entrada debe tener color anaranjado'
+    );
+    assert.ok(
+      despachoContent.includes('text-emerald-700'),
+      'Ensalada debe tener color verde'
+    );
+  });
 });
