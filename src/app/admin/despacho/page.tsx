@@ -33,6 +33,8 @@ import {
   formatearHoraPeru,
   calcularOffsetFechaPeru,
   formatearFechaEmisionPeru,
+  formatearDiaYFechaProgramadaPeru,
+  formatearFechaHoraRegistroPeru,
 } from '@/lib/dateUtils';
 import { Pedido, EstadoPedido, EstadoPago, FiltroGrados } from '@/types';
 import { StatCard } from '@/components/shared/StatCard';
@@ -339,7 +341,8 @@ export default function DespachoPage() {
           colegioFiltro === 'TODOS'
             ? `${p.colegioNombre} - ${p.gradoSeccion}`
             : p.gradoSeccion;
-        const horaPedido = formatearHora(p.createdAt);
+        const fechaHoraPedido = formatearFechaHoraRegistroPeru(p.createdAt).texto;
+        const diaProgramado = formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana);
         const entregaDetalle =
           p.estadoPedido === 'CANCELADO'
             ? 'CANCELADO'
@@ -351,7 +354,8 @@ export default function DespachoPage() {
         <tr>
           <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; font-family: monospace;">#${p.codigoPedido}</td>
           <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">Almuerzo #${numeroAlmuerzo}</td>
-          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${horaPedido}</td>
+          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px;">${fechaHoraPedido}</td>
+          <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${diaProgramado}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px;">${gradoSeccionDetalle}</td>
           <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
             ${p.estudianteNombre}
@@ -406,7 +410,8 @@ export default function DespachoPage() {
             <tr>
               <th style="width: 110px; text-align: center;">Código</th>
               <th style="width: 100px; text-align: center;">N° Almuerzo</th>
-              <th style="width: 100px; text-align: center;">Hora Pedido</th>
+              <th style="width: 130px; text-align: center;">Fecha Pedido</th>
+              <th style="width: 140px; text-align: center;">Día Programado</th>
               <th style="width: 180px;">Grado y Sección</th>
               <th style="width: 220px;">Nombres</th>
               <th style="width: 280px;">Pedido</th>
@@ -843,7 +848,7 @@ export default function DespachoPage() {
 
               {/* Tabla con la estructura de reporte solicitada: N° Almuerzo, Grado y Sección, Nombre, Pedido, Fecha y Hora, Pago, Entrega */}
               <div className="overflow-x-auto">
-                <Table className="min-w-[850px]">
+                <Table className="min-w-[950px]">
                   <TableHeader>
                     <TableRow className="border-b border-zinc-200 bg-zinc-50/80 hover:bg-transparent">
                       <TableHead className="py-3 px-4 text-center w-28 text-xs font-semibold text-zinc-600" title="N° Almuerzo / Hora">
@@ -852,7 +857,13 @@ export default function DespachoPage() {
                       <TableHead className="py-3 px-4 w-36 text-xs font-semibold text-zinc-600">Grado y Sección</TableHead>
                       <TableHead className="py-3 px-4 w-48 text-xs font-semibold text-zinc-600">Nombre</TableHead>
                       <TableHead className="py-3 px-4 text-xs font-semibold text-zinc-600">Pedido</TableHead>
-                      <TableHead className="py-3 px-4 w-36 text-xs font-semibold text-zinc-600">Fecha y Hora</TableHead>
+                      <TableHead className="py-3 px-4 w-36 text-xs font-semibold text-zinc-600">
+                        Fecha de Pedido
+                        <span className="sr-only">Fecha y Hora</span>
+                      </TableHead>
+                      <TableHead className="py-3 px-4 w-44 text-xs font-semibold text-zinc-600">
+                        Día Programado
+                      </TableHead>
                       <TableHead className="py-3 px-4 w-40 text-xs font-semibold text-zinc-600">Pago</TableHead>
                       <TableHead className="py-3 px-4 text-left w-44 print:hidden text-xs font-semibold text-zinc-600">Entrega</TableHead>
                     </TableRow>
@@ -954,17 +965,29 @@ export default function DespachoPage() {
                             </div>
                           </TableCell>
 
-                          {/* Columna 5: Fecha y Hora (Juntadas) */}
+                          {/* Columna 5: Fecha y Hora en que se hizo el pedido (Emisión) */}
+                          <TableCell className="py-3.5 px-4">
+                            <div className="flex flex-col gap-0.5 text-xs">
+                              <span className="text-[11px] font-semibold text-zinc-800 flex items-center gap-1.5 whitespace-nowrap">
+                                <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                {formatearFechaHoraRegistroPeru(p.createdAt).texto}
+                              </span>
+                              <span className="text-[10px] text-zinc-400">Emisión</span>
+                            </div>
+                          </TableCell>
+
+                          {/* Columna 6: Día para el que se pidió el almuerzo (Día Programado) */}
                           <TableCell className="py-3.5 px-4">
                             <div className="flex flex-col gap-1 text-xs">
-                              <span className="font-semibold text-zinc-900 flex items-center gap-1.5 whitespace-nowrap">
-                                <CalendarIcon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                                {p.fecha ? p.fecha.slice(0, 10) : p.diaSemana || 'Hoy'}
+                              <span className="font-bold text-zinc-950 flex items-center gap-1.5 whitespace-nowrap">
+                                <CalendarIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                {formatearDiaYFechaProgramadaPeru(p.fecha, p.diaSemana)}
                               </span>
-                              <span className="text-[11px] text-zinc-500 flex items-center gap-1.5 font-medium whitespace-nowrap">
-                                <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                                {formatearHora(p.createdAt)}
-                              </span>
+                              {p.fecha === fechaHoy && (
+                                <Badge variant="outline" className="w-fit text-[9px] font-extrabold uppercase px-1.5 py-0 bg-emerald-50 text-emerald-800 border-emerald-300">
+                                  HOY
+                                </Badge>
+                              )}
                             </div>
                           </TableCell>
 

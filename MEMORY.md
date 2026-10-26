@@ -1800,6 +1800,30 @@ Si una decisión cambia, conservar su contexto y marcarla como reemplazada por l
   - `tests/menu-entrada-sopa-o-postre-ensalada-mostrada.test.mjs`
   - `MEMORY.md`
 
+### D-063 — 2026-10-25 — Segregación Estricta de Fecha Programada vs Emisión y Dos Columnas en Despacho y Fiado
+
+- Decisión:
+  1. **Segregación estricta de pedidos por fecha programada de consumo (`fecha`)**: Garantizar que si un padre realiza un pedido para el lunes y otro para el martes, el pedido del martes NO se muestre en la vista operativa de hoy si hoy es lunes. Cada pedido se atribuye y filtra estrictamente por su fecha programada de consumo (`fecha`) y no por la fecha de emisión.
+  2. **Dos columnas de fechas explícitas en Despacho y Fiado**:
+     - **Columna 1: Fecha de Pedido (Emisión)**: Fecha y hora exacta de registro del pedido (`createdAt`), en zona horaria oficial `America/Lima` (ej. `25/10/2026, 09:15 a. m.`).
+     - **Columna 2: Día Programado (Consumo del Almuerzo)**: Día de la semana en mayúsculas y fecha programada (ej. `LUNES 26/10/2026`, `MARTES 27/10/2026`, `MIÉRCOLES 28/10/2026`, etc.).
+  3. **Aplicación transversal en el sistema**:
+     - `src/lib/dateUtils.ts`: Implementadas las funciones `formatearDiaYFechaProgramadaPeru` y `formatearFechaHoraRegistroPeru`.
+     - `src/lib/dataService.ts`: `mapearPedidoDesdeSupabase` respeta `d.fecha` como fecha de consumo en lugar de sobrescribirla con `created_at`. `crearPedido` asigna `fecha` según el día de la semana (`obtenerFechaParaDiaSemana`).
+     - `src/app/padres/page.tsx`: Al realizar pedidos se envía `fecha: obtenerFechaParaDiaSemana(diaSeleccionado)`.
+     - `src/app/admin/despacho/page.tsx`: Tabla principal y reporte Excel desglosados en "Fecha de Pedido" (con hora) y "Día Programado".
+     - `src/app/admin/fiado/page.tsx`: Tabla principal, desglose expandido de almuerzos y modal de reporte familiar actualizados con ambas columnas.
+  4. **Suite de pruebas**: `tests/separacion-fechas-consumo-registro-despacho-fiado.test.mjs` (todas las pruebas en verde).
+- Fuente: Solicitud e instrucción explícita del usuario ("OK AHORA SI YO HAGO UN PEDIDO DOS VECES PERO UNO PARA EL LUNES Y OTRO PARA EL MARTES ENTONCES NO DEBE MOSTRARSE HOY EL DEL MARTES SI HOY ES LUNES. AÑADE UNA COLUMNA QUE DIA EL DIA DEL PEDIDO TAMBIEN LA COLUMNA DEL DIA DEL PEDIDO. DEBE HABER DOS FECHAS UNO DEL DIA EN EL QUE SE HIZO EL PEDIDO FECHA Y HORA Y EL OTRO EL DIA PARA EL QUE SE PIDIÓ. AHI DEBE DECIR LUNES MARTES MIERCLES JUEVES O VIERNES Y LA FECHA, ESO TANTO EN FIADO COMO EN DESPACHO.").
+- Impacto:
+  - `src/lib/dateUtils.ts`
+  - `src/lib/dataService.ts`
+  - `src/app/padres/page.tsx`
+  - `src/app/admin/despacho/page.tsx`
+  - `src/app/admin/fiado/page.tsx`
+  - `tests/separacion-fechas-consumo-registro-despacho-fiado.test.mjs`
+  - `MEMORY.md`
+
 ## Contexto observado el 2026-10-14 (no decisiones del usuario)
 
 - Aplicación de almuerzos escolares con Next.js 16 (App Router), React 19, TypeScript estricto, Tailwind CSS y Supabase PostgreSQL.

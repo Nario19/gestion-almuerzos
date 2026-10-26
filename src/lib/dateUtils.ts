@@ -254,4 +254,68 @@ export function obtenerFechaParaDiaSemana(dia: DiaSemana, fechaReferencia: strin
   }
 }
 
+/**
+ * Retorna el día de la semana escolar y la fecha programada del almuerzo en formato legible:
+ * Ej. 'LUNES 26/10/2026', 'MARTES 27/10/2026', 'MIÉRCOLES 28/10/2026', 'JUEVES 29/10/2026', 'VIERNES 30/10/2026'
+ */
+export function formatearDiaYFechaProgramadaPeru(fechaStr?: string, diaSemana?: string): string {
+  if (!fechaStr) {
+    const dia = (diaSemana || '').toUpperCase();
+    return dia ? (dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia) : 'Fecha no definida';
+  }
+  try {
+    const [y, m, d] = fechaStr.split('-').map(Number);
+    if (!y || !m || !d) {
+      const dia = (diaSemana || '').toUpperCase();
+      return dia ? `${dia === 'MIERCOLES' ? 'MIÉRCOLES' : dia} ${fechaStr}` : fechaStr;
+    }
+    const date = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+
+    // Determinar día de la semana
+    let dia = (diaSemana || '').toUpperCase();
+    if (!dia) {
+      const dayIndex = date.getUTCDay();
+      const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+      dia = dias[dayIndex] || 'LUNES';
+    } else {
+      if (dia === 'MIERCOLES') dia = 'MIÉRCOLES';
+    }
+
+    const dd = String(d).padStart(2, '0');
+    const mm = String(m).padStart(2, '0');
+    const yyyy = String(y);
+    return `${dia} ${dd}/${mm}/${yyyy}`;
+  } catch {
+    return diaSemana ? `${diaSemana} ${fechaStr}` : fechaStr;
+  }
+}
+
+/**
+ * Retorna la fecha y hora de emisión/registro del pedido en formato peruano.
+ * Ej. '25/10/2026, 08:30 a. m.'
+ */
+export function formatearFechaHoraRegistroPeru(fechaIso?: string): { fecha: string; hora: string; texto: string } {
+  if (!fechaIso) return { fecha: '--/--/----', hora: '--:--', texto: '--/--/----' };
+  try {
+    const d = new Date(fechaIso);
+    if (isNaN(d.getTime())) return { fecha: '--/--/----', hora: '--:--', texto: '--/--/----' };
+    const fecha = d.toLocaleDateString('es-PE', {
+      timeZone: ZONA_HORARIA_PERU,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    const hora = d.toLocaleTimeString('es-PE', {
+      timeZone: ZONA_HORARIA_PERU,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    return { fecha, hora, texto: `${fecha}, ${hora}` };
+  } catch {
+    return { fecha: '--/--/----', hora: '--:--', texto: '--/--/----' };
+  }
+}
+
+
 

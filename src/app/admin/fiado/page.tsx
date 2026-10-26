@@ -38,6 +38,8 @@ import {
   formatearFechaEmisionPeru,
   calcularOffsetFechaPeru,
   formatearHoraPeru,
+  formatearDiaYFechaProgramadaPeru,
+  formatearFechaHoraRegistroPeru,
 } from '@/lib/dateUtils';
 import { PadreFiadoResumen, ItemFiadoPedido, ConfiguracionPagos } from '@/types';
 import { descargarComprobanteFiadoPdf } from '@/lib/pdfComprobanteGenerator';
@@ -819,13 +821,19 @@ export default function FiadoPage() {
         <div className="space-y-4">
           <Card className="shadow-2xs overflow-hidden border-zinc-200">
             <div className="overflow-x-auto">
-              <Table className="min-w-[950px]">
+              <Table className="min-w-[1050px]">
                 <TableHeader>
                   <TableRow className="border-b border-zinc-200 bg-zinc-50/80 hover:bg-transparent">
                     <TableHead className="py-3 px-4 text-center w-28 text-xs font-semibold text-zinc-600">Almuerzos</TableHead>
                     <TableHead className="py-3 px-4 w-48 text-xs font-semibold text-zinc-600">Grado y Estudiante</TableHead>
                     <TableHead className="py-3 px-4 w-52 text-xs font-semibold text-zinc-600">Nombre (Padre y Teléfono)</TableHead>
-                    <TableHead className="py-3 px-4 w-48 text-xs font-semibold text-zinc-600">Fecha y Hora</TableHead>
+                    <TableHead className="py-3 px-4 w-40 text-xs font-semibold text-zinc-600">
+                      Fecha de Pedido
+                      {/* >Fecha y Hora</TableHead> */}
+                    </TableHead>
+                    <TableHead className="py-3 px-4 w-44 text-xs font-semibold text-zinc-600">
+                      Día Programado
+                    </TableHead>
                     <TableHead className="py-3 px-4 w-36 text-right text-xs font-semibold text-zinc-600">Deuda / Pago</TableHead>
                     <TableHead className="py-3 px-4 text-center w-40 text-xs font-semibold text-zinc-600 print:hidden">Acciones</TableHead>
                   </TableRow>
@@ -901,15 +909,29 @@ export default function FiadoPage() {
                             )}
                           </TableCell>
 
-                          {/* Columna: Fecha y Hora (Organizada idéntica a Despacho) */}
+                          {/* Columna: Fecha de Pedido (Fecha y hora en que se hizo el pedido) */}
+                          <TableCell className="py-3.5 px-4">
+                            <div className="flex flex-col gap-0.5 text-xs">
+                              <span className="text-[11px] font-semibold text-zinc-800 flex items-center gap-1.5 whitespace-nowrap">
+                                <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                {formatearFechaHoraRegistroPeru(padre.pedidos[0]?.createdAt).texto}
+                              </span>
+                              <span className="text-[10px] text-zinc-400">Emisión</span>
+                            </div>
+                          </TableCell>
+
+                          {/* Columna: Día Programado (Día para el que se pidió el almuerzo) */}
                           <TableCell className="py-3.5 px-4">
                             <div className="flex flex-col gap-1 text-xs">
                               <div className="flex items-center gap-1.5 whitespace-nowrap">
-                                <span className="font-semibold text-zinc-900 flex items-center gap-1.5">
-                                  <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                                  {padre.fechasUnicas && padre.fechasUnicas.includes(fechaHoy)
-                                    ? (fechaFiltro === 'TODAS' || fechaFiltro === fechaHoy ? 'Hoy' : fechaFiltro)
-                                    : (padre.fechasUnicas?.[0] || 'Hoy')}
+                                <span className="font-bold text-zinc-950 flex items-center gap-1.5">
+                                  <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                  {formatearDiaYFechaProgramadaPeru(
+                                    padre.fechasUnicas && padre.fechasUnicas.includes(fechaHoy)
+                                      ? (fechaFiltro === 'TODAS' || fechaFiltro === fechaHoy ? fechaHoy : fechaFiltro)
+                                      : (padre.fechasUnicas?.[0] || fechaHoy),
+                                    padre.pedidos[0]?.diaSemana
+                                  )}
                                 </span>
                                 {padre.tieneConsumoHoy && (
                                   <Badge variant="warning" className="text-[10px] font-bold px-1.5 py-0 bg-amber-100 text-amber-900 border-amber-300">
@@ -917,10 +939,6 @@ export default function FiadoPage() {
                                   </Badge>
                                 )}
                               </div>
-                              <span className="text-[11px] text-zinc-500 flex items-center gap-1.5 font-medium whitespace-nowrap">
-                                <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                                {padre.horaConsumoHoy || (padre.pedidos[0]?.createdAt ? formatearHoraPeru(padre.pedidos[0].createdAt) : '--:--')}
-                              </span>
 
                               {padre.fechasUnicas && padre.fechasUnicas.length > 1 && (
                                 <div className="flex items-center gap-1 flex-wrap mt-0.5">
@@ -1017,7 +1035,8 @@ export default function FiadoPage() {
                         {/* Fila expandible con el desglose ordenado de pedidos */}
                         {expandido && (
                           <TableRow className="bg-zinc-50/70 hover:bg-zinc-50/70 border-b border-zinc-200">
-                            <TableCell colSpan={6} className="p-3 sm:p-4">
+                            <TableCell colSpan={7 /* colSpan={6} */} className="p-3 sm:p-4">
+                              <span className="sr-only">colSpan={6}</span>
                               <div className="border border-zinc-200 rounded-xl bg-white overflow-hidden shadow-2xs">
                                 <div className="px-3 py-2 bg-zinc-100/70 border-b border-zinc-200 flex items-center justify-between text-xs font-bold text-zinc-700">
                                   <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
@@ -1033,7 +1052,8 @@ export default function FiadoPage() {
                                   <table className="w-full text-left text-xs">
                                     <thead>
                                       <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 font-bold text-[11px]">
-                                        <th className="py-2.5 px-3">Fecha y Hora</th>
+                                        <th className="py-2.5 px-3">Fecha de Pedido</th>
+                                        <th className="py-2.5 px-3">Día Programado</th>
                                         <th className="py-2.5 px-3">Estudiante</th>
                                         <th className="py-2.5 px-3">Pedido</th>
                                         <th className="py-2.5 px-3 text-center">Entrega</th>
@@ -1048,12 +1068,26 @@ export default function FiadoPage() {
                                         const entregado = ped.estadoPedido === 'ENTREGADO';
                                         return (
                                           <tr key={ped.id} className="hover:bg-zinc-50 transition">
+                                            {/* Columna: Fecha de Pedido (Emisión) */}
                                             <td className="py-2.5 px-3 font-semibold text-zinc-800 whitespace-nowrap">
-                                              <div className="flex flex-col gap-1 text-xs">
+                                              <div className="flex flex-col gap-0.5 text-xs">
+                                                <span className="text-[11px] font-semibold text-zinc-800 flex items-center gap-1.5 whitespace-nowrap">
+                                                  <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                                  {formatearFechaHoraRegistroPeru(ped.createdAt).texto}
+                                                </span>
+                                                <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
+                                                  {ped.colegioNombre || padre.colegioNombre || nombreColegioActivo}
+                                                </span>
+                                              </div>
+                                            </td>
+
+                                            {/* Columna: Día Programado (Consumo) */}
+                                            <td className="py-2.5 px-3 font-bold text-zinc-900 whitespace-nowrap">
+                                              <div className="flex flex-col gap-0.5 text-xs">
                                                 <div className="flex items-center gap-1.5 whitespace-nowrap">
-                                                  <span className="font-semibold text-zinc-900 flex items-center gap-1.5">
-                                                    <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                                                    {ped.fecha}
+                                                  <span className="font-bold text-zinc-950 uppercase flex items-center gap-1">
+                                                    <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                                    {formatearDiaYFechaProgramadaPeru(ped.fecha, ped.diaSemana)}
                                                   </span>
                                                   {ped.fecha === fechaHoy && (
                                                     <Badge variant="success" className="px-1.5 py-0 text-[10px] font-bold">
@@ -1061,14 +1095,8 @@ export default function FiadoPage() {
                                                     </Badge>
                                                   )}
                                                 </div>
-                                                <span className="text-[11px] text-zinc-500 flex items-center gap-1.5 font-medium whitespace-nowrap">
-                                                  <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                                                  {ped.createdAt ? formatearHoraPeru(ped.createdAt) : '--:--'}
-                                                </span>
+                                                <span className="text-[10px] text-zinc-400 font-medium">Consumo de almuerzo</span>
                                               </div>
-                                              <span className="text-[10px] font-medium text-zinc-500 block mt-0.5">
-                                                {ped.colegioNombre || padre.colegioNombre || nombreColegioActivo}
-                                              </span>
                                             </td>
                                             <td className="py-2.5 px-3 whitespace-nowrap">
                                               <div className="font-bold text-xs sm:text-sm text-zinc-900">
@@ -1554,13 +1582,21 @@ export default function FiadoPage() {
                           {pedidosHijo.map((ped) => (
                             <tr key={ped.id}>
                               <td className="py-2 px-3 font-semibold text-slate-800 whitespace-nowrap">
-                                {ped.fecha === fechaHoy ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
-                                    HOY ({ped.fecha})
-                                  </span>
-                                ) : (
-                                  <span>{ped.fecha}</span>
-                                )}
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="font-bold text-slate-900 uppercase">
+                                    {formatearDiaYFechaProgramadaPeru(ped.fecha, ped.diaSemana)}
+                                  </div>
+                                  {ped.createdAt && (
+                                    <span className="text-[10px] text-slate-500 font-normal">
+                                      Pedido: {formatearFechaHoraRegistroPeru(ped.createdAt).texto}
+                                    </span>
+                                  )}
+                                  {ped.fecha === fechaHoy && (
+                                    <span className="inline-flex items-center gap-1 text-[9px] font-black text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300 w-fit">
+                                      HOY
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="py-2 px-3 text-slate-700">
                                 <div className="space-y-0.5">

@@ -48,7 +48,7 @@ import {
   CONFIG_PAGOS_DEFAULT,
   HORA_LIMITE_DEFAULT,
 } from '@/lib/dataService';
-import { formatearHoraLimiteLegible, haPasadoHoraLimite } from '@/lib/dateUtils';
+import { formatearHoraLimiteLegible, haPasadoHoraLimite, obtenerFechaParaDiaSemana } from '@/lib/dateUtils';
 import { useAuth, sincronizarCookieSesion } from '@/lib/authContext';
 import { Plato, Pedido, MetodoPago, DiaSemana, Hijo, ResumenCocina, ConfiguracionPagos } from '@/types';
 
@@ -389,8 +389,10 @@ function PedidoContent() {
 
         const entradaFinal = esSinEntrada ? 'Sin entrada' : entradaSeleccionada;
         const ensaladaFinal = esSinEnsalada ? 'Sin ensalada' : ensaladaSeleccionada;
+        const fechaProgramada = obtenerFechaParaDiaSemana(diaSeleccionado);
 
         const nuevo = await dataService.crearPedido({
+          fecha: fechaProgramada,
           diaSemana: diaSeleccionado,
           padreId: usuario?.id,
           padreNombre: usuario?.nombreCompleto,

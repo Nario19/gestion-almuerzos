@@ -46,6 +46,7 @@ import {
   obtenerFechaPeruDeIso,
   obtenerDiaActualSemanaPeru,
   obtenerHoraActualPeru,
+  obtenerFechaParaDiaSemana,
 } from '@/lib/dateUtils';
 
 export const DIAS_SEMANA: { key: DiaSemana; label: string; short: string }[] = [
@@ -433,15 +434,17 @@ function mapearPedidoDesdeSupabase(d: PedidoRowSupabase, mapLocal: Record<string
   }
 
   // Normalización defensiva de fecha según la zona horaria de Perú (America/Lima)
-  const fechaNormalizada = d.created_at
-    ? obtenerFechaPeruDeIso(d.created_at)
-    : (d.fecha || obtenerFechaHoyPeru());
+  // Si la fila tiene d.fecha explícita (YYYY-MM-DD), representa la fecha programada para el almuerzo.
+  // Si no tiene d.fecha, se deriva de created_at en zona horaria de Perú o fallback a fechaHoy.
+  const fechaNormalizada = d.fecha
+    ? d.fecha.slice(0, 10)
+    : (d.created_at ? obtenerFechaPeruDeIso(d.created_at) : obtenerFechaHoyPeru());
 
   return {
     id: d.id,
     codigoPedido: d.codigo || (d as { codigo_pedido?: string }).codigo_pedido || '',
     fecha: fechaNormalizada,
-    diaSemana: (d as { dia_semana?: DiaSemana }).dia_semana,
+    diaSemana: (d as { dia_semana?: DiaSemana }).dia_semana || obtenerDiaActualSemanaPeru(new Date(`${fechaNormalizada}T12:00:00-05:00`)),
     padreId: d.padre_id || '',
     padreNombre: padreNombre || undefined,
     hijoId: (d as { hijo_id?: string }).hijo_id,
@@ -1018,11 +1021,18 @@ export const dataService = {
     const siguienteNum = await this.obtenerSiguienteNumeroAlmuerzoColegio(colegioNom);
     const codigoInicial = `${prefijo}-${String(siguienteNum).padStart(3, '0')}`;
 
+    const fechaCalculada = (pedidoData.diaSemana && !pedidoData.fecha)
+      ? obtenerFechaParaDiaSemana(pedidoData.diaSemana as DiaSemana)
+      : undefined;
+    const fechaFinal = pedidoData.fecha || fechaCalculada || (pedidoData.fecha || obtenerFechaHoyPeru());
+    const diaSemanaFinal = pedidoData.diaSemana || obtenerDiaActualSemanaPeru(new Date(`${fechaFinal}T12:00:00-05:00`));
+
     const nuevo: Pedido = {
       ...pedidoData,
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}`,
       codigoPedido: codigoInicial,
-      fecha: pedidoData.fecha || obtenerFechaHoyPeru(),
+      fecha: fechaFinal, // fecha: pedidoData.fecha || obtenerFechaHoyPeru()
+      diaSemana: diaSemanaFinal,
       estadoPedido: 'REGISTRADO',
       estadoPago: pedidoData.estadoPago || 'PENDIENTE',
       createdAt: new Date().toISOString(),
